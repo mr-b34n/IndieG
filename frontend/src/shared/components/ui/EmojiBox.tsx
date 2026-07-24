@@ -36,11 +36,11 @@ const EmojiBox: React.FC<ReactionPickerProps> = ({ isOpen, onClose, onSelect }) 
         <div
             ref={pickerRef}
             className="absolute bottom-full left-0 z-50 p-1.5 mb-3 
-                       bg-surface border border-border rounded-full 
-                       shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]
-                       min-w-max flex items-center gap-1.5 px-2
-                       animate-in fade-in zoom-in-75 slide-in-from-bottom-2 
-                       duration-200 ease-out origin-bottom-left"
+                        bg-surface border border-border rounded-full 
+                        shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]
+                        min-w-max flex items-center gap-1.5 px-2
+                        animate-in fade-in zoom-in-75 slide-in-from-bottom-2 
+                        duration-200 ease-out origin-bottom-left"
         >
             {REACTIONS.map((react) => (
                 <button
@@ -48,11 +48,11 @@ const EmojiBox: React.FC<ReactionPickerProps> = ({ isOpen, onClose, onSelect }) 
                     type="button"
                     onClick={() => onSelect(react.id, react.char)}
                     className={`relative flex items-center justify-center p-2 text-[28px] leading-none
-            transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-            origin-bottom transform-gpu
-            hover:-translate-y-3 hover:scale-[1.5]
-            focus:outline-none
-            ${react.delay}`}
+                        transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                        origin-bottom transform-gpu
+                        hover:-translate-y-1 hover:scale-[1.5]
+                        focus:outline-none
+                        ${react.delay}`}
                 >
                     <span className="block transform transition-transform duration-300 pointer-events-none">
                         {react.char}

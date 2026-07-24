@@ -6,6 +6,7 @@ import raftLogo    from "../../../assets/logos/raft-logo.png";
 import rdr2Logo    from "../../../assets/logos/rdr2-logo.png";
 import cs2Logo     from "../../../assets/logos/cs2-logo.webp";
 import avatarGame  from "../../../assets/logos/raft-logo.png";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const Panel = ({ children }: { children: React.ReactNode }) => (
     <div className="
@@ -71,6 +72,7 @@ const EVENTS = [
 
 export const RightBar = () => {
     const navigate = useNavigate();
+    const {t} = useTranslation();
     const onlineCount = SQUAD_MEMBERS.filter((m) => m.status === "online").length;
 
     return (
@@ -78,7 +80,7 @@ export const RightBar = () => {
             <Panel>
                 <SectionTitle
                     icon={faGamepad}
-                    label="Squad"
+                    label={t('common.squad')}
                     extra={
                         <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -129,7 +131,7 @@ export const RightBar = () => {
             </Panel>
 
             <Panel>
-                <SectionTitle icon={faArrowTrendUp} label="Trending" />
+                <SectionTitle icon={faArrowTrendUp} label={t('common.trending')} />
                 <div className="flex flex-col pb-2 px-2 gap-0.5">
                     {TRENDING_POSTS.map((post, i) => (
                         <div
@@ -161,7 +163,7 @@ export const RightBar = () => {
             </Panel>
 
             <Panel>
-                <SectionTitle icon={faCalendarDay} label="Upcoming" />
+                <SectionTitle icon={faCalendarDay} label={t('common.upcoming')} />
                 <div className="flex flex-col pb-3 px-4 gap-2.5">
                     {EVENTS.map((ev) => (
                         <div key={ev.id} className="flex items-center gap-3 cursor-pointer group">

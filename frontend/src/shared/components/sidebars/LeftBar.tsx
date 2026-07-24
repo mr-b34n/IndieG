@@ -13,6 +13,7 @@ import rdr2Logo from "../../../assets/logos/rdr2-logo.png";
 import raftLogo from "../../../assets/logos/raft-logo.png";
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor } from "@/features/post";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const navItem = `
     w-full flex flex-row items-center gap-3 px-3 py-2.5
@@ -45,6 +46,7 @@ const MY_GAMES = [
 
 export const LeftBar = () => {
     const navigate = useNavigate();
+    const {t} = useTranslation();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
@@ -99,9 +101,9 @@ export const LeftBar = () => {
                         <FontAwesomeIcon icon={faUserCircle} className="text-2xl text-text-faint" />
                     </div>
                     <div>
-                        <p className="font-semibold text-sm text-text">You're not signed in</p>
+                        <p className="font-semibold text-sm text-text">{t('authenticate.notLoginRemindTitle')}</p>
                         <p className="text-xs text-text-faint mt-1 leading-relaxed">
-                            Log in to create posts, save bookmarks, and manage your library.
+                            {t('authenticate.notLoginRemindDetail')}
                         </p>
                     </div>
                     <button
@@ -112,7 +114,7 @@ export const LeftBar = () => {
                             shadow-[0_2px_10px_rgba(124,77,255,0.35)]
                             transition-colors duration-150 cursor-pointer"
                     >
-                        Log in
+                        {t('authenticate.login')}
                     </button>
                 </div>
             )}
@@ -162,11 +164,14 @@ export const LeftBar = () => {
             <div className="flex flex-col gap-1 px-2 pb-1">
                 <button
                     type="button"
-                    onClick={() => setActivePage("home")}
+                    onClick={() => {
+                        setActivePage("home");
+                        navigate({to: "/"});
+                    }}
                     className={activePage === "home" ? navItemActive : navItem}
                 >
                     <FontAwesomeIcon icon={faHouse} className="w-4 shrink-0" />
-                    <span>Home</span>
+                    <span>{t('common.home')}</span>
                 </button>
 
                 <button
@@ -178,7 +183,7 @@ export const LeftBar = () => {
                     className={activePage === "community" ? navItemActive : navItem}
                 >
                     <FontAwesomeIcon icon={faUsers} className="w-4 shrink-0" />
-                    <span>Community</span>
+                    <span>{t('common.community')}</span>
                 </button>
 
                 {isLoggedIn && (
@@ -189,7 +194,7 @@ export const LeftBar = () => {
                             className={activePage === "bookmarks" ? navItemActive : navItem}
                         >
                             <FontAwesomeIcon icon={faBookmark} className="w-4 shrink-0" />
-                            <span>Bookmarks</span>
+                            <span>{t('common.bookmark')}</span>
                         </button>
 
                         <button
@@ -199,7 +204,7 @@ export const LeftBar = () => {
                         >
                             <div className="flex flex-row items-center gap-3">
                                 <FontAwesomeIcon icon={faHubspot} className="w-4 shrink-0" />
-                                <span>My squad</span>
+                                <span>{t('common.squad')}</span>
                             </div>
                             <span className="text-[10px] font-bold bg-accent-500 text-white
                                 rounded-full w-4 h-4 flex items-center justify-center shrink-0">
@@ -212,7 +217,7 @@ export const LeftBar = () => {
 
             {isLoggedIn && (
                 <>
-                    <p className={sectionLabel}>Library</p>
+                    <p className={sectionLabel}>{t('common.library')}</p>
                     <div className="flex flex-col gap-1 px-2 pb-2">
                         <button
                             type="button"
@@ -221,7 +226,7 @@ export const LeftBar = () => {
                         >
                             <div className="flex flex-row items-center gap-3">
                                 <FontAwesomeIcon icon={faGamepad} className="w-4 shrink-0" />
-                                <span>My Games</span>
+                                <span>{t('common.game')}</span>
                             </div>
                             <FontAwesomeIcon
                                 icon={faAngleDown}
@@ -275,7 +280,7 @@ export const LeftBar = () => {
                 <div className="border-t border-border px-2 py-2">
                     <button type="button" className={navItem}>
                         <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
-                        <span>Settings</span>
+                        <span>{t('common.settings')}</span>
                     </button>
                 </div>
             )}

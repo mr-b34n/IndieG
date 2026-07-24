@@ -29,6 +29,9 @@ export const Header = () => {
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
 
+    const language= useThemeStore((state) => state.language)
+    const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
+
     return (
         <header className="w-full sticky top-0 z-20 flex flex-row items-center gap-3 px-4 py-3">
 
@@ -49,7 +52,17 @@ export const Header = () => {
 
             <div className={`shrink-0 ${floatCard} rounded-full px-2 py-2
                 flex flex-row items-center gap-1`}>
-
+                <button
+                    onClick={toggleLanguage}
+                    title={"Change to your language"}
+                    className="w-9 h-9 flex items-center justify-center rounded-full
+                        text-text-muted
+                        hover:bg-primary-soft hover:text-primary
+                        transition-colors duration-150 cursor-pointer"
+                >
+                    <p className="font-extrabold text-sm">{language === "en" ? "EN" : "VN"}</p>
+                    
+                </button>
                 <button
                     onClick={toggleTheme}
                     title={theme === "light" ? "Switch to dark" : "Switch to light"}
@@ -102,11 +115,11 @@ export const Header = () => {
                     </button>
                 )}
                 {isLoggedIn && (
-                    <img 
+                    <img
                         src={user?.user_metadata?.avatar_url ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
-                        alt="Profile" 
+                        alt="Profile"
                         onClick={() => user && navigate({ to: "/profile/$userId", params: { userId: user.id } })}
-                        className="w-9 h-9 ml-1 rounded-full object-cover ring-2 ring-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity" 
+                        className="w-9 h-9 ml-1 rounded-full object-cover ring-2 ring-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                     />
                 )}
             </div>
