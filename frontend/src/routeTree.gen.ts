@@ -10,14 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as CommunityIndexRouteImport } from './routes/community/index'
-import { Route as PostPostIdRouteImport } from './routes/post/$postId'
+import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as GameGameSlugRouteImport } from './routes/game/$gameSlug'
-import { Route as CommunityCommunityIdRouteImport } from './routes/community/$communityId'
+import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$postId'
+import { Route as LayoutCommunityCommunityIdRouteImport } from './routes/_layout/community/$communityId'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile/$userId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -25,34 +26,28 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityIndexRoute = CommunityIndexRouteImport.update({
-  id: '/community/',
-  path: '/community/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PostPostIdRoute = PostPostIdRouteImport.update({
-  id: '/post/$postId',
-  path: '/post/$postId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => LayoutRoute,
 } as any)
 const GameGameSlugRoute = GameGameSlugRouteImport.update({
   id: '/game/$gameSlug',
   path: '/game/$gameSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityCommunityIdRoute = CommunityCommunityIdRouteImport.update({
-  id: '/community/$communityId',
-  path: '/community/$communityId',
-  getParentRoute: () => rootRouteImport,
+const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
+  id: '/community/',
+  path: '/community/',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const AuthenticatedDeveloperIndexRoute =
   AuthenticatedDeveloperIndexRouteImport.update({
@@ -65,6 +60,17 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const LayoutPostPostIdRoute = LayoutPostPostIdRouteImport.update({
+  id: '/post/$postId',
+  path: '/post/$postId',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCommunityCommunityIdRoute =
+  LayoutCommunityCommunityIdRouteImport.update({
+    id: '/community/$communityId',
+    path: '/community/$communityId',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const AuthenticatedProfileUserIdRoute =
   AuthenticatedProfileUserIdRouteImport.update({
     id: '/profile/$userId',
@@ -73,85 +79,84 @@ const AuthenticatedProfileUserIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
-  '/post/$postId': typeof PostPostIdRoute
-  '/community/': typeof CommunityIndexRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
+  '/post/$postId': typeof LayoutPostPostIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/community/': typeof LayoutCommunityIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
-  '/post/$postId': typeof PostPostIdRoute
-  '/community': typeof CommunityIndexRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
+  '/post/$postId': typeof LayoutPostPostIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/developer': typeof AuthenticatedDeveloperIndexRoute
+  '/community': typeof LayoutCommunityIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_layout': typeof LayoutRouteWithChildren
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
-  '/post/$postId': typeof PostPostIdRoute
-  '/community/': typeof CommunityIndexRoute
+  '/_layout/': typeof LayoutIndexRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/_layout/community/$communityId': typeof LayoutCommunityCommunityIdRoute
+  '/_layout/post/$postId': typeof LayoutPostPostIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/_layout/community/': typeof LayoutCommunityIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
-    | '/post/$postId'
-    | '/community/'
     | '/profile/$userId'
+    | '/community/$communityId'
+    | '/post/$postId'
     | '/admin/'
     | '/developer/'
+    | '/community/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
-    | '/post/$postId'
-    | '/community'
     | '/profile/$userId'
+    | '/community/$communityId'
+    | '/post/$postId'
     | '/admin'
     | '/developer'
+    | '/community'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
+    | '/_layout'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
-    | '/post/$postId'
-    | '/community/'
+    | '/_layout/'
     | '/_authenticated/profile/$userId'
+    | '/_layout/community/$communityId'
+    | '/_layout/post/$postId'
     | '/_authenticated/admin/'
     | '/_authenticated/developer/'
+    | '/_layout/community/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LayoutRoute: typeof LayoutRouteWithChildren
   AuthRoute: typeof AuthRoute
-  CommunityCommunityIdRoute: typeof CommunityCommunityIdRoute
   GameGameSlugRoute: typeof GameGameSlugRoute
-  PostPostIdRoute: typeof PostPostIdRoute
-  CommunityIndexRoute: typeof CommunityIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -163,6 +168,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -170,26 +182,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_layout/': {
+      id: '/_layout/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community/': {
-      id: '/community/'
-      path: '/community'
-      fullPath: '/community/'
-      preLoaderRoute: typeof CommunityIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/post/$postId': {
-      id: '/post/$postId'
-      path: '/post/$postId'
-      fullPath: '/post/$postId'
-      preLoaderRoute: typeof PostPostIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/game/$gameSlug': {
       id: '/game/$gameSlug'
@@ -198,12 +196,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameGameSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/$communityId': {
-      id: '/community/$communityId'
-      path: '/community/$communityId'
-      fullPath: '/community/$communityId'
-      preLoaderRoute: typeof CommunityCommunityIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_layout/community/': {
+      id: '/_layout/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof LayoutCommunityIndexRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_authenticated/developer/': {
       id: '/_authenticated/developer/'
@@ -218,6 +216,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_layout/post/$postId': {
+      id: '/_layout/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/post/$postId'
+      preLoaderRoute: typeof LayoutPostPostIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/community/$communityId': {
+      id: '/_layout/community/$communityId'
+      path: '/community/$communityId'
+      fullPath: '/community/$communityId'
+      preLoaderRoute: typeof LayoutCommunityCommunityIdRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_authenticated/profile/$userId': {
       id: '/_authenticated/profile/$userId'
@@ -245,14 +257,28 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface LayoutRouteChildren {
+  LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutCommunityCommunityIdRoute: typeof LayoutCommunityCommunityIdRoute
+  LayoutPostPostIdRoute: typeof LayoutPostPostIdRoute
+  LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
+}
+
+const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutIndexRoute: LayoutIndexRoute,
+  LayoutCommunityCommunityIdRoute: LayoutCommunityCommunityIdRoute,
+  LayoutPostPostIdRoute: LayoutPostPostIdRoute,
+  LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
+}
+
+const LayoutRouteWithChildren =
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LayoutRoute: LayoutRouteWithChildren,
   AuthRoute: AuthRoute,
-  CommunityCommunityIdRoute: CommunityCommunityIdRoute,
   GameGameSlugRoute: GameGameSlugRoute,
-  PostPostIdRoute: PostPostIdRoute,
-  CommunityIndexRoute: CommunityIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

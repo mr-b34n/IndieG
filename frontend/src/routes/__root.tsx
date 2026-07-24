@@ -1,14 +1,22 @@
-import * as React from 'react'
-import { Outlet, createRootRoute } from '@tanstack/react-router'
+import { Outlet, createRootRoute, useLocation, useNavigate } from '@tanstack/react-router'
+import { Fragment, useEffect } from 'react';
 
 export const Route = createRootRoute({
     component: RootComponent,
 })
 
 function RootComponent() {
+    const navigate = useNavigate();
+    const {pathname} = useLocation();
+
+    useEffect(() => {
+        if (pathname !== '/') {
+            navigate({to: '/', replace: true})
+        }
+    }, [])
     return (
-        <React.Fragment>
+        <Fragment>
             <Outlet />
-        </React.Fragment>
+        </Fragment>
     )
 }
