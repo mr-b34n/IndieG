@@ -17,9 +17,9 @@
     .dark input:-webkit-autofill:hover,
     .dark input:-webkit-autofill:focus,
     .dark input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 1000px #14141e inset !important;
-        -webkit-text-fill-color: #ececf4 !important;
-        caret-color: #ececf4 !important;
+        -webkit-box-shadow: 0 0 0 1000px #0b0c14 inset !important;
+        -webkit-text-fill-color: #e8eaf5 !important;
+        caret-color: #00e5ff !important;
     }
 }
 
@@ -58,42 +58,47 @@
 }
 
 @theme {
-    --color-brand-50: #f4f2ff;
-    --color-brand-100: #e9e5ff;
-    --color-brand-200: #d4cbff;
-    --color-brand-300: #b3a3ff;
-    --color-brand-400: #9270ff;
-    --color-brand-500: #7c4dff;
-    --color-brand-600: #6935e6;
-    --color-brand-700: #5726bd;
-    --color-brand-800: #451f96;
-    --color-brand-900: #391c78;
+    /* Brand: Xanh Neon (Electric Cyan/Blue) - màu chủ đạo cyberpunk */
+    --color-brand-50: #e8fbff;
+    --color-brand-100: #c6f4ff;
+    --color-brand-200: #93e9ff;
+    --color-brand-300: #52d8ff;
+    --color-brand-400: #14c4ff;
+    --color-brand-500: #00aaff;
+    --color-brand-600: #0088e6;
+    --color-brand-700: #0068b8;
+    --color-brand-800: #004d8f;
+    --color-brand-900: #003a6e;
 
-    --color-accent-400: #ff7a59;
-    --color-accent-500: #ff5c33;
-    --color-accent-600: #e8481f;
+    /* Accent: Đỏ Neon (dùng cho like, cảnh báo, CTA nổi bật) */
+    --color-accent-400: #ff3d5e;
+    --color-accent-500: #ff1245;
+    --color-accent-600: #e0002e;
 
-    --color-success-400: #2dd4a7;
-    --color-success-500: #14b892;
+    /* Success: Xanh lá Neon */
+    --color-success-400: #3dffa0;
+    --color-success-500: #00e676;
 
+    /* Neutral: Đen ánh xanh + Xám tro (nền tối cho gaming) */
     --color-neutral-0: #ffffff;
-    --color-neutral-50: #f8f7fc;
-    --color-neutral-100: #efedf7;
-    --color-neutral-200: #e0ddef;
-    --color-neutral-300: #c7c2dc;
-    --color-neutral-400: #9d96b8;
-    --color-neutral-500: #726b8f;
-    --color-neutral-600: #574f70;
-    --color-neutral-700: #2a2a3c;
-    --color-neutral-800: #1e1e2a;
-    --color-neutral-900: #14141e;
-    --color-neutral-950: #09090f;
+    --color-neutral-50: #f1f3f9;
+    --color-neutral-100: #e2e5f0;
+    --color-neutral-200: #c7cbdd;
+    --color-neutral-300: #9aa0bd;
+    --color-neutral-400: #6e7395;
+    --color-neutral-500: #4c5170;
+    --color-neutral-600: #363a52;
+    --color-neutral-700: #23263a;
+    --color-neutral-800: #171928;
+    --color-neutral-900: #0e0f1a;
+    --color-neutral-950: #07080f;
 
-    --color-tag-1: #7c4dff;
-    --color-tag-2: #ff7a59;
-    --color-tag-3: #14b892;
-    --color-tag-4: #ffb02e;
-    --color-tag-5: #ec4899;
+    /* Tag: đa sắc rực rỡ cho thể loại/chủ đề game */
+    --color-tag-1: #00aaff;
+    --color-tag-2: #ff1245;
+    --color-tag-3: #00e676;
+    --color-tag-4: #ffb020;
+    --color-tag-5: #b14aed;
 
     --color-bg: var(--color-neutral-50);
     --color-surface: var(--color-neutral-0);
@@ -109,23 +114,23 @@
     --color-primary-soft: var(--color-brand-100);
 
     --color-like: var(--color-accent-500);
-    --color-like-soft: #fff1ec;
+    --color-like-soft: #ffeef1;
 }
 
 .dark {
-    --color-bg: var(--color-neutral-950);
+    --color-bg: #05060c;
     --color-surface: var(--color-neutral-900);
     --color-surface-hover: var(--color-neutral-800);
     --color-border: var(--color-neutral-700);
 
-    --color-text: #ececf4;
-    --color-text-muted: #9898ae;
-    --color-text-faint: #636378;
+    --color-text: #e8eaf5;
+    --color-text-muted: #8b90b5;
+    --color-text-faint: #565b80;
 
-    --color-primary: #a688ff;
-    --color-primary-hover: #bb9fff;
-    --color-primary-soft: color-mix(in srgb, var(--color-brand-400) 16%, transparent);
+    --color-primary: #00d4ff;
+    --color-primary-hover: #52e0ff;
+    --color-primary-soft: color-mix(in srgb, var(--color-brand-400) 18%, transparent);
 
-    --color-like: var(--color-accent-400);
-    --color-like-soft: color-mix(in srgb, var(--color-accent-400) 14%, transparent);
+    --color-like: #ff3d5e;
+    --color-like-soft: color-mix(in srgb, var(--color-accent-400) 16%, transparent);
 }

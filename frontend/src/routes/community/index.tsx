@@ -3,10 +3,10 @@ import { Header } from '@/shared/components/header/Header';
 import { LeftBar } from '@/shared/components/sidebars/LeftBar';
 import { RightBar } from '@/shared/components/sidebars/RightBar';
 import { useTheme } from '@/shared/hooks/useTheme';
-import { FeedList } from '@/features/feed';
+import { CommunityList } from '@/features/community';
 
-const Home = () => {
-	useTheme("Home");
+const Community = () => {
+	useTheme("Community");
 
 	return (
 		<div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
@@ -34,7 +34,7 @@ const Home = () => {
 					</aside>
 
 					<main className="flex-1 min-w-0">
-						<FeedList />
+						<CommunityList />
 					</main>
 
 					<aside className="hidden xl:block shrink-0 w-72 sticky top-3 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
@@ -46,6 +46,6 @@ const Home = () => {
 	);
 }
 
-export const Route = createFileRoute('/')(
-	{ component: Home }
+export const Route = createFileRoute('/community/')(
+	{ component: Community }
 )

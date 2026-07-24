@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CommunityIndexRouteImport } from './routes/community/index'
 import { Route as PostPostIdRouteImport } from './routes/post/$postId'
 import { Route as GameGameSlugRouteImport } from './routes/game/$gameSlug'
-import { Route as CommunityCommunityIdRouteImport } from './routes/community/$communityId'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile/$userId'
@@ -49,11 +48,6 @@ const GameGameSlugRoute = GameGameSlugRouteImport.update({
   path: '/game/$gameSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityCommunityIdRoute = CommunityCommunityIdRouteImport.update({
-  id: '/community/$communityId',
-  path: '/community/$communityId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedDeveloperIndexRoute =
   AuthenticatedDeveloperIndexRouteImport.update({
     id: '/developer/',
@@ -75,7 +69,6 @@ const AuthenticatedProfileUserIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
   '/post/$postId': typeof PostPostIdRoute
   '/community/': typeof CommunityIndexRoute
@@ -86,7 +79,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
   '/post/$postId': typeof PostPostIdRoute
   '/community': typeof CommunityIndexRoute
@@ -99,7 +91,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
-  '/community/$communityId': typeof CommunityCommunityIdRoute
   '/game/$gameSlug': typeof GameGameSlugRoute
   '/post/$postId': typeof PostPostIdRoute
   '/community/': typeof CommunityIndexRoute
@@ -112,7 +103,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/community/'
@@ -123,7 +113,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/community'
@@ -135,7 +124,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/community/'
@@ -148,7 +136,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
-  CommunityCommunityIdRoute: typeof CommunityCommunityIdRoute
   GameGameSlugRoute: typeof GameGameSlugRoute
   PostPostIdRoute: typeof PostPostIdRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
@@ -198,13 +185,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameGameSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/community/$communityId': {
-      id: '/community/$communityId'
-      path: '/community/$communityId'
-      fullPath: '/community/$communityId'
-      preLoaderRoute: typeof CommunityCommunityIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/developer/': {
       id: '/_authenticated/developer/'
       path: '/developer'
@@ -249,7 +229,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
-  CommunityCommunityIdRoute: CommunityCommunityIdRoute,
   GameGameSlugRoute: GameGameSlugRoute,
   PostPostIdRoute: PostPostIdRoute,
   CommunityIndexRoute: CommunityIndexRoute,

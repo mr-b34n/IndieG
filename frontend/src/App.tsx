@@ -2,7 +2,7 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import './App.css'
 import { useEffect } from 'react';
-import { useAuthStore } from './stores/useAuthStore';
+import { useAuthStore } from './features/auth';
 
 const router = createRouter({ routeTree });
 
