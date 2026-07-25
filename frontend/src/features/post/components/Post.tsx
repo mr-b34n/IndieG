@@ -78,6 +78,9 @@ export interface PostData {
     likes: number;
     comments: number;
     tab?: "foryou" | "following" | "hot";
+    privacy: "public" | "friends" | "private";
+    pinned?: boolean;
+    allowComments?: boolean;
 }
 
 interface PostProps {

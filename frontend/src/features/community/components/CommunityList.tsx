@@ -56,7 +56,7 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
             "
         >
             {/* Phần Banner Backdrop */}
-            <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${BANNER_GRADIENTS[index % BANNER_GRADIENTS.length]}`}>
+            <div className={`relative h-36 overflow-hidden bg-linear-to-br ${BANNER_GRADIENTS[index % BANNER_GRADIENTS.length]}`}>
                 {community.backdrop && (
                     <img
                         src={community.backdrop}
