@@ -32,6 +32,7 @@ import { formatFileSize } from "../helpers/postAttachmentLimits"
 import EmojiBox from "@/shared/components/ui/EmojiBox"
 import { Lightbox } from "@/shared/components/ui/Lightbox"
 import { ReportModal } from "@/features/report"
+import { useBookmarksStore } from "@/features/bookmark"
 import { EditPostModal } from ".."
 
 const TAG_CLASSES = [
@@ -183,7 +184,8 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
 export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor, isDetailView = false }: PostProps) => {
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
-    const [bookmarked, setBookmarked] = useState(false);
+    const bookmarked = useBookmarksStore((state) => state.isBookmarked(post.id));
+    const toggleBookmark = useBookmarksStore((state) => state.toggleBookmark);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [showActionMenu, setShowActionMenu] = useState(false);
     const [showShareMenu, setShowShareMenu] = useState(false);
@@ -523,7 +525,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        setBookmarked((prev) => !prev);
+                        toggleBookmark(post.id);
                     }}
                     className={`ml-auto w-8 h-8 flex items-center justify-center
                         rounded-full transition-colors duration-150

@@ -1,5 +1,3 @@
-
-
 import avatarGame from "../../assets/logos/raft-logo.png";
 import raftImg from "../../assets/logos/raft-logo.png";
 import butterflyEmeraldImg from "../../assets/mock-data/butterfly-emarald.webp";
@@ -24,6 +22,9 @@ export const ALL_POSTS: PostData[] = [
         likes: 24,
         comments: 8,
         tab: "foryou",
+        privacy: "public",
+        allowComments: true,
+        pinned: false,
     },
     {
         id: 2,
@@ -40,6 +41,9 @@ export const ALL_POSTS: PostData[] = [
         likes: 56,
         comments: 19,
         tab: "following",
+        privacy: "public",
+        allowComments: true,
+        pinned: false,
     },
     {
         id: 3,
@@ -57,6 +61,9 @@ export const ALL_POSTS: PostData[] = [
         likes: 132,
         comments: 41,
         tab: "foryou",
+        privacy: "public",
+        allowComments: true,
+        pinned: true,
     },
     {
         id: 4,
@@ -74,6 +81,9 @@ export const ALL_POSTS: PostData[] = [
         likes: 89,
         comments: 27,
         tab: "following",
+        privacy: "friends",
+        allowComments: true,
+        pinned: false,
     },
     {
         id: 5,
@@ -91,6 +101,9 @@ export const ALL_POSTS: PostData[] = [
         likes: 340,
         comments: 88,
         tab: "hot",
+        privacy: "public",
+        allowComments: true,
+        pinned: false,
     },
     {
         id: 6,
@@ -108,5 +121,8 @@ export const ALL_POSTS: PostData[] = [
         likes: 512,
         comments: 143,
         tab: "hot",
+        privacy: "private",
+        allowComments: false,
+        pinned: false,
     },
 ];
