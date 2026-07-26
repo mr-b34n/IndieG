@@ -190,7 +190,10 @@ export const LeftBar = () => {
                     <>
                         <button
                             type="button"
-                            onClick={() => setActivePage("bookmarks")}
+                            onClick={() => {
+                                setActivePage("bookmarks");
+                                navigate({to: "/bookmark"})
+                            }}
                             className={activePage === "bookmarks" ? navItemActive : navItem}
                         >
                             <FontAwesomeIcon icon={faBookmark} className="w-4 shrink-0" />

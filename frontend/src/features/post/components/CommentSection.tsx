@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 
 import avatarUser from "../../../assets/logos/raft-logo.png";
 import { useAuthStore } from "@/features/auth";
+
+// Chỉ cho phép đính kèm ảnh trong bình luận, tối đa 2MB/ảnh, không hỗ trợ gửi file khác.
+const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+const COMMENT_IMAGE_ACCEPT = "image/*";
 
 export interface CommentData {
     id: string | number;
@@ -14,6 +18,7 @@ export interface CommentData {
     content: string;
     timeAgo: string;
     likes: number;
+    image?: string; // URL ảnh đính kèm (nếu có)
     replies?: CommentData[]; // 👈 Bổ sung danh sách reply con
 }
 
@@ -24,14 +29,109 @@ interface CommentSectionProps {
 interface CommentItemProps {
     comment: CommentData;
     isLoggedIn: boolean;
-    onAddReply: (parentId: string | number, text: string) => void;
+    onAddReply: (parentId: string | number, text: string, image?: string) => void;
 }
+
+/**
+ * Hook nhỏ gọn xử lý chọn/validate/preview 1 ảnh đính kèm cho ô nhập bình luận.
+ * Giới hạn: chỉ ảnh, tối đa MAX_COMMENT_IMAGE_SIZE, không cho phép file khác.
+ */
+function useCommentImageAttachment() {
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Thu hồi object URL khi component unmount để tránh rò rỉ bộ nhớ
+    useEffect(() => {
+        return () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleSelect = (selected: File | null) => {
+        if (!selected) return;
+
+        if (!selected.type.startsWith("image/")) {
+            setError("Chỉ hỗ trợ đính kèm file ảnh.");
+            return;
+        }
+
+        if (selected.size > MAX_COMMENT_IMAGE_SIZE) {
+            setError("Ảnh không được vượt quá 2MB.");
+            return;
+        }
+
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+        setFile(selected);
+        setPreviewUrl(URL.createObjectURL(selected));
+        setError(null);
+    };
+
+    const clear = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setFile(null);
+        setPreviewUrl(null);
+        setError(null);
+        if (inputRef.current) inputRef.current.value = "";
+    };
+
+    const openPicker = () => inputRef.current?.click();
+
+    // Convert file gốc sang base64 data URL để lưu bền vững vào comment
+    // (khác với previewUrl là blob URL, chỉ dùng tạm lúc soạn thảo và sẽ bị revoke sau khi gửi).
+    const toDataUrl = (): Promise<string | undefined> => {
+        return new Promise((resolve) => {
+            if (!file) {
+                resolve(undefined);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(undefined);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    return { previewUrl, error, inputRef, handleSelect, clear, openPicker, toDataUrl };
+}
+
+const CommentImageInput = ({ inputRef, onSelect }: { inputRef: React.RefObject<HTMLInputElement | null>; onSelect: (file: File | null) => void }) => (
+    <input
+        ref={inputRef}
+        type="file"
+        accept={COMMENT_IMAGE_ACCEPT}
+        className="hidden"
+        onChange={(e) => {
+            onSelect(e.target.files?.[0] ?? null);
+            e.target.value = "";
+        }}
+    />
+);
+
+const CommentImagePreview = ({ url, onRemove }: { url: string; onRemove: () => void }) => (
+    <div className="relative w-20 h-20 group">
+        <img src={url} alt="Ảnh đính kèm" className="w-20 h-20 object-cover rounded-xl border border-border" />
+        <button
+            type="button"
+            onClick={onRemove}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-surface border border-border text-text-muted hover:text-accent-500 hover:border-accent-500/50 shadow-sm"
+            title="Gỡ ảnh"
+        >
+            <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+        </button>
+    </div>
+);
 
 const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(comment.likes);
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
+    const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
 
     const toggleLike = () => {
@@ -53,11 +153,14 @@ const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
         e.target.style.height = `${e.target.scrollHeight}px`;
     };
 
-    const handleSubmitSubReply = () => {
-        if (!replyText.trim()) return;
-        onAddReply(comment.id, replyText.trim());
+    const handleSubmitSubReply = async () => {
+        if (!replyText.trim() && !replyImage.previewUrl) return;
+        const imageDataUrl = await replyImage.toDataUrl();
+        onAddReply(comment.id, replyText.trim(), imageDataUrl);
         setReplyText("");
+        replyImage.clear();
         setIsReplying(false);
+        if (replyTextareaRef.current) replyTextareaRef.current.style.height = "auto";
     };
 
     return (
@@ -80,6 +183,13 @@ const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
                         <p className="text-[14px] text-text mt-0.5 leading-snug">
                             {comment.content}
                         </p>
+                        {comment.image && (
+                            <img
+                                src={comment.image}
+                                alt="Ảnh đính kèm"
+                                className="mt-2 max-w-[220px] max-h-56 object-cover rounded-xl border border-border cursor-pointer hover:opacity-95 transition-opacity"
+                            />
+                        )}
                     </div>
 
                     {/* Action buttons */}
@@ -105,6 +215,7 @@ const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
                     {isReplying && (
                         <div className="flex flex-col gap-2 mt-3 p-3 bg-surface-hover/40 border border-border/60 rounded-xl animate-fade-in">
                             <textarea
+                                ref={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
                                 placeholder={`Replying to @${comment.author}...`}
@@ -112,24 +223,48 @@ const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
                                 rows={1}
                                 autoFocus
                             />
-                            <div className="flex flex-row justify-end gap-2 pt-1 border-t border-border/40">
+
+                            <CommentImageInput inputRef={replyImage.inputRef} onSelect={replyImage.handleSelect} />
+
+                            {replyImage.previewUrl && (
+                                <CommentImagePreview url={replyImage.previewUrl} onRemove={replyImage.clear} />
+                            )}
+                            {replyImage.error && (
+                                <p className="text-xs text-accent-500 font-medium">{replyImage.error}</p>
+                            )}
+
+                            <div className="flex flex-row items-center justify-between gap-2 pt-1 border-t border-border/40">
                                 <button
-                                    onClick={() => setIsReplying(false)}
-                                    className="px-3 py-1 rounded-full text-xs font-semibold text-text-muted hover:bg-surface-hover transition-colors"
+                                    type="button"
+                                    onClick={replyImage.openPicker}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
+                                    title="Đính kèm ảnh (tối đa 2MB)"
                                 >
-                                    Cancel
+                                    <FontAwesomeIcon icon={faImage} className="text-sm" />
                                 </button>
-                                <button
-                                    onClick={handleSubmitSubReply}
-                                    disabled={!replyText.trim()}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                                        replyText.trim()
-                                            ? "bg-primary text-white hover:bg-primary-hover"
-                                            : "bg-surface-hover text-text-faint cursor-not-allowed"
-                                    }`}
-                                >
-                                    Reply
-                                </button>
+
+                                <div className="flex flex-row gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setIsReplying(false);
+                                            replyImage.clear();
+                                        }}
+                                        className="px-3 py-1 rounded-full text-xs font-semibold text-text-muted hover:bg-surface-hover transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSubmitSubReply}
+                                        disabled={!replyText.trim() && !replyImage.previewUrl}
+                                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                                            replyText.trim() || replyImage.previewUrl
+                                                ? "bg-primary text-white hover:bg-primary-hover"
+                                                : "bg-surface-hover text-text-faint cursor-not-allowed"
+                                        }`}
+                                    >
+                                        Reply
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -155,6 +290,8 @@ const CommentItem = ({ comment, isLoggedIn, onAddReply }: CommentItemProps) => {
 
 export const CommentSection = ({ postId }: CommentSectionProps) => {
     const [commentText, setCommentText] = useState("");
+    const mainTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const mainImage = useCommentImageAttachment();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
@@ -220,8 +357,9 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     };
 
     // Đăng bài reply chính (Top level comment)
-    const handleMainReplySubmit = () => {
-        if (!commentText.trim()) return;
+    const handleMainReplySubmit = async () => {
+        if (!commentText.trim() && !mainImage.previewUrl) return;
+        const imageDataUrl = await mainImage.toDataUrl();
         const newComment: CommentData = {
             id: `${postId}-${Date.now()}`,
             author: "You",
@@ -229,13 +367,16 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             content: commentText.trim(),
             timeAgo: "Just now",
             likes: 0,
+            image: imageDataUrl,
         };
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
+        mainImage.clear();
+        if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
     };
 
     // Đăng sub-reply (Reply cho một comment cụ thể)
-    const handleAddSubReply = (parentId: string | number, text: string) => {
+    const handleAddSubReply = (parentId: string | number, text: string, image?: string) => {
         const newSubReply: CommentData = {
             id: `sub-${Date.now()}`,
             author: "You",
@@ -243,9 +384,12 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             content: text,
             timeAgo: "Just now",
             likes: 0,
+            image,
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));
     };
+
+    const canSubmitMain = commentText.trim().length > 0 || !!mainImage.previewUrl;
 
     return (
         <div className="w-full flex flex-col pt-4 mt-2 border-t border-border">
@@ -260,15 +404,31 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                         <img src={avatarUser} alt="You" className="w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0" />
                         <div className="flex flex-col flex-1 gap-2">
                             <textarea
+                                ref={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
                                 placeholder="Post your reply..."
                                 className="w-full bg-transparent text-[15px] text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-6"
                                 rows={1}
                             />
+
+                            <CommentImageInput inputRef={mainImage.inputRef} onSelect={mainImage.handleSelect} />
+
+                            {mainImage.previewUrl && (
+                                <CommentImagePreview url={mainImage.previewUrl} onRemove={mainImage.clear} />
+                            )}
+                            {mainImage.error && (
+                                <p className="text-xs text-accent-500 font-medium">{mainImage.error}</p>
+                            )}
+
                             <div className="flex flex-row justify-between items-center pt-2 border-t border-border">
                                 <div className="flex flex-row gap-1">
-                                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" title="Add image">
+                                    <button
+                                        type="button"
+                                        onClick={mainImage.openPicker}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
+                                        title="Đính kèm ảnh (tối đa 2MB)"
+                                    >
                                         <FontAwesomeIcon icon={faImage} className="text-sm" />
                                     </button>
                                     <button className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" title="Add emoji">
@@ -277,9 +437,9 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 </div>
                                 <button 
                                     onClick={handleMainReplySubmit}
-                                    disabled={!commentText.trim()}
+                                    disabled={!canSubmitMain}
                                     className={`px-4 py-1.5 rounded-full font-bold text-sm transition-colors ${
-                                        commentText.trim() 
+                                        canSubmitMain 
                                         ? "bg-primary text-white hover:bg-primary-hover" 
                                         : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
