@@ -13,11 +13,11 @@ import {
 
 import avatarGame from '../../../assets/logos/raft-logo.png';
 import { useTheme } from '@/shared/hooks/useTheme';
-import { AttachmentPicker, getCurrentAuthor, prepareAttachmentsForSave, revokeAttachmentUrls, usePostsStore, type EditableAttachment } from '@/features/post';
+import { AttachmentPicker, getCurrentAuthor, prepareAttachmentsForSave, revokeAttachmentUrls, usePostsStore, type EditableAttachment, type PostData, Post } from '@/features/post';
 import { useAuthStore } from '@/features/auth';
 import { useCommunitiesStore } from '@/features/community';
-import type { PostData } from '@/features/post/components/Post';
-import { Post } from '@/features/post/components/Post'
+import { useTranslation } from '@/shared/hooks/useTranslate';
+
 export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetail,
 })
@@ -45,10 +45,20 @@ const hashIndex = (id: string | number, mod: number) => {
     return hash;
 };
 
+const THREAD_TABS = [
+    { id: "all", label: "🌐 Tất cả chủ đề" },
+    { id: "🤝 Tìm Đồng Đội", label: "🤝 Tìm Đồng Đội" },
+    { id: "💡 Thảo Luận & Guide", label: "💡 Thảo Luận & Guide" },
+    { id: "📢 Thông Báo & Event", label: "📢 Thông Báo & Event" },
+    { id: "📸 Showcase / Media", label: "📸 Showcase / Media" },
+    { id: "❓ Hỏi Đáp (Q&A)", label: "❓ Hỏi Đáp (Q&A)" },
+];
+
 interface CreateCommunityPostPayload {
     title: string;
     content: string;
     attachments: EditableAttachment[];
+    selectedTag: string;
 }
 
 const CreateCommunityPostBox = ({
@@ -58,10 +68,12 @@ const CreateCommunityPostBox = ({
     communityName: string;
     onPost: (data: CreateCommunityPostPayload) => Promise<void>;
 }) => {
+    const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
+    const [selectedTag, setSelectedTag] = useState<string>("💡 Thảo Luận & Guide");
     const [expanded, setExpanded] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
 
@@ -76,7 +88,7 @@ const CreateCommunityPostBox = ({
 
         setIsPosting(true);
         try {
-            await onPost({ title: title.trim(), content: content.trim(), attachments });
+            await onPost({ title: title.trim(), content: content.trim(), attachments, selectedTag });
             revokeAttachmentUrls(attachments);
             setTitle("");
             setContent("");
@@ -90,12 +102,12 @@ const CreateCommunityPostBox = ({
     return (
         <div
             className="
-                w-full p-3
-                bg-surface/90 backdrop-blur-md
-                border border-border rounded-2xl
-                shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
-                transition-all duration-200 ease-out
+                w-full p-3.5
+                bg-surface/95 backdrop-blur-md
+                rounded-2xl
+                shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
+                dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
+                transition-all duration-300 ease-out
             "
         >
             <div className="flex gap-2.5 items-start">
@@ -113,7 +125,7 @@ const CreateCommunityPostBox = ({
                             }`}
                         aria-hidden={!isActive}
                     >
-                        <div className="overflow-hidden min-h-0">
+                        <div className={`min-h-0 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
                             <input
                                 type="text"
                                 value={title}
@@ -136,6 +148,25 @@ const CreateCommunityPostBox = ({
                         className={`w-full px-3 py-2 bg-surface-hover border border-border rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-[min-height,border-color,box-shadow] duration-200 ease-out text-text placeholder:text-text-faint resize-none leading-snug ${isActive ? "min-h-19" : "min-h-9"
                             }`}
                     />
+
+                    {isActive && (
+                        <div className="flex items-center gap-1.5 py-1 overflow-x-auto no-scrollbar">
+                            <span className="text-xs font-bold text-text-muted shrink-0 mr-1">{t('community.topic')}</span>
+                            {THREAD_TABS.filter((t) => t.id !== "all").map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setSelectedTag(tab.id)}
+                                    className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${selectedTag === tab.id
+                                            ? "bg-primary/20 text-primary border border-primary/40 font-bold"
+                                            : "bg-surface text-text-muted border border-border/60 hover:text-text hover:border-border"
+                                        }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     <AttachmentPicker
                         attachments={attachments}
@@ -168,7 +199,7 @@ function CommunityDetail() {
 
     const { communityId } = Route.useParams();
     const navigate = useNavigate();
-
+    const { t } = useTranslation();
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
 
@@ -182,14 +213,19 @@ function CommunityDetail() {
     const isLoggedIn = !!user || mockLogin;
 
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
+    const [activeThread, setActiveThread] = useState<string>("all");
     const currentAuthor = getCurrentAuthor();
 
     const community = communities.find((c) => c.id.toString() === communityId);
 
     const communityPosts = useMemo(() => {
         if (!community) return [];
-        return posts.filter((p) => p.gameTag === community.name && !hiddenAuthors.includes(p.author));
-    }, [posts, community, hiddenAuthors]);
+        let list = posts.filter((p) => p.gameTag === community.name && !hiddenAuthors.includes(p.author));
+        if (activeThread !== "all") {
+            list = list.filter((p) => p.tags?.includes(activeThread));
+        }
+        return list;
+    }, [posts, community, hiddenAuthors, activeThread]);
 
     if (!community) {
         return (
@@ -202,7 +238,7 @@ function CommunityDetail() {
 
     const gradient = BANNER_GRADIENTS[hashIndex(community.id, BANNER_GRADIENTS.length)];
 
-    const handleCreatePost = async ({ title, content, attachments }: CreateCommunityPostPayload) => {
+    const handleCreatePost = async ({ title, content, attachments, selectedTag }: CreateCommunityPostPayload) => {
         const { images, files } = await prepareAttachmentsForSave(attachments);
 
         const newPost: PostData = {
@@ -210,27 +246,22 @@ function CommunityDetail() {
             author: currentAuthor,
             authorAvatar: avatarGame,
             gameTag: community.name,
-            timeAgo: "Vừa xong",
+            timeAgo: t('feed.justNow'),
             title: title || content.slice(0, 80) + (content.length > 80 ? "..." : ""),
             content,
             images: images.length > 0 ? images : undefined,
             files: files.length > 0 ? files : undefined,
-            tags: [],
+            tags: [selectedTag, community.name],
             likes: 0,
-            comments: 0,
+            comments: 0
         };
         addPost(newPost);
     };
 
-    const handleEditPost = (
-        id: string | number,
-        data: { title: string; content: string; images?: string[]; files?: PostData["files"] }
-    ) => {
+    const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
-            title: data.title || data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
-            content: data.content,
-            images: data.images,
-            files: data.files,
+            ...data,
+            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
         });
     };
 
@@ -262,100 +293,115 @@ function CommunityDetail() {
                 <div
                     className="
                                     w-full flex flex-col overflow-hidden
-                                    bg-surface/90 backdrop-blur-md
-                                    border border-border rounded-2xl
-                                    shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                                    dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
+                                    bg-surface/95 backdrop-blur-md
+                                    rounded-2xl
+                                    shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
+                                    dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
                                 "
                 >
-                    <div
-                        className="
-                                        w-full flex flex-col overflow-hidden
-                                        bg-surface/90 backdrop-blur-md
-                                        border border-border rounded-2xl
-                                        shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                                        dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
-                                    "
-                    >
-                        {/* Phần Banner */}
-                        <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
-                            {/* Đã BỎ z-50 khỏi ảnh backdrop */}
-                            {community.backdrop && (
-                                <img
-                                    src={community.backdrop}
-                                    alt={`${community.name} backdrop`}
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
-                            )}
+                    {/* Phần Banner */}
+                    <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
+                        {/* Đã BỎ z-50 khỏi ảnh backdrop */}
+                        {community.backdrop && (
+                            <img
+                                src={community.backdrop}
+                                alt={`${community.name} backdrop`}
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                        )}
 
-                            {/* Thêm z-10 để nút Featured luôn nổi trên backdrop */}
-                            {community.featured && (
-                                <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
-                                    <FontAwesomeIcon icon={faFire} className="text-[9px]" />
-                                    Featured
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Phần Nội dung */}
-                        <div className="flex flex-col px-5 pb-5 -mt-9">
-                            <div className="flex flex-row items-end justify-between">
-                                {/* Thêm relative z-10 để Avatar luôn nổi lên trên ranh giới backdrop */}
-                                <img
-                                    src={community.logo}
-                                    alt={community.name}
-                                    className="relative z-10 w-20 h-20 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-sm"
-                                />
-                                <button
-                                    onClick={() => toggleJoin(community.id)}
-                                    className={`mb-1 flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 ${community.joined
-                                        ? "bg-surface-hover text-text-muted hover:bg-accent-500/10 hover:text-accent-500"
-                                        : "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(0,170,255,0.3)]"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-xs" />
-                                    {community.joined ? "Joined" : "Join"}
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col mt-3 gap-0.5">
-                                <p className="font-bold text-xl text-text">
-                                    {community.name}
-                                </p>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-text-faint">
-                                    {community.category}
-                                </p>
-                            </div>
-
-                            <p className="text-sm text-text-muted mt-2 leading-snug">
-                                {community.description}
-                            </p>
-
-                            <div className="flex flex-row items-center gap-4 mt-3 text-[13px] text-text-faint">
-                                <span className="flex flex-row items-center gap-1.5">
-                                    <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                                    {community.members.toLocaleString()} members
-                                </span>
-                                <span className="flex flex-row items-center gap-1.5 text-success-500 font-medium">
-                                    <FontAwesomeIcon icon={faCircle} className="text-[6px]" />
-                                    {community.onlineNow} online
-                                </span>
-                            </div>
-
-                            {community.tags.length > 0 && (
-                                <div className="flex flex-row gap-1.5 flex-wrap mt-3">
-                                    {community.tags.map((tag, idx) => (
-                                        <span
-                                            key={tag}
-                                            className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
-                                        >
-                                            #{tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Thêm z-10 để nút Featured luôn nổi trên backdrop */}
+                        {community.featured && (
+                            <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
+                                <FontAwesomeIcon icon={faFire} className="text-[9px]" />
+                                Featured
+                            </span>
+                        )}
                     </div>
+
+                    {/* Phần Nội dung */}
+                    <div className="flex flex-col px-5 pb-5 -mt-9">
+                        <div className="flex flex-row items-end justify-between">
+                            {/* Thêm relative z-10 để Avatar luôn nổi lên trên ranh giới backdrop */}
+                            <img
+                                src={community.logo}
+                                alt={community.name}
+                                className="relative z-10 w-20 h-20 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-sm"
+                            />
+                            <button
+                                onClick={() => toggleJoin(community.id)}
+                                className={`mb-1 flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 ${community.joined
+                                    ? "bg-surface-hover text-text-muted hover:bg-accent-500/10 hover:text-accent-500"
+                                    : "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(0,170,255,0.3)]"
+                                    }`}
+                            >
+                                <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-xs" />
+                                {community.joined ? "Joined" : "Join"}
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col mt-3 gap-0.5">
+                            <p className="font-bold text-xl text-text">
+                                {community.name}
+                            </p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-text-faint">
+                                {community.category}
+                            </p>
+                        </div>
+
+                        <p className="text-sm text-text-muted mt-2 leading-snug">
+                            {community.description}
+                        </p>
+
+                        <div className="flex flex-row items-center gap-4 mt-3 text-[13px] text-text-faint">
+                            <span className="flex flex-row items-center gap-1.5">
+                                <FontAwesomeIcon icon={faUsers} className="text-xs" />
+                                {community.members.toLocaleString()} members
+                            </span>
+                            <span className="flex flex-row items-center gap-1.5 text-success-500 font-medium">
+                                <FontAwesomeIcon icon={faCircle} className="text-[6px]" />
+                                {community.onlineNow} online
+                            </span>
+                        </div>
+
+                        {community.tags.length > 0 && (
+                            <div className="flex flex-row gap-1.5 flex-wrap mt-3">
+                                {community.tags.map((tag, idx) => (
+                                    <span
+                                        key={tag}
+                                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
+                                    >
+                                        #{tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Thread / Tag Selector Bar */}
+                <div className="w-full bg-surface/90 backdrop-blur-md border border-border rounded-2xl p-2.5 shadow-sm flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    {THREAD_TABS.map((tab) => {
+                        const count = tab.id === "all"
+                            ? posts.filter((p) => p.gameTag === community.name && !hiddenAuthors.includes(p.author)).length
+                            : posts.filter((p) => p.gameTag === community.name && !hiddenAuthors.includes(p.author) && p.tags?.includes(tab.id)).length;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveThread(tab.id)}
+                                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${activeThread === tab.id
+                                        ? "bg-primary text-white shadow-md shadow-primary/25"
+                                        : "bg-surface-hover text-text-muted hover:bg-border hover:text-text border border-border/50"
+                                    }`}
+                            >
+                                <span>{tab.label}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeThread === tab.id ? "bg-white/20 text-white font-extrabold" : "bg-border text-text-faint font-semibold"
+                                    }`}>
+                                    {count}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {isLoggedIn && (

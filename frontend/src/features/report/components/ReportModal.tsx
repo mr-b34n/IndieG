@@ -2,21 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
-
-interface ReportModalProps {
-    postId: string | number;
-    author: string;
-    onClose: () => void;
-}
-
-const REPORT_REASONS = [
-    "Spam or misleading",
-    "Harassment or bullying",
-    "Hate speech or inappropriate language",
-    "Violence or harmful behavior",
-    "False information",
-    "Other"
-];
+import { type ReportModalProps } from "../types";
+import { REPORT_REASONS } from "../constants";
 
 export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     const [selectedReason, setSelectedReason] = useState<string>("");

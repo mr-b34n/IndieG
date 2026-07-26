@@ -35,7 +35,6 @@ const CURRENT_GAME = {
     name: "Raft",
     logo: raftLogo,
     duration: "2h 14m",
-    sessionLabel: "Current session",
 };
 
 const MY_GAMES = [
@@ -91,7 +90,7 @@ export const LeftBar = () => {
                     <div className="flex flex-col leading-tight min-w-0 flex-1">
                         <p className="font-semibold text-sm text-text truncate">{displayName}</p>
                         <p className="text-xs text-text-faint">
-                            {user ? "View profile" : "Signed in (demo)"}
+                            {user ? t('common.viewProfile') : t('common.signedInDemo')}
                         </p>
                     </div>
                 </button>
@@ -146,21 +145,21 @@ export const LeftBar = () => {
                                     className="text-[6px] text-success-500"
                                 />
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-success-500">
-                                    Playing now
+                                    {t('common.playingNow')}
                                 </p>
                             </div>
                             <p className="text-sm font-semibold text-text truncate">
                                 {CURRENT_GAME.name}
                             </p>
                             <p className="text-[11px] text-text-faint">
-                                {CURRENT_GAME.sessionLabel} · {CURRENT_GAME.duration}
+                                {t('common.currentSession')} · {CURRENT_GAME.duration}
                             </p>
                         </div>
                     </div>
                 </div>
             )}
 
-            <p className={sectionLabel}>Menu</p>
+            <p className={sectionLabel}>{t('common.menu')}</p>
             <div className="flex flex-col gap-1 px-2 pb-1">
                 <button
                     type="button"
@@ -202,7 +201,10 @@ export const LeftBar = () => {
 
                         <button
                             type="button"
-                            onClick={() => setActivePage("squad")}
+                            onClick={() => {
+                                setActivePage("squad");
+                                navigate({to: "/squad"});
+                            }}
                             className={`${activePage === "squad" ? navItemActive : navItem} justify-between`}
                         >
                             <div className="flex flex-row items-center gap-3">

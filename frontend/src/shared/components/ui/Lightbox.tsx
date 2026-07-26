@@ -16,6 +16,21 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+    const resetZoom = () => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+    };
+
+    const showNext = () => {
+        setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        resetZoom();
+    };
+
+    const showPrev = () => {
+        setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+        resetZoom();
+    };
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
@@ -32,21 +47,6 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
             document.body.style.overflow = "";
         };
     }, []);
-
-    const showNext = () => {
-        setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-        resetZoom();
-    };
-
-    const showPrev = () => {
-        setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-        resetZoom();
-    };
-
-    const resetZoom = () => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
-    };
 
     const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.5, 4));
     const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.5, 1));

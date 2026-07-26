@@ -1,15 +1,11 @@
 import { create } from "zustand";
+import { type BookmarksState } from "../types";
+import { INITIAL_BOOKMARK_IDS } from "../constants";
 
-interface BookmarksState {
-    bookmarkedIds: (string | number)[];
-    isBookmarked: (id: string | number) => boolean;
-    toggleBookmark: (id: string | number) => void;
-    addBookmark: (id: string | number) => void;
-    removeBookmark: (id: string | number) => void;
-}
+export * from "../types";
 
 export const useBookmarksStore = create<BookmarksState>((set, get) => ({
-    bookmarkedIds: [],
+    bookmarkedIds: INITIAL_BOOKMARK_IDS,
 
     isBookmarked: (id) =>
         get().bookmarkedIds.some((b) => b.toString() === id.toString()),

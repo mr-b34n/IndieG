@@ -84,7 +84,7 @@ export const RightBar = () => {
                     extra={
                         <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                            {onlineCount} online
+                            {t('squad.onlineCount', { count: onlineCount })}
                         </span>
                     }
                 />
@@ -115,7 +115,7 @@ export const RightBar = () => {
                                             <p className="text-[11px] text-text-faint truncate">{m.game}</p>
                                         </div>
                                     ) : (
-                                        <p className="text-[11px] text-text-faint">Offline</p>
+                                        <p className="text-[11px] text-text-faint">{t('common.offline')}</p>
                                     )}
                                 </div>
 
@@ -127,6 +127,13 @@ export const RightBar = () => {
                             </div>
                         );
                     })}
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/squad" })}
+                        className="w-full mt-1.5 py-2 px-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                        <span>{t('squad.lfgLobby')}</span>
+                    </button>
                 </div>
             </Panel>
 
@@ -153,7 +160,7 @@ export const RightBar = () => {
                                     <span className="font-semibold text-text-muted">{post.game}</span>
                                     <span>·</span>
                                     <FontAwesomeIcon icon={faUsers} className="text-[10px]" />
-                                    <span>{post.replies} replies</span>
+                                    <span>{t('post.repliesCount', { count: post.replies })}</span>
                                     <span className="ml-auto shrink-0">{post.heat}</span>
                                 </div>
                             </div>

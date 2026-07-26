@@ -14,6 +14,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as GameGameSlugRouteImport } from './routes/game/$gameSlug'
+import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
 import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
@@ -44,6 +45,11 @@ const GameGameSlugRoute = GameGameSlugRouteImport.update({
   id: '/game/$gameSlug',
   path: '/game/$gameSlug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
+  id: '/squad/',
+  path: '/squad/',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
   id: '/community/',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/bookmark/': typeof LayoutBookmarkIndexRoute
   '/community/': typeof LayoutCommunityIndexRoute
+  '/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof LayoutIndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/developer': typeof AuthenticatedDeveloperIndexRoute
   '/bookmark': typeof LayoutBookmarkIndexRoute
   '/community': typeof LayoutCommunityIndexRoute
+  '/squad': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/_layout/bookmark/': typeof LayoutBookmarkIndexRoute
   '/_layout/community/': typeof LayoutCommunityIndexRoute
+  '/_layout/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/developer/'
     | '/bookmark/'
     | '/community/'
+    | '/squad/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/bookmark'
     | '/community'
+    | '/squad'
   id:
     | '__root__'
     | '/_authenticated'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authenticated/developer/'
     | '/_layout/bookmark/'
     | '/_layout/community/'
+    | '/_layout/squad/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/game/$gameSlug'
       preLoaderRoute: typeof GameGameSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_layout/squad/': {
+      id: '/_layout/squad/'
+      path: '/squad'
+      fullPath: '/squad/'
+      preLoaderRoute: typeof LayoutSquadIndexRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/community/': {
       id: '/_layout/community/'
@@ -282,6 +301,7 @@ interface LayoutRouteChildren {
   LayoutPostPostIdRoute: typeof LayoutPostPostIdRoute
   LayoutBookmarkIndexRoute: typeof LayoutBookmarkIndexRoute
   LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
+  LayoutSquadIndexRoute: typeof LayoutSquadIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -290,6 +310,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutPostPostIdRoute: LayoutPostPostIdRoute,
   LayoutBookmarkIndexRoute: LayoutBookmarkIndexRoute,
   LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
+  LayoutSquadIndexRoute: LayoutSquadIndexRoute,
 }
 
 const LayoutRouteWithChildren =

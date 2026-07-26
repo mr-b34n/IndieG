@@ -1,13 +1,14 @@
 import { faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState, useRef, useEffect } from "react"
+import { useTranslation } from "@/shared/hooks/useTranslate"
 
 export const Search = () => {
+    const { t } = useTranslation();
     const [focused, setFocused] = useState(false);
     const [value, setValue] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Shortcut "/" to focus
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
@@ -20,7 +21,7 @@ export const Search = () => {
     }, []);
 
     return (
-        <div className="relative w-full max-w-md">
+        <div className="relative w-full max-w-full md:max-w-md">
 
             <div className={`
                 flex flex-row items-center gap-2.5 px-3.5 py-2.5
@@ -47,7 +48,7 @@ export const Search = () => {
                     onChange={(e) => setValue(e.target.value)}
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
-                    placeholder="Tìm game, bài viết, hoặc squad..."
+                    placeholder={t('search.placeholder')}
                     className="w-full focus:outline-none bg-transparent
                         text-sm text-text placeholder:text-text-faint"
                 />
@@ -88,7 +89,7 @@ export const Search = () => {
                 >
                     <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase
                         tracking-widest text-text-faint">
-                        Tìm kiếm gần đây
+                        {t('search.recent')}
                     </p>
                     <div className="flex flex-col pb-2">
                         {["CS 2 update patch", "RDR2 mods", "Raft co-op tips"].map((item) => (
