@@ -186,7 +186,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     
     const isOwnProfile = !userId || userId === "demo" || userId === "me" || userId === user?.id || userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`;
 
-    const [activeTab, setActiveTab] = useState<"posts" | "library" | "badges" | "friends">("posts");
+    const [activeTab, setActiveTab] = useState<"posts" | "library" | "badges" | "friends" | "blocked">("posts");
     const [isEditing, setIsEditing] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);

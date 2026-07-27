@@ -18,10 +18,14 @@ import {
     faCircleCheck,
     faArrowLeft,
     faComments,
-    faStore,
-    faFolderPlus
+    faFolderPlus,
+    faBullhorn,
+    faHistory,
+    faArrowRight
 } from "@fortawesome/free-solid-svg-icons";
+import { faSteam } from "@fortawesome/free-brands-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { Lightbox } from "@/shared/components/ui/Lightbox";
 import { getGameBySlug } from "../constants";
 import { type GameReview } from "../types";
 
@@ -60,6 +64,8 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     // 4. UI States
     const [sysReqType, setSysReqType] = useState<"minimum" | "recommended">("minimum");
     const [copied, setCopied] = useState(false);
+    const [showAllPatchNotes, setShowAllPatchNotes] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     // Modal states
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -246,16 +252,16 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 }`}
                             >
                                 <FontAwesomeIcon icon={isFollowing ? faCheck : faFolderPlus} className={isFollowing ? "text-white" : "text-primary"} />
-                                <span>{isFollowing ? "Đã thêm vào tủ" : "Thêm vào Tủ Game"}</span>
+                                <span>{isFollowing ? t('game.following') : t('game.follow')}</span>
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => window.open(`https://store.steampowered.com/search/?term=${game.name}`, '_blank')}
+                                onClick={() => window.open(game.steamUrl || `https://store.steampowered.com/search/?term=${encodeURIComponent(game.name)}`, '_blank')}
                                 className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                             >
-                                <FontAwesomeIcon icon={faStore} className="text-text-muted" />
-                                <span>Cửa hàng (Steam)</span>
+                                <FontAwesomeIcon icon={faSteam} className="text-text-muted text-base" />
+                                <span>{t('game.steamStore')}</span>
                             </button>
 
                             {game.communityId && (
@@ -275,13 +281,13 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer hidden sm:flex"
                             >
                                 <FontAwesomeIcon icon={faUsers} className="text-brand-400" />
-                                <span>{t('game.tabSquad')}</span>
+                                <span>{t('game.findSquad')}</span>
                             </button>
                         </div>
 
                         <div className="text-xs font-semibold text-text-muted self-center ml-auto hidden md:flex items-center gap-2 bg-surface-hover px-3.5 py-2 rounded-xl border border-border/60">
                             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            <span>Official Hub Verified</span>
+                            <span>{t('game.verifiedHub')}</span>
                         </div>
                     </div>
                 </div>
@@ -334,7 +340,11 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {game.screenshots.map((img, idx) => (
-                                        <div key={idx} className="rounded-2xl overflow-hidden border border-border/80 group aspect-video relative bg-surface-hover shadow-sm">
+                                        <div
+                                            key={idx}
+                                            onClick={() => setLightboxIndex(idx)}
+                                            className="rounded-2xl overflow-hidden border border-border/80 group aspect-video relative bg-surface-hover shadow-sm cursor-pointer"
+                                        >
                                             <img src={img} alt={`${game.name} screenshot ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <FontAwesomeIcon icon={faEye} className="text-white text-xl" />
@@ -346,7 +356,101 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         )}
                     </div>
 
-                    {/* 2. SYSTEM REQUIREMENTS CARD */}
+                    {/* 2. PUBLISHER PATCH NOTES & VERSION UPDATES CARD */}
+                    {game.patchNotes && game.patchNotes.length > 0 && (
+                        <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col gap-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-10 h-10 rounded-2xl bg-accent-500/10 text-accent-500 flex items-center justify-center text-base shrink-0 border border-accent-500/20">
+                                        <FontAwesomeIcon icon={faBullhorn} />
+                                    </span>
+                                    <div>
+                                        <h3 className="font-bold text-lg sm:text-xl text-text flex items-center gap-2">
+                                            <span>{t('game.patchNotesTitle')}</span>
+                                        </h3>
+                                        <p className="text-xs text-text-muted mt-0.5">{t('game.patchNotesSub')}</p>
+                                    </div>
+                                </div>
+                                {game.communityId && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate({ to: `/community/${game.communityId}`, search: { tab: "📢 Thông Báo NPH" } })}
+                                        className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-accent-500 hover:bg-accent-600 text-white shadow-md shadow-accent-500/20 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                                    >
+                                        <span>{t('game.viewOnForum')}</span>
+                                        <FontAwesomeIcon icon={faArrowRight} />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-3.5">
+                                {(showAllPatchNotes ? game.patchNotes : game.patchNotes.slice(0, 3)).map((note) => {
+                                    const noteTitleText = isVietnamese ? (note.titleVi || note.title) : note.title;
+                                    const noteSummaryText = isVietnamese ? (note.summaryVi || note.summary) : note.summary;
+                                    const typeColors: Record<string, string> = {
+                                        major: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+                                        patch: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                                        hotfix: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                                        event: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                    };
+                                    const typeLabels: Record<string, string> = {
+                                        major: t('game.patchTypeMajor'),
+                                        patch: t('game.patchTypePatch'),
+                                        hotfix: t('game.patchTypeHotfix'),
+                                        event: t('game.patchTypeEvent')
+                                    };
+
+                                    return (
+                                        <div
+                                            key={note.id}
+                                            onClick={() => {
+                                                if (game.communityId) {
+                                                    navigate({ to: `/community/${game.communityId}`, search: { tab: "📢 Thông Báo NPH" } });
+                                                }
+                                            }}
+                                            className="group p-5 rounded-2xl bg-surface-hover/30 hover:bg-surface-hover/80 border border-border/70 hover:border-accent-500/50 transition-all cursor-pointer flex flex-col gap-2.5 min-w-0"
+                                        >
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-primary/15 text-primary border border-primary/25 font-mono whitespace-nowrap">
+                                                        {note.version}
+                                                    </span>
+                                                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold border whitespace-nowrap ${typeColors[note.type] || "bg-primary/10 text-primary border-primary/20"}`}>
+                                                        {typeLabels[note.type] || t('game.patchUpdateDefault')}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xs font-medium text-text-faint flex items-center gap-1.5 whitespace-nowrap">
+                                                    <FontAwesomeIcon icon={faHistory} className="text-text-faint/80" />
+                                                    <span>{note.date}</span>
+                                                </span>
+                                            </div>
+
+                                            <h4 className="font-bold text-text group-hover:text-accent-500 transition-colors text-base break-words">
+                                                {noteTitleText}
+                                            </h4>
+
+                                            <p className="text-sm text-text-muted leading-relaxed break-words line-clamp-2">
+                                                {noteSummaryText}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {game.patchNotes.length > 3 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllPatchNotes(!showAllPatchNotes)}
+                                    className="w-full py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-surface-hover hover:bg-border/60 text-text transition-all border border-border/80 cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                    <FontAwesomeIcon icon={faHistory} />
+                                    <span>{showAllPatchNotes ? t('game.showLess') : t('game.showAllPatches', { count: game.patchNotes.length })}</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. SYSTEM REQUIREMENTS CARD */}
                     {game.systemReqs && (
                         <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col gap-6">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
@@ -404,7 +508,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         </span>
                                     </div>
                                     <p className="text-xs sm:text-sm text-text-muted break-words">
-                                        {t('game.totalReviews', { count: (game.totalReviewsCount || allReviews.length).toLocaleString() })} from verified community players
+                                        {t('game.totalReviews', { count: (game.totalReviewsCount || allReviews.length).toLocaleString() })} {t('game.fromVerifiedPlayers')}
                                     </p>
                                 </div>
                             </div>
@@ -453,14 +557,14 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                             </p>
 
                                             <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
-                                                <span className="text-text-faint">Was this review helpful?</span>
+                                                <span className="text-text-faint">{t('game.helpfulQuestion')}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => likeReview(game.slug, rev.id)}
                                                     className="flex items-center gap-1.5 font-medium text-text-muted hover:text-primary transition-colors px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-hover border border-border/60 cursor-pointer"
                                                 >
                                                     <FontAwesomeIcon icon={faThumbsUp} />
-                                                    <span>Helpful ({rev.likes})</span>
+                                                    <span>{t('game.helpfulBtn', { count: rev.likes })}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -532,7 +636,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1.5">Review</label>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-text-faint mb-1.5">{t('game.reviewLabel')}</label>
                                 <textarea
                                     required
                                     rows={5}
@@ -561,6 +665,15 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Lightbox for Screenshots */}
+            {lightboxIndex !== null && game.screenshots && game.screenshots.length > 0 && (
+                <Lightbox
+                    images={game.screenshots}
+                    initialIndex={lightboxIndex}
+                    onClose={() => setLightboxIndex(null)}
+                />
             )}
         </div>
     );

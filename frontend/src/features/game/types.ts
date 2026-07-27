@@ -43,6 +43,18 @@ export interface GameSystemReqs {
     };
 }
 
+export interface GamePatchNote {
+    id: string;
+    version: string;
+    title: string;
+    titleVi?: string;
+    date: string;
+    summary: string;
+    summaryVi?: string;
+    type: "major" | "patch" | "hotfix" | "event";
+    postId?: number; // Optional link to community post id
+}
+
 export interface GameData {
     slug: string; // The primary slug e.g. "counter-strike-2"
     id?: string; // Optional backwards compatibility (usually same as slug or community id)
@@ -50,6 +62,7 @@ export interface GameData {
     name: string; // E.g. "Counter Strike 2"
     tag: string; // Matching post.gameTag e.g. "Counter Strike 2" or "Raft"
     communityId?: string; // Link to /community/$communityId if exists e.g. "cs2", "rdr2", "raft"
+    steamUrl?: string; // Direct link to Steam Store page
     developer: string;
     publisher: string;
     releaseDate: string;
@@ -70,5 +83,7 @@ export interface GameData {
     systemReqs?: GameSystemReqs;
     guides: GameGuide[];
     reviews: GameReview[];
+    patchNotes?: GamePatchNote[];
 }
+
 

@@ -23,6 +23,11 @@ import { useAuthStore } from '@/features/auth';
 import { useCommunitiesStore } from '@/features/community';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
+    validateSearch: (search: Record<string, unknown>): { tab?: string } => {
+        return {
+            tab: (search.tab as string) || undefined,
+        };
+    },
     component: CommunityDetail,
 })
 
@@ -53,6 +58,7 @@ const THREAD_TABS = [
     { id: "all", label: "🌐 Tất cả chủ đề" },
     { id: "🤝 Tìm Đồng Đội", label: "🤝 Tìm Đồng Đội" },
     { id: "💡 Thảo Luận & Guide", label: "💡 Thảo Luận & Guide" },
+    { id: "📢 Thông Báo NPH", label: "📢 Thông Báo NPH" },
     { id: "📢 Thông Báo & Event", label: "📢 Thông Báo & Event" },
     { id: "📸 Showcase / Media", label: "📸 Showcase / Media" },
     { id: "❓ Hỏi Đáp (Q&A)", label: "❓ Hỏi Đáp (Q&A)" },
@@ -218,8 +224,10 @@ function CommunityDetail() {
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
 
+    const { tab } = Route.useSearch();
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
-    const [activeThread, setActiveThread] = useState<string>("all");
+    const activeThread = tab || "all";
+
     const [showRules, setShowRules] = useState(false);
     const currentAuthor = getCurrentAuthor();
 
@@ -438,7 +446,7 @@ function CommunityDetail() {
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveThread(tab.id)}
+                                onClick={() => navigate({ search: { tab: tab.id === "all" ? undefined : tab.id } })}
                                 className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                     activeThread === tab.id
                                         ? "bg-primary text-white shadow-md shadow-primary/25"
