@@ -18,6 +18,7 @@ import {
     faFile,
     faDownload,
     faLock,
+    faBan,
 } from "@fortawesome/free-solid-svg-icons"
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
 import { useRef, useState } from "react"
@@ -372,6 +373,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                                         <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); setShowReportModal(true); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent-500 hover:bg-surface-hover transition-colors text-left mt-1 border-t border-border/50">
                                             <FontAwesomeIcon icon={faFlag} className="w-4" />
                                             {t('post.report')}
+                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); alert("Đã chặn người dùng: " + post.author); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium">
+                                            <FontAwesomeIcon icon={faBan} className="w-4" />
+                                            Chặn người dùng
                                         </button>
                                     </>
                                 )}

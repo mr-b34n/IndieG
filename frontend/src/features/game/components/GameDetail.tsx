@@ -3,7 +3,6 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faHeart as faHeartSolid,
     faShareNodes,
     faCheck,
     faCircleInfo,
@@ -18,9 +17,10 @@ import {
     faXmark,
     faCircleCheck,
     faArrowLeft,
-    faComments
+    faComments,
+    faStore,
+    faFolderPlus
 } from "@fortawesome/free-solid-svg-icons";
-import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { getGameBySlug } from "../constants";
 import { type GameReview } from "../types";
@@ -245,8 +245,17 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         : "bg-surface-hover hover:bg-border/80 text-text border border-border"
                                 }`}
                             >
-                                <FontAwesomeIcon icon={isFollowing ? faHeartSolid : faHeartOutline} className={isFollowing ? "text-white animate-bounce-short" : "text-primary"} />
-                                <span>{isFollowing ? t('game.following') : t('game.follow')}</span>
+                                <FontAwesomeIcon icon={isFollowing ? faCheck : faFolderPlus} className={isFollowing ? "text-white" : "text-primary"} />
+                                <span>{isFollowing ? "Đã thêm vào tủ" : "Thêm vào Tủ Game"}</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => window.open(`https://store.steampowered.com/search/?term=${game.name}`, '_blank')}
+                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faStore} className="text-text-muted" />
+                                <span>Cửa hàng (Steam)</span>
                             </button>
 
                             {game.communityId && (
@@ -263,7 +272,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             <button
                                 type="button"
                                 onClick={() => navigate({ to: "/squad" })}
-                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer hidden sm:flex"
                             >
                                 <FontAwesomeIcon icon={faUsers} className="text-brand-400" />
                                 <span>{t('game.tabSquad')}</span>

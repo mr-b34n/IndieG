@@ -10,7 +10,7 @@ import {
     faCalendarAlt, faFire, faTrophy, faShieldHalved, faClock,
     faMedal, faCrown, faBolt, faUserPlus, faUserCheck, faBell, faCommentDots,
     faCheckCircle, faUsers, faCamera, faSearchPlus,
-    faSearchMinus, faCrop, faTrash
+    faSearchMinus, faCrop, faTrash, faPlus, faBan
 } from "@fortawesome/free-solid-svg-icons";
 
 import cs2Bg from "../../../assets/bgs/cs2_bg.jpg";
@@ -175,16 +175,6 @@ interface UserProfileProps {
     userId: string;
 }
 
-// Định nghĩa giao diện rõ ràng cho Friend list để fix lỗi TS
-interface FriendProfile {
-    name: string;
-    game: string | null;
-    logo: string | null;
-    status: string;
-    playtime: string | null;
-    isFriend: boolean;
-}
-
 export const UserProfile = ({ userId }: UserProfileProps) => {
     const { t, language } = useTranslation();
     const navigate = useNavigate();
@@ -193,7 +183,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
     const currentAuthor = getCurrentAuthor();
 
-    // Check if viewing own profile
+    
     const isOwnProfile = !userId || userId === "demo" || userId === "me" || userId === user?.id || userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`;
 
     const [activeTab, setActiveTab] = useState<"posts" | "library" | "badges" | "friends">("posts");
@@ -201,9 +191,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
 
-    const friendProfiles: Record<string, { name: string; username: string; bio: string; favGame: string; status: "online" | "offline" }> = {
+    const friendProfiles: Record<string, { name: string; username: string; bio: string; favGame: string; status: "online" | "in-game" | "offline" }> = {
         ghostrider: { name: "GhostRider", username: "@ghostrider", bio: "Red Dead Redemption 2 enthusiast. Outlaw by day, sheriff by night. Always down for lassoing bounties!", favGame: "Red Dead 2", status: "online" },
-        tactical_xeno: { name: "TacticalXeno", username: "@tactical_xeno", bio: "Pro CS2 competitive player & tactical leader. Always online for high rank pushes!", favGame: "CS2 — Rank S", status: "online" },
+        tactical_xeno: { name: "TacticalXeno", username: "@tactical_xeno", bio: "Pro CS2 competitive player & tactical leader. Always online for high rank pushes!", favGame: "CS2 — Rank S", status: "in-game" },
         nightowl: { name: "NightOwl", username: "@nightowl", bio: "Late night gaming only (1 AM - 5 AM). Raft Hardcore survivor & building floating fortresses.", favGame: "Raft", status: "online" },
         maplestrike: { name: "Maplestrike", username: "@maplestrike", bio: "Casual gamer exploring indie titles and RPGs. Currently offline, catch you on the weekend!", favGame: "Stardew Valley", status: "offline" },
     };
@@ -232,7 +222,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [displayName, setDisplayName] = useState(initial.name);
     const [username, setUsername] = useState(initial.username);
     const [bio, setBio] = useState(initial.bio);
-    const [status, setStatus] = useState<"online" | "offline">(initial.status);
+    const [status, setStatus] = useState<"online" | "in-game" | "offline">(initial.status);
 
     const profileKey = `${userId}-${isOwnProfile}-${currentAuthor}`;
     const [prevProfileKey, setPrevProfileKey] = useState(profileKey);
@@ -245,8 +235,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         setStatus(initial.status);
     }
 
-    // Friends State - Đã thêm kiểu dữ liệu <FriendProfile[]>
-    const [friendsList, setFriendsList] = useState<FriendProfile[]>([
+    
+    const [friendsList, setFriendsList] = useState([
         { name: "GhostRider", game: "Red Dead 2", logo: rdr2Logo, status: "online", playtime: "2h 14m", isFriend: true },
         { name: "TacticalXeno", game: "CS2 — Rank S", logo: cs2Logo, status: "online", playtime: "45m", isFriend: true },
         { name: "NightOwl", game: "Raft", logo: raftLogo, status: "online", playtime: "1h 03m", isFriend: true },
@@ -313,7 +303,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 </div>
             )}
 
-            {/* Profile Header Banner & Avatar Card */}
+            {/* Header */}
             <div className="relative w-full bg-surface border border-border rounded-2xl overflow-hidden shadow-lg">
                 {/* Banner Cover */}
                 <div className="relative h-48 sm:h-64 w-full overflow-hidden">
@@ -321,11 +311,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
                 </div>
 
-                {/* Profile Info Bar */}
+                {/* Profile Info */}
                 <div className="relative px-4 sm:px-8 pb-6 pt-0 flex flex-col gap-4 z-10">
-                    {/* Top Row: Avatar overlapping banner & Action Buttons aligned on the right */}
+                    {/* Top */}
                     <div className="flex items-end justify-between w-full -mt-14 sm:-mt-16">
-                        {/* Avatar with Status Ring */}
+                        {/* Avatar */}
                         <div className="relative shrink-0">
                             <img
                                 src={avatarUrl}
@@ -333,11 +323,13 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                                 className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-surface bg-surface shadow-xl"
                             />
                             <span
-                                className={`absolute bottom-2 right-2 w-5 h-5 rounded-full ring-4 ring-surface ${
-                                    status === "online" ? "bg-emerald-500" : "bg-neutral-500"
+                                className={`absolute bottom-2 right-2 w-5 h-5 rounded-full ring-4 ring-surface flex items-center justify-center ${
+                                    status === "online" ? "bg-emerald-500" : status === "in-game" ? "bg-primary" : "bg-neutral-500"
                                 }`}
-                                title={status === "online" ? t('profile.online') : t('profile.offline')}
-                            />
+                                title={status === "online" ? t('profile.online') : status === "in-game" ? "Đang chơi game" : t('profile.offline')}
+                            >
+                                {status === "in-game" && <FontAwesomeIcon icon={faGamepad} className="text-white text-[9px]" />}
+                            </span>
                         </div>
 
                         {/* Action Buttons */}
@@ -377,12 +369,19 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                                     >
                                         <FontAwesomeIcon icon={isFriend ? faUserCheck : faUserPlus} className="text-base" />
                                     </button>
+                                    <button
+                                        onClick={() => alert("Đã chặn người dùng: " + displayName)}
+                                        className="w-10 h-10 rounded-xl bg-surface-hover text-rose-500 border border-border hover:bg-rose-500/10 hover:border-rose-500/30 font-bold transition-all flex items-center justify-center shadow-md cursor-pointer"
+                                        title="Chặn người dùng này"
+                                    >
+                                        <FontAwesomeIcon icon={faBan} className="text-base" />
+                                    </button>
                                 </>
                             )}
                         </div>
                     </div>
 
-                    {/* Bottom Section: Full Width Name, Rank, Bio, and Chips - No Squeezing! */}
+                    {/* Bottom */}
                     <div className="flex flex-col gap-1 w-full text-center sm:text-left">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                             <h1 className="text-2xl sm:text-3xl font-black text-text tracking-tight">{displayName}</h1>
@@ -412,10 +411,31 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                                 {t('profile.reputation')}
                             </span>
                         </div>
+
+                        {/* Connected Accounts */}
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#171a21] hover:bg-[#1b2838] text-white text-[11px] font-bold rounded-lg border border-border transition-colors">
+                                <FontAwesomeIcon icon={faGamepad} className="text-[#66c0f4]" />
+                                Steam
+                            </button>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#d13639]/10 hover:bg-[#d13639]/20 text-[#d13639] text-[11px] font-bold rounded-lg border border-[#d13639]/20 transition-colors">
+                                <FontAwesomeIcon icon={faFire} />
+                                Riot Games
+                            </button>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#107c10]/10 hover:bg-[#107c10]/20 text-[#107c10] text-[11px] font-bold rounded-lg border border-[#107c10]/20 transition-colors">
+                                <FontAwesomeIcon icon={faGamepad} />
+                                Xbox Live
+                            </button>
+                            {isOwnProfile && (
+                                <button className="flex items-center justify-center w-7 h-7 bg-surface-hover hover:bg-border text-text-muted hover:text-text rounded-lg transition-colors" title="Kết nối tài khoản khác">
+                                    <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Gamified Stats Bar */}
+                {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-4 sm:px-8 py-4 bg-surface-hover/50 border-t border-border text-center">
                     <div className="flex flex-col p-2 rounded-xl bg-surface/60">
                         <span className="text-lg sm:text-xl font-black text-primary">1,240h</span>
@@ -450,7 +470,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 />
             )}
 
-            {/* Edit Profile Form Modal / Inline Box */}
+            {/* Edit Profile */}
             {isEditing && (
                 <form onSubmit={handleSaveProfile} className="w-full bg-surface border border-primary/30 rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col gap-4 animate-fade-in">
                     <div className="flex items-center justify-between border-b border-border pb-3">
@@ -463,7 +483,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         </button>
                     </div>
 
-                    {/* Avatar Upload / Crop Trigger Section */}
+                    {/* Avatar Upload */}
                     <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-surface-hover/40 border border-border/80">
                         <img src={avatarUrl} alt="Avatar Preview" className="w-20 h-20 rounded-full object-cover ring-2 ring-primary/40 shrink-0 shadow-md" />
                         <div className="flex flex-col gap-1.5 flex-1 text-center sm:text-left">
@@ -545,10 +565,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                             <label className="text-xs font-bold uppercase text-text-muted">{t('profile.statusLabel')}</label>
                             <select
                                 value={status}
-                                onChange={(e) => setStatus(e.target.value as "online" | "offline")}
+                                onChange={(e) => setStatus(e.target.value as "online" | "in-game" | "offline")}
                                 className="px-3.5 py-2 rounded-xl bg-surface-hover border border-border text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             >
                                 <option value="online">🟢 {t('profile.online')}</option>
+                                <option value="in-game">🎮 Đang chơi game</option>
                                 <option value="offline">⚪ {t('profile.offline')}</option>
                             </select>
                         </div>
@@ -573,17 +594,18 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 </form>
             )}
 
-            {/* Profile Navigation Tabs */}
+            {/* Tabs */}
             <div className="flex items-center gap-2 border-b border-border overflow-x-auto pb-1 scrollbar-none">
                 {[
                     { id: "posts", label: t('profile.tabs.posts'), icon: faCommentDots },
                     { id: "library", label: t('profile.tabs.library'), icon: faGamepad },
                     { id: "badges", label: t('profile.tabs.badges'), icon: faTrophy },
                     { id: "friends", label: t('profile.tabs.friends'), icon: faUsers },
+                    ...(isOwnProfile ? [{ id: "blocked", label: "Danh sách chặn", icon: faShieldHalved }] : []),
                 ].map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as "posts" | "library" | "badges" | "friends")}
+                        onClick={() => setActiveTab(tab.id as "posts" | "library" | "badges" | "friends" | "blocked")}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer whitespace-nowrap ${
                             activeTab === tab.id
                                 ? "bg-primary text-white shadow-md"
@@ -596,9 +618,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 ))}
             </div>
 
-            {/* Tab Content Area */}
+            {/* Tabs Content */}
             <div className="w-full">
-                {/* 1. Posts Tab */}
+                {/* Posts */}
                 {activeTab === "posts" && (
                     <div className="flex flex-col gap-4">
                         {displayPosts.length > 0 ? (
@@ -615,7 +637,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     </div>
                 )}
 
-                {/* 2. Game Library Tab */}
+                {/* Library */}
                 {activeTab === "library" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {libraryGames.map((game) => (
@@ -648,7 +670,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     </div>
                 )}
 
-                {/* 3. Badges & Titles Tab */}
+                {/* Badges */}
                 {activeTab === "badges" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {badges.map((badge) => (
@@ -665,7 +687,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     </div>
                 )}
 
-                {/* 4. Friends & Squad Tab */}
+                {/* Friends */}
                 {activeTab === "friends" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {friendsList.map((f) => (
@@ -688,7 +710,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
                                 <div className="flex items-center gap-2 shrink-0">
                                     <button
-                                        onClick={() => toggleFriend(f.name)}
+                                        onClick={(e) => { e.stopPropagation(); toggleFriend(f.name); }}
                                         className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer ${
                                             f.isFriend
                                                 ? "bg-surface-hover text-text-muted hover:bg-rose-500/10 hover:text-rose-500"
@@ -700,6 +722,43 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Blocked */}
+                {isOwnProfile && activeTab === "blocked" && (
+                    <div className="flex flex-col gap-4">
+                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-4 rounded-xl text-sm font-medium flex items-start gap-3">
+                            <FontAwesomeIcon icon={faShieldHalved} className="mt-0.5 text-lg" />
+                            <div>
+                                <h4 className="font-bold mb-1">Danh sách tài khoản bị chặn</h4>
+                                <p className="opacity-90 leading-relaxed text-xs">Các tài khoản dưới đây sẽ không thể xem hồ sơ của bạn, bài viết và bình luận của họ cũng sẽ bị ẩn khỏi bảng tin của bạn.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {[
+                                { name: "ToxicGamer99", username: "@toxic99", reason: "Spam / Ngôn từ đả kích", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ToxicGamer99" },
+                                { name: "ScammerBot", username: "@scammer_xyz", reason: "Lừa đảo / Phishing", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ScammerBot" }
+                            ].map((blocked) => (
+                                <div key={blocked.username} className="bg-surface border border-border rounded-2xl p-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img src={blocked.avatar} alt={blocked.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-border opacity-50 grayscale" />
+                                        <div className="flex flex-col min-w-0">
+                                            <h4 className="font-bold text-text text-sm truncate line-through opacity-70">{blocked.name}</h4>
+                                            <p className="text-xs text-text-muted truncate">{blocked.username}</p>
+                                            <p className="text-[10px] text-rose-500 mt-0.5 truncate font-medium border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 rounded w-fit">{blocked.reason}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => alert("Đã bỏ chặn người dùng này.")}
+                                        className="px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-border text-text font-bold text-xs transition-colors shrink-0 cursor-pointer"
+                                    >
+                                        Bỏ chặn
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

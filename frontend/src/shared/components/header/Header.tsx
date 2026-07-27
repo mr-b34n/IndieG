@@ -14,7 +14,7 @@ import {
     faMoon,
     faSignOutAlt,
     faBars,
-    faGamepad,
+    faGamepad
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from '@/features/auth';
 
@@ -32,7 +32,6 @@ export const Header = () => {
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
-    const customAvatar = useAuthStore((state) => state.customAvatar);
     const toggleMockLogin = useAuthStore((state) => state.toggleMockLogin);
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
@@ -48,7 +47,7 @@ export const Header = () => {
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
     return (
-        <header className="w-full sticky top-0 z-20 flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-1.5">
+        <header className="w-full sticky top-0 z-[60] flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-1.5">
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 order-1">
                 <button
@@ -159,14 +158,6 @@ export const Header = () => {
                     >
                         {t('authenticate.login')}
                     </button>
-                )}
-                {isLoggedIn && (
-                    <img
-                        src={customAvatar ?? user?.user_metadata?.avatar_url ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
-                        alt="Profile"
-                        onClick={() => navigate({ to: "/profile/$userId", params: { userId: "me" } })}
-                        className="w-8 h-8 ml-0.5 sm:ml-1 rounded-full object-cover ring-2 ring-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                    />
                 )}
             </div>
         </header>

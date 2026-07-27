@@ -9,6 +9,10 @@ import {
     faPlus,
     faFire,
     faInbox,
+    faChevronDown,
+    faChevronUp,
+    faShieldHalved,
+    faScroll,
 } from '@fortawesome/free-solid-svg-icons';
 
 import avatarGame from '../../../assets/logos/raft-logo.png';
@@ -216,6 +220,7 @@ function CommunityDetail() {
 
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
     const [activeThread, setActiveThread] = useState<string>("all");
+    const [showRules, setShowRules] = useState(false);
     const currentAuthor = getCurrentAuthor();
 
     const community = communities.find((c) => c.id.toString() === communityId);
@@ -301,9 +306,9 @@ function CommunityDetail() {
                                     dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
                                 "
                 >
-                        {/* Phần Banner */}
+                        {/* Banner */}
                         <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
-                            {/* Đã BỎ z-50 khỏi ảnh backdrop */}
+                            
                             {community.backdrop && (
                                 <img
                                     src={community.backdrop}
@@ -312,7 +317,7 @@ function CommunityDetail() {
                                 />
                             )}
 
-                            {/* Thêm z-10 để nút Featured luôn nổi trên backdrop */}
+                            
                             {community.featured && (
                                 <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
                                     <FontAwesomeIcon icon={faFire} className="text-[9px]" />
@@ -321,10 +326,10 @@ function CommunityDetail() {
                             )}
                         </div>
 
-                        {/* Phần Nội dung */}
+                        {/* Content */}
                         <div className="flex flex-col px-5 pb-5 -mt-9">
                             <div className="flex flex-row items-end justify-between">
-                                {/* Thêm relative z-10 để Avatar luôn nổi lên trên ranh giới backdrop */}
+                                
                                 <img
                                     src={community.logo}
                                     alt={community.name}
@@ -378,10 +383,53 @@ function CommunityDetail() {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Rules */}
+                            <div className="mt-4 pt-4 border-t border-border">
+                                <button
+                                    onClick={() => setShowRules(!showRules)}
+                                    className="w-full flex items-center justify-between text-sm font-bold text-text hover:text-primary transition-colors cursor-pointer"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <FontAwesomeIcon icon={faScroll} className="text-primary" />
+                                        Nội quy & Quản trị viên
+                                    </span>
+                                    <FontAwesomeIcon icon={showRules ? faChevronUp : faChevronDown} className="text-xs" />
+                                </button>
+                                {showRules && (
+                                    <div className="mt-3 flex flex-col gap-3 animate-fade-in text-sm text-text-muted">
+                                        <div className="bg-surface-hover/50 rounded-xl p-3 border border-border/50">
+                                            <h4 className="font-semibold text-text mb-2 flex items-center gap-2">
+                                                <FontAwesomeIcon icon={faShieldHalved} className="text-amber-500" />
+                                                Quản trị viên (Admins/Mods)
+                                            </h4>
+                                            <div className="flex flex-col gap-1.5 text-[13px]">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-text font-medium">@ghostrider</span>
+                                                    <span className="bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded text-[10px] font-bold">ADMIN</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-text font-medium">@tactical_xeno</span>
+                                                    <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[10px] font-bold">MOD</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-surface-hover/50 rounded-xl p-3 border border-border/50">
+                                            <h4 className="font-semibold text-text mb-2">Quy tắc ứng xử</h4>
+                                            <ol className="list-decimal list-inside space-y-1.5 text-[13px]">
+                                                <li>Tôn trọng mọi thành viên, không toxic hoặc xúc phạm cá nhân.</li>
+                                                <li>Không spam hoặc đăng nội dung không liên quan đến game/cộng đồng này.</li>
+                                                <li>Gắn thẻ spoiler cho những bài viết tiết lộ nội dung quan trọng (cốt truyện, kết thúc).</li>
+                                                <li>Nội dung 18+ (NSFW) bị cấm nghiêm ngặt.</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                 </div>
 
-                {/* Thread / Tag Selector Bar */}
+                {/* Threads */}
                 <div className="w-full bg-surface/90 backdrop-blur-md border border-border rounded-2xl p-2.5 shadow-sm flex items-center gap-2 overflow-x-auto no-scrollbar">
                     {THREAD_TABS.map((tab) => {
                         const count = tab.id === "all"

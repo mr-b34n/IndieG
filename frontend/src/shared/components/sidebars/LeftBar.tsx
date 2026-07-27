@@ -236,7 +236,14 @@ export const LeftBar = () => {
 
             {isLoggedIn && (
                 <div className="border-t border-border px-2 py-1.5">
-                    <button type="button" className={navItem}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setActivePage("settings");
+                            navigate({to: "/settings"});
+                        }}
+                        className={`${activePage === "settings" ? navItemActive : navItem}`}
+                    >
                         <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
                         <span>{t('common.settings')}</span>
                     </button>

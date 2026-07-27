@@ -14,6 +14,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
+import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
 import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
@@ -45,6 +46,11 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
 const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
   id: '/squad/',
   path: '/squad/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/bookmark/': typeof LayoutBookmarkIndexRoute
   '/community/': typeof LayoutCommunityIndexRoute
   '/profile/': typeof LayoutProfileIndexRoute
+  '/settings/': typeof LayoutSettingsIndexRoute
   '/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesByTo {
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/bookmark': typeof LayoutBookmarkIndexRoute
   '/community': typeof LayoutCommunityIndexRoute
   '/profile': typeof LayoutProfileIndexRoute
+  '/settings': typeof LayoutSettingsIndexRoute
   '/squad': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesById {
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_layout/bookmark/': typeof LayoutBookmarkIndexRoute
   '/_layout/community/': typeof LayoutCommunityIndexRoute
   '/_layout/profile/': typeof LayoutProfileIndexRoute
+  '/_layout/settings/': typeof LayoutSettingsIndexRoute
   '/_layout/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRouteTypes {
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/bookmark/'
     | '/community/'
     | '/profile/'
+    | '/settings/'
     | '/squad/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/bookmark'
     | '/community'
     | '/profile'
+    | '/settings'
     | '/squad'
   id:
     | '__root__'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/_layout/bookmark/'
     | '/_layout/community/'
     | '/_layout/profile/'
+    | '/_layout/settings/'
     | '/_layout/squad/'
   fileRoutesById: FileRoutesById
 }
@@ -228,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/squad'
       fullPath: '/squad/'
       preLoaderRoute: typeof LayoutSquadIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/settings/': {
+      id: '/_layout/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof LayoutSettingsIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/profile/': {
@@ -319,6 +338,7 @@ interface LayoutRouteChildren {
   LayoutBookmarkIndexRoute: typeof LayoutBookmarkIndexRoute
   LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
+  LayoutSettingsIndexRoute: typeof LayoutSettingsIndexRoute
   LayoutSquadIndexRoute: typeof LayoutSquadIndexRoute
 }
 
@@ -331,6 +351,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutBookmarkIndexRoute: LayoutBookmarkIndexRoute,
   LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
+  LayoutSettingsIndexRoute: LayoutSettingsIndexRoute,
   LayoutSquadIndexRoute: LayoutSquadIndexRoute,
 }
 

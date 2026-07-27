@@ -35,9 +35,11 @@ function MainLayout() {
         closeRight()
     }, [pathname, closeLeft, closeRight])
 
+    const hideSidebars = pathname.startsWith('/settings')
+
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
-            {/* Background chung */}
+            {/* Background */}
             <div className="absolute inset-0 pointer-events-none select-none">
                 <div className="absolute -top-32 -left-32 w-125 h-125 bg-primary/10 dark:bg-primary/15 rounded-full blur-[100px]" />
                 <div className="absolute -bottom-32 -right-32 w-125 h-125 bg-accent-500/8 dark:bg-accent-500/12 rounded-full blur-[100px]" />
@@ -45,9 +47,9 @@ function MainLayout() {
 
             <Header />
 
-            {/* Mobile/Tablet Left Sidebar Overlay (< lg) */}
-            {isLeftOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden flex">
+            {/* Mobile Left Sidebar */}
+            {!hideSidebars && isLeftOpen && (
+                <div className="fixed inset-0 z-[150] lg:hidden flex">
                     <div 
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
                         onClick={closeLeft}
@@ -64,9 +66,9 @@ function MainLayout() {
                 </div>
             )}
 
-            {/* Mobile/Tablet Right Sidebar Overlay (< lg) */}
-            {isRightOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
+            {/* Mobile Right Sidebar */}
+            {!hideSidebars && isRightOpen && (
+                <div className="fixed inset-0 z-[150] lg:hidden flex justify-end">
                     <div 
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
                         onClick={closeRight}
@@ -83,27 +85,31 @@ function MainLayout() {
                 </div>
             )}
 
-            {/* GẮN REF VÀO THẺ DIV CÓ OVERFLOW-Y-AUTO NÀY */}
+            
             <div 
                 ref={scrollContainerRef} 
                 className="relative flex-1 overflow-y-auto overflow-x-hidden w-full"
             >
-                <div className="w-full max-w-[1400px] mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12">
+                <div className={`w-full ${hideSidebars ? 'max-w-5xl' : 'max-w-[1400px]'} mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12`}>
                     
                     {/* Left Sidebar */}
-                    <aside className="hidden lg:block shrink-0 w-52 xl:w-56 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
-                        <LeftBar />
-                    </aside>
+                    {!hideSidebars && (
+                        <aside className="hidden lg:block shrink-0 w-52 xl:w-56 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
+                            <LeftBar />
+                        </aside>
+                    )}
 
-                    {/* CORE CONTENT */}
+                    {/* Main Content */}
                     <main className="flex-1 min-w-0">
                         <Outlet />
                     </main>
 
                     {/* Right Sidebar */}
-                    <aside className="hidden lg:block shrink-0 w-60 xl:w-64 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
-                        <RightBar />
-                    </aside>
+                    {!hideSidebars && (
+                        <aside className="hidden lg:block shrink-0 w-60 xl:w-64 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
+                            <RightBar />
+                        </aside>
+                    )}
 
                 </div>
             </div>

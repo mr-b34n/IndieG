@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faBan } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -13,7 +13,7 @@ import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 
-// Chỉ cho phép đính kèm ảnh trong bình luận, tối đa 2MB/ảnh, không hỗ trợ gửi file khác.
+
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
 const COMMENT_IMAGE_ACCEPT = "image/*";
 
@@ -55,7 +55,7 @@ function useCommentImageAttachment() {
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Thu hồi object URL khi component unmount để tránh rò rỉ bộ nhớ
+    
     useEffect(() => {
         return () => {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -93,8 +93,8 @@ function useCommentImageAttachment() {
 
     const openPicker = () => inputRef.current?.click();
 
-    // Convert file gốc sang base64 data URL để lưu bền vững vào comment
-    // (khác với previewUrl là blob URL, chỉ dùng tạm lúc soạn thảo và sẽ bị revoke sau khi gửi).
+    
+    
     const toDataUrl = (): Promise<string | undefined> => {
         return new Promise((resolve) => {
             if (!file) {
@@ -355,7 +355,7 @@ const CommentItem = ({
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    // Menu & Edit states
+    
     const [showMenu, setShowMenu] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -368,7 +368,7 @@ const CommentItem = ({
     const toggleLike = () => {
         setLiked((prev) => !prev);
         setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
-        // Optimistic UI Update: Phản hồi ngay lập tức trên giao diện trước khi đồng bộ server
+        
     };
 
     const handleReplyClick = () => {
@@ -457,7 +457,7 @@ const CommentItem = ({
                                 )}
                             </div>
 
-                            {/* 3 dots action menu */}
+                            {/* Actions */}
                             <div className={`relative shrink-0 ${showMenu ? "z-[100]" : ""}`}>
                                 <button
                                     type="button"
@@ -528,8 +528,20 @@ const CommentItem = ({
 
                                             <button
                                                 type="button"
+                                                onClick={() => {
+                                                    setShowMenu(false);
+                                                    alert("Đã chặn người dùng: " + comment.author);
+                                                }}
+                                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium"
+                                            >
+                                                <FontAwesomeIcon icon={faBan} className="w-3.5" />
+                                                <span>Chặn người dùng</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
                                                 onClick={handleDelete}
-                                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium"
+                                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/40 mt-0.5 pt-2"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} className="w-3.5" />
                                                 <span>{t('comment.delete')}</span>
@@ -585,7 +597,7 @@ const CommentItem = ({
                         )}
                     </div>
 
-                    {/* Action buttons */}
+                    {/* Actions */}
                     <div className="flex flex-row items-center gap-5 mt-1 text-xs font-medium text-text-faint">
                         <button 
                             onClick={toggleLike} 
@@ -606,7 +618,7 @@ const CommentItem = ({
                         )}
                     </div>
 
-                    {/* Inline Reply Input Box */}
+                    {/* Reply Input */}
                     {isReplying && isCommentsAllowed && (
                         <div className="flex flex-col gap-2 mt-3 p-3 bg-surface-hover/40 border border-border/60 rounded-xl animate-fade-in">
                             <MentionTextArea
@@ -666,7 +678,7 @@ const CommentItem = ({
                 </div>
             </div>
 
-            {/* Render các Reply con (Nested Replies) */}
+            {/* Nested Replies */}
             {comment.replies && comment.replies.length > 0 && (
                 <div className="ml-4 pl-4 border-l-2 border-border/40 flex flex-col gap-4 mt-3">
                     {sortComments(comment.replies, sortBy).map((subCmt) => (
@@ -709,7 +721,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
 
-    // Mock Data có chứa Reply con
+    
     const [comments, setComments] = useState<CommentData[]>([
         {
             id: 1,
@@ -754,7 +766,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         e.target.style.height = `${e.target.scrollHeight}px`;
     };
 
-    // Hàm đệ quy chèn reply mới vào đúng comment cha (kể cả comment con nhiều cấp)
+    
     const addReplyToTree = (
         list: CommentData[],
         parentId: string | number,
@@ -777,7 +789,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         });
     };
 
-    // Đăng bài reply chính (Top level comment)
+    
     const handleMainReplySubmit = async () => {
         if (!commentText.trim() && !mainImage.previewUrl) return;
         const imageDataUrl = await mainImage.toDataUrl();
@@ -797,7 +809,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
     };
 
-    // Đăng sub-reply (Reply cho một comment cụ thể)
+    
     const handleAddSubReply = (parentId: string | number, text: string, image?: string) => {
         const newSubReply: CommentData = {
             id: `sub-${Date.now()}`,
@@ -891,7 +903,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                 )}
             </div>
 
-            {/* Main comment input */}
+            {/* Input */}
             <div className="flex flex-row gap-3 px-4 mb-6">
                 {!isCommentsAllowed ? (
                     <div className="w-full flex flex-col items-center justify-center p-6 bg-surface-hover/50 rounded-xl border border-border">
@@ -965,7 +977,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                 )}
             </div>
 
-            {/* List các comments */}
+            {/* List */}
             <div className="flex flex-col gap-6 px-4 pb-4">
                 {sortComments(comments, sortBy).map((cmt) => (
                     <CommentItem
