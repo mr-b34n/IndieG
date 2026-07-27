@@ -2,21 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
-
-interface ReportModalProps {
-    postId: string | number;
-    author: string;
-    onClose: () => void;
-}
-
-const REPORT_REASONS = [
-    "Spam or misleading",
-    "Harassment or bullying",
-    "Hate speech or inappropriate language",
-    "Violence or harmful behavior",
-    "False information",
-    "Other"
-];
+import { type ReportModalProps } from "../types";
+import { REPORT_REASONS } from "../constants";
 
 export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     const [selectedReason, setSelectedReason] = useState<string>("");
@@ -33,10 +20,17 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-200 flex items-center justify-center animate-fade-in px-4">
+        <div
+            className="fixed inset-0 z-200 flex items-center justify-center animate-fade-in px-4"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+        >
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={onClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                }}
             />
 
             <div className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">

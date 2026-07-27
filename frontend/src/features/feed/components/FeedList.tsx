@@ -1,133 +1,19 @@
-
-import { useState } from "react"
-import { faInbox } from "@fortawesome/free-solid-svg-icons"
+import { useEffect, useRef, useState } from "react"
+import { faInbox, faSpinner, faCircleCheck } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useTranslation } from "@/shared/hooks/useTranslate"
 
-import avatarGame from "../../../assets/logos/raft-logo.png";
-import { prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
+import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
+import { prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
-import { AttachmentPicker } from "@/features/post/components/AttachmentPicker";
-import { getCurrentAuthor, Post, usePostsStore } from "@/features/post";
-import type { PostData } from "@/features/post/components/Post";
+import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";
 
-interface CreatePostPayload {
-    title: string;
-    content: string;
-    attachments: EditableAttachment[];
-}
-
-const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) => Promise<void> }) => {
-    const user = useAuthStore((state) => state.user);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
-    const [expanded, setExpanded] = useState(false);
-    const [isPosting, setIsPosting] = useState(false);
-
-    const isActive = expanded || content.trim().length > 0 || attachments.length > 0 || title.trim().length > 0;
-    const canPost = content.trim().length > 0 && !isPosting;
-    const avatarUrl =
-        user?.user_metadata?.avatar_url ??
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
-
-    const handlePost = async () => {
-        if (!canPost) return;
-
-        setIsPosting(true);
-        try {
-            await onPost({ title: title.trim(), content: content.trim(), attachments });
-            revokeAttachmentUrls(attachments);
-            setTitle("");
-            setContent("");
-            setAttachments([]);
-            setExpanded(false);
-        } finally {
-            setIsPosting(false);
-        }
-    };
-
-    return (
-        <div
-            id="create-post"
-            className="
-                w-full p-3
-                bg-surface/90 backdrop-blur-md
-                border border-border rounded-2xl
-                shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
-                transition-all duration-200 ease-out
-            "
-        >
-            <div className="flex gap-2.5 items-start">
-                <img
-                    src={avatarUrl}
-                    alt="User"
-                    className={`w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
-                        isActive ? "" : "self-center"
-                    }`}
-                />
-                <div className="flex flex-col gap-1.5 w-full min-w-0">
-                    <div
-                        className={`grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out ${
-                            isActive
-                                ? "grid-rows-[1fr] opacity-100"
-                                : "grid-rows-[0fr] opacity-0 -mb-1.5 pointer-events-none"
-                        }`}
-                        aria-hidden={!isActive}
-                    >
-                        <div className="overflow-hidden min-h-0">
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Post title (optional)"
-                                tabIndex={isActive ? 0 : -1}
-                                className="w-full h-9 px-3 bg-surface-hover border border-border rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all text-text placeholder:text-text-faint"
-                            />
-                        </div>
-                    </div>
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        onFocus={() => setExpanded(true)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
-                        }}
-                        placeholder="What's on your mind?"
-                        rows={1}
-                        className={`w-full px-3 py-2 bg-surface-hover border border-border rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-[min-height,border-color,box-shadow] duration-200 ease-out text-text placeholder:text-text-faint resize-none leading-snug ${
-                            isActive ? "min-h-[4.75rem]" : "min-h-[2.25rem]"
-                        }`}
-                    />
-
-                    <AttachmentPicker
-                        attachments={attachments}
-                        onChange={setAttachments}
-                        showToolbar={isActive}
-                        compactToolbar
-                        className="gap-1.5"
-                        toolbarTrailing={
-                            <button
-                                type="button"
-                                onClick={handlePost}
-                                disabled={!canPost}
-                                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                                    canPost
-                                        ? "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(124,77,255,0.35)]"
-                                        : "bg-surface-hover text-text-faint cursor-not-allowed"
-                                }`}
-                            >
-                                {isPosting ? "Posting..." : "Post"}
-                            </button>
-                        }
-                    />
-                </div>
-            </div>
-        </div>
-    );
-};
+import { useCommunitiesStore } from "@/features/community";
+import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
+import { type PostDataWithSettings } from "../types";
 
 export const FeedList = () => {
+    const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
@@ -138,37 +24,41 @@ export const FeedList = () => {
     const deletePost = usePostsStore((state) => state.deletePost);
 
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
+    const [displayLimit, setDisplayLimit] = useState(4);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const sentinelRef = useRef<HTMLDivElement>(null);
     const currentAuthor = getCurrentAuthor();
+    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
 
-    const handleCreatePost = async ({ title, content, attachments }: CreatePostPayload) => {
+    const handleCreatePost = async ({ title, content, attachments, privacy, tags, allowComments, pinned, communityId }: CreatePostPayload) => {
         const { images, files } = await prepareAttachmentsForSave(attachments);
+        const community = getCommunityById(communityId);
 
-        const newPost: PostData = {
+        const newPost: PostDataWithSettings = {
             id: Date.now(),
             author: currentAuthor,
             authorAvatar: avatarGame,
-            gameTag: "General",
-            timeAgo: "Vừa xong",
+            gameTag: community?.name ?? "General",
+            timeAgo: t('feed.justNow'),
             title: title || content.slice(0, 80) + (content.length > 80 ? "..." : ""),
             content,
             images: images.length > 0 ? images : undefined,
             files: files.length > 0 ? files : undefined,
-            tags: [],
+            tags,
             likes: 0,
             comments: 0,
+            privacy,
+            allowComments,
+            pinned,
+            communityId,
         };
         addPost(newPost);
     };
 
-    const handleEditPost = (
-        id: string | number,
-        data: { title: string; content: string; images?: string[]; files?: PostData["files"] }
-    ) => {
+    const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
-            title: data.title || data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
-            content: data.content,
-            images: data.images,
-            files: data.files,
+            ...data,
+            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
         });
     };
 
@@ -176,24 +66,84 @@ export const FeedList = () => {
         setHiddenAuthors((prev) => [...prev, author]);
     };
 
-    const filteredPosts = posts.filter((p) => !hiddenAuthors.includes(p.author));
+    const filteredPosts = posts
+        .filter((p) => !hiddenAuthors.includes(p.author))
+        .slice()
+        .sort((a, b) => Number(!!(b as PostDataWithSettings).pinned) - Number(!!(a as PostDataWithSettings).pinned));
+
+    const displayedPosts = filteredPosts.slice(0, displayLimit);
+    const hasMore = displayLimit < filteredPosts.length;
+
+    useEffect(() => {
+        if (!hasMore || isLoadingMore) return;
+        const el = sentinelRef.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    setIsLoadingMore(true);
+                    setTimeout(() => {
+                        setDisplayLimit((prev) => prev + 3);
+                        setIsLoadingMore(false);
+                    }, 500);
+                }
+            },
+            { threshold: 0.1, rootMargin: "150px" }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasMore, isLoadingMore]);
 
     return (
         <div className="w-full flex flex-col gap-3">
 
             {isLoggedIn && <CreatePostBox onPost={handleCreatePost} />}
 
-            {filteredPosts.length > 0 ? (
-                filteredPosts.map((post) => (
-                    <Post
-                        key={post.id}
-                        post={post}
-                        isOwner={post.author === currentAuthor}
-                        onDelete={deletePost}
-                        onEdit={handleEditPost}
-                        onUnfollowAuthor={handleUnfollowAuthor}
-                    />
-                ))
+            {displayedPosts.length > 0 ? (
+                <>
+                    {displayedPosts.map((post) => (
+                        <Post
+                            key={post.id}
+                            post={post}
+                            isOwner={post.author === currentAuthor}
+                            onDelete={deletePost}
+                            onEdit={handleEditPost}
+                            onUnfollowAuthor={handleUnfollowAuthor}
+                        />
+                    ))}
+
+                    <div ref={sentinelRef} className="w-full py-4 flex flex-col items-center justify-center gap-2">
+                        {isLoadingMore && (
+                            <div className="flex items-center gap-2.5 px-5 py-2.5 bg-surface/90 border border-border rounded-full shadow-sm text-sm font-semibold text-primary animate-pulse">
+                                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-base" />
+                                <span>{t('feed.loadingMore')}</span>
+                            </div>
+                        )}
+                        {!isLoadingMore && hasMore && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsLoadingMore(true);
+                                    setTimeout(() => {
+                                        setDisplayLimit((prev) => prev + 3);
+                                        setIsLoadingMore(false);
+                                    }, 400);
+                                }}
+                                className="px-5 py-2 text-xs font-semibold text-text-muted hover:text-text bg-surface-hover hover:bg-border/60 border border-border rounded-full transition-all"
+                            >
+                                {t('feed.loadMoreCount', { count: filteredPosts.length - displayLimit })}
+                            </button>
+                        )}
+                        {!hasMore && filteredPosts.length > 4 && (
+                            <div className="flex items-center gap-2 text-xs text-text-faint py-3 font-medium bg-surface/50 border border-border/50 rounded-xl px-4">
+                                <FontAwesomeIcon icon={faCircleCheck} className="text-primary" />
+                                <span>{t('feed.allLoaded')}</span>
+                            </div>
+                        )}
+                    </div>
+                </>
             ) : (
                 <div className="
                     w-full flex flex-col items-center justify-center gap-2 p-10
@@ -201,8 +151,8 @@ export const FeedList = () => {
                     text-text-muted text-sm
                 ">
                     <FontAwesomeIcon icon={faInbox} className="text-2xl text-text-faint mb-1" />
-                    <p className="font-semibold text-text">No posts here yet</p>
-                    <p className="text-text-faint text-center">Check back later or create a new post.</p>
+                    <p className="font-semibold text-text">{t('feed.emptyTitle')}</p>
+                    <p className="text-text-faint text-center">{t('feed.emptyDesc')}</p>
                 </div>
             )}
         </div>

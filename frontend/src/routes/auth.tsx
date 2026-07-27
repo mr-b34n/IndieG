@@ -9,9 +9,11 @@ import {
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
 import { useState } from 'react';
 
-import gameLogo from "../assets/logos/gg.png"
-import gameBgIllu from "../assets/bgs/game-illu-bg.webp";
-import googleLogo from "../assets/logos/gg.png";
+import {
+    APP_LOGO as gameLogo,
+    GAME_ILLU_BG as gameBgIllu,
+    GOOGLE_LOGO as googleLogo
+} from "@/shared/constants/images";
 import { STRENGTH_LEVELS, validatePassword, type PasswordValidationResult } from '../features/auth/helpers/passwordValidator';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { useAuthStore } from '@/features/auth';

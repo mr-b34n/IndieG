@@ -13,6 +13,7 @@ function RootComponent() {
         if (pathname !== '/') {
             navigate({to: '/', replace: true})
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
     return (
         <Fragment>

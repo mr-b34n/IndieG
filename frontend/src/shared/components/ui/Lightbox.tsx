@@ -16,22 +16,10 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-            if (e.key === "ArrowRight") showNext();
-            if (e.key === "ArrowLeft") showPrev();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentIndex]);
-
-    useEffect(() => {
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = "";
-        };
-    }, []);
+    const resetZoom = () => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+    };
 
     const showNext = () => {
         setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
@@ -43,10 +31,23 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         resetZoom();
     };
 
-    const resetZoom = () => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
-    };
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowRight") showNext();
+            if (e.key === "ArrowLeft") showPrev();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex]);
+
+    useEffect(() => {
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, []);
 
     const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.5, 4));
     const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.5, 1));
@@ -77,6 +78,8 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     return createPortal(
         <div 
             className="fixed inset-0 z-100 flex items-center justify-center animate-fade-in select-none"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onWheel={handleWheel}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -84,7 +87,10 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         >
             <div 
                 className="absolute inset-0 bg-black/90 backdrop-blur-sm cursor-zoom-out"
-                onClick={onClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                }}
             />
 
             <button

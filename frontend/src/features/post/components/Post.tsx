@@ -15,15 +15,10 @@ import {
     faLink,
     faTrash,
     faPen,
-    faFire,
-    faStar,
-    faUsers,
-    faSeedling,
-    faShieldHalved,
-    faCrown,
-    faGem,
     faFile,
     faDownload,
+    faLock,
+    faBan,
 } from "@fortawesome/free-solid-svg-icons"
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
 import { useRef, useState } from "react"
@@ -32,53 +27,15 @@ import { formatFileSize } from "../helpers/postAttachmentLimits"
 import EmojiBox from "@/shared/components/ui/EmojiBox"
 import { Lightbox } from "@/shared/components/ui/Lightbox"
 import { ReportModal } from "@/features/report"
+import { useBookmarksStore } from "@/features/bookmark"
 import { EditPostModal } from ".."
+import { RANK_CONFIG, getUserRankConfig, getRankLabel } from "../helpers/userRanks"
+import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
+import { useTranslation } from "@/shared/hooks/useTranslate"
+import { type PostFileAttachment, type PostData } from "../types";
+import { POST_TAG_CLASSES, POST_BADGE_MAP } from "../constants";
+import { getGameBySlug } from "@/features/game";
 
-const TAG_CLASSES = [
-    "bg-tag-1/10 text-tag-1",
-    "bg-tag-2/10 text-tag-2",
-    "bg-tag-3/10 text-tag-3",
-    "bg-tag-4/10 text-tag-4",
-    "bg-tag-5/10 text-tag-5",
-];
-
-const BADGE_MAP = {
-    foryou: { icon: faStar, label: "Recommended", classes: "text-tag-4 bg-tag-4/10 border border-tag-4/20" },
-    following: { icon: faUsers, label: "Following", classes: "text-primary bg-primary-soft border border-primary/20" },
-    hot: { icon: faFire, label: "Trending", classes: "text-accent-500 bg-accent-500/10 border border-accent-500/20" },
-};
-
-const RANK_MAP = {
-    rookie: { icon: faSeedling, label: "Rookie", classes: "bg-neutral-400 text-white" },
-    pro: { icon: faShieldHalved, label: "Pro", classes: "bg-success-500 text-white" },
-    master: { icon: faCrown, label: "Master", classes: "bg-primary text-white" },
-    legend: { icon: faGem, label: "Legend", classes: "bg-accent-500 text-white" },
-};
-
-export interface PostFileAttachment {
-    id: string;
-    name: string;
-    url: string;
-    size: number;
-    mimeType: string;
-}
-
-export interface PostData {
-    id: string | number;
-    author: string;
-    authorAvatar: string;
-    authorRank?: "rookie" | "pro" | "master" | "legend";
-    gameTag: string;
-    timeAgo: string;
-    title: string;
-    content: string;
-    images?: string[];
-    files?: PostFileAttachment[];
-    tags: string[];
-    likes: number;
-    comments: number;
-    tab?: "foryou" | "following" | "hot";
-}
 
 interface PostProps {
     post: PostData;
@@ -86,7 +43,7 @@ interface PostProps {
     onDelete?: (id: string | number) => void;
     onEdit?: (
         id: string | number,
-        data: { title: string; content: string; images?: string[]; files?: PostFileAttachment[] }
+        data: Partial<PostData>
     ) => void;
     onUnfollowAuthor?: (author: string) => void;
     isDetailView?: boolean;
@@ -178,9 +135,11 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
 };
 
 export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor, isDetailView = false }: PostProps) => {
+    const { t, language } = useTranslation();
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
-    const [bookmarked, setBookmarked] = useState(false);
+    const bookmarked = useBookmarksStore((state) => state.isBookmarked(post.id));
+    const toggleBookmark = useBookmarksStore((state) => state.toggleBookmark);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [showActionMenu, setShowActionMenu] = useState(false);
     const [showShareMenu, setShowShareMenu] = useState(false);
@@ -208,6 +167,12 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
     const handleNavigate = () => {
         if (isDetailView) return;
         navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
+    };
+
+    const handleAuthorClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const isMe = post.author === getCurrentAuthor();
+        navigate({ to: "/profile/$userId", params: { userId: isMe ? "me" : `@${post.author.toLowerCase().replace(/\s+/g, "_")}` } });
     };
 
     const handleCopyLink = async (e: React.MouseEvent) => {
@@ -251,12 +216,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
         setShowEditModal(true);
     };
 
-    const handleSaveEdit = (data: {
-        title: string;
-        content: string;
-        images?: string[];
-        files?: PostFileAttachment[];
-    }) => {
+    const handleSaveEdit = (data: Partial<PostData>) => {
         onEdit?.(post.id, data);
     };
 
@@ -305,33 +265,35 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
         setIsEmojiOpen(false);
     };
 
-    const badge = post.tab ? BADGE_MAP[post.tab] : null;
-    const rank = post.authorRank ? RANK_MAP[post.authorRank] : null;
+    const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
+    const rank = post.authorRank ? (RANK_CONFIG[post.authorRank] || getUserRankConfig(post.author)) : getUserRankConfig(post.author);
 
     return (
         <article
             onClick={handleNavigate}
             className={`
-            w-full overflow-hidden
-            bg-surface/90 backdrop-blur-sm
-            border border-border
-            rounded-2xl
-            shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-            dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
-            transition-all duration-200 ease-out
+            w-full ${(showActionMenu || showShareMenu || isEmojiOpen) ? "!overflow-visible relative z-[100]" : "overflow-hidden relative"}
+            bg-surface/95 backdrop-blur-sm
+            rounded-xl
+            shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_4px_12px_-5px_rgba(0,0,0,0.06)]
+            dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.40),0_4px_12px_-5px_rgba(0,0,0,0.20)]
+            hover:shadow-[0_16px_40px_-5px_rgba(0,0,0,0.18),0_6px_16px_-5px_rgba(0,0,0,0.10)]
+            dark:hover:shadow-[0_16px_40px_-5px_rgba(0,0,0,0.50),0_6px_16px_-5px_rgba(0,0,0,0.28)]
+            hover:-translate-y-0.5
+            transition-all duration-300 ease-out
             ${isDetailView ? "" : "cursor-pointer"}
         `}>
 
-            <div className="flex flex-row items-center gap-3 px-4 pt-4 pb-3">
-                <div className="relative shrink-0">
+            <div className="flex flex-row items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+                <div className="relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleAuthorClick}>
                     <img
                         src={post.authorAvatar}
                         alt={post.author}
-                        className="w-9 h-9 rounded-full object-cover ring-1 ring-border"
+                        className="w-8 h-8 rounded-full object-cover ring-1 ring-border"
                     />
                     {rank && (
                         <span
-                            title={rank.label}
+                            title={getRankLabel(rank, language)}
                             className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-surface text-[8px] ${rank.classes}`}
                         >
                             <FontAwesomeIcon icon={rank.icon} />
@@ -341,11 +303,11 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
 
                 <div className="flex flex-col flex-1 leading-tight min-w-0">
                     <div className="flex flex-row items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-[15px] text-text hover:underline">{post.author}</p>
+                        <p onClick={handleAuthorClick} className={`font-semibold text-[15px] hover:underline cursor-pointer ${rank?.textColor || "text-text"}`}>{post.author}</p>
 
                         {rank && (
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${rank.classes}`}>
-                                {rank.label}
+                                {getRankLabel(rank, language)}
                             </span>
                         )}
 
@@ -359,7 +321,16 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     <div className="flex flex-row items-center gap-1.5 text-xs text-text-faint mt-1">
                         <span>{post.timeAgo}</span>
                         <span>•</span>
-                        <span>{post.gameTag}</span>
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const gameInfo = getGameBySlug(post.gameTag);
+                                navigate({ to: `/game/${gameInfo.slug}` });
+                            }}
+                            className="hover:text-primary hover:underline transition-colors font-medium cursor-pointer"
+                        >
+                            {post.gameTag}
+                        </span>
                     </div>
                 </div>
 
@@ -377,31 +348,38 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     {showActionMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); }} />
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in py-1">
+                            <div
+                                className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in py-1"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {isOwner ? (
                                     <>
                                         <button onClick={handleEdit} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                             <FontAwesomeIcon icon={faPen} className="w-4" />
-                                            Edit Post
+                                            {t('post.edit')}
                                         </button>
                                         <button onClick={handleDelete} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/50">
                                             <FontAwesomeIcon icon={faTrash} className="w-4" />
-                                            Delete Post
+                                            {t('post.delete')}
                                         </button>
                                     </>
                                 ) : (
                                     <>
                                         <button onClick={handleNotInterested} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                             <FontAwesomeIcon icon={faEyeSlash} className="w-4" />
-                                            Not interested
+                                            {t('post.notInterested')}
                                         </button>
                                         <button onClick={handleUnfollow} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                             <FontAwesomeIcon icon={faUserMinus} className="w-4" />
-                                            Unfollow @{post.author}
+                                            {t('post.unfollow', { name: post.author })}
                                         </button>
                                         <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); setShowReportModal(true); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent-500 hover:bg-surface-hover transition-colors text-left mt-1 border-t border-border/50">
                                             <FontAwesomeIcon icon={faFlag} className="w-4" />
-                                            Report post
+                                            {t('post.report')}
+                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); alert("Đã chặn người dùng: " + post.author); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium">
+                                            <FontAwesomeIcon icon={faBan} className="w-4" />
+                                            Chặn người dùng
                                         </button>
                                     </>
                                 )}
@@ -426,7 +404,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                                 key={tag}
                                 className={`px-2 py-0.5 rounded-full text-xs font-medium
                                     hover:opacity-75 transition-opacity
-                                    ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
+                                    ${POST_TAG_CLASSES[idx % POST_TAG_CLASSES.length]}`}
                             >
                                 #{tag}
                             </span>
@@ -471,17 +449,31 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     </button>
                 </div>
 
-                <button
-                    onClick={(e) => { e.stopPropagation(); if (!isDetailView) handleNavigate(); }}
-                    className="
-                    flex flex-row items-center gap-1.5 px-3 py-1.5
-                    rounded-full text-sm font-medium
-                    text-text-muted hover:bg-surface-hover hover:text-text
-                    transition-colors duration-150
-                ">
-                    <FontAwesomeIcon icon={faComment} className="text-xs" />
-                    <span>{post.comments}</span>
-                </button>
+                {post.allowComments === false ? (
+                    <div
+                        className="
+                        flex flex-row items-center gap-1.5 px-3 py-1.5
+                        rounded-full text-sm font-medium
+                        text-text-faint bg-surface-hover/40 cursor-not-allowed
+                    "
+                        title={t('post.commentsDisabledTitle')}
+                    >
+                        <FontAwesomeIcon icon={faLock} className="text-xs" />
+                        <span>{t('post.commentsDisabled')}</span>
+                    </div>
+                ) : (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); if (!isDetailView) handleNavigate(); }}
+                        className="
+                        flex flex-row items-center gap-1.5 px-3 py-1.5
+                        rounded-full text-sm font-medium
+                        text-text-muted hover:bg-surface-hover hover:text-text
+                        transition-colors duration-150
+                    ">
+                        <FontAwesomeIcon icon={faComment} className="text-xs" />
+                        <span>{post.comments}</span>
+                    </button>
+                )}
 
                 <div className="relative">
                     <button
@@ -493,24 +485,27 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                         transition-colors duration-150
                     ">
                         <FontAwesomeIcon icon={faShare} className="text-xs" />
-                        <span>Share</span>
+                        <span>{t('post.share')}</span>
                     </button>
 
                     {showShareMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowShareMenu(false); }} />
-                            <div className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-fade-in py-1">
+                            <div
+                                className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-fade-in py-1"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                     <FontAwesomeIcon icon={faLink} className="w-4" />
-                                    {linkCopied ? "Copied!" : "Copy Link"}
+                                    {linkCopied ? t('post.copied') : t('post.copyLink')}
                                 </button>
                                 <button onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                     <FontAwesomeIcon icon={faTwitter} className="w-4 text-[#1DA1F2]" />
-                                    Share to X
+                                    {t('post.shareX')}
                                 </button>
                                 <button onClick={handleShareFacebook} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                     <FontAwesomeIcon icon={faFacebook} className="w-4 text-[#1877F2]" />
-                                    Share to Facebook
+                                    {t('post.shareFB')}
                                 </button>
                             </div>
                         </>
@@ -520,7 +515,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        setBookmarked((prev) => !prev);
+                        toggleBookmark(post.id);
                     }}
                     className={`ml-auto w-8 h-8 flex items-center justify-center
                         rounded-full transition-colors duration-150
@@ -553,6 +548,9 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     initialTitle={post.title}
                     initialContent={post.content}
                     initialAttachments={post}
+                    initialPrivacy={post.privacy}
+                    initialAllowComments={post.allowComments ?? true}
+                    initialPinned={post.pinned ?? false}
                     onClose={() => setShowEditModal(false)}
                     onSave={handleSaveEdit}
                 />

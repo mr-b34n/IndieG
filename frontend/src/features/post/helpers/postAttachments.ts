@@ -1,5 +1,6 @@
 
-import type { PostData, PostFileAttachment } from "../components/Post";
+import type { PostData, PostFileAttachment } from "../types";
+
 import { isBlobUrl } from "./postAttachmentLimits";
 
 export interface EditableAttachment {
