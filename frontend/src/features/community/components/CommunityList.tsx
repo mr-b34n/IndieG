@@ -11,7 +11,9 @@ import {
     faXmark,
     faGamepad,
     faArrowRight,
-    faHashtag,
+    faFilter,
+    faChevronDown,
+    faChevronUp,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
@@ -146,6 +148,7 @@ export const CommunityList = () => {
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [search, setSearch] = useState("");
+    const [showAllCategories, setShowAllCategories] = useState(false);
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
@@ -286,41 +289,70 @@ export const CommunityList = () => {
                     </div>
                 </div>
 
-                {/* Categories Horizontal Pills */}
+                {/* Categories Filter Bar */}
                 {categories.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-2 border-t border-border/50">
-                        <span className="text-xs font-bold text-text-faint shrink-0 mr-1 flex items-center gap-1">
-                            <FontAwesomeIcon icon={faHashtag} /> {t('community.category')}
-                        </span>
-                        <button
-                            onClick={() => setActiveCategory(null)}
-                            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                                activeCategory === null
-                                    ? "bg-text text-bg shadow-sm"
-                                    : "bg-surface-hover text-text-muted border border-border/60 hover:text-text hover:border-border"
-                            }`}
-                        >
-                            {t('community.allCommunities', { count: communities.length })}
-                        </button>
-                        {categories.map((cat) => {
-                            const count = communities.filter((c) => c.category === cat).length;
-                            return (
+                    <div className="flex flex-col gap-3 pt-3 border-t border-border/60">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
+                                <FontAwesomeIcon icon={faFilter} className="text-primary" />
+                                <span>{t('community.category')}:</span>
+                                <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold border border-primary/20">
+                                    {activeCategory ? activeCategory : t('community.allCommunities', { count: communities.length })}
+                                </span>
+                                {activeCategory && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveCategory(null)}
+                                        className="text-[11px] text-text-faint hover:text-rose-500 underline ml-1 cursor-pointer"
+                                    >
+                                        Xóa bộ lọc
+                                    </button>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowAllCategories(!showAllCategories)}
+                                className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
+                            >
+                                <span>{showAllCategories ? "Thu gọn" : `Bộ lọc thể loại (${categories.length})`}</span>
+                                <FontAwesomeIcon icon={showAllCategories ? faChevronUp : faChevronDown} className="text-[10px]" />
+                            </button>
+                        </div>
+
+                        {showAllCategories && (
+                            <div className="flex flex-wrap items-center gap-2 p-3 bg-surface-hover/50 rounded-2xl border border-border/60 animate-fade-in">
                                 <button
-                                    key={cat}
-                                    onClick={() => setActiveCategory(cat)}
-                                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                        activeCategory === cat
+                                    onClick={() => setActiveCategory(null)}
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                        activeCategory === null
                                             ? "bg-primary text-white shadow-sm"
-                                            : "bg-surface-hover text-text-muted border border-border/60 hover:text-text hover:border-border"
+                                            : "bg-surface text-text-muted border border-border hover:text-text hover:border-primary/50"
                                     }`}
                                 >
-                                    <span>{cat}</span>
-                                    <span className={`text-[10px] px-1.5 rounded-full ${activeCategory === cat ? "bg-white/20 text-white" : "bg-border text-text-faint"}`}>
-                                        {count}
-                                    </span>
+                                    {t('community.allCommunities', { count: communities.length })}
                                 </button>
-                            );
-                        })}
+                                {categories.map((cat) => {
+                                    const count = communities.filter((c) => c.category === cat).length;
+                                    return (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setActiveCategory(cat)}
+                                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                                activeCategory === cat
+                                                    ? "bg-primary text-white shadow-sm"
+                                                    : "bg-surface text-text-muted border border-border hover:text-text hover:border-primary/50"
+                                            }`}
+                                        >
+                                            <span>{cat}</span>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${activeCategory === cat ? "bg-white/20 text-white" : "bg-surface-hover text-text-faint"}`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

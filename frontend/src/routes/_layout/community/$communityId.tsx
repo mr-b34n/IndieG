@@ -13,10 +13,10 @@ import {
 
 import avatarGame from '../../../assets/logos/raft-logo.png';
 import { useTheme } from '@/shared/hooks/useTheme';
+import { useTranslation } from '@/shared/hooks/useTranslate';
 import { AttachmentPicker, getCurrentAuthor, prepareAttachmentsForSave, revokeAttachmentUrls, usePostsStore, type EditableAttachment, type PostData, Post } from '@/features/post';
 import { useAuthStore } from '@/features/auth';
 import { useCommunitiesStore } from '@/features/community';
-import { useTranslation } from '@/shared/hooks/useTranslate';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetail,
@@ -157,10 +157,11 @@ const CreateCommunityPostBox = ({
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setSelectedTag(tab.id)}
-                                    className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${selectedTag === tab.id
+                                    className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                        selectedTag === tab.id
                                             ? "bg-primary/20 text-primary border border-primary/40 font-bold"
                                             : "bg-surface text-text-muted border border-border/60 hover:text-text hover:border-border"
-                                        }`}
+                                    }`}
                                 >
                                     {tab.label}
                                 </button>
@@ -196,10 +197,11 @@ const CreateCommunityPostBox = ({
 
 function CommunityDetail() {
     useTheme("Community");
+    const { t } = useTranslation();
 
     const { communityId } = Route.useParams();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
 
@@ -253,7 +255,7 @@ function CommunityDetail() {
             files: files.length > 0 ? files : undefined,
             tags: [selectedTag, community.name],
             likes: 0,
-            comments: 0
+            comments: 0,
         };
         addPost(newPost);
     };
@@ -299,84 +301,84 @@ function CommunityDetail() {
                                     dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
                                 "
                 >
-                    {/* Phần Banner */}
-                    <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
-                        {/* Đã BỎ z-50 khỏi ảnh backdrop */}
-                        {community.backdrop && (
-                            <img
-                                src={community.backdrop}
-                                alt={`${community.name} backdrop`}
-                                className="absolute inset-0 w-full h-full object-cover"
-                            />
-                        )}
+                        {/* Phần Banner */}
+                        <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
+                            {/* Đã BỎ z-50 khỏi ảnh backdrop */}
+                            {community.backdrop && (
+                                <img
+                                    src={community.backdrop}
+                                    alt={`${community.name} backdrop`}
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                            )}
 
-                        {/* Thêm z-10 để nút Featured luôn nổi trên backdrop */}
-                        {community.featured && (
-                            <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
-                                <FontAwesomeIcon icon={faFire} className="text-[9px]" />
-                                Featured
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Phần Nội dung */}
-                    <div className="flex flex-col px-5 pb-5 -mt-9">
-                        <div className="flex flex-row items-end justify-between">
-                            {/* Thêm relative z-10 để Avatar luôn nổi lên trên ranh giới backdrop */}
-                            <img
-                                src={community.logo}
-                                alt={community.name}
-                                className="relative z-10 w-20 h-20 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-sm"
-                            />
-                            <button
-                                onClick={() => toggleJoin(community.id)}
-                                className={`mb-1 flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 ${community.joined
-                                    ? "bg-surface-hover text-text-muted hover:bg-accent-500/10 hover:text-accent-500"
-                                    : "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(0,170,255,0.3)]"
-                                    }`}
-                            >
-                                <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-xs" />
-                                {community.joined ? "Joined" : "Join"}
-                            </button>
+                            {/* Thêm z-10 để nút Featured luôn nổi trên backdrop */}
+                            {community.featured && (
+                                <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
+                                    <FontAwesomeIcon icon={faFire} className="text-[9px]" />
+                                    Featured
+                                </span>
+                            )}
                         </div>
 
-                        <div className="flex flex-col mt-3 gap-0.5">
-                            <p className="font-bold text-xl text-text">
-                                {community.name}
-                            </p>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-text-faint">
-                                {community.category}
-                            </p>
-                        </div>
-
-                        <p className="text-sm text-text-muted mt-2 leading-snug">
-                            {community.description}
-                        </p>
-
-                        <div className="flex flex-row items-center gap-4 mt-3 text-[13px] text-text-faint">
-                            <span className="flex flex-row items-center gap-1.5">
-                                <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                                {community.members.toLocaleString()} members
-                            </span>
-                            <span className="flex flex-row items-center gap-1.5 text-success-500 font-medium">
-                                <FontAwesomeIcon icon={faCircle} className="text-[6px]" />
-                                {community.onlineNow} online
-                            </span>
-                        </div>
-
-                        {community.tags.length > 0 && (
-                            <div className="flex flex-row gap-1.5 flex-wrap mt-3">
-                                {community.tags.map((tag, idx) => (
-                                    <span
-                                        key={tag}
-                                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
+                        {/* Phần Nội dung */}
+                        <div className="flex flex-col px-5 pb-5 -mt-9">
+                            <div className="flex flex-row items-end justify-between">
+                                {/* Thêm relative z-10 để Avatar luôn nổi lên trên ranh giới backdrop */}
+                                <img
+                                    src={community.logo}
+                                    alt={community.name}
+                                    className="relative z-10 w-20 h-20 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-sm"
+                                />
+                                <button
+                                    onClick={() => toggleJoin(community.id)}
+                                    className={`mb-1 flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 ${community.joined
+                                        ? "bg-surface-hover text-text-muted hover:bg-accent-500/10 hover:text-accent-500"
+                                        : "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(0,170,255,0.3)]"
+                                        }`}
+                                >
+                                    <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-xs" />
+                                    {community.joined ? "Joined" : "Join"}
+                                </button>
                             </div>
-                        )}
-                    </div>
+
+                            <div className="flex flex-col mt-3 gap-0.5">
+                                <p className="font-bold text-xl text-text">
+                                    {community.name}
+                                </p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-text-faint">
+                                    {community.category}
+                                </p>
+                            </div>
+
+                            <p className="text-sm text-text-muted mt-2 leading-snug">
+                                {community.description}
+                            </p>
+
+                            <div className="flex flex-row items-center gap-4 mt-3 text-[13px] text-text-faint">
+                                <span className="flex flex-row items-center gap-1.5">
+                                    <FontAwesomeIcon icon={faUsers} className="text-xs" />
+                                    {community.members.toLocaleString()} members
+                                </span>
+                                <span className="flex flex-row items-center gap-1.5 text-success-500 font-medium">
+                                    <FontAwesomeIcon icon={faCircle} className="text-[6px]" />
+                                    {community.onlineNow} online
+                                </span>
+                            </div>
+
+                            {community.tags.length > 0 && (
+                                <div className="flex flex-row gap-1.5 flex-wrap mt-3">
+                                    {community.tags.map((tag, idx) => (
+                                        <span
+                                            key={tag}
+                                            className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                 </div>
 
                 {/* Thread / Tag Selector Bar */}
@@ -389,14 +391,16 @@ function CommunityDetail() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveThread(tab.id)}
-                                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${activeThread === tab.id
+                                className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                    activeThread === tab.id
                                         ? "bg-primary text-white shadow-md shadow-primary/25"
                                         : "bg-surface-hover text-text-muted hover:bg-border hover:text-text border border-border/50"
-                                    }`}
+                                }`}
                             >
                                 <span>{tab.label}</span>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeThread === tab.id ? "bg-white/20 text-white font-extrabold" : "bg-border text-text-faint font-semibold"
-                                    }`}>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                    activeThread === tab.id ? "bg-white/20 text-white font-extrabold" : "bg-border text-text-faint font-semibold"
+                                }`}>
                                     {count}
                                 </span>
                             </button>

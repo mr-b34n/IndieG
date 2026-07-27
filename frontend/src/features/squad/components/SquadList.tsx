@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faUsers,
@@ -7,10 +7,13 @@ import {
     faGamepad,
     faFilter,
     faRocket,
+    faChevronDown,
+    faChevronUp,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHubspot } from "@fortawesome/free-brands-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useSquadStore } from "../store/useSquadStore";
+import { useGameStore } from "@/features/game/store/useGameStore";
 import { GAME_FILTERS } from "../constants";
 import { SquadCard } from "./SquadCard";
 import { CreateSquadModal } from "./CreateSquadModal";
@@ -26,8 +29,23 @@ export const SquadList = () => {
         setFilterGame,
         setSearchQuery,
     } = useSquadStore();
+    const followedSlugs = useGameStore((state) => state.followedSlugs);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [showAllGames, setShowAllGames] = useState(false);
+
+    const displayedGames = useMemo(() => {
+        if (showAllGames) return GAME_FILTERS;
+        const defaultPlayedGames = ["CS2", "Valorant", "League of Legends", "Dota 2", "PUBG", "Red Dead Redemption 2"];
+        return GAME_FILTERS.filter((game) => {
+            if (game === "all" || game === filterGame) return true;
+            const slug = game.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            const isFollowed = followedSlugs.some((s) => s.includes(slug) || slug.includes(s));
+            if (isFollowed) return true;
+            if (followedSlugs.length === 0 && defaultPlayedGames.includes(game)) return true;
+            return false;
+        });
+    }, [showAllGames, filterGame, followedSlugs]);
 
     const filteredSquads = squads.filter((squad) => {
         if (activeTab === "my-squads" && !squad.isMySquad) return false;
@@ -129,18 +147,41 @@ export const SquadList = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    <span className="text-xs font-bold text-text-muted flex items-center gap-1.5 shrink-0 mr-1">
+            <div className="flex flex-col gap-3 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
                         <FontAwesomeIcon icon={faGamepad} className="text-primary" />
-                        {t('squad.filterGame')}
-                    </span>
-                    {GAME_FILTERS.map((game) => (
+                        <span>{t('squad.filterGame')}:</span>
+                        <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold border border-primary/20">
+                            {filterGame === "all" ? `🔥 ${t('squad.allGames')}` : filterGame}
+                        </span>
+                        {filterGame !== "all" && (
+                            <button
+                                type="button"
+                                onClick={() => setFilterGame("all")}
+                                className="text-[11px] text-text-faint hover:text-rose-500 underline ml-1 cursor-pointer"
+                            >
+                                Xóa bộ lọc
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowAllGames(!showAllGames)}
+                        className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                    >
+                        <span>{showAllGames ? "Thu gọn" : `Tất cả game (${GAME_FILTERS.length - 1})`}</span>
+                        <FontAwesomeIcon icon={showAllGames ? faChevronUp : faChevronDown} className="text-[10px]" />
+                    </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 p-3 bg-surface-hover/50 rounded-2xl border border-border/60 animate-fade-in">
+                    {displayedGames.map((game) => (
                         <button
                             key={game}
                             type="button"
                             onClick={() => setFilterGame(game)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border cursor-pointer ${
                                 filterGame === game
                                     ? "bg-primary text-white border-primary shadow-2xs"
                                     : "bg-surface hover:bg-surface-hover text-text-muted border-border"

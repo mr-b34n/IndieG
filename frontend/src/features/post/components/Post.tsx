@@ -28,10 +28,13 @@ import { Lightbox } from "@/shared/components/ui/Lightbox"
 import { ReportModal } from "@/features/report"
 import { useBookmarksStore } from "@/features/bookmark"
 import { EditPostModal } from ".."
-import { RANK_CONFIG, getUserRankConfig } from "../helpers/userRanks"
+import { RANK_CONFIG, getUserRankConfig, getRankLabel } from "../helpers/userRanks"
+import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
 import { useTranslation } from "@/shared/hooks/useTranslate"
 import { type PostFileAttachment, type PostData } from "../types";
 import { POST_TAG_CLASSES, POST_BADGE_MAP } from "../constants";
+import { getGameBySlug } from "@/features/game";
+
 
 interface PostProps {
     post: PostData;
@@ -131,7 +134,7 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
 };
 
 export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor, isDetailView = false }: PostProps) => {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
     const bookmarked = useBookmarksStore((state) => state.isBookmarked(post.id));
@@ -163,6 +166,12 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
     const handleNavigate = () => {
         if (isDetailView) return;
         navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
+    };
+
+    const handleAuthorClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const isMe = post.author === getCurrentAuthor();
+        navigate({ to: "/profile/$userId", params: { userId: isMe ? "me" : `@${post.author.toLowerCase().replace(/\s+/g, "_")}` } });
     };
 
     const handleCopyLink = async (e: React.MouseEvent) => {
@@ -264,7 +273,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
             className={`
             w-full ${(showActionMenu || showShareMenu || isEmojiOpen) ? "!overflow-visible relative z-[100]" : "overflow-hidden relative"}
             bg-surface/95 backdrop-blur-sm
-            rounded-2xl
+            rounded-xl
             shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_4px_12px_-5px_rgba(0,0,0,0.06)]
             dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.40),0_4px_12px_-5px_rgba(0,0,0,0.20)]
             hover:shadow-[0_16px_40px_-5px_rgba(0,0,0,0.18),0_6px_16px_-5px_rgba(0,0,0,0.10)]
@@ -274,16 +283,16 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
             ${isDetailView ? "" : "cursor-pointer"}
         `}>
 
-            <div className="flex flex-row items-center gap-3 px-4 pt-4 pb-3">
-                <div className="relative shrink-0">
+            <div className="flex flex-row items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+                <div className="relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleAuthorClick}>
                     <img
                         src={post.authorAvatar}
                         alt={post.author}
-                        className="w-9 h-9 rounded-full object-cover ring-1 ring-border"
+                        className="w-8 h-8 rounded-full object-cover ring-1 ring-border"
                     />
                     {rank && (
                         <span
-                            title={rank.label}
+                            title={getRankLabel(rank, language)}
                             className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-surface text-[8px] ${rank.classes}`}
                         >
                             <FontAwesomeIcon icon={rank.icon} />
@@ -293,11 +302,11 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
 
                 <div className="flex flex-col flex-1 leading-tight min-w-0">
                     <div className="flex flex-row items-center gap-2 flex-wrap">
-                        <p className={`font-semibold text-[15px] hover:underline ${rank?.textColor || "text-text"}`}>{post.author}</p>
+                        <p onClick={handleAuthorClick} className={`font-semibold text-[15px] hover:underline cursor-pointer ${rank?.textColor || "text-text"}`}>{post.author}</p>
 
                         {rank && (
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${rank.classes}`}>
-                                {rank.label}
+                                {getRankLabel(rank, language)}
                             </span>
                         )}
 
@@ -311,7 +320,16 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     <div className="flex flex-row items-center gap-1.5 text-xs text-text-faint mt-1">
                         <span>{post.timeAgo}</span>
                         <span>•</span>
-                        <span>{post.gameTag}</span>
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const gameInfo = getGameBySlug(post.gameTag);
+                                navigate({ to: `/game/${gameInfo.slug}` });
+                            }}
+                            className="hover:text-primary hover:underline transition-colors font-medium cursor-pointer"
+                        >
+                            {post.gameTag}
+                        </span>
                     </div>
                 </div>
 

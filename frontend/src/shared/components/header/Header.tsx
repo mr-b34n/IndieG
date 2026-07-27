@@ -32,6 +32,7 @@ export const Header = () => {
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
+    const customAvatar = useAuthStore((state) => state.customAvatar);
     const toggleMockLogin = useAuthStore((state) => state.toggleMockLogin);
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
@@ -47,19 +48,19 @@ export const Header = () => {
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
     return (
-        <header className="w-full sticky top-0 z-20 flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3">
+        <header className="w-full sticky top-0 z-20 flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-1.5">
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 order-1">
                 <button
                     onClick={toggleLeft}
                     title={t('common.menu')}
-                    className={`lg:hidden shrink-0 ${floatCard} w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary hover:bg-primary-soft transition-colors cursor-pointer`}
+                    className={`lg:hidden shrink-0 ${floatCard} w-8 h-8 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary hover:bg-primary-soft transition-colors cursor-pointer`}
                 >
                     <FontAwesomeIcon icon={faBars} className="text-sm sm:text-base" />
                 </button>
 
                 <div
-                    className={`shrink-0 ${floatCard} rounded-xl sm:rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2
+                    className={`shrink-0 ${floatCard} rounded-xl sm:rounded-2xl px-3 sm:px-4 py-1 sm:py-1.5
                         cursor-pointer hover:-translate-y-0.5
                         hover:shadow-[0_6px_24px_rgba(124,77,255,0.18)]`}
                     onClick={() => navigate({ to: '/' })}
@@ -70,16 +71,16 @@ export const Header = () => {
                 </div>
             </div>
 
-            <div className="w-full md:w-auto flex-1 flex justify-center order-3 md:order-2 mt-1.5 md:mt-0">
+            <div className="w-full md:w-auto flex-1 flex justify-center order-3 md:order-2 mt-1 md:mt-0">
                 <Search />
             </div>
 
-            <div className={`shrink-0 ${floatCard} rounded-full px-1.5 sm:px-2 py-1.5 sm:py-2
+            <div className={`shrink-0 ${floatCard} rounded-full px-1.5 sm:px-2 py-1 sm:py-1.5
                 flex flex-row items-center gap-1 order-2 md:order-3`}>
                 <button
                     onClick={toggleRight}
                     title={t('common.openExplore')}
-                    className="xl:hidden w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full
+                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-full
                         text-primary bg-primary/10 hover:bg-primary/20
                         transition-colors duration-150 cursor-pointer shrink-0"
                 >
@@ -89,7 +90,7 @@ export const Header = () => {
                 <button
                     onClick={toggleLanguage}
                     title={t('common.switchLanguage')}
-                    className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full
+                    className="w-8 h-8 flex items-center justify-center rounded-full
                         text-text-muted
                         hover:bg-primary-soft hover:text-primary
                         transition-colors duration-150 cursor-pointer shrink-0"
@@ -100,7 +101,7 @@ export const Header = () => {
                 <button
                     onClick={toggleTheme}
                     title={theme === "light" ? t('common.switchThemeDark') : t('common.switchThemeLight')}
-                    className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full
+                    className="w-8 h-8 flex items-center justify-center rounded-full
                         text-text-muted
                         hover:bg-primary-soft hover:text-primary
                         transition-colors duration-150 cursor-pointer shrink-0"
@@ -113,7 +114,7 @@ export const Header = () => {
                         <button
                             onClick={() => setShowNotifications(!showNotifications)}
                             title={t('notification.title')}
-                            className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full
+                            className="relative w-8 h-8 flex items-center justify-center rounded-full
                                 text-text-muted
                                 hover:bg-primary-soft hover:text-primary
                                 transition-colors duration-150 cursor-pointer"
@@ -135,7 +136,7 @@ export const Header = () => {
                     <button
                         onClick={toggleMockLogin}
                         title={isLoggedIn ? "[DEV] Mock Logout" : "[DEV] Mock Login"}
-                        className={`w-9 h-9 flex items-center justify-center rounded-full
+                        className={`w-8 h-8 flex items-center justify-center rounded-full
                             transition-colors duration-150 cursor-pointer
                             ${isLoggedIn
                                 ? "text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
@@ -152,7 +153,7 @@ export const Header = () => {
                 {!isLoggedIn && (
                     <button
                         onClick={() => navigate({ to: "/auth" })}
-                        className="h-8 sm:h-9 px-3 sm:px-4 ml-0.5 sm:ml-1 flex items-center justify-center rounded-full
+                        className="h-8 px-3 sm:px-4 ml-0.5 sm:ml-1 flex items-center justify-center rounded-full
                             bg-primary text-white font-semibold text-xs sm:text-sm
                             hover:bg-primary-hover shadow-sm transition-colors duration-150 cursor-pointer shrink-0"
                     >
@@ -161,10 +162,10 @@ export const Header = () => {
                 )}
                 {isLoggedIn && (
                     <img
-                        src={user?.user_metadata?.avatar_url ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
+                        src={customAvatar ?? user?.user_metadata?.avatar_url ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
                         alt="Profile"
-                        onClick={() => user && navigate({ to: "/profile/$userId", params: { userId: user.id } })}
-                        className="w-8 h-8 sm:w-9 sm:h-9 ml-0.5 sm:ml-1 rounded-full object-cover ring-2 ring-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => navigate({ to: "/profile/$userId", params: { userId: "me" } })}
+                        className="w-8 h-8 ml-0.5 sm:ml-1 rounded-full object-cover ring-2 ring-border shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                     />
                 )}
             </div>

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
 import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 import avatarUser from "../../../assets/logos/raft-logo.png";
 import { useAuthStore } from "@/features/auth";
@@ -10,7 +11,7 @@ import { usePostsStore } from "../store/usePostsStore";
 import { useNotificationStore } from "@/features/notification/store/useNotificationStore";
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
-import { getUserRankConfig } from "../helpers/userRanks";
+import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 
 // Chỉ cho phép đính kèm ảnh trong bình luận, tối đa 2MB/ảnh, không hỗ trợ gửi file khác.
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -48,6 +49,7 @@ interface CommentItemProps {
  * Giới hạn: chỉ ảnh, tối đa MAX_COMMENT_IMAGE_SIZE, không cho phép file khác.
  */
 function useCommentImageAttachment() {
+    const { t } = useTranslation();
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -65,12 +67,12 @@ function useCommentImageAttachment() {
         if (!selected) return;
 
         if (!selected.type.startsWith("image/")) {
-            setError("Chỉ hỗ trợ đính kèm file ảnh.");
+            setError(t('comment.errorOnlyImage'));
             return;
         }
 
         if (selected.size > MAX_COMMENT_IMAGE_SIZE) {
-            setError("Ảnh không được vượt quá 2MB.");
+            setError(t('comment.errorMaxSize'));
             return;
         }
 
@@ -122,19 +124,22 @@ const CommentImageInput = ({ inputRef, onSelect }: { inputRef: React.RefObject<H
     />
 );
 
-const CommentImagePreview = ({ url, onRemove }: { url: string; onRemove: () => void }) => (
-    <div className="relative w-20 h-20 group">
-        <img src={url} alt="Ảnh đính kèm" className="w-20 h-20 object-cover rounded-xl border border-border" />
-        <button
-            type="button"
-            onClick={onRemove}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-surface border border-border text-text-muted hover:text-accent-500 hover:border-accent-500/50 shadow-sm"
-            title="Gỡ ảnh"
-        >
-            <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
-        </button>
-    </div>
-);
+const CommentImagePreview = ({ url, onRemove }: { url: string; onRemove: () => void }) => {
+    const { t } = useTranslation();
+    return (
+        <div className="relative w-20 h-20 group">
+            <img src={url} alt={t('comment.attachedImage')} className="w-20 h-20 object-cover rounded-xl border border-border" />
+            <button
+                type="button"
+                onClick={onRemove}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-surface border border-border text-text-muted hover:text-accent-500 hover:border-accent-500/50 shadow-sm"
+                title={t('comment.removeImage')}
+            >
+                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+            </button>
+        </div>
+    );
+};
 
 const MENTION_USERS = [
     "ProGamer99",
@@ -180,7 +185,7 @@ const renderCommentContent = (text: string) => {
                 <span
                     key={idx}
                     className={`${rankConfig.textColor} hover:underline cursor-pointer transition-colors inline-block font-bold`}
-                    title={`Mentioned user ${part} (${rankConfig.label})`}
+                    title={`Mentioned user ${part} (${getRankLabel(rankConfig)})`}
                 >
                     {part}
                 </span>
@@ -276,7 +281,7 @@ const MentionTextArea = ({
                                         <span className={`truncate ${rankConfig.textColor}`}>@{user}</span>
                                     </div>
                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${rankConfig.classes} shrink-0`}>
-                                        {rankConfig.label}
+                                        {getRankLabel(rankConfig)}
                                     </span>
                                 </button>
                             );
@@ -348,6 +353,7 @@ const CommentItem = ({
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     // Menu & Edit states
     const [showMenu, setShowMenu] = useState(false);
@@ -438,13 +444,13 @@ const CommentItem = ({
                                 </p>
                                 <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.author).classes}`}>
                                     <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
-                                    {getUserRankConfig(comment.author).label}
+                                    {getRankLabel(getUserRankConfig(comment.author))}
                                 </span>
                                 <span className="text-xs text-text-faint">· {comment.timeAgo}</span>
                                 {comment.pinned && (
                                     <span 
                                         className="inline-flex items-center justify-center w-5 h-5 text-primary bg-primary/10 rounded-full"
-                                        title="Bình luận đã ghim"
+                                        title={t('comment.pinnedBadge')}
                                     >
                                         <FontAwesomeIcon icon={faThumbtack} className="text-[10px]" />
                                     </span>
@@ -460,7 +466,7 @@ const CommentItem = ({
                                         setShowMenu((prev) => !prev);
                                     }}
                                     className="w-7 h-7 flex items-center justify-center rounded-full text-text-faint hover:text-text hover:bg-surface-hover transition-colors opacity-70 group-hover:opacity-100 focus:opacity-100"
-                                    title="Tùy chọn bình luận"
+                                    title={t('comment.options')}
                                 >
                                     <FontAwesomeIcon icon={faEllipsis} className="text-xs" />
                                 </button>
@@ -481,7 +487,7 @@ const CommentItem = ({
                                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left"
                                             >
                                                 <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={`w-3.5 ${copied ? "text-success-500" : ""}`} />
-                                                <span>{copied ? "Đã sao chép!" : "Sao chép bình luận"}</span>
+                                                <span>{copied ? t('comment.copied') : t('comment.copy')}</span>
                                             </button>
 
                                             {isAuthor && (
@@ -495,7 +501,7 @@ const CommentItem = ({
                                                     className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left"
                                                 >
                                                     <FontAwesomeIcon icon={faPen} className="w-3.5" />
-                                                    <span>Chỉnh sửa</span>
+                                                    <span>{t('comment.edit')}</span>
                                                 </button>
                                             )}
 
@@ -505,7 +511,7 @@ const CommentItem = ({
                                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left"
                                             >
                                                 <FontAwesomeIcon icon={faThumbtack} className="w-3.5" />
-                                                <span>{comment.pinned ? "Bỏ ghim" : "Ghim bình luận"}</span>
+                                                <span>{comment.pinned ? t('comment.unpin') : t('comment.pin')}</span>
                                             </button>
 
                                             <button
@@ -517,7 +523,7 @@ const CommentItem = ({
                                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left border-t border-border/40 mt-0.5 pt-2"
                                             >
                                                 <FontAwesomeIcon icon={faFlag} className="w-3.5 text-accent-500" />
-                                                <span>Báo cáo bình luận</span>
+                                                <span>{t('comment.report')}</span>
                                             </button>
 
                                             <button
@@ -526,7 +532,7 @@ const CommentItem = ({
                                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} className="w-3.5" />
-                                                <span>Xóa bình luận</span>
+                                                <span>{t('comment.delete')}</span>
                                             </button>
                                         </div>
                                     </>
@@ -553,7 +559,7 @@ const CommentItem = ({
                                         onClick={() => setIsEditing(false)}
                                         className="px-3 py-1 rounded-full text-xs font-semibold text-text-muted hover:bg-surface transition-colors"
                                     >
-                                        Hủy
+                                        {t('comment.cancel')}
                                     </button>
                                     <button
                                         type="button"
@@ -561,7 +567,7 @@ const CommentItem = ({
                                         disabled={!editText.trim()}
                                         className="px-3 py-1 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary-hover disabled:opacity-50 transition-colors"
                                     >
-                                        Lưu
+                                        {t('comment.save')}
                                     </button>
                                 </div>
                             </div>
@@ -573,7 +579,7 @@ const CommentItem = ({
                         {comment.image && (
                             <img
                                 src={comment.image}
-                                alt="Ảnh đính kèm"
+                                alt={t('comment.attachedImage')}
                                 className="mt-2 max-w-[220px] max-h-56 object-cover rounded-xl border border-border cursor-pointer hover:opacity-95 transition-opacity"
                             />
                         )}
@@ -595,7 +601,7 @@ const CommentItem = ({
                                 className={`flex flex-row items-center gap-1.5 hover:text-primary transition-colors ${isReplying ? "text-primary font-semibold" : ""}`}
                             >
                                 <FontAwesomeIcon icon={faReply} className="text-xs" />
-                                <span>Reply</span>
+                                <span>{t('comment.replyBtn')}</span>
                             </button>
                         )}
                     </div>
@@ -607,7 +613,7 @@ const CommentItem = ({
                                 inputRef={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
-                                placeholder={`Replying to @${comment.author}... Use @ to mention users`}
+                                placeholder={t('comment.placeholderReply', { author: comment.author })}
                                 className="w-full bg-transparent text-sm text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-8"
                                 rows={1}
                                 autoFocus
@@ -627,7 +633,7 @@ const CommentItem = ({
                                     type="button"
                                     onClick={replyImage.openPicker}
                                     className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
-                                    title="Đính kèm ảnh (tối đa 2MB)"
+                                    title={t('comment.attachImage')}
                                 >
                                     <FontAwesomeIcon icon={faImage} className="text-sm" />
                                 </button>
@@ -640,7 +646,7 @@ const CommentItem = ({
                                         }}
                                         className="px-3 py-1 rounded-full text-xs font-semibold text-text-muted hover:bg-surface-hover transition-colors"
                                     >
-                                        Cancel
+                                        {t('comment.cancel')}
                                     </button>
                                     <button
                                         onClick={handleSubmitSubReply}
@@ -651,7 +657,7 @@ const CommentItem = ({
                                                 : "bg-surface-hover text-text-faint cursor-not-allowed"
                                         }`}
                                     >
-                                        Reply
+                                        {t('comment.replyBtn')}
                                     </button>
                                 </div>
                             </div>
@@ -691,6 +697,7 @@ const CommentItem = ({
 };
 
 export const CommentSection = ({ postId }: CommentSectionProps) => {
+    const { t } = useTranslation();
     const post = usePostsStore((state) => state.getPostById(postId));
     const isCommentsAllowed = post?.allowComments !== false;
     const [commentText, setCommentText] = useState("");
@@ -858,7 +865,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         <div className="w-full flex flex-col pt-4 mt-2 border-t border-border">
             <div className="flex items-center justify-between px-4 mb-4">
                 <h3 className="font-bold text-lg text-text">
-                    Comments <span className="text-text-muted font-normal text-base ml-1">{comments.length}</span>
+                    {t('comment.title')} <span className="text-text-muted font-normal text-base ml-1">{comments.length}</span>
                 </h3>
                 {comments.length > 0 && (
                     <div className="flex items-center gap-1 bg-surface-hover/70 p-1 rounded-xl border border-border/60 text-xs font-semibold">
@@ -869,7 +876,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 sortBy === "top" ? "bg-surface text-primary shadow-sm font-bold" : "text-text-muted hover:text-text"
                             }`}
                         >
-                            <span>Nổi bật nhất</span>
+                            <span>{t('comment.sortTop')}</span>
                         </button>
                         <button
                             type="button"
@@ -878,7 +885,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 sortBy === "newest" ? "bg-surface text-primary shadow-sm font-bold" : "text-text-muted hover:text-text"
                             }`}
                         >
-                            <span>Mới nhất</span>
+                            <span>{t('comment.sortNewest')}</span>
                         </button>
                     </div>
                 )}
@@ -891,8 +898,8 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                         <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-text-muted mb-2 shadow-sm">
                             <FontAwesomeIcon icon={faLock} className="text-base" />
                         </div>
-                        <p className="font-bold text-text mb-1">Tính năng bình luận đã bị tắt</p>
-                        <p className="text-sm text-text-muted text-center">Tác giả bài viết không cho phép để lại bình luận mới.</p>
+                        <p className="font-bold text-text mb-1">{t('comment.disabledTitle')}</p>
+                        <p className="text-sm text-text-muted text-center">{t('comment.disabledDesc')}</p>
                     </div>
                 ) : isLoggedIn ? (
                     <>
@@ -902,7 +909,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 inputRef={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
-                                placeholder="Post your reply... Use @ to tag users"
+                                placeholder={t('comment.placeholderMain')}
                                 className="w-full bg-transparent text-[15px] text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-6"
                                 rows={1}
                             />
@@ -922,7 +929,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                         type="button"
                                         onClick={mainImage.openPicker}
                                         className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
-                                        title="Đính kèm ảnh (tối đa 2MB)"
+                                        title={t('comment.attachImage')}
                                     >
                                         <FontAwesomeIcon icon={faImage} className="text-sm" />
                                     </button>
@@ -939,20 +946,20 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                         : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                                 >
-                                    Reply
+                                    {t('comment.replyBtn')}
                                 </button>
                             </div>
                         </div>
                     </>
                 ) : (
                     <div className="w-full flex flex-col items-center justify-center p-6 bg-surface-hover/50 rounded-xl border border-border">
-                        <p className="font-semibold text-text mb-2">Join the discussion</p>
-                        <p className="text-sm text-text-muted mb-4">You need to be logged in to leave a comment.</p>
+                        <p className="font-semibold text-text mb-2">{t('comment.joinTitle')}</p>
+                        <p className="text-sm text-text-muted mb-4">{t('comment.joinDesc')}</p>
                         <button 
                             onClick={() => navigate({ to: "/auth" })}
                             className="px-6 py-2 bg-primary text-white font-bold rounded-full hover:bg-primary-hover transition-colors shadow-sm"
                         >
-                            Log in / Sign up
+                            {t('comment.loginSign')}
                         </button>
                     </div>
                 )}

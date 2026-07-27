@@ -64,14 +64,14 @@ function MainLayout() {
                 </div>
             )}
 
-            {/* Mobile/Tablet Right Sidebar Overlay (< xl) */}
+            {/* Mobile/Tablet Right Sidebar Overlay (< lg) */}
             {isRightOpen && (
-                <div className="fixed inset-0 z-50 xl:hidden flex justify-end">
+                <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
                     <div 
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
                         onClick={closeRight}
                     />
-                    <aside className="relative w-80 max-w-[85vw] h-full bg-surface border-l border-border p-4 overflow-y-auto z-10 shadow-2xl animate-slide-left">
+                    <aside className="relative w-72 max-w-[85vw] h-full bg-surface border-l border-border p-4 overflow-y-auto z-10 shadow-2xl animate-slide-left">
                         <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
                             <p className="font-extrabold text-primary text-lg">{t('common.exploreSquad')}</p>
                             <button onClick={closeRight} className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-text-muted hover:text-text cursor-pointer">
@@ -86,12 +86,12 @@ function MainLayout() {
             {/* GẮN REF VÀO THẺ DIV CÓ OVERFLOW-Y-AUTO NÀY */}
             <div 
                 ref={scrollContainerRef} 
-                className="relative flex-1 overflow-y-auto overflow-x-hidden w-full z-10"
+                className="relative flex-1 overflow-y-auto overflow-x-hidden w-full"
             >
-                <div className="w-full max-w-350 mx-auto flex flex-row items-start gap-4 px-2 sm:px-4 py-3 pb-12">
+                <div className="w-full max-w-[1400px] mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12">
                     
                     {/* Left Sidebar */}
-                    <aside className="hidden lg:block shrink-0 w-60 sticky top-3 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
+                    <aside className="hidden lg:block shrink-0 w-52 xl:w-56 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
                         <LeftBar />
                     </aside>
 
@@ -101,7 +101,7 @@ function MainLayout() {
                     </main>
 
                     {/* Right Sidebar */}
-                    <aside className="hidden xl:block shrink-0 w-72 sticky top-3 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
+                    <aside className="hidden lg:block shrink-0 w-60 xl:w-64 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
                         <RightBar />
                     </aside>
 

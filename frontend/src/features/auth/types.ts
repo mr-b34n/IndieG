@@ -4,6 +4,8 @@ export interface AuthState {
     user: User | null;
     loading: boolean;
     mockLogin: boolean;
+    customAvatar: string | null;
+    setCustomAvatar: (avatar: string | null) => void;
     initializeAuth: () => () => void;
     toggleMockLogin: () => void;
 }

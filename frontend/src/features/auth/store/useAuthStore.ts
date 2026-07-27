@@ -9,6 +9,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     loading: true,
     mockLogin: false,
+    customAvatar: typeof window !== "undefined" ? localStorage.getItem("user_custom_avatar") : null,
+
+    setCustomAvatar: (avatar) => {
+        if (typeof window !== "undefined") {
+            if (avatar) {
+                localStorage.setItem("user_custom_avatar", avatar);
+            } else {
+                localStorage.removeItem("user_custom_avatar");
+            }
+        }
+        set({ customAvatar: avatar });
+    },
 
     initializeAuth: () => {
         supabase.auth.getSession().then(({ data: { session } }) => {

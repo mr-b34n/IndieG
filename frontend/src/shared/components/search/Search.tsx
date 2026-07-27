@@ -24,7 +24,7 @@ export const Search = () => {
         <div className="relative w-full max-w-full md:max-w-md">
 
             <div className={`
-                flex flex-row items-center gap-2.5 px-3.5 py-2.5
+                flex flex-row items-center gap-2 px-3.5 py-1.5 sm:py-2
                 w-full
                 bg-surface/90 backdrop-blur-md
                 border-2 rounded-full

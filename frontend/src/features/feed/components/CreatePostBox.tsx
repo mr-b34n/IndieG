@@ -161,6 +161,7 @@ const CommunitySelector = ({
     onChange: (id: string | number) => void;
     communities: CommunityData[];
 }) => {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -168,7 +169,6 @@ const CommunitySelector = ({
     const current = communities.find((c) => c.id === value) ?? null;
     const hasCommunities = communities.length > 0;
 
-    const {t} = useTranslation();
     const openMenu = () => {
         if (!hasCommunities) return;
         const rect = btnRef.current?.getBoundingClientRect();
@@ -465,9 +465,9 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
             id="create-post"
             className="
                 relative z-20
-                w-full p-3.5
+                w-full p-3
                 bg-surface/95 backdrop-blur-md
-                rounded-2xl
+                rounded-xl
                 shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
                 dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
                 transition-all duration-300 ease-out
@@ -477,7 +477,7 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                 <img
                     src={avatarUrl}
                     alt="User"
-                    className={`w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
+                    className={`w-8 h-8 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
                         isActive ? "" : "self-center"
                     }`}
                 />

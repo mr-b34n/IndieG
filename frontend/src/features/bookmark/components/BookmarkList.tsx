@@ -52,7 +52,7 @@ export const BookmarkList = () => {
                     text-text-muted text-sm
                 ">
                     <FontAwesomeIcon icon={faBookmark} className="text-2xl text-text-faint mb-1" />
-                    <p className="font-semibold text-text">{t('bookmark.emptyTitle')}</p>
+                    <p className="font-semibold text-text">{t('bookmark.titleempty') || t('bookmark.emptyTitle') || t('bookmark.empty')}</p>
                     <p className="text-text-faint text-center">{t('bookmark.emptyDesc')}</p>
                 </div>
             )}
