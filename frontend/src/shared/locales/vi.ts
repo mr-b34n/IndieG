@@ -179,7 +179,7 @@ export const vi = {
         communitiesLabel: "Cộng đồng",
         onlineLabel: "Đang online",
         gamersLabel: "Game thủ tham gia",
-        enterCommunity: "Vào cộng đồng"
+        enterCommunity: "Truy cập"
     },
     squad: {
         title: "Tổ đội",

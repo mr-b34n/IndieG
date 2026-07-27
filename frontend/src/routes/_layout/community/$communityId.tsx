@@ -15,7 +15,7 @@ import {
     faScroll,
 } from '@fortawesome/free-solid-svg-icons';
 
-import avatarGame from '../../../assets/logos/raft-logo.png';
+import { DEFAULT_AVATAR as avatarGame } from '@/shared/constants/images';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { AttachmentPicker, getCurrentAuthor, prepareAttachmentsForSave, revokeAttachmentUrls, usePostsStore, type EditableAttachment, type PostData, Post } from '@/features/post';
@@ -321,9 +321,10 @@ function CommunityDetail() {
                                 <img
                                     src={community.backdrop}
                                     alt={`${community.name} backdrop`}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="absolute inset-0 w-full h-full object-cover object-top"
                                 />
                             )}
+                            <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/60 to-transparent pointer-events-none" />
 
                             
                             {community.featured && (

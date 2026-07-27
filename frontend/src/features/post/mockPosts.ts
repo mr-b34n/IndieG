@@ -1,8 +1,11 @@
-import avatarGame from "../../assets/logos/raft-logo.png";
-import raftImg from "../../assets/logos/raft-logo.png";
-import butterflyEmeraldImg from "../../assets/mock-data/butterfly-emarald.webp";
-import dust2Img from "../../assets/bgs/cs2_bg.jpg";
-import figuresImg from "../../assets/mock-data/figures.jpeg";
+import {
+    DEFAULT_AVATAR as avatarGame,
+    RAFT_SCREENSHOTS,
+    BUTTERFLY_EMERALD_IMG as butterflyEmeraldImg,
+    CS2_BG as dust2Img,
+    FIGURES_IMG as figuresImg
+} from "@/shared/constants/images";
+const raftImg = RAFT_SCREENSHOTS[0];
 import type { PostData } from "./types";
 
 

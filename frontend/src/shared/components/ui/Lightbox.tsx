@@ -78,6 +78,8 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     return createPortal(
         <div 
             className="fixed inset-0 z-100 flex items-center justify-center animate-fade-in select-none"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             onWheel={handleWheel}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -85,7 +87,10 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         >
             <div 
                 className="absolute inset-0 bg-black/90 backdrop-blur-sm cursor-zoom-out"
-                onClick={onClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                }}
             />
 
             <button

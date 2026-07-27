@@ -5,7 +5,7 @@ import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import avatarUser from "../../../assets/logos/raft-logo.png";
+import { DEFAULT_AVATAR as avatarUser } from "@/shared/constants/images";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore } from "../store/usePostsStore";
 import { useNotificationStore } from "@/features/notification/store/useNotificationStore";

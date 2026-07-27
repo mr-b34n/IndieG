@@ -33,9 +33,9 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                 group w-full flex flex-col overflow-hidden
                 bg-surface/90 backdrop-blur-md
                 border border-border rounded-2xl
-                shadow-sm hover:shadow-xl dark:shadow-[0_4px_20px_rgba(0,0,0,0.35)]
+                shadow-sm hover:shadow-md dark:shadow-[0_4px_16px_rgba(0,0,0,0.3)]
                 hover:border-primary/40
-                transition-all duration-300 ease-out
+                transition-colors duration-200
                 cursor-pointer relative
             "
         >
@@ -45,12 +45,12 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                     <img
                         src={community.backdrop}
                         alt={`${community.name} backdrop`}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                        className="absolute inset-0 w-full h-full object-cover object-top"
                     />
                 )}
                 
-                {/* Lớp gradient tối phủ lên trên để làm nổi bật logo và text */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+                {/* Lớp gradient tối phủ lên trên để làm nổi bật logo và text (fade từ dưới lên) */}
+                <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/70 to-transparent" />
 
                 {/* Badge Category & Featured bên góc phải trên */}
                 <div className="absolute z-20 top-3 right-3 flex items-center gap-1.5">
@@ -78,11 +78,11 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                 <div>
                     {/* Hàng chứa Logo và nút Join */}
                     <div className="flex flex-row items-end justify-between mb-3.5">
-                        <div className="relative z-10 -mt-10 group-hover:-translate-y-1 transition-transform duration-300">
+                        <div className="relative z-10 -mt-10">
                             <img
                                 src={community.logo}
                                 alt={community.name}
-                                className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover border-4 border-surface bg-surface shadow-lg ring-1 ring-border/50"
+                                className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover border-4 border-surface bg-surface shadow-md ring-1 ring-border/50"
                             />
                         </div>
 
@@ -91,10 +91,10 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                                 e.stopPropagation();
                                 toggleJoin(community.id);
                             }}
-                            className={`flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                            className={`flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-colors duration-150 cursor-pointer ${
                                 community.joined
                                     ? "bg-surface-hover text-text hover:bg-like/15 hover:text-like border border-border"
-                                    : "bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/30 hover:shadow-primary/50 hover:scale-105"
+                                    : "bg-primary text-white hover:bg-primary-hover shadow-sm shadow-primary/20"
                             }`}
                         >
                             <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-[10px]" />
@@ -103,7 +103,7 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                     </div>
 
                     <div className="flex flex-col gap-1 mt-1">
-                        <p className="font-extrabold text-lg text-text group-hover:text-primary transition-colors line-clamp-1">
+                        <p className="font-extrabold text-lg text-text group-hover:text-primary transition-colors duration-150 line-clamp-1">
                             {community.name}
                         </p>
                     </div>
@@ -128,11 +128,11 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
 
                 {/* Footer số thành viên & lời mời vào xem */}
                 <div className="flex flex-row items-center justify-between mt-4 text-xs text-text-muted border-t border-border/60 pt-3.5 font-medium">
-                    <span className="flex flex-row items-center gap-2">
+                    <span className="flex flex-row items-center gap-1.5" title="Thành viên">
                         <FontAwesomeIcon icon={faUsers} className="text-text-faint" />
-                        <strong className="text-text font-bold">{community.members.toLocaleString()}</strong> {t('community.members')}
+                        <strong className="text-text font-bold">{community.members.toLocaleString()}</strong>
                     </span>
-                    <span className="text-primary font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform duration-200">
+                    <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
                         {t('community.enterCommunity')} <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                     </span>
                 </div>

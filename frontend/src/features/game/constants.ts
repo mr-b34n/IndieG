@@ -1,13 +1,17 @@
 import { type GameData } from "./types";
 
-import cs2Logo from "../../assets/logos/cs2-logo.webp";
-import rdr2Logo from "../../assets/logos/rdr2-logo.png";
-import raftLogo from "../../assets/logos/raft-logo.png";
-
-import cs2Bg from "../../assets/bgs/cs2_bg.jpg";
-import raftBg from "../../assets/bgs/raft_bg.jpg";
-import rdr2Bg from "../../assets/bgs/rdr_2_bg.jpg";
-import gameIlluBg from "../../assets/bgs/game-illu-bg.webp";
+import {
+    CS2_LOGO as cs2Logo,
+    RDR2_LOGO as rdr2Logo,
+    RAFT_LOGO as raftLogo,
+    CS2_BANNER as cs2Banner,
+    RAFT_BANNER as raftBanner,
+    RDR2_BANNER as rdr2Banner,
+    GAME_ILLU_BG as gameIlluBg,
+    CS2_SCREENSHOTS,
+    RDR2_SCREENSHOTS,
+    RAFT_SCREENSHOTS
+} from "@/shared/constants/images";
 
 export const INITIAL_GAMES: GameData[] = [
     {
@@ -28,7 +32,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Cực kỳ tích cực",
         activePlayers: 842150,
         logoUrl: cs2Logo,
-        bannerUrl: cs2Bg,
+        bannerUrl: cs2Banner,
         description: "For over two decades, Counter-Strike has offered an elite competitive experience, shaped by millions of players across the globe. And now the next chapter in the CS story begins. This is Counter-Strike 2. A free upgrade to CS:GO, Counter-Strike 2 is the largest technical leap in Counter-Strike’s history.",
         descriptionVi: "Trải qua hơn hai thập kỷ, Counter-Strike luôn mang đến trải nghiệm thi đấu đỉnh cao được định hình bởi hàng triệu game thủ toàn cầu. Counter-Strike 2 là bước nhảy vọt kỹ thuật lớn nhất trong lịch sử CS với hệ thống khói động Sub-tick, đồ họa Source 2 và âm thanh chân thực tối đa.",
         features: [
@@ -43,11 +47,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Các bản đồ huyền thoại được làm lại toàn diện trên nền tảng Source 2",
             "Giao diện người dùng và kho đồ skin vũ khí được nâng cấp đồ họa tuyệt đẹp"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: CS2_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 10 (64-bit)",
@@ -172,7 +172,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Cực kỳ tích cực",
         activePlayers: 48900,
         logoUrl: rdr2Logo,
-        bannerUrl: rdr2Bg,
+        bannerUrl: rdr2Banner,
         description: "Winner of over 175 Game of the Year Awards and recipient of over 250 perfect scores, Red Dead Redemption 2 is an epic tale of honor and loyalty at the dawn of the modern age. America, 1899. Arthur Morgan and the Van der Linde gang are outlaws on the run.",
         descriptionVi: "Giành hơn 175 giải thưởng Game of the Year và 250 điểm tuyệt đối từ các chuyên trang đánh giá, Red Dead Redemption 2 là sử thi hùng tráng về danh dự và lòng trung thành tại nước Mỹ năm 1899. Arthur Morgan và băng đảng Van der Linde buộc phải chạy trốn băng qua triền núi hoang dã.",
         features: [
@@ -187,11 +187,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Bao gồm trọn bộ chế độ chơi mạng thế giới mở Red Dead Online",
             "Hệ thống thời tiết thay đổi linh hoạt và cốt truyện điện ảnh lấy nước mắt người chơi"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RDR2_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 10 - April 2018 Update (v1803)",
@@ -280,7 +276,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Rất tích cực",
         activePlayers: 14200,
         logoUrl: raftLogo,
-        bannerUrl: raftBg,
+        bannerUrl: raftBanner,
         description: "By yourself or with friends, your mission is to survive an epic oceanic adventure across a perilous sea! Gather debris to survive, expand your raft and be wary of the dangers of the ocean! Trapped on a simple plastic raft, navigate vast waters and uncover the story of a flooded world.",
         descriptionVi: "Độc hành hoặc cùng hội bạn thân, nhiệm vụ của bạn là sinh tồn trong chuyến phiêu lưu kỳ thú trên đại dương nguy hiểm! Vớt rác trôi dạt để xây dựng cơi nới bè, chế tạo vũ khí và coi chừng những con cá mập trắng luôn rình rập dưới làn nước.",
         features: [
@@ -295,11 +291,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Bàn nghiên cứu: Mở khóa các công thức chế tạo động cơ tự động và hệ thống định vị",
             "Khám phá hòn đảo bí ẩn: Cập bến các hòn đảo cốt truyện để tìm ra bí mật về Utopia"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RAFT_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 7 or later (64-bit)",
@@ -388,7 +380,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Rất tích cực",
         activePlayers: 42100,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=Cyberpunk&backgroundColor=ff0055",
-        bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: CS2_SCREENSHOTS[2],
         description: "Cyberpunk 2077 is an open-world, action-adventure RPG set in the dark future of Night City — a megalopolis obsessed with power, glamour, and ceaseless body modification. Step into the shoes of V, a cyberpunk mercenary taking on the most dangerous contracts.",
         descriptionVi: "Cyberpunk 2077 là tựa game hành động nhập vai thế giới mở lấy bối cảnh tương lai đen tối tại Night City — siêu đô thị cuồng loạn vì quyền lực, sự xa hoa và cường hóa cơ thể. Hóa thân thành V, lính đánh thuê cyberpunk nhận những hợp đồng sinh tử.",
         features: [
@@ -403,11 +395,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Đỉnh cao đồ họa Ray Tracing Overdrive và Path Tracing chân thực đến từng ngọn đèn neon",
             "Cốt truyện phi tuyến tính sâu sắc nơi quyết định của bạn quyết định vận mệnh Night City"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: CS2_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 10 (64-bit)",
@@ -468,7 +456,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Rất tích cực",
         activePlayers: 650000,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=Valorant&backgroundColor=ff4655",
-        bannerUrl: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: CS2_SCREENSHOTS[1],
         description: "Blend your style and experience on a global, competitive stage. You have 13 rounds to attack and defend your side using sharp gunplay and tactical abilities. And, with one life per-round, you'll need to think faster than your opponent if you want to survive.",
         descriptionVi: "Kết hợp lối chơi đấu súng chiến thuật chuẩn xác và các kỹ năng đặc trưng của từng Agent trên đấu trường cạnh tranh toàn cầu. Bạn có 13 vòng đấu để tấn công hoặc phòng thủ, cần tốc độ phản xạ và tư duy chiến thuật nhạy bén để giành chiến thắng.",
         features: [
@@ -483,10 +471,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Hệ thống chống gian lận Vanguard cấp độ nhân (kernel) hàng đầu thế giới",
             "Hệ sinh thái thể thao điện tử VCT sôi động toàn cầu"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: CS2_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 10 (64-bit)",
@@ -547,7 +532,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Cực kỳ tích cực",
         activePlayers: 54300,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=EldenRing&backgroundColor=d4af37",
-        bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: RDR2_SCREENSHOTS[1],
         description: "THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between. Directed by Hidetaka Miyazaki and created in collaboration with George R. R. Martin.",
         descriptionVi: "SIÊU PHẨM HÀNH ĐỘNG NHẬP VAI FANTASY. Hãy trỗi dậy, hỡi Tarnished, và theo sự dẫn lối của ân sủng để đoạt lấy quyền năng Elden Ring, trở thành Elden Lord tại Lands Between. Tác phẩm do Hidetaka Miyazaki đạo diễn cùng đồng sáng tạo với nhà văn George R. R. Martin.",
         features: [
@@ -562,10 +547,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Những trận chiến boss quy mô sử thi đòi hỏi kỹ năng phản xạ và chiến thuật đỉnh cao",
             "Bản mở rộng Shadow of the Erdtree mang đến vùng đất bóng tối hoàn toàn mới"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RDR2_SCREENSHOTS,
         guides: [],
         reviews: [],
         patchNotes: [
@@ -610,7 +592,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Cực kỳ tích cực",
         activePlayers: 125000,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=Wukong&backgroundColor=ff8800",
-        bannerUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: RDR2_SCREENSHOTS[2],
         description: "Black Myth: Wukong is an action RPG rooted in Chinese mythology. The story is based on Journey to the West, one of the Four Great Classical Novels of Chinese literature. You shall set out as the Destined One to venture into the challenges and marvels ahead.",
         descriptionVi: "Black Myth: Wukong là tựa game hành động nhập vai đỉnh cao đậm chất thần thoại phương Đông, lấy cảm hứng từ kiệt tác Tây Du Ký. Bạn sẽ hóa thân thành Người Được Chọn (The Destined One) dấn thân vào hành trình đối đầu các yêu vương hùng mạnh.",
         features: [
@@ -625,10 +607,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Khám phá các chương cốt truyện phong phú với hàng loạt boss ẩn và bí mật sâu sắc",
             "Hệ thống phép thuật và pháp bảo đa dạng giúp tùy biến lối đánh chiến thuật"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RDR2_SCREENSHOTS,
         guides: [],
         reviews: [],
         patchNotes: [
@@ -673,7 +652,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Rất tích cực",
         activePlayers: 135000,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=GTAV&backgroundColor=22aa22",
-        bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: RDR2_SCREENSHOTS[0],
         description: "When a young street hustler, a retired bank robber and a terrifying psychopath find themselves entangled with some of the most frightening and deranged elements of the criminal underworld, the U.S. government and the entertainment industry, they must pull off a series of dangerous heists.",
         descriptionVi: "Khi một gã giang hồ đường phố, một tên cướp ngân hàng giải nghệ và một kẻ tâm thần quái đản bị cuốn vào những thế lực ngầm nguy hiểm nhất của thế giới tội phạm và chính phủ, họ buộc phải thực hiện những vụ cướp thế kỷ tại Los Santos.",
         features: [
@@ -688,10 +667,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Điều hành đế chế tội phạm, thực hiện các vụ Heist thế kỷ và đua xe ngầm dưới phố",
             "Hàng trăm dòng siêu xe, máy bay, vũ khí và biệt thự sang trọng để sở hữu"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RDR2_SCREENSHOTS,
         guides: [],
         reviews: [],
         patchNotes: [
@@ -736,7 +712,7 @@ export const INITIAL_GAMES: GameData[] = [
         sentimentVi: "Cực kỳ tích cực",
         activePlayers: 450000,
         logoUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=Minecraft&backgroundColor=338833",
-        bannerUrl: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1000&q=80",
+        bannerUrl: RAFT_SCREENSHOTS[1],
         description: "Explore randomly generated worlds and build amazing things from the simplest of homes to the grandest of castles. Play in creative mode with unlimited resources or mine deep into the world in survival mode, crafting weapons and armor to fend off the dangerous mobs.",
         descriptionVi: "Khám phá thế giới khối vuông vô tận và xây dựng những công trình kỳ vĩ từ ngôi nhà gỗ ấm cúng đến lâu đài vĩ đại. Thỏa sức sáng tạo không giới hạn tài nguyên hoặc dấn thân sinh tồn, chế tạo vũ khí chống lại quái vật bóng đêm.",
         features: [
@@ -751,10 +727,7 @@ export const INITIAL_GAMES: GameData[] = [
             "Cộng đồng modding khổng lồ, shader đồ họa lung linh và hàng ngàn server minigame",
             "Chơi chéo nền tảng mượt mà giữa PC, máy chơi game Console và điện thoại di động"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: RAFT_SCREENSHOTS,
         guides: [],
         reviews: [],
         patchNotes: [
@@ -848,11 +821,7 @@ export const getGameBySlug = (slug: string): GameData => {
             "Hệ thống leo rank cạnh tranh khốc liệt",
             "Cốt truyện chuyên sâu và nhiều bí mật ẩn giấu"
         ],
-        screenshots: [
-            "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80"
-        ],
+        screenshots: CS2_SCREENSHOTS,
         systemReqs: {
             minimum: {
                 os: "Windows 10 64-bit",

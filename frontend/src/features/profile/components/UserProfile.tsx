@@ -13,10 +13,12 @@ import {
     faSearchMinus, faCrop, faTrash, faPlus, faBan
 } from "@fortawesome/free-solid-svg-icons";
 
-import cs2Bg from "../../../assets/bgs/cs2_bg.jpg";
-import raftLogo from "../../../assets/logos/raft-logo.png";
-import rdr2Logo from "../../../assets/logos/rdr2-logo.png";
-import cs2Logo from "../../../assets/logos/cs2-logo.webp";
+import {
+    CS2_BG as cs2Bg,
+    RAFT_LOGO as raftLogo,
+    RDR2_LOGO as rdr2Logo,
+    CS2_LOGO as cs2Logo
+} from "@/shared/constants/images";
 
 const AvatarCropperModal = ({
     rawImageSrc,

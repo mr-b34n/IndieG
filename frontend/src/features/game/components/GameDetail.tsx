@@ -31,7 +31,7 @@ import { type GameReview } from "../types";
 
 import { useGameStore } from "../store/useGameStore";
 import { useAuthStore } from "@/features/auth";
-import avatarDefault from "../../../assets/logos/raft-logo.png";
+import { DEFAULT_AVATAR as avatarDefault } from "@/shared/constants/images";
 
 interface GameDetailProps {
     slug: string;
@@ -154,10 +154,10 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     <img
                         src={game.bannerUrl || game.logoUrl}
                         alt={game.name}
-                        className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700 opacity-90"
+                        className="w-full h-full object-cover object-top sm:object-center transform hover:scale-105 transition-transform duration-700 opacity-95"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/80 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-surface/95 via-surface/50 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-surface/90 via-surface/40 to-transparent" />
                 </div>
 
                 {/* Spacer to show off the banner artwork cleanly without overlapping issues */}

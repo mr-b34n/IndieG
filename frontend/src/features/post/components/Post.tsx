@@ -348,7 +348,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     {showActionMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); }} />
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in py-1">
+                            <div
+                                className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in py-1"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {isOwner ? (
                                     <>
                                         <button onClick={handleEdit} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
@@ -488,7 +491,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     {showShareMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowShareMenu(false); }} />
-                            <div className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-fade-in py-1">
+                            <div
+                                className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-fade-in py-1"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
                                     <FontAwesomeIcon icon={faLink} className="w-4" />
                                     {linkCopied ? t('post.copied') : t('post.copyLink')}

@@ -3,7 +3,7 @@ import { faInbox, faSpinner, faCircleCheck } from "@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useTranslation } from "@/shared/hooks/useTranslate"
 
-import avatarGame from "../../../assets/logos/raft-logo.png";
+import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
 import { prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";

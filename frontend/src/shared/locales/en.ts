@@ -181,7 +181,7 @@ export const en: typeof vi = {
         communitiesLabel: "Communities",
         onlineLabel: "Online now",
         gamersLabel: "Gamers joined",
-        enterCommunity: "Enter community"
+        enterCommunity: "Access"
     },
     squad: {
         title: "Squad",

@@ -1,10 +1,14 @@
-import cs2Logo from "../../assets/logos/cs2-logo.webp";
-import rdr2Logo from "../../assets/logos/rdr2-logo.png";
-import raftLogo from "../../assets/logos/raft-logo.png";
-
-import cs2Bg from "../../assets/bgs/cs2_bg.jpg";
-import raftBg from "../../assets/bgs/raft_bg.jpg";
-import rdr2Bg from "../../assets/bgs/rdr_2_bg.jpg";
+import {
+    CS2_LOGO as cs2Logo,
+    RDR2_LOGO as rdr2Logo,
+    RAFT_LOGO as raftLogo,
+    CS2_POSTER as cs2Poster,
+    RAFT_POSTER as raftPoster,
+    RDR2_POSTER as rdr2Poster,
+    CS2_SCREENSHOTS,
+    RDR2_SCREENSHOTS,
+    RAFT_SCREENSHOTS
+} from "@/shared/constants/images";
 
 import { faCompass, faFire, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import { type CommunityData, type CommunityTabKey } from "./types";
@@ -35,7 +39,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "raft",
         name: "Raft",
         logo: raftLogo,
-        backdrop: raftBg,
+        backdrop: raftPoster,
         category: "Survival",
         description:
             "Cộng đồng chính thức của Raft: mẹo sinh tồn, base build, farming route và ý tưởng thiết kế trên biển.",
@@ -49,7 +53,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "cs2",
         name: "Counter Strike 2",
         logo: cs2Logo,
-        backdrop: cs2Bg,
+        backdrop: cs2Poster,
         category: "FPS",
         description:
             "Cộng đồng chính thức của CS2: chiến thuật, patch notes, tuyển quân và highlight clip.",
@@ -63,7 +67,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "rdr2",
         name: "Red Dead Redemption 2",
         logo: rdr2Logo,
-        backdrop: rdr2Bg,
+        backdrop: rdr2Poster,
         category: "Open World",
         description:
             "Cộng đồng chính thức của Red Dead Redemption 2: ảnh đẹp, build nhân vật và chuyện miền viễn Tây.",
@@ -76,7 +80,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "cyberpunk",
         name: "Cyberpunk 2077",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=Cyberpunk&backgroundColor=ff0055",
-        backdrop: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80",
+        backdrop: CS2_SCREENSHOTS[2],
         category: "RPG",
         description:
             "Khám phá Night City: hướng dẫn build Cyberware, mod đồ hoạ ray-tracing, cốt truyện Phantom Liberty và góc chụp ảnh cực chất.",
@@ -90,7 +94,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "eldenring",
         name: "Elden Ring",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=EldenRing&backgroundColor=d4af37",
-        backdrop: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80",
+        backdrop: RDR2_SCREENSHOTS[1],
         category: "Soulslike",
         description:
             "Hội Tarnished chinh phục Lands Between & Shadow of the Erdtree: hướng dẫn đánh boss, build vũ khí PvP/PvE và thảo luận lore bí ẩn.",
@@ -104,7 +108,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "valorant",
         name: "Valorant",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=Valorant&backgroundColor=ff4655",
-        backdrop: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80",
+        backdrop: CS2_SCREENSHOTS[1],
         category: "FPS",
         description:
             "Cộng đồng Valorant Việt Nam: chia sẻ lineup súng/skill, tìm squad leo rank, thảo luận meta Agent và giải đấu VCT.",
@@ -118,7 +122,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "wukong",
         name: "Black Myth: Wukong",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=Wukong&backgroundColor=ff8800",
-        backdrop: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80",
+        backdrop: RDR2_SCREENSHOTS[2],
         category: "Action RPG",
         description:
             "Hành trình Tây Du: hướng dẫn hạ gục Yêu Vương, build pháp bảo & phép thuật, bí mật ẩn trong các chương và lore thần thoại.",
@@ -132,7 +136,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "gtav",
         name: "Grand Theft Auto V & Online",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=GTAV&backgroundColor=22aa22",
-        backdrop: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1000&q=80",
+        backdrop: RDR2_SCREENSHOTS[0],
         category: "Open World",
         description:
             "Cộng đồng GTA Online & Roleplay (FiveM): tìm crew làm Heist, giao lưu xe cộ, hướng dẫn mod server và tin tức GTA VI.",
@@ -146,7 +150,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         id: "minecraft",
         name: "Minecraft Builders & Redstone",
         logo: "https://api.dicebear.com/7.x/identicon/svg?seed=Minecraft&backgroundColor=338833",
-        backdrop: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1000&q=80",
+        backdrop: RAFT_SCREENSHOTS[1],
         category: "Sandbox",
         description:
             "Thế giới khối vuông kỳ diệu: khoe công trình kiến trúc mega-build, cỗ máy Redstone tự động, chia sẻ seed map và server sinh tồn.",

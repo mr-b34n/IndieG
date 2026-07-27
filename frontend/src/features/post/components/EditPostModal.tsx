@@ -77,10 +77,17 @@ export const EditPostModal = ({
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-200 flex items-center justify-center animate-fade-in px-4">
+        <div
+            className="fixed inset-0 z-200 flex items-center justify-center animate-fade-in px-4"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+        >
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={handleClose}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleClose();
+                }}
             />
 
             <div className="relative w-full max-w-lg max-h-[90vh] bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">

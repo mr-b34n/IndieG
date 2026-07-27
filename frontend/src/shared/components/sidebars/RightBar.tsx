@@ -3,10 +3,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "@tanstack/react-router"
 import { useSquadStore } from "@/features/squad/store/useSquadStore"
 
-import raftLogo    from "../../../assets/logos/raft-logo.png";
-import rdr2Logo    from "../../../assets/logos/rdr2-logo.png";
-import cs2Logo     from "../../../assets/logos/cs2-logo.webp";
-import avatarGame  from "../../../assets/logos/raft-logo.png";
+import {
+    RAFT_LOGO as raftLogo,
+    RDR2_LOGO as rdr2Logo,
+    CS2_LOGO as cs2Logo,
+    DEFAULT_AVATAR as avatarGame
+} from "@/shared/constants/images";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const Panel = ({ children }: { children: React.ReactNode }) => (

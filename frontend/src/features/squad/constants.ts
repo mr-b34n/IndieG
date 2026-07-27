@@ -1,7 +1,9 @@
-import cs2Logo from "../../assets/logos/cs2-logo.webp";
-import raftLogo from "../../assets/logos/raft-logo.png";
-import rdr2Logo from "../../assets/logos/rdr2-logo.png";
-import avatarDefault from "../../assets/logos/raft-logo.png";
+import {
+    CS2_LOGO as cs2Logo,
+    RAFT_LOGO as raftLogo,
+    RDR2_LOGO as rdr2Logo,
+    DEFAULT_AVATAR as avatarDefault
+} from "@/shared/constants/images";
 import { getCurrentAuthor } from "@/features/post/helpers/getCurrentAuthor";
 import { type Squad, type SquadVoiceType } from "./types";
 

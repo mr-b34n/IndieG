@@ -6,11 +6,13 @@ import {
 import { faHubspot } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate, useLocation } from "@tanstack/react-router"
 
-import cs2Logo from "../../../assets/logos/cs2-logo.webp";
-import rdr2Logo from "../../../assets/logos/rdr2-logo.png";
-import raftLogo from "../../../assets/logos/raft-logo.png";
+import {
+    CS2_LOGO as cs2Logo,
+    RDR2_LOGO as rdr2Logo,
+    RAFT_LOGO as raftLogo
+} from "@/shared/constants/images";
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor } from "@/features/post";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -32,14 +34,15 @@ const sectionLabel = `
 `;
 
 const MY_GAMES = [
-    { logo: raftLogo, label: "Raft", slug: "raft", active: false },
-    { logo: rdr2Logo, label: "RDR 2", slug: "red-dead-redemption-2", active: false },
-    { logo: cs2Logo, label: "CS 2", slug: "counter-strike-2", active: false },
+    { logo: raftLogo, label: "Raft", slug: "raft" },
+    { logo: rdr2Logo, label: "RDR 2", slug: "red-dead-redemption-2" },
+    { logo: cs2Logo, label: "CS 2", slug: "counter-strike-2" },
 ];
 
 
 export const LeftBar = () => {
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const {t} = useTranslation();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
@@ -47,7 +50,13 @@ export const LeftBar = () => {
     const isLoggedIn = !!user || mockLogin;
 
     const [gamesDrop, setGamesDrop] = useState<boolean>(true);
-    const [activePage, setActivePage] = useState<string>("home");
+
+    const isHomeActive = pathname === "/" || pathname.startsWith("/post");
+    const isCommunityActive = pathname.startsWith("/community");
+    const isBookmarkActive = pathname.startsWith("/bookmark");
+    const isSquadActive = pathname.startsWith("/squad");
+    const isSettingsActive = pathname.startsWith("/settings");
+    const isGameSectionActive = pathname.startsWith("/game");
 
     const displayName = getCurrentAuthor();
     const avatarUrl =
@@ -115,11 +124,8 @@ export const LeftBar = () => {
             <div className="flex flex-col gap-1 px-2 pb-1">
                 <button
                     type="button"
-                    onClick={() => {
-                        setActivePage("home");
-                        navigate({to: "/"});
-                    }}
-                    className={activePage === "home" ? navItemActive : navItem}
+                    onClick={() => navigate({to: "/"})}
+                    className={isHomeActive ? navItemActive : navItem}
                 >
                     <FontAwesomeIcon icon={faHouse} className="w-4 shrink-0" />
                     <span>{t('common.home')}</span>
@@ -127,11 +133,8 @@ export const LeftBar = () => {
 
                 <button
                     type="button"
-                    onClick={() => {
-                        setActivePage("community");
-                        navigate({ to: "/community" });
-                    }}
-                    className={activePage === "community" ? navItemActive : navItem}
+                    onClick={() => navigate({ to: "/community" })}
+                    className={isCommunityActive ? navItemActive : navItem}
                 >
                     <FontAwesomeIcon icon={faUsers} className="w-4 shrink-0" />
                     <span>{t('common.community')}</span>
@@ -141,11 +144,8 @@ export const LeftBar = () => {
                     <>
                         <button
                             type="button"
-                            onClick={() => {
-                                setActivePage("bookmarks");
-                                navigate({to: "/bookmark"})
-                            }}
-                            className={activePage === "bookmarks" ? navItemActive : navItem}
+                            onClick={() => navigate({to: "/bookmark"})}
+                            className={isBookmarkActive ? navItemActive : navItem}
                         >
                             <FontAwesomeIcon icon={faBookmark} className="w-4 shrink-0" />
                             <span>{t('common.bookmark')}</span>
@@ -153,11 +153,8 @@ export const LeftBar = () => {
 
                         <button
                             type="button"
-                            onClick={() => {
-                                setActivePage("squad");
-                                navigate({to: "/squad"});
-                            }}
-                            className={`${activePage === "squad" ? navItemActive : navItem} justify-between`}
+                            onClick={() => navigate({to: "/squad"})}
+                            className={`${isSquadActive ? navItemActive : navItem} justify-between`}
                         >
                             <div className="flex flex-row items-center gap-3">
                                 <FontAwesomeIcon icon={faHubspot} className="w-4 shrink-0" />
@@ -179,7 +176,7 @@ export const LeftBar = () => {
                         <button
                             type="button"
                             onClick={() => setGamesDrop(!gamesDrop)}
-                            className={`${navItem} justify-between ${gamesDrop ? "bg-surface-hover text-text" : ""}`}
+                            className={`${isGameSectionActive ? navItemActive : navItem} justify-between ${gamesDrop && !isGameSectionActive ? "bg-surface-hover text-text" : ""}`}
                         >
                             <div className="flex flex-row items-center gap-2.5">
                                 <FontAwesomeIcon icon={faGamepad} className="w-4 shrink-0" />
@@ -202,31 +199,34 @@ export const LeftBar = () => {
                         >
                             <div className="overflow-hidden min-h-0">
                                 <div className="flex flex-col gap-0.5 pl-8 pr-2 pb-1">
-                                    {MY_GAMES.map(({ logo, label, slug, active }) => (
-                                        <div
-                                            key={label}
-                                            onClick={() => navigate({ to: `/game/${slug}` })}
-                                            className={`flex flex-row items-center gap-2 px-2 py-1
-                                                rounded-lg text-xs sm:text-sm
-                                                hover:bg-surface-hover
-                                                transition-colors duration-150 cursor-pointer
-                                                ${active ? "text-text font-medium" : "text-text-muted"}`}
-                                        >
-                                            <div className="relative shrink-0">
-                                                <img
-                                                    src={logo}
-                                                    alt={label}
-                                                    className="w-3.5 h-3.5 rounded object-cover"
-                                                />
-                                                {active && (
-                                                    <span className="absolute -top-0.5 -right-0.5
-                                                        w-1.5 h-1.5 rounded-full bg-success-500
-                                                        ring-1 ring-surface" />
-                                                )}
+                                    {MY_GAMES.map(({ logo, label, slug }) => {
+                                        const isThisGameActive = pathname.startsWith(`/game/${slug}`);
+                                        return (
+                                            <div
+                                                key={label}
+                                                onClick={() => navigate({ to: `/game/${slug}` })}
+                                                className={`flex flex-row items-center gap-2 px-2 py-1.5
+                                                    rounded-lg text-xs sm:text-sm
+                                                    hover:bg-surface-hover
+                                                    transition-colors duration-150 cursor-pointer
+                                                    ${isThisGameActive ? "text-primary font-bold bg-primary-soft/60" : "text-text-muted"}`}
+                                            >
+                                                <div className="relative shrink-0">
+                                                    <img
+                                                        src={logo}
+                                                        alt={label}
+                                                        className="w-3.5 h-3.5 rounded object-cover"
+                                                    />
+                                                    {isThisGameActive && (
+                                                        <span className="absolute -top-0.5 -right-0.5
+                                                            w-1.5 h-1.5 rounded-full bg-primary
+                                                            ring-1 ring-surface" />
+                                                    )}
+                                                </div>
+                                                <span>{label}</span>
                                             </div>
-                                            <span>{label}</span>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -238,11 +238,8 @@ export const LeftBar = () => {
                 <div className="border-t border-border px-2 py-1.5">
                     <button
                         type="button"
-                        onClick={() => {
-                            setActivePage("settings");
-                            navigate({to: "/settings"});
-                        }}
-                        className={`${activePage === "settings" ? navItemActive : navItem}`}
+                        onClick={() => navigate({to: "/settings"})}
+                        className={`${isSettingsActive ? navItemActive : navItem}`}
                     >
                         <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
                         <span>{t('common.settings')}</span>
