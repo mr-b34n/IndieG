@@ -119,6 +119,39 @@ export const INITIAL_GAMES: GameData[] = [
                 recommended: true,
                 likes: 28
             }
+        ],
+        patchNotes: [
+            {
+                id: "cs2-pn-1",
+                version: "v1.40.2.0",
+                title: "The Armory Update & Major Weapon Balances",
+                titleVi: "Bản Cập Nhật The Armory & Cân Bằng Vũ Khí Lớn",
+                date: "15/07/2026",
+                summary: "Introduced 3 new weapon collections, two new charm cases, and overhauled M4A1-S and AK-47 recoil recovery animation in Sub-tick.",
+                summaryVi: "Ra mắt 3 bộ sưu tập vũ khí mới, 2 hòm móc khóa charms, đồng thời tinh chỉnh độ giật hồi phục của M4A1-S và AK-47 trên hệ thống Sub-tick.",
+                type: "major",
+                postId: 13
+            },
+            {
+                id: "cs2-pn-2",
+                version: "v1.40.1.5",
+                title: "Mirage & Inferno Source 2 Lighting Hotfix",
+                titleVi: "Cập Nhật Khắc Phục Ánh Sáng Mirage & Inferno",
+                date: "02/07/2026",
+                summary: "Fixed shadow clipping in Palace on Mirage and improved volumetric smoke grenade density around Banana on Inferno.",
+                summaryVi: "Sửa lỗi khuất bóng tại Palace trên Mirage và cải thiện mật độ lựu đạn khói động quanh khu vực Banana trên Inferno.",
+                type: "patch"
+            },
+            {
+                id: "cs2-pn-3",
+                version: "v1.40.0.0",
+                title: "Summer Competitive Season & Premier Anti-Cheat Upgrade",
+                titleVi: "Mùa Giải Premier Mùa Hè & Nâng Cấp Anti-Cheat",
+                date: "10/06/2026",
+                summary: "VAC Live now instantly cancels matches upon detecting kernel-level anomalies. Added Premier Leaderboard rewards.",
+                summaryVi: "Hệ thống VAC Live nay lập tức hủy trận đấu khi phát hiện gian lận. Bổ sung phần thưởng danh hiệu cho Bảng xếp hạng Premier.",
+                type: "major"
+            }
         ]
     },
     {
@@ -203,6 +236,29 @@ export const INITIAL_GAMES: GameData[] = [
                 date: "3 ngày trước",
                 recommended: true,
                 likes: 120
+            }
+        ],
+        patchNotes: [
+            {
+                id: "rdr2-pn-1",
+                version: "v1.32.0",
+                title: "DLSS 3.5 & FSR 3 Ray Reconstruction Support",
+                titleVi: "Hỗ Trợ DLSS 3.5 & FSR 3 Ray Reconstruction",
+                date: "12/07/2026",
+                summary: "Official PC update integrating NVIDIA DLSS 3.5 Ray Reconstruction and AMD FSR 3 Frame Generation, fixing memory leaks during long Story Mode sessions.",
+                summaryVi: "Bản cập nhật PC chính thức tích hợp NVIDIA DLSS 3.5 Ray Reconstruction và AMD FSR 3 Frame Generation, sửa lỗi rò rỉ bộ nhớ khi chơi chế độ cốt truyện thời gian dài.",
+                type: "major",
+                postId: 14
+            },
+            {
+                id: "rdr2-pn-2",
+                version: "v1.31.5",
+                title: "Red Dead Online Telegram Missions & Bonus Gold",
+                titleVi: "Nhiệm Vụ Telegram Red Dead Online & Thưởng Vàng",
+                date: "20/06/2026",
+                summary: "Added 3 new hardcore Telegram missions for Bounty Hunters and 2x Gold payouts on all Legendary Bounties this month.",
+                summaryVi: "Bổ sung 3 nhiệm vụ Telegram độ khó cao cho Bounty Hunter và nhân đôi phần thưởng Vàng cho toàn bộ Nhiệm vụ Săn tiền thưởng Huyền thoại trong tháng.",
+                type: "event"
             }
         ]
     },
@@ -289,6 +345,29 @@ export const INITIAL_GAMES: GameData[] = [
                 recommended: true,
                 likes: 89
             }
+        ],
+        patchNotes: [
+            {
+                id: "raft-pn-1",
+                version: "v1.09",
+                title: "Summer Mystery Islands & Advanced Automation",
+                titleVi: "Bản Cập Nhật Mùa Hè - Đảo Thần Bí & Tự Động Hóa",
+                date: "10/07/2026",
+                summary: "Explore new fog-enshrouded archipelago biomes, bioluminescent sea fauna, advanced cooking recipes, and automated biofuel dispensers.",
+                summaryVi: "Khám phá quần đảo sương mù mới với sinh vật biển phát sáng, công thức nấu ăn cao cấp và hệ thống phân phối nhiên liệu tự động hóa cho chiếc bè của bạn.",
+                type: "major",
+                postId: 15
+            },
+            {
+                id: "raft-pn-2",
+                version: "v1.08.4",
+                title: "Multiplayer Synchronization & Shark AI Hotfix",
+                titleVi: "Cải Thiện Đồng Bộ Mạng & Khắc Phục Lỗi Cá Mập",
+                date: "25/06/2026",
+                summary: "Fixed desync issues when 8 players dock simultaneously at Utopia and resolved an issue where Bruce the shark could swim through solid metal foundations.",
+                summaryVi: "Sửa lỗi mất đồng bộ khi 8 người chơi cùng cập bến Utopia và giải quyết hiện tượng cá mập Bruce bơi xuyên qua các ô móng đã bọc giáp kim loại.",
+                type: "hotfix"
+            }
         ]
     },
     {
@@ -346,7 +425,30 @@ export const INITIAL_GAMES: GameData[] = [
             }
         },
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "cp-pn-1",
+                version: "Patch 2.20",
+                title: "NCART Metro System & Path Tracing Overdrive",
+                titleVi: "Hệ Thống Tàu Điện Metro & Tối Ưu Path Tracing",
+                date: "08/07/2026",
+                summary: "Introduced a fully interactive 5-line NCART subway system, new apartment interactions for V, and Ray Reconstruction performance upgrades.",
+                summaryVi: "Mang đến hệ thống tàu điện ngầm NCART 5 tuyến tương tác đầy đủ, các tương tác mới tại căn hộ của V, và nâng cấp hiệu năng Path Tracing mượt mà hơn.",
+                type: "major",
+                postId: 16
+            },
+            {
+                id: "cp-pn-2",
+                version: "Patch 2.13",
+                title: "AMD FSR 3 & Intel XeSS Support Hotfix",
+                titleVi: "Hỗ Trợ AMD FSR 3 & Intel XeSS Frame Gen",
+                date: "15/06/2026",
+                summary: "Added official AMD FidelityFX Super Resolution 3 with Frame Generation and fixed stuttering when driving through Dogtown.",
+                summaryVi: "Bổ sung chính thức AMD FSR 3 Frame Generation và sửa lỗi giật khung hình khi lái xe tốc độ cao qua khu vực Dogtown.",
+                type: "patch"
+            }
+        ]
     },
     {
         slug: "valorant",
@@ -402,7 +504,30 @@ export const INITIAL_GAMES: GameData[] = [
             }
         },
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "val-pn-1",
+                version: "Patch 9.08",
+                title: "Pearl Map Rework & Agent Vyse Balance",
+                titleVi: "Làm Lại Bản Đồ Pearl & Cân Bằng Agent Vyse",
+                date: "14/07/2026",
+                summary: "Major geometry changes to Pearl B-Site to widen defense angles, reduced Vyse trap slow duration, and Vanguard hardware anti-cheat upgrades.",
+                summaryVi: "Làm lại khu vực B-Site trên bản đồ Pearl, giảm thời gian làm chậm từ bẫy của Vyse, đồng thời cải thiện hệ thống Vanguard chống gian lận cấp độ phần cứng.",
+                type: "major",
+                postId: 17
+            },
+            {
+                id: "val-pn-2",
+                version: "Patch 9.07",
+                title: "Agent Neon & Iso Combat Tweaks",
+                titleVi: "Điều Chỉnh Chỉ Số Chiến Đấu Neon & Iso",
+                date: "28/06/2026",
+                summary: "Adjusted Neon slide accuracy reset speed and reduced Iso shield duration in competitive queue.",
+                summaryVi: "Điều chỉnh tốc độ hồi tâm khi trượt của Neon và giảm thời gian duy trì khiên chắn của Iso trong đấu hạng.",
+                type: "patch"
+            }
+        ]
     },
     {
         slug: "elden-ring",
@@ -442,7 +567,30 @@ export const INITIAL_GAMES: GameData[] = [
             "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80"
         ],
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "er-pn-1",
+                version: "Regulation 1.14",
+                title: "Shadow of the Erdtree Boss Balancing & Scadutree Scaling",
+                titleVi: "Cân Bằng Boss Shadow of the Erdtree & Chỉ Số Scadutree",
+                date: "01/07/2026",
+                summary: "Adjusted damage and mobility of final DLC bosses and increased damage mitigation granted by early Scadutree Fragments.",
+                summaryVi: "Tinh chỉnh sát thương và độ cơ động của các Boss cuối DLC, đồng thời tăng chỉ số giảm sát thương khi thu thập Scadutree Fragment mức 1-10.",
+                type: "major",
+                postId: 18
+            },
+            {
+                id: "er-pn-2",
+                version: "Patch 1.13.2",
+                title: "Summoning Bell & Ash of War Bugfix",
+                titleVi: "Sửa Lỗi Triệu Hồi Spirit Ash & Kỹ Năng Vũ Khí",
+                date: "18/06/2026",
+                summary: "Fixed an issue where spirit ashes would fail to spawn in certain boss arenas in Realm of Shadow.",
+                summaryVi: "Sửa lỗi không thể triệu hồi Tro tàn linh hồn tại một số đấu trường Boss trong vùng đất Shadow.",
+                type: "hotfix"
+            }
+        ]
     },
     {
         slug: "black-myth-wukong",
@@ -482,7 +630,30 @@ export const INITIAL_GAMES: GameData[] = [
             "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1000&q=80"
         ],
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "wukong-pn-1",
+                version: "Patch v1.0.8",
+                title: "Chapter 3 Frame Stuttering Fix & Full Ray Tracing Optimization",
+                titleVi: "Khắc Phục Lỗi Dừng Hình Chương 3 & Tối Ưu Ray Tracing",
+                date: "05/07/2026",
+                summary: "Optimized UE5 shader compilation to eliminate stuttering in Pagoda Realm and improved Full Ray Tracing reflections on PC.",
+                summaryVi: "Tối ưu biên dịch shader UE5 nhằm loại bỏ hiện tượng giật hình tại khu vực Pagoda Realm và cải thiện phản chiếu Full Ray Tracing trên PC.",
+                type: "major",
+                postId: 19
+            },
+            {
+                id: "wukong-pn-2",
+                version: "Patch v1.0.6",
+                title: "PS5 Surround Sound & Controller Feedback Hotfix",
+                titleVi: "Cập Nhật Khắc Phục Âm Thanh 3D & Haptic PS5",
+                date: "22/06/2026",
+                summary: "Fixed audio channel dropouts during intense boss fights and improved DualSense haptic feedback synchronization.",
+                summaryVi: "Sửa lỗi mất tiếng kênh âm thanh vòm khi chiến đấu boss cường độ cao và đồng bộ hóa rung phản hồi DualSense.",
+                type: "hotfix"
+            }
+        ]
     },
     {
         slug: "grand-theft-auto-v",
@@ -522,7 +693,30 @@ export const INITIAL_GAMES: GameData[] = [
             "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=80"
         ],
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "gtav-pn-1",
+                version: "Bottom Dollar Bounties",
+                title: "Bounty Hunting Business & New Law Enforcement Vehicles",
+                titleVi: "Mở Rộng Kinh Doanh Săn Tiền Thưởng & Xe Cảnh Sát Mới",
+                date: "25/06/2026",
+                summary: "Join Maude Eccles to run a private bounty hunting business, capture high-value targets across Los Santos, and unlock custom police cruisers.",
+                summaryVi: "Tham gia cùng Maude Eccles điều hành văn phòng săn tiền thưởng riêng, truy bắt các mục tiêu truy nã giá trị cao và mở khóa hàng loạt xe cảnh sát đặc chủng.",
+                type: "major",
+                postId: 20
+            },
+            {
+                id: "gtav-pn-2",
+                version: "Patch 1.69",
+                title: "FiveM Anti-Cheat Integration & Drift Tuning Hotfix",
+                titleVi: "Tích Hợp Anti-Cheat FiveM & Sửa Lỗi Drift Tuning",
+                date: "10/06/2026",
+                summary: "Enhanced security for FiveM roleplay servers and fixed wheel clipping issues when installing Drift Tuning kits on tuner cars.",
+                summaryVi: "Tăng cường bảo mật cho máy chủ nhập vai FiveM và khắc phục lỗi lún bánh xe khi lắp gói nâng cấp Drift Tuning.",
+                type: "patch"
+            }
+        ]
     },
     {
         slug: "minecraft",
@@ -562,9 +756,45 @@ export const INITIAL_GAMES: GameData[] = [
             "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=1000&q=80"
         ],
         guides: [],
-        reviews: []
+        reviews: [],
+        patchNotes: [
+            {
+                id: "mc-pn-1",
+                version: "v1.21 Tricky Trials",
+                title: "Trial Chambers, The Breeze & Mace Weapon",
+                titleVi: "Hầm Ngục Thử Thách, Quái Vật Breeze & Vũ Khí Mace",
+                date: "13/06/2026",
+                summary: "Venture into subterranean Trial Chambers, battle the wind-manipulating Breeze, craft heavy Mace weapons, and automate crafting with the Redstone Crafter.",
+                summaryVi: "Khám phá Trial Chambers thần bí dưới lòng đất, chiến đấu với quái vật Breeze, chế tạo vũ khí Mace hạng nặng cùng công cụ tự động hóa Crafter bằng Redstone.",
+                type: "major",
+                postId: 21
+            },
+            {
+                id: "mc-pn-2",
+                version: "v1.20.6",
+                title: "Armadillo & Wolf Armor Update",
+                titleVi: "Cập Nhật Armadillo & Giáp Bảo Vệ Sói",
+                date: "23/04/2026",
+                summary: "Added savanna Armadillos that drop scutes used to craft protective wolf armor, alongside 8 new wolf variant breeds.",
+                summaryVi: "Ra mắt sinh vật Armadillo tại vùng thảo nguyên, cho phép thu thập vảy để chế tạo giáp bảo vệ cho chó sói, cùng 8 giống sói mới theo từng hệ sinh thái.",
+                type: "patch"
+            }
+        ]
     }
 ];
+
+const STEAM_URL_MAP: Record<string, string> = {
+    "raft": "https://store.steampowered.com/app/648800/Raft/",
+    "red-dead-redemption-2": "https://store.steampowered.com/app/1174180/Red_Dead_Redemption_2/",
+    "rdr2": "https://store.steampowered.com/app/1174180/Red_Dead_Redemption_2/",
+    "counter-strike-2": "https://store.steampowered.com/app/730/CounterStrike_2/",
+    "cs2": "https://store.steampowered.com/app/730/CounterStrike_2/",
+    "cyberpunk-2077": "https://store.steampowered.com/app/1091500/Cyberpunk_2077/",
+    "elden-ring": "https://store.steampowered.com/app/1245620/ELDEN_RING/",
+    "black-myth-wukong": "https://store.steampowered.com/app/2358720/Black_Myth_Wukong/",
+    "grand-theft-auto-v": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/",
+    "gtav": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/"
+};
 
 export const getGameBySlug = (slug: string): GameData => {
     if (!slug) return INITIAL_GAMES[0];
@@ -575,7 +805,12 @@ export const getGameBySlug = (slug: string): GameData => {
         g.aliases?.includes(cleanSlug) ||
         g.tag.toLowerCase() === cleanSlug.replace(/-/g, " ")
     );
-    if (found) return found;
+    if (found) {
+        return {
+            ...found,
+            steamUrl: found.steamUrl || STEAM_URL_MAP[found.slug.toLowerCase()] || STEAM_URL_MAP[found.communityId?.toLowerCase() || ""] || `https://store.steampowered.com/search/?term=${encodeURIComponent(found.name)}`
+        };
+    }
 
     // Fallback generation for unknown game slugs so the page never 404s
     const titleName = cleanSlug
@@ -588,6 +823,7 @@ export const getGameBySlug = (slug: string): GameData => {
         id: cleanSlug,
         name: titleName,
         tag: titleName,
+        steamUrl: STEAM_URL_MAP[cleanSlug] || `https://store.steampowered.com/search/?term=${encodeURIComponent(titleName)}`,
         developer: "Indie / Community Studio",
         publisher: "Global Games",
         releaseDate: "2024",
