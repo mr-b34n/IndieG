@@ -1,33 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { faGlobeAsia, faUserGroup, faLock, faChevronDown, faGear, faThumbtack, faComment } from "@fortawesome/free-solid-svg-icons"
+import { faChevronDown, faGear, faThumbtack, faComment, faBookmark, faFileLines, faTrash, faClock, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import { prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
+import { revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
 import { useCommunitiesStore, type CommunityData } from "@/features/community";
-import { AttachmentPicker } from "@/features/post/components/AttachmentPicker";
-
-export type PostPrivacy = "public" | "friends" | "private";
-
-export interface CreatePostPayload {
-    title: string;
-    content: string;
-    attachments: EditableAttachment[];
-    privacy: PostPrivacy;
-    tags: string[];
-    allowComments: boolean;
-    pinned: boolean;
-    communityId: string | number;
-}
-
-const PRIVACY_OPTIONS: { value: PostPrivacy; label: string; icon: typeof faGlobeAsia }[] = [
-    { value: "public", label: "Công khai", icon: faGlobeAsia },
-    { value: "friends", label: "Bạn bè", icon: faUserGroup },
-    { value: "private", label: "Riêng tư", icon: faLock },
-];
-
-const HASHTAG_REGEX = /#[^\s#]+/g;
+import { AttachmentPicker, useDraftsStore, type PostDraft } from "@/features/post";
+import { type PostPrivacy, type CreatePostPayload } from "../types";
+import { HASHTAG_REGEX, MAX_TEXTAREA_HEIGHT } from "../constants";
 
 const extractHashtags = (text: string): string[] => {
     const matches = text.match(HASHTAG_REGEX) ?? [];
@@ -47,83 +29,6 @@ const renderHighlightedContent = (text: string) => {
         ) : (
             <span key={i}>{part}</span>
         )
-    );
-};
-
-const PrivacySelector = ({ value, onChange }: { value: PostPrivacy; onChange: (v: PostPrivacy) => void }) => {
-    const [open, setOpen] = useState(false);
-    const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
-    const btnRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    const current = PRIVACY_OPTIONS.find((o) => o.value === value) ?? PRIVACY_OPTIONS[0];
-
-    const openMenu = () => {
-        const rect = btnRef.current?.getBoundingClientRect();
-        if (rect) setCoords({ top: rect.top - 6, left: rect.right });
-        setOpen(true);
-    };
-
-    useEffect(() => {
-        if (!open) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-            const target = e.target as Node;
-            if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-            setOpen(false);
-        };
-        const handleReposition = () => setOpen(false);
-
-        document.addEventListener("mousedown", handleClickOutside);
-        window.addEventListener("scroll", handleReposition, true);
-        window.addEventListener("resize", handleReposition);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            window.removeEventListener("scroll", handleReposition, true);
-            window.removeEventListener("resize", handleReposition);
-        };
-    }, [open]);
-
-    return (
-        <div className="relative shrink-0">
-            <button
-                ref={btnRef}
-                type="button"
-                onClick={() => (open ? setOpen(false) : openMenu())}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium bg-surface-hover border border-border text-text-muted hover:text-text hover:border-primary/40 transition-colors"
-            >
-                <FontAwesomeIcon icon={current.icon} className="text-[11px]" />
-                <span>{current.label}</span>
-                <FontAwesomeIcon icon={faChevronDown} className="text-[9px] opacity-60" />
-            </button>
-
-            {open &&
-                coords &&
-                createPortal(
-                    <div
-                        ref={menuRef}
-                        style={{ top: coords.top, left: coords.left, transform: "translate(-100%, -100%)" }}
-                        className="fixed w-36 py-1 bg-surface border border-border rounded-xl shadow-lg z-[999] overflow-hidden"
-                    >
-                        {PRIVACY_OPTIONS.map((opt) => (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => {
-                                    onChange(opt.value);
-                                    setOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-surface-hover transition-colors ${
-                                    opt.value === value ? "text-primary font-semibold" : "text-text"
-                                }`}
-                            >
-                                <FontAwesomeIcon icon={opt.icon} className="text-[11px] w-3" />
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>,
-                    document.body
-                )}
-        </div>
     );
 };
 
@@ -172,6 +77,7 @@ const PostSettingsMenu = ({
     pinned: boolean;
     onPinnedChange: (v: boolean) => void;
 }) => {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -214,7 +120,7 @@ const PostSettingsMenu = ({
                         ? "bg-primary/10 text-primary"
                         : "bg-surface-hover border border-border text-text-muted hover:text-text hover:border-primary/40"
                 }`}
-                title="Cài đặt bài viết"
+                title={t('feed.privacy')}
             >
                 <FontAwesomeIcon icon={faGear} className="text-[13px]" />
             </button>
@@ -230,13 +136,13 @@ const PostSettingsMenu = ({
                         <ToggleSwitch
                             checked={allowComments}
                             onChange={onAllowCommentsChange}
-                            label="Cho phép bình luận"
+                            label={t('feed.allowComments')}
                             icon={faComment}
                         />
                         <ToggleSwitch
                             checked={pinned}
                             onChange={onPinnedChange}
-                            label="Ghim lên đầu feed"
+                            label={t('feed.pinned')}
                             icon={faThumbtack}
                         />
                     </div>,
@@ -255,6 +161,7 @@ const CommunitySelector = ({
     onChange: (id: string | number) => void;
     communities: CommunityData[];
 }) => {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
@@ -309,7 +216,7 @@ const CommunitySelector = ({
                     </>
                 ) : (
                     <span className="truncate text-text-faint">
-                        {hasCommunities ? "Chọn cộng đồng để đăng bài (bắt buộc)" : "Bạn chưa tham gia cộng đồng nào"}
+                        {hasCommunities ? t('feed.selectCommunityRequired') : t('feed.noCommunitiesJoined')}
                     </span>
                 )}
                 <FontAwesomeIcon icon={faChevronDown} className="text-[10px] opacity-60 ml-auto shrink-0" />
@@ -346,9 +253,109 @@ const CommunitySelector = ({
     );
 };
 
-const MAX_TEXTAREA_HEIGHT = 280; // px — chiều cao tối đa trước khi bắt đầu scroll
+const DraftsModal = ({
+    isOpen,
+    onClose,
+    onSelectDraft,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelectDraft: (draft: PostDraft) => void;
+}) => {
+    const { t } = useTranslation();
+    const drafts = useDraftsStore((state) => state.drafts);
+    const deleteDraft = useDraftsStore((state) => state.deleteDraft);
+    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
+
+    if (!isOpen) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-hover/50">
+                    <div className="flex items-center gap-2">
+                        <FontAwesomeIcon icon={faBookmark} className="text-primary text-lg" />
+                        <h3 className="font-bold text-base text-text">{t('feed.drafts')} ({drafts.length})</h3>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
+                    >
+                        <FontAwesomeIcon icon={faXmark} className="text-lg" />
+                    </button>
+                </div>
+
+                <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3">
+                    {drafts.length === 0 ? (
+                        <div className="py-12 text-center text-text-faint text-sm flex flex-col items-center gap-2">
+                            <FontAwesomeIcon icon={faFileLines} className="text-3xl text-text-faint/50 mb-1" />
+                            <p>{t('feed.noDrafts')}</p>
+                            <p className="text-xs">{t('feed.draftsDesc')}</p>
+                        </div>
+                    ) : (
+                        drafts.map((draft) => {
+                            const comm = draft.communityId ? getCommunityById(draft.communityId) : null;
+                            return (
+                                <div
+                                    key={draft.id}
+                                    className="p-3.5 bg-surface-hover/40 border border-border rounded-xl flex flex-col gap-2 hover:border-primary/40 transition-all group"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                            {comm && (
+                                                <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">
+                                                    {comm.name}
+                                                </span>
+                                            )}
+                                            <h4 className="font-semibold text-sm text-text truncate">
+                                                {draft.title || (draft.content ? draft.content.slice(0, 50) + "..." : t('feed.noTitle'))}
+                                            </h4>
+                                            <p className="text-xs text-text-muted line-clamp-2">
+                                                {draft.content || t('feed.noContent')}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteDraft(draft.id);
+                                            }}
+                                            title={t('feed.deleteDraft')}
+                                            className="text-text-faint hover:text-error p-1.5 rounded-lg hover:bg-error/10 transition-colors"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-border/50 text-[11px] text-text-faint mt-1">
+                                        <span className="flex items-center gap-1">
+                                            <FontAwesomeIcon icon={faClock} className="w-3" />
+                                            {t('feed.savedAt', { time: draft.updatedAt })}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onSelectDraft(draft);
+                                                onClose();
+                                            }}
+                                            className="px-3 py-1 bg-primary text-white rounded-lg font-medium hover:bg-primary-hover transition-colors shadow-sm"
+                                        >
+                                            {t('feed.continueEdit')}
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
 
 export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) => Promise<void> }) => {
+    const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const communities = useCommunitiesStore((state) => state.communities);
     const joinedCommunities = useMemo(() => communities.filter((c) => c.joined), [communities]);
@@ -361,6 +368,12 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
     const [communityId, setCommunityId] = useState<string | number | null>(null);
     const [expanded, setExpanded] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
+    const [showDraftsModal, setShowDraftsModal] = useState(false);
+    const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+    const [isDraftSaved, setIsDraftSaved] = useState(false);
+    const drafts = useDraftsStore((state) => state.drafts);
+    const saveDraft = useDraftsStore((state) => state.saveDraft);
+    const deleteDraft = useDraftsStore((state) => state.deleteDraft);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const highlightRef = useRef<HTMLDivElement>(null);
 
@@ -373,7 +386,6 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
 
     const isActive = expanded || content.trim().length > 0 || attachments.length > 0 || title.trim().length > 0;
 
-    // Tự giãn chiều cao textarea theo nội dung, chỉ scroll khi vượt MAX_TEXTAREA_HEIGHT
     useEffect(() => {
         const el = textareaRef.current;
         if (!el) return;
@@ -403,6 +415,10 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                 pinned,
                 communityId,
             });
+            if (currentDraftId) {
+                deleteDraft(currentDraftId);
+                setCurrentDraftId(null);
+            }
             revokeAttachmentUrls(attachments);
             setTitle("");
             setContent("");
@@ -417,24 +433,51 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
         }
     };
 
+    const handleSaveDraft = () => {
+        if (!content.trim() && !title.trim()) return;
+        const savedId = saveDraft({
+            id: currentDraftId || undefined,
+            title: title.trim(),
+            content: content.trim(),
+            privacy,
+            allowComments,
+            pinned,
+            communityId,
+        });
+        setCurrentDraftId(savedId);
+        setIsDraftSaved(true);
+        setTimeout(() => setIsDraftSaved(false), 2500);
+    };
+
+    const handleSelectDraft = (draft: PostDraft) => {
+        setTitle(draft.title);
+        setContent(draft.content);
+        setPrivacy(draft.privacy);
+        setAllowComments(draft.allowComments);
+        setPinned(draft.pinned);
+        setCommunityId(draft.communityId);
+        setCurrentDraftId(draft.id);
+        setExpanded(true);
+    };
+
     return (
         <div
             id="create-post"
             className="
                 relative z-20
                 w-full p-3
-                bg-surface/90 backdrop-blur-md
-                border border-border rounded-2xl
-                shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                dark:shadow-[0_2px_16px_rgba(0,0,0,0.30)]
-                transition-all duration-200 ease-out
+                bg-surface/95 backdrop-blur-md
+                rounded-xl
+                shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
+                dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
+                transition-all duration-300 ease-out
             "
         >
             <div className="flex gap-2.5 items-start">
                 <img
                     src={avatarUrl}
                     alt="User"
-                    className={`w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
+                    className={`w-8 h-8 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
                         isActive ? "" : "self-center"
                     }`}
                 />
@@ -447,7 +490,7 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                         }`}
                         aria-hidden={!isActive}
                     >
-                        <div className="overflow-hidden min-h-0 flex flex-col gap-1.5">
+                        <div className={`min-h-0 flex flex-col gap-1.5 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
                             <CommunitySelector
                                 value={communityId}
                                 onChange={setCommunityId}
@@ -457,7 +500,7 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Post title (optional)"
+                                placeholder={t('feed.postTitle')}
                                 tabIndex={isActive ? 0 : -1}
                                 className="w-full h-9 px-3 bg-surface-hover border border-border rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all text-text placeholder:text-text-faint"
                             />
@@ -477,7 +520,7 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
                             }}
-                            placeholder="What's on your mind?"
+                            placeholder={t('feed.whatOnMind')}
                             rows={1}
                             className={`block w-full px-3 bg-transparent border-none outline-none text-sm text-transparent caret-text placeholder:text-text-faint resize-none leading-snug transition-[padding] duration-200 ease-out ${
                                 isActive ? "min-h-19 py-2" : "min-h-9 py-1.5"
@@ -491,7 +534,6 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                             }`}
                         >
                             {renderHighlightedContent(content)}
-                            {/* Khoảng trắng cuối để giữ đúng chiều cao khi nội dung kết thúc bằng dòng mới */}
                             {content.endsWith("\n") ? "\u200b" : null}
                         </div>
                     </div>
@@ -504,16 +546,43 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                         className="gap-1.5"
                         toolbarTrailing={
                             <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDraftsModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-hover border border-border text-text hover:border-primary/50 transition-all shrink-0"
+                                    title={t('feed.drafts')}
+                                >
+                                    <FontAwesomeIcon icon={faBookmark} className="text-primary w-3.5" />
+                                    <span>{t('feed.drafts')}</span>
+                                    {drafts.length > 0 && (
+                                        <span className="bg-primary text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                                            {drafts.length}
+                                        </span>
+                                    )}
+                                </button>
                                 {isActive && (
-                                    <>
-                                        <PostSettingsMenu
-                                            allowComments={allowComments}
-                                            onAllowCommentsChange={setAllowComments}
-                                            pinned={pinned}
-                                            onPinnedChange={setPinned}
-                                        />
-                                        <PrivacySelector value={privacy} onChange={setPrivacy} />
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveDraft}
+                                        disabled={!content.trim() && !title.trim()}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all shrink-0 ${
+                                            isDraftSaved
+                                                ? "bg-success/15 border-success text-success"
+                                                : "bg-surface-hover border-border text-text-muted hover:text-text hover:border-primary/50"
+                                        }`}
+                                        title={t('feed.saveDraftTooltip')}
+                                    >
+                                        <FontAwesomeIcon icon={isDraftSaved ? faCheck : faFileLines} className="w-3.5" />
+                                        <span>{isDraftSaved ? t('feed.draftSaved') : t('feed.saveDraft')}</span>
+                                    </button>
+                                )}
+                                {isActive && (
+                                    <PostSettingsMenu
+                                        allowComments={allowComments}
+                                        onAllowCommentsChange={setAllowComments}
+                                        pinned={pinned}
+                                        onPinnedChange={setPinned}
+                                    />
                                 )}
                                 <button
                                     type="button"
@@ -525,13 +594,18 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                                             : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                                 >
-                                    {isPosting ? "Posting..." : "Post"}
+                                    {isPosting ? t('common.loading') : t('feed.postButton')}
                                 </button>
                             </div>
                         }
                     />
                 </div>
             </div>
+            <DraftsModal
+                isOpen={showDraftsModal}
+                onClose={() => setShowDraftsModal(false)}
+                onSelectDraft={handleSelectDraft}
+            />
         </div>
     );
 };

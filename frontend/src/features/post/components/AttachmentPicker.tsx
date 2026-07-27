@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile, faImage, faPaperclip, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { createAttachmentFromFile, revokeAttachmentUrl, type EditableAttachment } from "../helpers/postAttachments";
@@ -29,11 +29,9 @@ export function AttachmentPicker({
     const imageCount = attachments.filter((a) => a.kind === "image").length;
     const fileCount = attachments.filter((a) => a.kind === "file").length;
 
-    useEffect(() => {
-        if (attachments.length === 0) {
-            setError(null);
-        }
-    }, [attachments]);
+    if (attachments.length === 0 && error !== null) {
+        setError(null);
+    }
 
     const addFiles = (files: FileList | null, kind: "image" | "file") => {
         if (!files || files.length === 0) return;
@@ -182,7 +180,7 @@ export function AttachmentPicker({
                 }`}
                 aria-hidden={!showToolbar}
             >
-                <div className="overflow-hidden min-h-0">
+                <div className={`min-h-0 ${showToolbar ? "overflow-visible" : "overflow-hidden"}`}>
                     <div className="flex flex-row items-center justify-between gap-2">
                         <div className="flex flex-row items-center gap-1 min-w-0">
                             <button

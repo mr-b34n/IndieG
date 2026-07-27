@@ -1,11 +1,13 @@
 import { faBookmark } from "@fortawesome/free-regular-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import { getCurrentAuthor, Post, usePostsStore } from "@/features/post";
-import type { PostData } from "@/features/post/components/Post";
+import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";
 import { useBookmarksStore } from "../store/useBookmarkStore";
 
+
 export const BookmarkList = () => {
+    const { t } = useTranslation();
     const posts = usePostsStore((state) => state.posts);
     const updatePost = usePostsStore((state) => state.updatePost);
     const deletePost = usePostsStore((state) => state.deletePost);
@@ -14,23 +16,15 @@ export const BookmarkList = () => {
     const removeBookmark = useBookmarksStore((state) => state.removeBookmark);
     const currentAuthor = getCurrentAuthor();
 
-    const handleEditPost = (
-        id: string | number,
-        data: { title: string; content: string; images?: string[]; files?: PostData["files"] }
-    ) => {
+    const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
-            title: data.title || data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
-            content: data.content,
-            images: data.images,
-            files: data.files,
+            ...data,
+            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
         });
     };
 
-    const handleUnfollowAuthor = () => {
-        // Danh sách bookmark không lọc theo tác giả đang follow, không cần xử lý gì thêm ở đây.
-    };
+    const handleUnfollowAuthor = () => {};
 
-    // Giữ đúng thứ tự bookmark gần nhất trước (theo bookmarkedIds), chỉ lấy các post còn tồn tại.
     const bookmarkedPosts = bookmarkedIds
         .map((id) => posts.find((p) => p.id.toString() === id.toString()))
         .filter((p): p is PostData => Boolean(p));
@@ -58,8 +52,8 @@ export const BookmarkList = () => {
                     text-text-muted text-sm
                 ">
                     <FontAwesomeIcon icon={faBookmark} className="text-2xl text-text-faint mb-1" />
-                    <p className="font-semibold text-text">Chưa có bài viết nào được lưu</p>
-                    <p className="text-text-faint text-center">Nhấn biểu tượng bookmark trên bài viết để lưu lại xem sau.</p>
+                    <p className="font-semibold text-text">{t('bookmark.titleempty') || t('bookmark.emptyTitle') || t('bookmark.empty')}</p>
+                    <p className="text-text-faint text-center">{t('bookmark.emptyDesc')}</p>
                 </div>
             )}
         </div>

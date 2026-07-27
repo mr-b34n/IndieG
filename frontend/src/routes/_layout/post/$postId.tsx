@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '@/shared/hooks/useTheme';
-import { CommentSection, getCurrentAuthor, Post, usePostsStore } from '@/features/post';
+import { CommentSection, getCurrentAuthor, Post, usePostsStore, type PostData } from '@/features/post';
 
 export const Route = createFileRoute('/_layout/post/$postId')({
     component: PostDetail,
@@ -13,29 +13,38 @@ function PostDetail() {
 
     const { postId } = Route.useParams();
     const navigate = useNavigate();
+    const router = useRouter();
 
     const post = usePostsStore((state) => state.getPostById(postId));
     const updatePost = usePostsStore((state) => state.updatePost);
     const deletePost = usePostsStore((state) => state.deletePost);
     const currentAuthor = getCurrentAuthor();
 
-    const handleEditPost = (id: string | number, data: { title: string; content: string }) => {
+    const handleGoBack = () => {
+        if (window.history.length > 1) {
+            router.history.back();
+        } else {
+            navigate({ to: '/' });
+        }
+    };
+
+    const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
-            title: data.title || data.content.slice(0, 80) + (data.content.length > 80 ? "..." : ""),
-            content: data.content,
+            ...data,
+            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
         });
     };
 
     const handleDeletePost = (id: string | number) => {
         deletePost(id);
-        navigate({ to: '/' });
+        handleGoBack();
     };
 
     if (!post) {
         return (
             <div className="flex flex-col items-center justify-center w-full h-screen bg-bg text-text">
                 <p>Post not found</p>
-                <button onClick={() => navigate({ to: '/' })} className="mt-4 text-primary underline">Go back</button>
+                <button onClick={handleGoBack} className="mt-4 text-primary underline">Go back</button>
             </div>
         );
     }
@@ -46,7 +55,7 @@ function PostDetail() {
 
                 <div className="w-full flex flex-row items-center gap-3 mb-2 px-1">
                     <button
-                        onClick={() => navigate({ to: '/' })}
+                        onClick={handleGoBack}
                         className="
                                     w-10 h-10 flex items-center justify-center rounded-full
                                     bg-surface/50 backdrop-blur-sm border border-border/50

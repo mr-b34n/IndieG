@@ -1,30 +1,9 @@
 
-export interface ValidationRule {
-    id: string;
-    label: string;
-    isMet: boolean;
-}
+import { type ValidationRule, type PasswordValidationResult } from "../types";
+import { STRENGTH_LEVELS } from "../constants";
 
-export interface PasswordStrengthConfig {
-    label: string;
-    color: string;
-    bg: string;
-}
-
-export interface PasswordValidationResult {
-    requirements: ValidationRule[];
-    score: number;
-    isAllValid: boolean;
-    strengthConfig: PasswordStrengthConfig;
-    isEmpty: boolean
-}
-
-export const STRENGTH_LEVELS: Record<number, PasswordStrengthConfig> = {
-    1: { label: "Weak", color: "text-red-600", bg: "bg-red-600" },
-    2: { label: "Fair", color: "text-amber-500", bg: "bg-amber-500" },
-    3: { label: "Good", color: "text-yellow-400", bg: "bg-yellow-400" },
-    4: { label: "Strong", color: "text-emerald-500", bg: "bg-emerald-500" },
-};
+export * from "../types";
+export * from "../constants";
 
 export const validatePassword = async (password: string): Promise<PasswordValidationResult> => {
 

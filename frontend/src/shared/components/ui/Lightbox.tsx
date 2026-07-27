@@ -16,22 +16,10 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-            if (e.key === "ArrowRight") showNext();
-            if (e.key === "ArrowLeft") showPrev();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentIndex]);
-
-    useEffect(() => {
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = "";
-        };
-    }, []);
+    const resetZoom = () => {
+        setScale(1);
+        setPosition({ x: 0, y: 0 });
+    };
 
     const showNext = () => {
         setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
@@ -43,10 +31,23 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         resetZoom();
     };
 
-    const resetZoom = () => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
-    };
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+            if (e.key === "ArrowRight") showNext();
+            if (e.key === "ArrowLeft") showPrev();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex]);
+
+    useEffect(() => {
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, []);
 
     const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.5, 4));
     const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.5, 1));

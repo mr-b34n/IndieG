@@ -20,7 +20,15 @@ const getInitialTheme = (): Theme => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
+const getInitialLanguage = (): Language => {
+    if (typeof window === 'undefined') return 'vi';
+    const saved = localStorage.getItem('language') as Language | null;
+    if (saved === 'vi' || saved === 'en') return saved;
+    return 'vi';
+};
+
 const initialTheme = getInitialTheme();
+const initialLanguage = getInitialLanguage();
 
 if (initialTheme === 'dark') {
     document.documentElement.classList.add('dark');
@@ -30,7 +38,7 @@ if (initialTheme === 'dark') {
 
 export const useThemeStore = create<ThemeState>((set) => ({
     theme: initialTheme,
-    language: 'en',
+    language: initialLanguage,
     toggleTheme: () => set((state) => {
         const nextTheme: Theme = state.theme === 'light' ? 'dark' : 'light';
         localStorage.setItem('theme', nextTheme);
@@ -43,10 +51,15 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
         return { theme: nextTheme };
     }),
-    setLanguage: (language) => set({language}),
+    setLanguage: (language) => {
+        localStorage.setItem('language', language);
+        set({ language });
+    },
     toggleLanguage: () => {
-        set((state) => ({
-            language: state.language === 'en' ? 'vi' : 'en'
-        }))
+        set((state) => {
+            const nextLang: Language = state.language === 'en' ? 'vi' : 'en';
+            localStorage.setItem('language', nextLang);
+            return { language: nextLang };
+        });
     }
 }));
