@@ -154,16 +154,10 @@ export const LeftBar = () => {
                         <button
                             type="button"
                             onClick={() => navigate({to: "/squad"})}
-                            className={`${isSquadActive ? navItemActive : navItem} justify-between`}
+                            className={isSquadActive ? navItemActive : navItem}
                         >
-                            <div className="flex flex-row items-center gap-3">
-                                <FontAwesomeIcon icon={faHubspot} className="w-4 shrink-0" />
-                                <span>{t('common.squad')}</span>
-                            </div>
-                            <span className="text-[10px] font-bold bg-accent-500 text-white
-                                rounded-full w-4 h-4 flex items-center justify-center shrink-0">
-                                3
-                            </span>
+                            <FontAwesomeIcon icon={faHubspot} className="w-4 shrink-0" />
+                            <span>{t('common.squad')}</span>
                         </button>
                     </>
                 )}

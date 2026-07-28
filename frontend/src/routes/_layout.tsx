@@ -35,7 +35,7 @@ function MainLayout() {
         closeRight()
     }, [pathname, closeLeft, closeRight])
 
-    const hideSidebars = pathname.startsWith('/settings')
+    const hideSidebars = pathname.startsWith('/settings') || pathname.startsWith('/profile')
 
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
@@ -90,7 +90,7 @@ function MainLayout() {
                 ref={scrollContainerRef} 
                 className="relative flex-1 overflow-y-auto overflow-x-hidden w-full"
             >
-                <div className={`w-full ${hideSidebars ? 'max-w-5xl' : 'max-w-[1400px]'} mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12`}>
+                <div className={`w-full ${hideSidebars ? 'max-w-[1280px]' : 'max-w-[1400px]'} mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12`}>
                     
                     {/* Left Sidebar */}
                     {!hideSidebars && (

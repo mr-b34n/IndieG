@@ -13,14 +13,16 @@ import {
     faChevronUp,
     faShieldHalved,
     faScroll,
+    faGamepad,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { DEFAULT_AVATAR as avatarGame } from '@/shared/constants/images';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { useTranslation } from '@/shared/hooks/useTranslate';
+import { INITIAL_GAMES } from '@/features/game/constants';
 import { AttachmentPicker, getCurrentAuthor, prepareAttachmentsForSave, revokeAttachmentUrls, usePostsStore, type EditableAttachment, type PostData, Post } from '@/features/post';
 import { useAuthStore } from '@/features/auth';
-import { useCommunitiesStore } from '@/features/community';
+import { useCommunitiesStore, formatCompactNumber } from '@/features/community';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
     validateSearch: (search: Record<string, unknown>): { tab?: string } => {
@@ -31,32 +33,8 @@ export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetail,
 })
 
-const TAG_CLASSES = [
-    "bg-tag-1/10 text-tag-1",
-    "bg-tag-2/10 text-tag-2",
-    "bg-tag-3/10 text-tag-3",
-    "bg-tag-4/10 text-tag-4",
-    "bg-tag-5/10 text-tag-5",
-];
-
-const BANNER_GRADIENTS = [
-    "from-brand-500/40 via-brand-400/15 to-transparent",
-    "from-accent-500/40 via-accent-400/15 to-transparent",
-    "from-success-500/40 via-success-400/15 to-transparent",
-    "from-tag-5/40 via-tag-5/15 to-transparent",
-];
-
-// Chọn gradient/tag màu ổn định theo id, để cùng 1 cộng đồng luôn ra cùng 1 màu
-const hashIndex = (id: string | number, mod: number) => {
-    const str = id.toString();
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) % mod;
-    return hash;
-};
-
 const THREAD_TABS = [
     { id: "all", label: "🌐 Tất cả chủ đề" },
-    { id: "🤝 Tìm Đồng Đội", label: "🤝 Tìm Đồng Đội" },
     { id: "💡 Thảo Luận & Guide", label: "💡 Thảo Luận & Guide" },
     { id: "📢 Thông Báo NPH", label: "📢 Thông Báo NPH" },
     { id: "📢 Thông Báo & Event", label: "📢 Thông Báo & Event" },
@@ -207,7 +185,7 @@ const CreateCommunityPostBox = ({
 
 function CommunityDetail() {
     useTheme("Community");
-    const { t } = useTranslation();
+    const { t, lang } = useTranslation();
 
     const { communityId } = Route.useParams();
     const navigate = useNavigate();
@@ -251,7 +229,7 @@ function CommunityDetail() {
         );
     }
 
-    const gradient = BANNER_GRADIENTS[hashIndex(community.id, BANNER_GRADIENTS.length)];
+    const game = INITIAL_GAMES.find(g => g.communityId === community.id || g.id === community.id || g.slug === community.id);
 
     const handleCreatePost = async ({ title, content, attachments, selectedTag }: CreateCommunityPostPayload) => {
         const { images, files } = await prepareAttachmentsForSave(attachments);
@@ -305,48 +283,61 @@ function CommunityDetail() {
                     <span className="text-sm font-bold text-text-muted tracking-wide uppercase">Community</span>
                 </div>
 
-                <div
-                    className="
-                                    w-full flex flex-col overflow-hidden
-                                    bg-surface/95 backdrop-blur-md
-                                    rounded-2xl
-                                    shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
-                                    dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
-                                "
-                >
-                        {/* Banner */}
-                        <div className={`relative h-34 bg-linear-to-br ${gradient}`}>
-                            
-                            {community.backdrop && (
-                                <img
-                                    src={community.backdrop}
-                                    alt={`${community.name} backdrop`}
-                                    className="absolute inset-0 w-full h-full object-cover object-top"
-                                />
-                            )}
-                            <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/60 to-transparent pointer-events-none" />
+                <div className="relative w-full rounded-3xl overflow-hidden border border-border bg-surface shadow-md mb-2">
+                    {/* Backdrop Image with Gradients fading smoothly down into the card, just like GameDetail */}
+                    <div className="absolute inset-0 h-72 sm:h-96 w-full overflow-hidden pointer-events-none">
+                        <img
+                            src={game?.bannerUrl || community.backdrop || community.logo}
+                            alt={`${community.name} backdrop`}
+                            className="w-full h-full object-cover object-top sm:object-center transform hover:scale-105 transition-transform duration-700 opacity-95"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-r from-surface/90 via-surface/40 to-transparent" />
+                    </div>
 
-                            
-                            {community.featured && (
-                                <span className="absolute z-10 top-3 right-3 flex flex-row items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-500 text-white shadow-sm">
-                                    <FontAwesomeIcon icon={faFire} className="text-[9px]" />
-                                    Featured
-                                </span>
-                            )}
-                        </div>
+                    {/* Spacer to show off the banner artwork cleanly without overlapping issues */}
+                    <div className="h-32 sm:h-44 w-full relative z-10">
+                        {community.featured && (
+                            <span className="absolute top-4 right-4 flex flex-row items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-accent-500 text-white shadow-md">
+                                <FontAwesomeIcon icon={faFire} className="text-[10px]" />
+                                Featured
+                            </span>
+                        )}
+                    </div>
 
-                        {/* Content */}
-                        <div className="flex flex-col px-5 pb-5 -mt-9">
-                            <div className="flex flex-row items-end justify-between">
-                                
-                                <img
-                                    src={community.logo}
-                                    alt={community.name}
-                                    className="relative z-10 w-20 h-20 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-sm"
-                                />
+                    {/* Content Overlay */}
+                    <div className="relative z-10 flex flex-col px-5 sm:px-8 pb-6 pt-0">
+                        <div className="flex flex-row items-end justify-between flex-wrap gap-4">
+                            
+                            <img
+                                src={community.logo}
+                                alt={community.name}
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-surface bg-surface shadow-xl shrink-0"
+                            />
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                {game && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate({ to: `/game/${game.slug}` })}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold bg-primary/15 hover:bg-primary text-primary hover:text-white transition-all shadow-sm border border-primary/30 cursor-pointer"
+                                        title="Đến trang Game"
+                                    >
+                                        <FontAwesomeIcon icon={faGamepad} />
+                                        <span>Trang Game</span>
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => navigate({ to: "/squad" })}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold bg-surface-hover hover:bg-border/80 text-text border border-border shadow-sm transition-all cursor-pointer"
+                                    title="Tìm Tổ Đội"
+                                >
+                                    <FontAwesomeIcon icon={faUsers} className="text-brand-400" />
+                                    <span>{lang === "vi" ? "Tìm Tổ Đội" : "Find Squad"}</span>
+                                </button>
                                 <button
                                     onClick={() => toggleJoin(community.id)}
-                                    className={`mb-1 flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 ${community.joined
+                                    className={`flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors duration-150 cursor-pointer ${community.joined
                                         ? "bg-surface-hover text-text-muted hover:bg-accent-500/10 hover:text-accent-500"
                                         : "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(0,170,255,0.3)]"
                                         }`}
@@ -355,6 +346,7 @@ function CommunityDetail() {
                                     {community.joined ? "Joined" : "Join"}
                                 </button>
                             </div>
+                        </div>
 
                             <div className="flex flex-col mt-3 gap-0.5">
                                 <p className="font-bold text-xl text-text">
@@ -372,26 +364,13 @@ function CommunityDetail() {
                             <div className="flex flex-row items-center gap-4 mt-3 text-[13px] text-text-faint">
                                 <span className="flex flex-row items-center gap-1.5">
                                     <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                                    {community.members.toLocaleString()} members
+                                    {formatCompactNumber(community.members)} members
                                 </span>
                                 <span className="flex flex-row items-center gap-1.5 text-success-500 font-medium">
                                     <FontAwesomeIcon icon={faCircle} className="text-[6px]" />
-                                    {community.onlineNow} online
+                                    {formatCompactNumber(community.onlineNow)} online
                                 </span>
                             </div>
-
-                            {community.tags.length > 0 && (
-                                <div className="flex flex-row gap-1.5 flex-wrap mt-3">
-                                    {community.tags.map((tag, idx) => (
-                                        <span
-                                            key={tag}
-                                            className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
-                                        >
-                                            #{tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
 
                             {/* Rules */}
                             <div className="mt-4 pt-4 border-t border-border">

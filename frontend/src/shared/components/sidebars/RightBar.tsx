@@ -1,7 +1,6 @@
-import { faArrowTrendUp, faGamepad, faCalendarDay, faUsers, faBolt, faArrowRight } from "@fortawesome/free-solid-svg-icons"
+import { faArrowTrendUp, faCalendarDay, faUsers, faBolt } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "@tanstack/react-router"
-import { useSquadStore } from "@/features/squad/store/useSquadStore"
 
 import {
     RAFT_LOGO as raftLogo,
@@ -30,7 +29,7 @@ const SectionTitle = ({ icon, label, extra }: { icon: typeof faArrowTrendUp; lab
     </div>
 );
 
-const SQUAD_MEMBERS = [
+const FRIEND_LIST = [
     { name: "GhostRider",    game: "Red Dead 2",    slug: "red-dead-redemption-2", logo: rdr2Logo, status: "online",  playtime: "2h 14m" },
     { name: "TacticalXeno",  game: "CS2 — Rank S",  slug: "counter-strike-2", logo: cs2Logo,  status: "online",  playtime: "45m"    },
     { name: "NightOwl",      game: "Raft",           slug: "raft", logo: raftLogo, status: "online",  playtime: "1h 03m" },
@@ -79,18 +78,16 @@ const EVENTS = [
 
 export const RightBar = () => {
     const navigate = useNavigate();
-    const {t} = useTranslation();
-    const mySquadsCount = useSquadStore((state) => state.squads.filter((s) => s.isMySquad).length);
-    const setActiveTab = useSquadStore((state) => state.setActiveTab);
-    const onlineSquad = SQUAD_MEMBERS.filter((m) => m.status === "online");
-    const onlineCount = onlineSquad.length;
+    const {t, lang} = useTranslation();
+    const onlineFriends = FRIEND_LIST.filter((m) => m.status === "online");
+    const onlineCount = onlineFriends.length;
 
     return (
         <div className="w-full flex flex-col gap-2.5">
             <Panel>
                 <SectionTitle
-                    icon={faGamepad}
-                    label={t('common.squad')}
+                    icon={faUsers}
+                    label={lang === "vi" ? "Bạn bè" : "Friends"}
                     extra={
                         <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
@@ -100,7 +97,7 @@ export const RightBar = () => {
                 />
                 <div className="flex flex-col pb-2 px-1.5 gap-1">
                     {onlineCount > 0 ? (
-                        onlineSquad.map((m) => (
+                        onlineFriends.map((m) => (
                             <div
                                 key={m.name}
                                 onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name.toLowerCase().replace(/\s+/g, "_")}` } })}
@@ -153,26 +150,11 @@ export const RightBar = () => {
                                 <FontAwesomeIcon icon={faUsers} className="text-xs" />
                             </div>
                             <p className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {t('squad.noOneOnline')}
+                                {lang === "vi" ? "Chưa có bạn bè nào online" : "No friends online"}
                             </p>
                             <p className="text-[10px] text-text-faint leading-relaxed">
-                                {t('squad.inviteFriends')}
+                                {lang === "vi" ? "Mời bạn bè cùng tham gia và leo rank!" : "Invite friends to jump in and play together!"}
                             </p>
-                        </div>
-                    )}
-                    {mySquadsCount > 3 && (
-                        <div className="pt-1.5 px-1 pb-0.5">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setActiveTab("my-squads");
-                                    navigate({ to: "/squad" });
-                                }}
-                                className="w-full py-2 px-3 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white font-extrabold text-xs transition-all duration-150 flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                            >
-                                <span>Xem tổ đội của tôi ({mySquadsCount})</span>
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                            </button>
                         </div>
                     )}
                 </div>

@@ -161,3 +161,14 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         featured: false,
     },
 ];
+
+export const formatCompactNumber = (num: number): string => {
+    if (num >= 1_000_000) {
+        return (num / 1_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'M';
+    }
+    if (num >= 1_000) {
+        return (num / 1_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'k';
+    }
+    return num.toString();
+};
+
