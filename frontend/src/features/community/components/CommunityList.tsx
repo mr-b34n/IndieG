@@ -6,8 +6,6 @@ import {
     faCircle,
     faFire,
     faLayerGroup,
-    faCheck,
-    faPlus,
     faXmark,
     faGamepad,
     faArrowRight,
@@ -18,12 +16,11 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import { type CommunityData, type CommunityTabKey } from "../types";
-import { TAG_CLASSES, BANNER_GRADIENTS, COMMUNITY_TABS } from "../constants";
+import { BANNER_GRADIENTS, COMMUNITY_TABS, formatCompactNumber } from "../constants";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const CommunityCard = ({ community, index }: { community: CommunityData; index: number }) => {
     const { t } = useTranslation();
-    const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
     const navigate = useNavigate();
 
     return (
@@ -52,7 +49,7 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                 {/* Lớp gradient tối phủ lên trên để làm nổi bật logo và text (fade từ dưới lên) */}
                 <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/70 to-transparent" />
 
-                {/* Badge Category & Featured bên góc phải trên */}
+                {/* Badge Featured bên góc phải trên */}
                 <div className="absolute z-20 top-3 right-3 flex items-center gap-1.5">
                     {community.featured && (
                         <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-linear-to-r from-amber-500 to-orange-500 text-white shadow-md">
@@ -60,15 +57,12 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                             HOT
                         </span>
                     )}
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide bg-black/60 backdrop-blur-md text-white border border-white/15">
-                        {community.category}
-                    </span>
                 </div>
 
                 {/* Chỉ số Online Live ngay trên banner */}
                 <div className="absolute z-20 bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[11px] font-semibold border border-white/10">
                     <span className="w-2 h-2 rounded-full bg-success-500 inline-flex" />
-                    <span className="text-success-400 font-bold ml-1">{community.onlineNow}</span>
+                    <span className="text-success-400 font-bold ml-1">{formatCompactNumber(community.onlineNow)}</span>
                     <span className="text-white/80 text-[10px]">online</span>
                 </div>
             </div>
@@ -76,7 +70,7 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
             {/* Phần Nội dung */}
             <div className="flex flex-col px-5 pb-5 flex-1 justify-between">
                 <div>
-                    {/* Hàng chứa Logo và nút Join */}
+                    {/* Hàng chứa Logo */}
                     <div className="flex flex-row items-end justify-between mb-3.5">
                         <div className="relative z-10 -mt-10">
                             <img
@@ -85,21 +79,6 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                                 className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover border-4 border-surface bg-surface shadow-md ring-1 ring-border/50"
                             />
                         </div>
-
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleJoin(community.id);
-                            }}
-                            className={`flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-colors duration-150 cursor-pointer ${
-                                community.joined
-                                    ? "bg-surface-hover text-text hover:bg-like/15 hover:text-like border border-border"
-                                    : "bg-primary text-white hover:bg-primary-hover shadow-sm shadow-primary/20"
-                            }`}
-                        >
-                            <FontAwesomeIcon icon={community.joined ? faCheck : faPlus} className="text-[10px]" />
-                            {community.joined ? t('community.joinedButton') : t('community.join')}
-                        </button>
                     </div>
 
                     <div className="flex flex-col gap-1 mt-1">
@@ -112,34 +91,32 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                         {community.description}
                     </p>
 
-                    {community.tags.length > 0 && (
-                        <div className="flex flex-row gap-1.5 flex-wrap mt-3.5">
-                            {community.tags.map((tag, idx) => (
-                                <span
-                                    key={tag}
-                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${TAG_CLASSES[idx % TAG_CLASSES.length]}`}
-                                >
-                                    #{tag}
-                                </span>
-                            ))}
-                        </div>
-                    )}
+                    {/* 1 cái badge để hiện thể loại chính của game */}
+                    <div className="flex items-center gap-1.5 mt-3.5">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+                            <FontAwesomeIcon icon={faLayerGroup} className="text-[10px]" />
+                            {community.category}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Footer số thành viên & lời mời vào xem */}
                 <div className="flex flex-row items-center justify-between mt-4 text-xs text-text-muted border-t border-border/60 pt-3.5 font-medium">
                     <span className="flex flex-row items-center gap-1.5" title="Thành viên">
                         <FontAwesomeIcon icon={faUsers} className="text-text-faint" />
-                        <strong className="text-text font-bold">{community.members.toLocaleString()}</strong>
+                        <strong className="text-text font-bold">{formatCompactNumber(community.members)}</strong>
                     </span>
-                    <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
-                        {t('community.enterCommunity')} <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
+                            {t('community.enterCommunity')} <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
+
 
 export const CommunityList = () => {
     const { t } = useTranslation();
@@ -219,7 +196,7 @@ export const CommunityList = () => {
                                     <FontAwesomeIcon icon={faCircle} className="text-xs" />
                                 </div>
                                 <div>
-                                    <p className="font-extrabold text-text text-sm sm:text-base">{totalOnline.toLocaleString()}</p>
+                                    <p className="font-extrabold text-text text-sm sm:text-base">{formatCompactNumber(totalOnline)}</p>
                                     <p className="text-text-faint text-xs">{t('community.onlineLabel')}</p>
                                 </div>
                             </div>
@@ -228,7 +205,7 @@ export const CommunityList = () => {
                                     <FontAwesomeIcon icon={faUsers} />
                                 </div>
                                 <div>
-                                    <p className="font-extrabold text-text text-sm sm:text-base">{totalMembers.toLocaleString()}</p>
+                                    <p className="font-extrabold text-text text-sm sm:text-base">{formatCompactNumber(totalMembers)}</p>
                                     <p className="text-text-faint text-xs">{t('community.gamersLabel')}</p>
                                 </div>
                             </div>
