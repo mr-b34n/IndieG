@@ -6,7 +6,6 @@ import {
     faShareNodes,
     faCheck,
     faCircleInfo,
-    faUsers,
     faStar,
     faDesktop,
     faCode,
@@ -275,14 +274,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 </button>
                             )}
 
-                            <button
-                                type="button"
-                                onClick={() => navigate({ to: "/squad" })}
-                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer hidden sm:flex"
-                            >
-                                <FontAwesomeIcon icon={faUsers} className="text-brand-400" />
-                                <span>{t('game.findSquad')}</span>
-                            </button>
+
                         </div>
 
                         <div className="text-xs font-semibold text-text-muted self-center ml-auto hidden md:flex items-center gap-2 bg-surface-hover px-3.5 py-2 rounded-xl border border-border/60">
@@ -466,14 +458,14 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         onClick={() => setSysReqType("minimum")}
                                         className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "minimum" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
                                     >
-                                        {t('game.minimumReqs') || "Tối thiểu"}
+                                        {t('game.minimumReqs')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setSysReqType("recommended")}
                                         className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "recommended" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
                                     >
-                                        {t('game.recommendedReqs') || "Đề nghị"}
+                                        {t('game.recommendedReqs')}
                                     </button>
                                 </div>
                             </div>
@@ -481,7 +473,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {Object.entries(game.systemReqs[sysReqType]).map(([key, val]) => (
                                     <div key={key} className="flex flex-col p-4 rounded-2xl bg-surface-hover/40 border border-border/50">
-                                        <span className="font-semibold uppercase tracking-wider text-text-faint text-[11px] mb-1">{t(`game.${key}`) || key}</span>
+                                        <span className="font-semibold uppercase tracking-wider text-text-faint text-[11px] mb-1">{t(`game.${key}`)}</span>
                                         <span className="text-text font-medium text-sm leading-relaxed break-words">{val}</span>
                                     </div>
                                 ))}

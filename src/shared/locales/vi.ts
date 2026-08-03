@@ -8,6 +8,7 @@ export const vi = {
         game: "Trò chơi",
         settings: "Cài đặt",
         library: "Thư viện",
+        explore: "Khám phá",
         trending: "Xu hướng",
         upcoming: "Sắp diễn ra",
         all: "Tất cả",
@@ -37,7 +38,9 @@ export const vi = {
         switchThemeDark: "Chuyển sang chế độ tối",
         openExplore: "Mở Khám phá & Xu hướng",
         exploreSquad: "Khám phá & Squad",
-        back: "Quay lại"
+        back: "Quay lại",
+        prev: "Trước",
+        next: "Tiếp"
     },
     authenticate: {
         login: "Đăng nhập",
@@ -149,7 +152,22 @@ export const vi = {
         sortNewest: "Mới nhất",
         joinDiscussion: "Tham gia thảo luận",
         loginToComment: "Bạn cần đăng nhập để bình luận.",
-        postSettings: "Cài đặt bài viết"
+        postSettings: "Cài đặt bài viết",
+        blockUser: "Chặn người dùng",
+        react: "Cảm xúc",
+        reacted: "Đã thả"
+    },
+    time: {
+        justNow: "Vừa xong",
+        minutesAgo: "{count} phút trước",
+        hoursAgo: "{count} giờ trước",
+        daysAgo: "{count} ngày trước"
+    },
+    explore: {
+        title: "Khám Phá",
+        subtitle: "Bắt nhịp với những xu hướng, sự kiện và bài viết nổi bật nhất.",
+        ongoingEvents: "Sự kiện đang diễn ra",
+        viral: "Đang Viral"
     },
     community: {
         discover: "Khám phá",
@@ -166,6 +184,10 @@ export const vi = {
         allTopics: "🌐 Tất cả chủ đề",
         findTeammates: "🤝 Tìm Đồng Đội",
         discussionGuide: "💡 Thảo Luận & Guide",
+        publisherAnnouncements: "📢 Thông Báo NPH",
+        eventsAnnouncements: "📢 Thông Báo & Event",
+        showcaseMedia: "📸 Showcase / Media",
+        qna: "❓ Hỏi Đáp (Q&A)",
         showcase: "📸 Showcase",
         memes: "😂 Memes",
         offTopic: "💬 Off-topic",
@@ -180,10 +202,32 @@ export const vi = {
         communitiesLabel: "Cộng đồng",
         onlineLabel: "Đang online",
         gamersLabel: "Game thủ tham gia",
-        enterCommunity: "Truy cập"
+        enterCommunity: "Truy cập",
+        clearFilter: "Xóa bộ lọc",
+        collapse: "Thu gọn",
+        categoryFilter: "Bộ lọc thể loại ({count})",
+        rulesAndAdmin: "Nội quy & Quản trị viên",
+        adminsAndMods: "Quản trị viên (Admins/Mods)",
+        rulesOfConduct: "Quy tắc ứng xử",
+        rule1: "Tôn trọng mọi thành viên, không toxic hoặc xúc phạm cá nhân.",
+        rule2: "Không spam hoặc đăng nội dung không liên quan đến game/cộng đồng này.",
+        rule3: "Gắn thẻ spoiler cho những bài viết tiết lộ nội dung quan trọng (cốt truyện, kết thúc).",
+        rule4: "Nội dung 18+ (NSFW) bị cấm nghiêm ngặt.",
+        officialHub: "Trung tâm Chính thức",
+        activeSquads: "Tổ đội đang tuyển quân",
+        findSquadForGame: "Tìm đồng đội game này",
+        noActiveSquads: "Chưa có tổ đội nào đang mở tuyển",
+        popularTags: "Chủ đề nổi bật",
+        communityStats: "Thống kê cộng đồng",
+        backToCommunities: "Cộng đồng",
+        postCount: "{count} bài viết",
+        memberList: "Danh sách thành viên",
+        leaveCommunity: "Rời cộng đồng",
+        searchPlaceholder: "Tìm kiếm trong cộng đồng..."
     },
     squad: {
         title: "Tổ đội",
+        friendsTitle: "Bạn bè",
         lfgLobby: "Sảnh LFG & Tìm Đồng Đội →",
         onlineCount: "{count} trực tuyến",
         noOneOnline: "Chưa có chiến hữu nào online",
@@ -231,6 +275,9 @@ export const vi = {
         exploreTab: "Khám Phá Tổ Đội",
         mySquadsTab: "Tổ Đội Của Tôi",
         filterGame: "Tựa Game:",
+        clearFilter: "Xóa bộ lọc",
+        collapse: "Thu gọn",
+        allGamesCount: "Tất cả game ({count})",
         emptyTitle: "Không tìm thấy tổ đội nào phù hợp",
         emptyDesc: "Hiện chưa có ai đăng tin tuyển quân phù hợp với bộ lọc của bạn. Hãy là người đầu tiên tạo tổ đội và kêu gọi đồng đội cùng tham gia nhé!",
         createNow: "Tạo Tổ Đội Mới Ngay",
@@ -448,6 +495,7 @@ export const vi = {
         options: "Tùy chọn bình luận"
     },
     game: {
+        gamePage: "Trang Game",
         overview: "Tổng quan",
         discussions: "Thảo luận",
         guides: "Hướng dẫn",
@@ -531,5 +579,69 @@ export const vi = {
         ratingLabel: "Điểm đánh giá của bạn",
         cancel: "Hủy",
         submit: "Đăng bài"
+    },
+    settings: {
+        title: "Cài đặt",
+        tabs: {
+            general: "Cài đặt chung",
+            account: "Tài khoản & Bảo mật",
+            blocked: "Danh sách chặn",
+            feedback: "Báo lỗi & Góp ý"
+        },
+        general: {
+            appearance: "Giao diện",
+            darkMode: "Chế độ tối (Dark Mode)",
+            darkModeDesc: "Sử dụng nền tối để bảo vệ mắt",
+            language: "Ngôn ngữ",
+            languageLabel: "Ngôn ngữ hiển thị",
+            languageDesc: "Thay đổi ngôn ngữ ứng dụng",
+            vi: "Tiếng Việt",
+            en: "English"
+        },
+        account: {
+            title: "Quản lý tài khoản",
+            wip: "Chức năng quản lý mật khẩu và các phiên đăng nhập đang được phát triển.",
+            changePassword: "Đổi mật khẩu",
+            changePasswordDesc: "Cập nhật mật khẩu mới",
+            updateBtn: "Cập nhật",
+            twoFactor: "Xác thực 2 yếu tố (2FA)",
+            twoFactorDesc: "Bảo vệ tài khoản bằng ứng dụng Authenticator",
+            enableBtn: "Bật",
+            dangerZone: "Khu vực nguy hiểm",
+            deleteAccount: "Xóa tài khoản",
+            deleteAccountDesc: "Xóa vĩnh viễn dữ liệu của bạn"
+        },
+        blocked: {
+            title: "Tài khoản bị chặn",
+            desc: "Những tài khoản dưới đây sẽ không thể tương tác với bạn, và bạn cũng sẽ không thấy bài viết/bình luận của họ.",
+            unblock: "Bỏ chặn",
+            empty: "Bạn chưa chặn tài khoản nào."
+        },
+        feedback: {
+            title: "Gửi phản hồi cho chúng tôi",
+            subtitle: "Bạn gặp sự cố hay có ý tưởng hay? Hãy cho chúng tôi biết nhé!",
+            successTitle: "Đã gửi thành công!",
+            successDesc: "Cảm ơn bạn đã đóng góp. Chúng tôi sẽ xem xét phản hồi của bạn sớm nhất.",
+            bugReport: "Báo lỗi",
+            idea: "Góp ý tính năng",
+            formTitle: "Tiêu đề",
+            bugPlaceholder: "Ví dụ: Lỗi không thể tải ảnh lên",
+            ideaPlaceholder: "Ví dụ: Nên có thêm chế độ Dark Mode",
+            descLabel: "Mô tả chi tiết",
+            bugDescPlaceholder: "Vui lòng mô tả các bước để tái hiện lỗi này...",
+            ideaDescPlaceholder: "Chia sẻ thêm chi tiết về ý tưởng của bạn...",
+            submitting: "Đang gửi...",
+            submitBtn: "Gửi phiếu"
+        }
+    },
+    ranks: {
+        rookie: "Thành viên mới",
+        veteran: "Thành viên tích cực",
+        pro: "Người chia sẻ hữu ích",
+        elite: "Cây viết tâm huyết",
+        master: "Chuyên gia giải đáp",
+        grandmaster: "Học giả uyên bác",
+        legend: "Bách khoa toàn thư",
+        immortal: "Cố vấn đặc quyền"
     }
 };

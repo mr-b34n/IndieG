@@ -99,7 +99,7 @@ export const Header = () => {
                         hover:bg-primary-soft hover:text-primary
                         transition-colors duration-150 cursor-pointer shrink-0"
                 >
-                    <p className="font-extrabold text-xs sm:text-sm">{language === "en" ? "EN" : "VN"}</p>
+                    <p className="font-extrabold text-xs sm:text-sm">{language.toUpperCase()}</p>
                 </button>
 
                 <button

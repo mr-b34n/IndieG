@@ -14,6 +14,7 @@ import {
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { useSquadStore } from "../store/useSquadStore";
 import { type Squad } from "../types";
 import { getUserRankConfig } from "@/features/post/helpers/userRanks";
@@ -65,7 +66,7 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                             <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                                 {squad.game}
                             </span>
-                            <span className="text-xs text-text-faint font-medium">· {squad.createdAt}</span>
+                            <span className="text-xs text-text-faint font-medium">· {formatTimeAgo(squad.createdAt, t)}</span>
                             {squad.isMySquad && (
                                 <span className="text-[10px] font-extrabold bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
                                     {isLeader ? `👑 ${t('squad.managedByYou')}` : `✓ ${t('squad.yourSquad')}`}
@@ -140,11 +141,6 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                                 >
                                     <div className="relative">
                                         <img src={m.avatar} alt={m.username} className="w-5 h-5 rounded-full object-cover ring-1 ring-border" />
-                                        <span
-                                            className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-surface ${
-                                                m.status === "online" ? "bg-emerald-500" : m.status === "in-game" ? "bg-blue-500" : "bg-neutral-400"
-                                            }`}
-                                        />
                                     </div>
                                     <span className={`font-bold truncate max-w-[80px] ${rankConf.textColor}`}>{m.username}</span>
                                     {m.role === "Leader" ? (

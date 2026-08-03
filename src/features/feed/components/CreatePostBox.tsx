@@ -275,7 +275,7 @@ const DraftsModal = ({
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-hover/50">
                     <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faBookmark} className="text-primary text-lg" />
-                        <h3 className="font-bold text-base text-text">{t('feed.drafts')} ({drafts.length})</h3>
+                        <h3 className="font-bold text-base text-text">{t('feed.drafts')}</h3>
                     </div>
                     <button
                         type="button"
@@ -354,7 +354,15 @@ const DraftsModal = ({
     );
 };
 
-export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) => Promise<void> }) => {
+export const CreatePostBox = ({ 
+    onPost,
+    defaultCommunityId,
+    hideCommunitySelector
+}: { 
+    onPost: (data: CreatePostPayload) => Promise<void>;
+    defaultCommunityId?: string | number;
+    hideCommunitySelector?: boolean;
+}) => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const communities = useCommunitiesStore((state) => state.communities);
@@ -365,7 +373,7 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
     const [privacy, setPrivacy] = useState<PostPrivacy>("public");
     const [allowComments, setAllowComments] = useState(true);
     const [pinned, setPinned] = useState(false);
-    const [communityId, setCommunityId] = useState<string | number | null>(null);
+    const [communityId, setCommunityId] = useState<string | number | null>(defaultCommunityId ?? null);
     const [expanded, setExpanded] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
     const [showDraftsModal, setShowDraftsModal] = useState(false);
@@ -491,11 +499,13 @@ export const CreatePostBox = ({ onPost }: { onPost: (data: CreatePostPayload) =>
                         aria-hidden={!isActive}
                     >
                         <div className={`min-h-0 flex flex-col gap-1.5 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
-                            <CommunitySelector
-                                value={communityId}
-                                onChange={setCommunityId}
-                                communities={joinedCommunities}
-                            />
+                            {!hideCommunitySelector && (
+                                <CommunitySelector
+                                    value={communityId}
+                                    onChange={setCommunityId}
+                                    communities={joinedCommunities}
+                                />
+                            )}
                             <input
                                 type="text"
                                 value={title}

@@ -174,8 +174,11 @@ export const getUserRankConfig = (username?: string): UserRankConfig => {
     return RANK_CONFIG[rankKey] || RANK_CONFIG.rookie;
 };
 
-export const getRankLabel = (rank: UserRankConfig, language?: string): string => {
-    if (language === 'en') return rank.labelEn;
+export const getRankLabel = (rank: UserRankConfig, tOrLang?: string | ((key: string) => string)): string => {
+    if (typeof tOrLang === 'function') {
+        return tOrLang(`ranks.${rank.id}`);
+    }
+    if (tOrLang === 'en') return rank.labelEn;
     return rank.labelVi || rank.label;
 };
 

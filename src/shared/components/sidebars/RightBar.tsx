@@ -13,9 +13,8 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 const Panel = ({ children }: { children: React.ReactNode }) => (
     <div className="
         w-full flex flex-col overflow-hidden
-        bg-surface/90 backdrop-blur-md
-        border border-border
-        rounded-xl
+        bg-surface border border-border/80
+        rounded-xl shadow-xs
     ">
         {children}
     </div>
@@ -78,7 +77,7 @@ const EVENTS = [
 
 export const RightBar = () => {
     const navigate = useNavigate();
-    const {t, lang} = useTranslation();
+    const { t } = useTranslation();
     const onlineFriends = FRIEND_LIST.filter((m) => m.status === "online");
     const onlineCount = onlineFriends.length;
 
@@ -87,7 +86,7 @@ export const RightBar = () => {
             <Panel>
                 <SectionTitle
                     icon={faUsers}
-                    label={lang === "vi" ? "Bạn bè" : "Friends"}
+                    label={t('squad.friendsTitle')}
                     extra={
                         <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
@@ -143,17 +142,16 @@ export const RightBar = () => {
                         ))
                     ) : (
                         <div
-                            onClick={() => navigate({ to: "/squad" })}
-                            className="flex flex-col items-center justify-center text-center py-3 px-2 gap-1.5 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors group"
+                            className="flex flex-col items-center justify-center text-center py-3 px-2 gap-1.5 rounded-lg group"
                         >
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                 <FontAwesomeIcon icon={faUsers} className="text-xs" />
                             </div>
                             <p className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {lang === "vi" ? "Chưa có bạn bè nào online" : "No friends online"}
+                                {t('squad.noFriendsOnline')}
                             </p>
                             <p className="text-[10px] text-text-faint leading-relaxed">
-                                {lang === "vi" ? "Mời bạn bè cùng tham gia và leo rank!" : "Invite friends to jump in and play together!"}
+                                {t('squad.inviteFriendsDesc')}
                             </p>
                         </div>
                     )}

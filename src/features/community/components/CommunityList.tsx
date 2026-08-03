@@ -253,7 +253,7 @@ export const CommunityList = () => {
                                 }`}
                             >
                                 <FontAwesomeIcon icon={tab.icon} className="text-xs" />
-                                <span>{tab.label}</span>
+                                <span>{t(`community.${tab.key}`)}</span>
                                 {tab.key === "joined" && (
                                     <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
                                         activeTab === "joined" ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
@@ -272,7 +272,7 @@ export const CommunityList = () => {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
                                 <FontAwesomeIcon icon={faFilter} className="text-primary" />
-                                <span>{t('community.category')}:</span>
+                                <span>{t('community.category')}</span>
                                 <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold border border-primary/20">
                                     {activeCategory ? activeCategory : t('community.allCommunities', { count: communities.length })}
                                 </span>
@@ -282,7 +282,7 @@ export const CommunityList = () => {
                                         onClick={() => setActiveCategory(null)}
                                         className="text-[11px] text-text-faint hover:text-rose-500 underline ml-1 cursor-pointer"
                                     >
-                                        Xóa bộ lọc
+                                        {t('community.clearFilter')}
                                     </button>
                                 )}
                             </div>
@@ -292,7 +292,7 @@ export const CommunityList = () => {
                                 onClick={() => setShowAllCategories(!showAllCategories)}
                                 className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
                             >
-                                <span>{showAllCategories ? "Thu gọn" : `Bộ lọc thể loại (${categories.length})`}</span>
+                                <span>{showAllCategories ? t('community.collapse') : t('community.categoryFilter', { count: categories.length })}</span>
                                 <FontAwesomeIcon icon={showAllCategories ? faChevronUp : faChevronDown} className="text-[10px]" />
                             </button>
                         </div>

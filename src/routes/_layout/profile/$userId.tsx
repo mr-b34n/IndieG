@@ -7,5 +7,5 @@ export const Route = createFileRoute('/_layout/profile/$userId')({
 
 function ProfileRoute() {
     const { userId } = Route.useParams();
-    return <UserProfile userId={userId} />;
+    return <UserProfile key={userId} userId={userId} />;
 }
