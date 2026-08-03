@@ -26,3 +26,5 @@ dist-ssr
 # Trash/tempratory folder
 .tanstack/
 *.tanstack
+
+.env

@@ -11,7 +11,7 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 import { INITIAL_GAMES } from "@/features/game/constants";
 
 export const GamePromoBanner = () => {
-    const { lang } = useTranslation();
+    const { t, lang } = useTranslation();
     const navigate = useNavigate();
 
     // 7 game nổi bật trên banner
@@ -99,7 +99,7 @@ export const GamePromoBanner = () => {
                     type="button"
                     onClick={handlePrev}
                     className="absolute left-0 top-0 bottom-0 z-30 w-10 sm:w-14 bg-black/45 hover:bg-black/80 text-white/70 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all duration-300 cursor-pointer shadow-xl group/btn"
-                    title={lang === "vi" ? "Trước" : "Previous"}
+                    title={t('common.prev')}
                 >
                     <FontAwesomeIcon icon={faChevronLeft} className="transition-transform group-hover/btn:-translate-x-0.5 text-base sm:text-lg" />
                 </button>
@@ -109,7 +109,7 @@ export const GamePromoBanner = () => {
                     type="button"
                     onClick={handleNext}
                     className="absolute right-0 top-0 bottom-0 z-30 w-10 sm:w-14 bg-black/45 hover:bg-black/80 text-white/70 hover:text-white backdrop-blur-xs flex items-center justify-center transition-all duration-300 cursor-pointer shadow-xl group/btn"
-                    title={lang === "vi" ? "Tiếp" : "Next"}
+                    title={t('common.next')}
                 >
                     <FontAwesomeIcon icon={faChevronRight} className="transition-transform group-hover/btn:translate-x-0.5 text-base sm:text-lg" />
                 </button>
@@ -175,7 +175,7 @@ export const GamePromoBanner = () => {
                                         {game.activePlayers && (
                                             <span className="flex items-center gap-1 text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
                                                 <FontAwesomeIcon icon={faUsers} className="text-[10px]" />
-                                                {game.activePlayers.toLocaleString()} {lang === "vi" ? "người chơi online" : "playing now"}
+                                                {t('game.activePlayers', { count: game.activePlayers.toLocaleString() })}
                                             </span>
                                         )}
                                     </div>

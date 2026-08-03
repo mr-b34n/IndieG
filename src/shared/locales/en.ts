@@ -10,6 +10,7 @@ export const en: typeof vi = {
         game: "My games",
         settings: "Settings",
         library: "Library",
+        explore: "Explore",
         trending: "Trending",
         upcoming: "Upcoming",
         all: "All",
@@ -39,7 +40,9 @@ export const en: typeof vi = {
         switchThemeDark: "Switch to dark mode",
         openExplore: "Open Explore & Trending",
         exploreSquad: "Explore & Squad",
-        back: "Back"
+        back: "Back",
+        prev: "Previous",
+        next: "Next"
     },
     authenticate: {
         login: "Log in",
@@ -151,7 +154,22 @@ export const en: typeof vi = {
         sortNewest: "Newest first",
         joinDiscussion: "Join the discussion",
         loginToComment: "You need to be logged in to leave a comment.",
-        postSettings: "Post settings"
+        postSettings: "Post settings",
+        blockUser: "Block user",
+        react: "React",
+        reacted: "Reacted"
+    },
+    time: {
+        justNow: "Just now",
+        minutesAgo: "{count}m ago",
+        hoursAgo: "{count}h ago",
+        daysAgo: "{count}d ago"
+    },
+    explore: {
+        title: "Explore",
+        subtitle: "Catch up with the latest trends, events, and viral posts.",
+        ongoingEvents: "Ongoing Events",
+        viral: "Viral Now"
     },
     community: {
         discover: "Discover",
@@ -168,6 +186,10 @@ export const en: typeof vi = {
         allTopics: "🌐 All topics",
         findTeammates: "🤝 Find Teammates",
         discussionGuide: "💡 Discussion & Guide",
+        publisherAnnouncements: "📢 Publisher News",
+        eventsAnnouncements: "📢 News & Events",
+        showcaseMedia: "📸 Showcase / Media",
+        qna: "❓ Q&A",
         showcase: "📸 Showcase",
         memes: "😂 Memes",
         offTopic: "💬 Off-topic",
@@ -182,10 +204,32 @@ export const en: typeof vi = {
         communitiesLabel: "Communities",
         onlineLabel: "Online now",
         gamersLabel: "Gamers joined",
-        enterCommunity: "Access"
+        enterCommunity: "Access",
+        clearFilter: "Clear filter",
+        collapse: "Collapse",
+        categoryFilter: "Category filter ({count})",
+        rulesAndAdmin: "Rules & Admins",
+        adminsAndMods: "Admins & Moderators",
+        rulesOfConduct: "Rules of Conduct",
+        rule1: "Respect all members, no toxicity or personal attacks.",
+        rule2: "Do not spam or post content unrelated to this game/community.",
+        rule3: "Tag spoilers for posts containing major story or ending details.",
+        rule4: "18+ (NSFW) content is strictly prohibited.",
+        officialHub: "Official Hub",
+        activeSquads: "Squads Recruiting Now",
+        findSquadForGame: "Find Squads for this Game",
+        noActiveSquads: "No open recruitment squads yet",
+        popularTags: "Popular Topics",
+        communityStats: "Hub Statistics",
+        backToCommunities: "Communities",
+        postCount: "{count} posts",
+        memberList: "Member List",
+        leaveCommunity: "Leave Community",
+        searchPlaceholder: "Search in community..."
     },
     squad: {
         title: "Squad",
+        friendsTitle: "Friends",
         lfgLobby: "LFG Lobby & Find Teammates →",
         onlineCount: "{count} online",
         noOneOnline: "No squad members online",
@@ -233,6 +277,9 @@ export const en: typeof vi = {
         exploreTab: "Explore Squads",
         mySquadsTab: "My Squads",
         filterGame: "Game:",
+        clearFilter: "Clear filter",
+        collapse: "Collapse",
+        allGamesCount: "All games ({count})",
         emptyTitle: "No matching squads found",
         emptyDesc: "No one has posted recruitment that matches your filters. Be the first to create a squad and call teammates to join!",
         createNow: "Create New Squad Now",
@@ -450,6 +497,7 @@ export const en: typeof vi = {
         options: "Comment options"
     },
     game: {
+        gamePage: "Game Page",
         overview: "Overview",
         discussions: "Discussions",
         guides: "Guides",
@@ -533,5 +581,69 @@ export const en: typeof vi = {
         ratingLabel: "Your Rating",
         cancel: "Cancel",
         submit: "Publish"
+    },
+    settings: {
+        title: "Settings",
+        tabs: {
+            general: "General Settings",
+            account: "Account & Security",
+            blocked: "Blocked List",
+            feedback: "Feedback & Bug Report"
+        },
+        general: {
+            appearance: "Appearance",
+            darkMode: "Dark Mode",
+            darkModeDesc: "Use dark theme to reduce eye strain",
+            language: "Language",
+            languageLabel: "Display Language",
+            languageDesc: "Change application language",
+            vi: "Tiếng Việt",
+            en: "English"
+        },
+        account: {
+            title: "Account Management",
+            wip: "Password management and active session features are under development.",
+            changePassword: "Change Password",
+            changePasswordDesc: "Update to a new password",
+            updateBtn: "Update",
+            twoFactor: "Two-Factor Authentication (2FA)",
+            twoFactorDesc: "Protect your account with an Authenticator app",
+            enableBtn: "Enable",
+            dangerZone: "Danger Zone",
+            deleteAccount: "Delete Account",
+            deleteAccountDesc: "Permanently delete your account and data"
+        },
+        blocked: {
+            title: "Blocked Accounts",
+            desc: "Blocked users will not be able to interact with you, and you will not see their posts or comments.",
+            unblock: "Unblock",
+            empty: "You haven't blocked any accounts."
+        },
+        feedback: {
+            title: "Send Us Feedback",
+            subtitle: "Encountered an issue or have a feature idea? Let us know!",
+            successTitle: "Sent Successfully!",
+            successDesc: "Thank you for your feedback! We will review it shortly.",
+            bugReport: "Report a Bug",
+            idea: "Feature Idea",
+            formTitle: "Title",
+            bugPlaceholder: "E.g., Unable to upload images",
+            ideaPlaceholder: "E.g., Add a dark mode toggle",
+            descLabel: "Detailed Description",
+            bugDescPlaceholder: "Please describe the steps to reproduce this issue...",
+            ideaDescPlaceholder: "Share more details about your idea...",
+            submitting: "Submitting...",
+            submitBtn: "Submit Feedback"
+        }
+    },
+    ranks: {
+        rookie: "Rookie Member",
+        veteran: "Active Veteran",
+        pro: "Helpful Contributor",
+        elite: "Dedicated Writer",
+        master: "QA Expert",
+        grandmaster: "Scholarly Master",
+        legend: "Living Encyclopedia",
+        immortal: "Privileged Advisor"
     }
 };

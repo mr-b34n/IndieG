@@ -3,9 +3,11 @@ import { type GameGuide, type GameReview } from "../types";
 
 interface GameStoreState {
     followedSlugs: string[];
+    quickAccessSlugs: string[];
     customGuides: Record<string, GameGuide[]>; // slug -> guides
     customReviews: Record<string, GameReview[]>; // slug -> reviews
     toggleFollowGame: (slug: string) => void;
+    setQuickAccessSlugs: (slugs: string[]) => void;
     isFollowing: (slug: string) => boolean;
     addGuide: (slug: string, guide: Omit<GameGuide, "id" | "date" | "likes" | "views">) => void;
     addReview: (slug: string, review: Omit<GameReview, "id" | "date" | "likes">) => void;
@@ -15,6 +17,7 @@ interface GameStoreState {
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
     followedSlugs: ["counter-strike-2", "raft", "red-dead-redemption-2", "grand-theft-auto-v", "elden-ring"],
+    quickAccessSlugs: ["raft", "red-dead-redemption-2", "counter-strike-2", "grand-theft-auto-v"],
     customGuides: {},
     customReviews: {},
 
@@ -28,6 +31,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                     : [...state.followedSlugs, cleanSlug],
             };
         });
+    },
+
+    setQuickAccessSlugs: (slugs: string[]) => {
+        set({ quickAccessSlugs: slugs.slice(0, 4) });
     },
 
     isFollowing: (slug: string) => {

@@ -5,10 +5,13 @@ import { useThemeStore } from '../store/useThemeStore';
 
 const dictionary: Record<string, any> = { vi, en };
 
+/** Shared type for the `t()` translation function returned by useTranslation. */
+export type TranslateFn = (path: string, params?: Record<string, any>) => string;
+
 export const useTranslation = () => {
     const language = useThemeStore((state) => state.language);
 
-    const t = (path: string, params?: Record<string, string | number>): string => {
+    const t: TranslateFn = (path, params) => {
         const keys = path.split('.');
         let current: any = dictionary[language] || dictionary.vi;
 

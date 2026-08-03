@@ -2,9 +2,11 @@ import { faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState, useRef, useEffect } from "react"
 import { useTranslation } from "@/shared/hooks/useTranslate"
+// import { useNavigate } from "@tanstack/react-router"
 
 export const Search = () => {
     const { t } = useTranslation();
+    // const navigate = useNavigate();
     const [focused, setFocused] = useState(false);
     const [value, setValue] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);

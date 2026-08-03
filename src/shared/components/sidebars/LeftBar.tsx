@@ -1,19 +1,15 @@
 import {
     faUsers, faHouse, faBookmark, faGamepad,
     faAngleDown, faGear,
-    faUserCircle,
+    faUserCircle, faCompass
 } from "@fortawesome/free-solid-svg-icons"
-import { faHubspot } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState } from "react"
 import { useNavigate, useLocation } from "@tanstack/react-router"
 
-import {
-    CS2_LOGO as cs2Logo,
-    RDR2_LOGO as rdr2Logo,
-    RAFT_LOGO as raftLogo
-} from "@/shared/constants/images";
+import { INITIAL_GAMES } from "@/features/game/constants";
 import { useAuthStore } from "@/features/auth";
+import { useGameStore } from "@/features/game";
 import { getCurrentAuthor } from "@/features/post";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -33,14 +29,8 @@ const sectionLabel = `
     text-[10px] font-bold uppercase tracking-widest text-text-faint
 `;
 
-const MY_GAMES = [
-    { logo: raftLogo, label: "Raft", slug: "raft" },
-    { logo: rdr2Logo, label: "RDR 2", slug: "red-dead-redemption-2" },
-    { logo: cs2Logo, label: "CS 2", slug: "counter-strike-2" },
-];
-
-
 export const LeftBar = () => {
+    const quickAccessSlugs = useGameStore((state) => state.quickAccessSlugs);
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const {t} = useTranslation();
@@ -54,7 +44,7 @@ export const LeftBar = () => {
     const isHomeActive = pathname === "/" || pathname.startsWith("/post");
     const isCommunityActive = pathname.startsWith("/community");
     const isBookmarkActive = pathname.startsWith("/bookmark");
-    const isSquadActive = pathname.startsWith("/squad");
+    const isExploreActive = pathname.startsWith("/explore");
     const isSettingsActive = pathname.startsWith("/settings");
     const isGameSectionActive = pathname.startsWith("/game");
 
@@ -71,9 +61,8 @@ export const LeftBar = () => {
     return (
         <div className="
             w-full h-fit flex flex-col overflow-hidden
-            bg-surface/90 backdrop-blur-md
-            border border-border
-            rounded-xl
+            bg-surface border border-border/80
+            rounded-xl shadow-xs
         ">
 
             {isLoggedIn ? (
@@ -153,11 +142,11 @@ export const LeftBar = () => {
 
                         <button
                             type="button"
-                            onClick={() => navigate({to: "/squad"})}
-                            className={isSquadActive ? navItemActive : navItem}
+                            onClick={() => navigate({to: "/explore"})}
+                            className={isExploreActive ? navItemActive : navItem}
                         >
-                            <FontAwesomeIcon icon={faHubspot} className="w-4 shrink-0" />
-                            <span>{t('common.squad')}</span>
+                            <FontAwesomeIcon icon={faCompass} className="w-4 shrink-0" />
+                            <span>{t('common.explore', { defaultValue: 'Explore' })}</span>
                         </button>
                     </>
                 )}
@@ -193,11 +182,13 @@ export const LeftBar = () => {
                         >
                             <div className="overflow-hidden min-h-0">
                                 <div className="flex flex-col gap-0.5 pl-8 pr-2 pb-1">
-                                    {MY_GAMES.map(({ logo, label, slug }) => {
+                                    {quickAccessSlugs.map((slug) => {
+                                        const g = INITIAL_GAMES.find(item => item.slug === slug);
+                                        if (!g) return null;
                                         const isThisGameActive = pathname.startsWith(`/game/${slug}`);
                                         return (
                                             <div
-                                                key={label}
+                                                key={slug}
                                                 onClick={() => navigate({ to: `/game/${slug}` })}
                                                 className={`flex flex-row items-center gap-2 px-2 py-1.5
                                                     rounded-lg text-xs sm:text-sm
@@ -207,8 +198,8 @@ export const LeftBar = () => {
                                             >
                                                 <div className="relative shrink-0">
                                                     <img
-                                                        src={logo}
-                                                        alt={label}
+                                                        src={g.logoUrl}
+                                                        alt={g.name}
                                                         className="w-3.5 h-3.5 rounded object-cover"
                                                     />
                                                     {isThisGameActive && (
@@ -217,7 +208,7 @@ export const LeftBar = () => {
                                                             ring-1 ring-surface" />
                                                     )}
                                                 </div>
-                                                <span>{label}</span>
+                                                <span className="truncate">{g.name}</span>
                                             </div>
                                         );
                                     })}
