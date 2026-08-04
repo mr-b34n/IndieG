@@ -5,6 +5,8 @@ import {
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
     faImage, faSliders, faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth";
 import { useClickOutside } from "../hooks/useClickOutside";
 import type { Badge, ProfileIdentity, ProfileStatus } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
@@ -51,6 +53,19 @@ export const ProfileHero = ({
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [showFriendMenu, setShowFriendMenu] = useState(false);
 
+    const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+
+    const handleProtectedAction = (action: () => void) => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
+        action();
+    };
+
     const statusMenuRef = useRef<HTMLDivElement>(null);
     const friendMenuRef = useRef<HTMLDivElement>(null);
     useClickOutside(statusMenuRef, () => setIsEditingStatus(false), isEditingStatus);
@@ -67,11 +82,11 @@ export const ProfileHero = ({
                     src={coverSrc}
                     alt="Cover"
                     className="absolute inset-0 w-full h-full object-cover object-center scale-105"
-                    style={{ filter: "brightness(0.75) saturate(1.1)" }}
+                    style={{ filter: "brightness(0.95) saturate(1.05)" }}
                 />
                 {/* Gradient overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent h-[45%] top-auto bottom-0" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
 
                 {/* Back button */}
                 <button
@@ -218,7 +233,7 @@ export const ProfileHero = ({
                             <div className="relative flex items-center gap-1.5" ref={friendMenuRef}>
                                 {isFriend ? (
                                     <button
-                                        onClick={() => setShowFriendMenu((v) => !v)}
+                                        onClick={() => handleProtectedAction(() => setShowFriendMenu((v) => !v))}
                                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
@@ -227,14 +242,14 @@ export const ProfileHero = ({
                                     </button>
                                 ) : (
                                     <>
-                                        <button onClick={onAddFriend}
+                                        <button onClick={() => handleProtectedAction(onAddFriend)}
                                             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:brightness-110 transition-all shadow-lg"
                                             style={{ boxShadow: "0 4px 20px -4px var(--color-primary)" }}
                                         >
                                             <FontAwesomeIcon icon={faUserPlus} />
                                             <span>{t("profile.addFriend")}</span>
                                         </button>
-                                        <button onClick={() => setShowFriendMenu((v) => !v)}
+                                        <button onClick={() => handleProtectedAction(() => setShowFriendMenu((v) => !v))}
                                             className="w-8 h-8 rounded-xl bg-white/10 text-white/60 hover:text-white hover:bg-white/20 flex items-center justify-center text-sm transition-all border border-white/10"
                                         >
                                             <FontAwesomeIcon icon={faEllipsisV} />

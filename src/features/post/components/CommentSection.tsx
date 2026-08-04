@@ -369,9 +369,12 @@ const CommentItem = ({
     const isAuthor = comment.author === currentAuthor || comment.author === "You";
 
     const toggleLike = () => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
         setLiked((prev) => !prev);
         setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
-        
     };
 
     const handleReplyClick = () => {

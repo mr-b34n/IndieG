@@ -4,7 +4,7 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
@@ -22,6 +22,7 @@ import { FriendsTab } from "./tabs/FriendsTab";
 import { LibraryTab } from "./tabs/LibraryTab";
 import { PostsTab } from "./tabs/PostsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
+import { BookmarkList } from "@/features/bookmark";
 
 interface UserProfileProps {
     userId: string;
@@ -32,11 +33,16 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const user = useAuthStore((state) => state.user);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
     const currentAuthor = getCurrentAuthor();
 
     const isOwnProfile =
-        !userId || userId === "demo" || userId === "me" || userId === user?.id ||
-        userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`;
+        isLoggedIn &&
+        (!userId || userId === "demo" || userId === "me" || userId === user?.id ||
+        userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`);
+
+    const showBookmarks = isOwnProfile && isLoggedIn;
 
     const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor });
 
@@ -223,7 +229,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 </div>
 
                 <div className="lg:col-span-8 flex flex-col gap-0 w-full">
-                    <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} friendsCount={friendsList.length} t={t} />
+                    <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} friendsCount={friendsList.length} showBookmarks={showBookmarks} t={t} />
 
                     <div className="pt-5 transition-all duration-300 min-h-[480px]">
                         {activeTab === "library" && <LibraryTab games={LIBRARY_GAMES} t={t} />}
@@ -239,6 +245,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                                 t={t}
                             />
                         )}
+                        {activeTab === "bookmarks" && showBookmarks && <BookmarkList />}
                         {activeTab === "guestbook" && (
                             <GuestbookTab
                                 comments={guestbookComments}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { FRIEND_PROFILES } from "../constants";
 import type { ProfileIdentity } from "../types";
 
@@ -37,11 +37,13 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor }: UseP
         );
     }, [userId, isOwnProfile, currentAuthor]);
 
+    const [prevInitial, setPrevInitial] = useState<ProfileIdentity>(initial);
     const [identity, setIdentity] = useState<ProfileIdentity>(initial);
 
-    useEffect(() => {
+    if (initial !== prevInitial) {
+        setPrevInitial(initial);
         setIdentity(initial);
-    }, [initial]);
+    }
 
     return { identity, setIdentity };
 }

@@ -1,5 +1,5 @@
 import {
-    faUsers, faHouse, faBookmark, faGamepad,
+    faUsers, faUserGroup, faHouse, faGamepad,
     faAngleDown, faGear,
     faUserCircle, faCompass
 } from "@fortawesome/free-solid-svg-icons"
@@ -14,19 +14,19 @@ import { getCurrentAuthor } from "@/features/post";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const navItem = `
-    w-full flex flex-row items-center gap-2.5 px-2.5 py-1.5
-    rounded-lg text-xs sm:text-sm font-medium text-text-muted
+    w-full flex flex-row items-center gap-2.5 px-3 py-2
+    rounded-xl text-xs sm:text-sm font-bold text-text-muted
     bg-transparent hover:bg-surface-hover hover:text-text
-    transition-colors duration-150 cursor-pointer select-none
+    transition-all duration-150 cursor-pointer select-none
 `;
 const navItemActive = `
-    w-full flex flex-row items-center gap-2.5 px-2.5 py-1.5
-    rounded-lg text-xs sm:text-sm font-semibold
-    bg-primary-soft text-primary cursor-pointer select-none
+    w-full flex flex-row items-center gap-2.5 px-3 py-2
+    rounded-xl text-xs sm:text-sm font-extrabold
+    bg-primary-soft text-primary shadow-xs cursor-pointer select-none
 `;
 const sectionLabel = `
-    px-2.5 pt-2 pb-1
-    text-[10px] font-bold uppercase tracking-widest text-text-faint
+    px-3 pt-3 pb-1
+    text-[10px] font-black uppercase tracking-wider text-text-faint/80
 `;
 
 export const LeftBar = () => {
@@ -42,9 +42,9 @@ export const LeftBar = () => {
     const [gamesDrop, setGamesDrop] = useState<boolean>(true);
 
     const isHomeActive = pathname === "/" || pathname.startsWith("/post");
-    const isCommunityActive = pathname.startsWith("/community");
-    const isBookmarkActive = pathname.startsWith("/bookmark");
     const isExploreActive = pathname.startsWith("/explore");
+    const isCommunityActive = pathname.startsWith("/community");
+    const isSquadActive = pathname.startsWith("/squad");
     const isSettingsActive = pathname.startsWith("/settings");
     const isGameSectionActive = pathname.startsWith("/game");
 
@@ -122,6 +122,15 @@ export const LeftBar = () => {
 
                 <button
                     type="button"
+                    onClick={() => navigate({to: "/explore"})}
+                    className={isExploreActive ? navItemActive : navItem}
+                >
+                    <FontAwesomeIcon icon={faCompass} className="w-4 shrink-0" />
+                    <span>{t('common.explore', { defaultValue: 'Explore' })}</span>
+                </button>
+
+                <button
+                    type="button"
                     onClick={() => navigate({ to: "/community" })}
                     className={isCommunityActive ? navItemActive : navItem}
                 >
@@ -130,25 +139,14 @@ export const LeftBar = () => {
                 </button>
 
                 {isLoggedIn && (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() => navigate({to: "/bookmark"})}
-                            className={isBookmarkActive ? navItemActive : navItem}
-                        >
-                            <FontAwesomeIcon icon={faBookmark} className="w-4 shrink-0" />
-                            <span>{t('common.bookmark')}</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => navigate({to: "/explore"})}
-                            className={isExploreActive ? navItemActive : navItem}
-                        >
-                            <FontAwesomeIcon icon={faCompass} className="w-4 shrink-0" />
-                            <span>{t('common.explore', { defaultValue: 'Explore' })}</span>
-                        </button>
-                    </>
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/squad" })}
+                        className={isSquadActive ? navItemActive : navItem}
+                    >
+                        <FontAwesomeIcon icon={faUserGroup} className="w-4 shrink-0" />
+                        <span>{t('common.squad')}</span>
+                    </button>
                 )}
             </div>
 

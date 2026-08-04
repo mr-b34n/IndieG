@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGamepad, faComments, faUsers, faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import { faGamepad, faComments, faUsers, faCommentDots, faBookmark } from "@fortawesome/free-solid-svg-icons";
 import type { ProfileTab } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 
@@ -8,6 +8,7 @@ interface ProfileTabBarProps {
     activeTab: ProfileTab;
     onChange: (tab: ProfileTab) => void;
     friendsCount: number;
+    showBookmarks?: boolean;
     t: TranslateFn;
 }
 
@@ -15,11 +16,12 @@ interface ProfileTabBarProps {
  * Underline-style tab bar inspired by Twitter/Linear.
  * A sliding border-bottom indicator moves between tabs.
  */
-export const ProfileTabBar = ({ activeTab, onChange, friendsCount, t }: ProfileTabBarProps) => {
+export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks = true, t }: ProfileTabBarProps) => {
     const tabs: { id: ProfileTab; label: string; icon: typeof faGamepad; count?: number }[] = [
         { id: "library",   label: t("profile.tabs.library"),       icon: faGamepad },
         { id: "posts",     label: t("profile.tabs.posts"),         icon: faComments },
         { id: "friends",   label: t("profile.friendsWidgetTitle"), icon: faUsers, count: friendsCount },
+        ...(showBookmarks ? [{ id: "bookmarks" as ProfileTab, label: t("common.bookmark"), icon: faBookmark }] : []),
         { id: "guestbook", label: t("profile.guestbookTitle"),     icon: faCommentDots },
     ];
 

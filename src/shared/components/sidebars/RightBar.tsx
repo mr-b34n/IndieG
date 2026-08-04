@@ -9,6 +9,7 @@ import {
     DEFAULT_AVATAR as avatarGame
 } from "@/shared/constants/images";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useAuthStore } from "@/features/auth";
 
 const Panel = ({ children }: { children: React.ReactNode }) => (
     <div className="
@@ -21,9 +22,9 @@ const Panel = ({ children }: { children: React.ReactNode }) => (
 );
 
 const SectionTitle = ({ icon, label, extra }: { icon: typeof faArrowTrendUp; label: string; extra?: React.ReactNode }) => (
-    <div className="flex items-center gap-1.5 px-3 pt-2.5 pb-1.5">
-        <FontAwesomeIcon icon={icon} className="text-xs text-text-muted" />
-        <span className="text-[11px] font-bold uppercase tracking-widest text-text-muted flex-1">{label}</span>
+    <div className="flex items-center gap-1.5 px-3 pt-3 pb-1.5 border-b border-border/40 mb-1">
+        <FontAwesomeIcon icon={icon} className="text-xs text-primary" />
+        <span className="text-[11px] font-black uppercase tracking-wider text-text-muted/90 flex-1">{label}</span>
         {extra}
     </div>
 );
@@ -78,85 +79,85 @@ const EVENTS = [
 export const RightBar = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+
     const onlineFriends = FRIEND_LIST.filter((m) => m.status === "online");
     const onlineCount = onlineFriends.length;
 
     return (
         <div className="w-full flex flex-col gap-2.5">
-            <Panel>
-                <SectionTitle
-                    icon={faUsers}
-                    label={t('squad.friendsTitle')}
-                    extra={
-                        <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
-                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                            {t('squad.onlineCount', { count: onlineCount })}
-                        </span>
-                    }
-                />
-                <div className="flex flex-col pb-2 px-1.5 gap-1">
-                    {onlineCount > 0 ? (
-                        onlineFriends.map((m) => (
+            {isLoggedIn && (
+                <Panel>
+                    <SectionTitle
+                        icon={faUsers}
+                        label={t('squad.friendsTitle')}
+                    />
+                    <div className="flex flex-col pb-2 px-1.5 gap-1">
+                        {onlineCount > 0 ? (
+                            onlineFriends.map((m) => (
+                                <div
+                                    key={m.name}
+                                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name.toLowerCase().replace(/\s+/g, "_")}` } })}
+                                    className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer group"
+                                >
+                                    <div className="relative shrink-0">
+                                        <img
+                                            src={avatarGame}
+                                            alt={m.name}
+                                            className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500/40"
+                                        />
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-surface bg-emerald-500" />
+                                    </div>
+
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <p className="text-xs sm:text-sm font-bold truncate text-text group-hover:text-primary transition-colors">
+                                             {m.name}
+                                         </p>
+                                         {m.game ? (
+                                             <div
+                                                 onClick={(e) => {
+                                                     if (m.slug) {
+                                                         e.stopPropagation();
+                                                         navigate({ to: `/game/${m.slug}` });
+                                                     }
+                                                 }}
+                                                 className="flex items-center gap-1.5 mt-0.5 hover:text-primary cursor-pointer"
+                                             >
+                                                 {m.logo && <img src={m.logo} alt="" className="w-2.5 h-2.5 rounded object-cover opacity-80" />}
+                                                 <p className="text-[11px] font-semibold text-text-muted truncate hover:underline">{m.game}</p>
+                                             </div>
+                                         ) : (
+                                             <p className="text-[11px] font-medium text-text-faint">{t('common.online')}</p>
+                                         )}
+                                     </div>
+
+                                     {m.playtime && (
+                                         <span className="text-[10px] font-semibold text-text-muted bg-surface-hover px-1.5 py-0.5 rounded-md shrink-0 border border-border/40">
+                                             {m.playtime}
+                                         </span>
+                                     )}
+                                </div>
+                            ))
+                        ) : (
                             <div
-                                key={m.name}
-                                onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name.toLowerCase().replace(/\s+/g, "_")}` } })}
-                                className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer group"
+                                className="flex flex-col items-center justify-center text-center py-3 px-2 gap-1.5 rounded-lg group"
                             >
-                                <div className="relative shrink-0">
-                                    <img
-                                        src={avatarGame}
-                                        alt={m.name}
-                                        className="w-7 h-7 rounded-full object-cover ring-1 ring-emerald-500/40"
-                                    />
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-surface bg-emerald-500" />
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <FontAwesomeIcon icon={faUsers} className="text-xs" />
                                 </div>
-
-                                <div className="flex flex-col min-w-0 flex-1">
-                                    <p className="text-xs sm:text-sm font-semibold truncate text-text">
-                                        {m.name}
-                                    </p>
-                                    {m.game ? (
-                                        <div
-                                            onClick={(e) => {
-                                                if (m.slug) {
-                                                    e.stopPropagation();
-                                                    navigate({ to: `/game/${m.slug}` });
-                                                }
-                                            }}
-                                            className="flex items-center gap-1.5 mt-0.5 hover:text-primary cursor-pointer"
-                                        >
-                                            {m.logo && <img src={m.logo} alt="" className="w-2.5 h-2.5 rounded object-cover opacity-80" />}
-                                            <p className="text-[10px] text-text-faint truncate hover:underline">{m.game}</p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-[10px] text-text-faint">{t('common.online')}</p>
-                                    )}
-                                </div>
-
-                                {m.playtime && (
-                                    <span className="text-[9px] text-text-faint shrink-0 group-hover:text-text-muted transition-colors">
-                                        {m.playtime}
-                                    </span>
-                                )}
+                                <p className="text-xs font-bold text-text group-hover:text-primary transition-colors">
+                                    {t('squad.noFriendsOnline')}
+                                </p>
+                                <p className="text-[10px] text-text-faint leading-relaxed">
+                                    {t('squad.inviteFriendsDesc')}
+                                </p>
                             </div>
-                        ))
-                    ) : (
-                        <div
-                            className="flex flex-col items-center justify-center text-center py-3 px-2 gap-1.5 rounded-lg group"
-                        >
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                            </div>
-                            <p className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {t('squad.noFriendsOnline')}
-                            </p>
-                            <p className="text-[10px] text-text-faint leading-relaxed">
-                                {t('squad.inviteFriendsDesc')}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            </Panel>
+                        )}
+                    </div>
+                </Panel>
+            )}
 
             <Panel>
                 <SectionTitle icon={faArrowTrendUp} label={t('common.trending')} />
@@ -174,10 +175,10 @@ export const RightBar = () => {
                             <img src={post.gameLogo} alt={post.game} className="w-6 h-6 rounded-md object-cover shrink-0 ring-1 ring-border" />
 
                             <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                                <p className="text-xs sm:text-sm font-medium text-text leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                                <p className="text-xs sm:text-sm font-bold text-text leading-tight line-clamp-1 group-hover:text-primary transition-colors">
                                     {post.title}
                                 </p>
-                                <div className="flex items-center gap-1.5 text-[10px] text-text-faint">
+                                <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
                                     <span
                                         onClick={(e) => {
                                             if (post.slug) {
@@ -185,14 +186,14 @@ export const RightBar = () => {
                                                 navigate({ to: `/game/${post.slug}` });
                                             }
                                         }}
-                                        className="font-semibold text-text-muted hover:text-primary hover:underline cursor-pointer"
+                                        className="font-bold text-text-muted hover:text-primary hover:underline cursor-pointer"
                                     >
                                         {post.game}
                                     </span>
                                     <span>·</span>
-                                    <FontAwesomeIcon icon={faUsers} className="text-[9px]" />
-                                    <span>{t('post.repliesCount', { count: post.replies })}</span>
-                                    <span className="ml-auto shrink-0">{post.heat}</span>
+                                    <FontAwesomeIcon icon={faUsers} className="text-[9px] text-text-faint" />
+                                    <span className="font-medium text-text-faint">{t('post.repliesCount', { count: post.replies })}</span>
+                                    <span className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-surface-hover text-text-muted border border-border/40">{post.heat}</span>
                                 </div>
                             </div>
                         </div>
@@ -207,10 +208,10 @@ export const RightBar = () => {
                         <div key={ev.id} className="flex items-center gap-2.5 cursor-pointer group">
                             <div className={`w-1 h-6 rounded-full shrink-0 ${ev.color}`} />
                             <div className="flex flex-col min-w-0 flex-1">
-                                <p className="text-xs sm:text-sm font-medium text-text group-hover:text-primary transition-colors leading-tight truncate">
+                                <p className="text-xs sm:text-sm font-bold text-text group-hover:text-primary transition-colors leading-tight truncate">
                                     {ev.label}
                                 </p>
-                                <p className="text-[10px] text-text-faint">{ev.date}</p>
+                                <p className="text-[11px] font-semibold text-text-muted">{ev.date}</p>
                             </div>
                             <FontAwesomeIcon icon={faBolt} className="text-[10px] text-text-faint group-hover:text-primary transition-colors shrink-0" />
                         </div>

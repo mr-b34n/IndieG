@@ -1,7 +1,7 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 export type ProfileStatus = "online" | "in-game" | "offline";
-export type ProfileTab = "library" | "posts" | "guestbook" | "friends";
+export type ProfileTab = "library" | "posts" | "guestbook" | "friends" | "bookmarks";
 
 export interface Badge {
     id: string;

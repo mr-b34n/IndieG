@@ -6,6 +6,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { GamePromoBanner } from "@/features/feed/components/GamePromoBanner";
+import { VietnamGamesBanner } from "./VietnamGamesBanner";
 
 // --- MOCK DATA ---
 const TRENDING_TAGS = [
@@ -135,9 +136,14 @@ export const ExplorePage = () => {
                 </div>
             </div>
 
-            {/* ── Banner (Like Home Page) ── */}
+            {/* ── Banner (Global Games Promo) ── */}
             <div className="-mx-2 sm:mx-0">
                 <GamePromoBanner />
+            </div>
+
+            {/* ── Banner (Game Việt Nam Mới) ── */}
+            <div className="-mx-2 sm:mx-0">
+                <VietnamGamesBanner />
             </div>
 
             {/* ── Events Hero (Asymmetric Grid) ── */}

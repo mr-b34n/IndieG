@@ -168,8 +168,8 @@ function CommunityDetail() {
                             className="w-full h-full object-cover object-center opacity-90"
                         />
                         {/* Gradient Overlays */}
-                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-surface via-surface/60 to-transparent" />
-                        <div className="absolute inset-y-0 left-0 w-2/3 bg-linear-to-r from-surface/80 via-surface/30 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-surface via-surface/30 to-transparent" />
+                        <div className="absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-surface/40 via-transparent to-transparent" />
 
                         {/* Top Badges */}
                         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -179,10 +179,6 @@ function CommunityDetail() {
                                     Featured Hub
                                 </span>
                             )}
-                            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-black/60 backdrop-blur-md text-emerald-400 border border-emerald-500/30 shadow-md">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                {formatCompactNumber(community.onlineNow)} {t('community.onlineLabel')}
-                            </span>
                         </div>
                     </div>
 
@@ -263,7 +259,13 @@ function CommunityDetail() {
                                     </div>
                                 ) : (
                                     <button
-                                        onClick={() => toggleJoin(community.id)}
+                                        onClick={() => {
+                                            if (!isLoggedIn) {
+                                                navigate({ to: "/auth" });
+                                                return;
+                                            }
+                                            toggleJoin(community.id);
+                                        }}
                                         className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black tracking-wide uppercase transition-all duration-200 cursor-pointer shadow-md bg-primary text-white hover:bg-primary-hover shadow-primary/25 active:scale-95"
                                     >
                                         <FontAwesomeIcon icon={faPlus} className="text-xs" />

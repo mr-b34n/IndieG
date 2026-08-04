@@ -13,6 +13,8 @@ import {
     faTrash,
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { useSquadStore } from "../store/useSquadStore";
@@ -26,6 +28,10 @@ interface SquadCardProps {
 
 export const SquadCard = ({ squad }: SquadCardProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
     const joinSquad = useSquadStore((state) => state.joinSquad);
     const leaveSquad = useSquadStore((state) => state.leaveSquad);
     const kickMember = useSquadStore((state) => state.kickMember);
@@ -258,8 +264,14 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                     ) : (
                         <button
                             type="button"
-                            onClick={() => joinSquad(squad.id)}
-                            className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-extrabold text-xs shadow-sm hover:shadow transition-all flex items-center gap-1.5"
+                            onClick={() => {
+                                if (!isLoggedIn) {
+                                    navigate({ to: "/auth" });
+                                    return;
+                                }
+                                joinSquad(squad.id);
+                            }}
+                            className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-extrabold text-xs shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                             <FontAwesomeIcon icon={faPlus} />
                             <span>{t('squad.join')}</span>

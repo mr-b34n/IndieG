@@ -12,6 +12,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faHubspot } from "@fortawesome/free-brands-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth";
 import { useSquadStore } from "../store/useSquadStore";
 import { useGameStore } from "@/features/game/store/useGameStore";
 import { GAME_FILTERS } from "../constants";
@@ -20,6 +22,11 @@ import { CreateSquadModal } from "./CreateSquadModal";
 
 export const SquadList = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+
     const {
         squads,
         activeTab,
@@ -82,16 +89,18 @@ export const SquadList = () => {
                     </p>
                 </div>
 
-                <div className="shrink-0 z-10 w-full sm:w-auto flex justify-center sm:justify-end">
-                    <button
-                        type="button"
-                        onClick={() => setIsCreateOpen(true)}
-                        className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white font-extrabold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-                    >
-                        <FontAwesomeIcon icon={faPlus} className="text-base" />
-                        <span>{t('squad.createButton')}</span>
-                    </button>
-                </div>
+                {isLoggedIn && (
+                    <div className="shrink-0 z-10 w-full sm:w-auto flex justify-center sm:justify-end">
+                        <button
+                            type="button"
+                            onClick={() => setIsCreateOpen(true)}
+                            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white font-extrabold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            <FontAwesomeIcon icon={faPlus} className="text-base" />
+                            <span>{t('squad.createButton')}</span>
+                        </button>
+                    </div>
+                )}
 
                 <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
             </div>
@@ -101,7 +110,7 @@ export const SquadList = () => {
                     <button
                         type="button"
                         onClick={() => setActiveTab("explore")}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all ${
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all cursor-pointer ${
                             activeTab === "explore"
                                 ? "bg-primary text-white shadow-sm"
                                 : "text-text-muted hover:text-text hover:bg-surface"
@@ -114,25 +123,27 @@ export const SquadList = () => {
                         </span>
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab("my-squads")}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all ${
-                            activeTab === "my-squads"
-                                ? "bg-primary text-white shadow-sm"
-                                : "text-text-muted hover:text-text hover:bg-surface"
-                        }`}
-                    >
-                        <FontAwesomeIcon icon={faUsers} />
-                        <span>{t('squad.mySquadsTab')}</span>
-                        {mySquadsCount > 0 && (
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                activeTab === "my-squads" ? "bg-white/20 text-white" : "bg-primary/20 text-primary"
-                            }`}>
-                                {mySquadsCount}
-                            </span>
-                        )}
-                    </button>
+                    {isLoggedIn && (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("my-squads")}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all cursor-pointer ${
+                                activeTab === "my-squads"
+                                    ? "bg-primary text-white shadow-sm"
+                                    : "text-text-muted hover:text-text hover:bg-surface"
+                            }`}
+                        >
+                            <FontAwesomeIcon icon={faUsers} />
+                            <span>{t('squad.mySquadsTab')}</span>
+                            {mySquadsCount > 0 && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    activeTab === "my-squads" ? "bg-white/20 text-white" : "bg-primary/20 text-primary"
+                                }`}>
+                                    {mySquadsCount}
+                                </span>
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 <div className="relative w-full sm:w-72">
