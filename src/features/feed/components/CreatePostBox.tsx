@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { faChevronDown, faGear, faThumbtack, faComment, faBookmark, faFileLines, faTrash, faClock, faXmark, faCheck } from "@fortawesome/free-solid-svg-icons"
+import { 
+    faChevronDown, 
+    faGear, 
+    faThumbtack, 
+    faComment, 
+    faImage,
+    faGamepad,
+    faPenToSquare,
+    faPaperPlane
+} from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import { revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
+import { createAttachmentFromFile, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
 import { useCommunitiesStore, type CommunityData } from "@/features/community";
-import { AttachmentPicker, useDraftsStore, type PostDraft } from "@/features/post";
-import { type PostPrivacy, type CreatePostPayload } from "../types";
+import { AttachmentPicker, useDraftsStore } from "@/features/post";
+import { type CreatePostPayload } from "../types";
 import { HASHTAG_REGEX, MAX_TEXTAREA_HEIGHT } from "../constants";
 
 const extractHashtags = (text: string): string[] => {
@@ -54,7 +63,7 @@ const ToggleSwitch = ({
             aria-checked={checked}
             onClick={() => onChange(!checked)}
             className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                checked ? "bg-primary" : "bg-surface-hover border border-border"
+                checked ? "bg-primary" : "bg-surface-hover"
             }`}
         >
             <span
@@ -80,49 +89,59 @@ const PostSettingsMenu = ({
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
-    const btnRef = useRef<HTMLButtonElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const openMenu = () => {
-        const rect = btnRef.current?.getBoundingClientRect();
-        if (rect) setCoords({ top: rect.top - 6, left: rect.right });
-        setOpen(true);
+    const updatePosition = () => {
+        if (!buttonRef.current) return;
+        const rect = buttonRef.current.getBoundingClientRect();
+        setCoords({
+            top: rect.bottom + 6,
+            left: Math.max(12, rect.right - 220),
+        });
     };
 
     useEffect(() => {
         if (!open) return;
+        updatePosition();
+        const handleScrollOrResize = () => updatePosition();
+        window.addEventListener("scroll", handleScrollOrResize, true);
+        window.addEventListener("resize", handleScrollOrResize);
+        return () => {
+            window.removeEventListener("scroll", handleScrollOrResize, true);
+            window.removeEventListener("resize", handleScrollOrResize);
+        };
+    }, [open]);
 
+    useEffect(() => {
+        if (!open) return;
         const handleClickOutside = (e: MouseEvent) => {
             const target = e.target as Node;
-            if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-            setOpen(false);
+            if (
+                buttonRef.current &&
+                !buttonRef.current.contains(target) &&
+                menuRef.current &&
+                !menuRef.current.contains(target)
+            ) {
+                setOpen(false);
+            }
         };
-        const handleReposition = () => setOpen(false);
-
         document.addEventListener("mousedown", handleClickOutside);
-        window.addEventListener("scroll", handleReposition, true);
-        window.addEventListener("resize", handleReposition);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            window.removeEventListener("scroll", handleReposition, true);
-            window.removeEventListener("resize", handleReposition);
-        };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
 
     return (
         <div className="relative shrink-0">
             <button
-                ref={btnRef}
+                ref={buttonRef}
                 type="button"
-                onClick={() => (open ? setOpen(false) : openMenu())}
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm transition-colors ${
-                    pinned || !allowComments
-                        ? "bg-primary/10 text-primary"
-                        : "bg-surface-hover border border-border text-text-muted hover:text-text hover:border-primary/40"
+                onClick={() => setOpen((prev) => !prev)}
+                className={`p-2 rounded-xl text-xs font-semibold hover:bg-surface-hover text-text-muted transition-colors cursor-pointer ${
+                    open ? "bg-surface-hover text-text" : ""
                 }`}
-                title={t('feed.privacy')}
+                title={t('feed.settings')}
             >
-                <FontAwesomeIcon icon={faGear} className="text-[13px]" />
+                <FontAwesomeIcon icon={faGear} className="w-4 h-4" />
             </button>
 
             {open &&
@@ -130,8 +149,8 @@ const PostSettingsMenu = ({
                 createPortal(
                     <div
                         ref={menuRef}
-                        style={{ top: coords.top, left: coords.left, transform: "translate(-100%, -100%)" }}
-                        className="fixed w-52 py-1.5 bg-surface border border-border rounded-xl shadow-lg z-[999] overflow-hidden"
+                        style={{ top: coords.top, left: coords.left }}
+                        className="fixed z-[9999] w-56 rounded-2xl bg-surface shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-scale-up"
                     >
                         <ToggleSwitch
                             checked={allowComments}
@@ -142,7 +161,7 @@ const PostSettingsMenu = ({
                         <ToggleSwitch
                             checked={pinned}
                             onChange={onPinnedChange}
-                            label={t('feed.pinned')}
+                            label={t('feed.pinPost')}
                             icon={faThumbtack}
                         />
                     </div>,
@@ -157,315 +176,202 @@ const CommunitySelector = ({
     onChange,
     communities,
 }: {
-    value: string | number | null;
-    onChange: (id: string | number) => void;
+    value: number | null;
+    onChange: (id: number | null) => void;
     communities: CommunityData[];
 }) => {
     const { t } = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
-    const btnRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    const current = communities.find((c) => c.id === value) ?? null;
-    const hasCommunities = communities.length > 0;
-
-    const openMenu = () => {
-        if (!hasCommunities) return;
-        const rect = btnRef.current?.getBoundingClientRect();
-        if (rect) setCoords({ top: rect.bottom + 6, left: rect.left, width: rect.width });
-        setOpen(true);
-    };
-
-    useEffect(() => {
-        if (!open) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-            const target = e.target as Node;
-            if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-            setOpen(false);
-        };
-        const handleReposition = () => setOpen(false);
-
-        document.addEventListener("mousedown", handleClickOutside);
-        window.addEventListener("scroll", handleReposition, true);
-        window.addEventListener("resize", handleReposition);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            window.removeEventListener("scroll", handleReposition, true);
-            window.removeEventListener("resize", handleReposition);
-        };
-    }, [open]);
 
     return (
-        <div className="relative w-full">
-            <button
-                ref={btnRef}
-                type="button"
-                onClick={() => (open ? setOpen(false) : openMenu())}
-                disabled={!hasCommunities}
-                className={`w-full h-9 flex items-center gap-2 px-3 rounded-xl text-sm border transition-colors ${
-                    hasCommunities
-                        ? "bg-surface-hover border-border text-text hover:border-primary/40"
-                        : "bg-surface-hover border-border text-text-faint cursor-not-allowed"
-                }`}
-            >
-                {current ? (
-                    <>
-                        <img src={current.logo} alt={current.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                        <span className="truncate">{current.name}</span>
-                    </>
-                ) : (
-                    <span className="truncate text-text-faint">
-                        {hasCommunities ? t('feed.selectCommunityRequired') : t('feed.noCommunitiesJoined')}
-                    </span>
-                )}
-                <FontAwesomeIcon icon={faChevronDown} className="text-[10px] opacity-60 ml-auto shrink-0" />
-            </button>
-
-            {open &&
-                coords &&
-                createPortal(
-                    <div
-                        ref={menuRef}
-                        style={{ top: coords.top, left: coords.left, width: coords.width }}
-                        className="fixed py-1 bg-surface border border-border rounded-xl shadow-lg z-[999] overflow-hidden max-h-64 overflow-y-auto"
+        <div className="flex flex-col gap-1.5 w-full">
+            <span className="text-[11px] font-bold text-text-muted flex items-center gap-1">
+                <span>{t('feed.selectCommunity') || "Đăng trong cộng đồng đã gia nhập:"}</span>
+            </span>
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <button
+                    type="button"
+                    onClick={() => onChange(null)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        value === null
+                            ? "bg-primary text-white shadow-xs"
+                            : "bg-surface-hover text-text-muted hover:text-text hover:bg-surface-hover/80"
+                    }`}
+                >
+                    <span>🌐 {t('feed.generalFeed') || "Bảng tin chung"}</span>
+                </button>
+                {communities.map((c) => (
+                    <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => onChange(c.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                            value === c.id
+                                ? "bg-primary text-white shadow-xs"
+                                : "bg-surface-hover text-text-muted hover:text-text hover:bg-surface-hover/80"
+                        }`}
                     >
-                        {communities.map((c) => (
-                            <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => {
-                                    onChange(c.id);
-                                    setOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-surface-hover transition-colors ${
-                                    c.id === value ? "text-primary font-semibold" : "text-text"
-                                }`}
-                            >
-                                <img src={c.logo} alt={c.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                                <span className="truncate">{c.name}</span>
-                            </button>
-                        ))}
-                    </div>,
-                    document.body
-                )}
+                        <img
+                            src={c.logo}
+                            alt={c.name}
+                            className="w-4 h-4 rounded-full object-cover shrink-0"
+                        />
+                        <span className="truncate max-w-[140px]">{c.name}</span>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
 
-const DraftsModal = ({
-    isOpen,
-    onClose,
-    onSelectDraft,
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    onSelectDraft: (draft: PostDraft) => void;
-}) => {
-    const { t } = useTranslation();
-    const drafts = useDraftsStore((state) => state.drafts);
-    const deleteDraft = useDraftsStore((state) => state.deleteDraft);
-    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
-
-    if (!isOpen) return null;
-
-    return createPortal(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-hover/50">
-                    <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faBookmark} className="text-primary text-lg" />
-                        <h3 className="font-bold text-base text-text">{t('feed.drafts')}</h3>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-colors"
-                    >
-                        <FontAwesomeIcon icon={faXmark} className="text-lg" />
-                    </button>
-                </div>
-
-                <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3">
-                    {drafts.length === 0 ? (
-                        <div className="py-12 text-center text-text-faint text-sm flex flex-col items-center gap-2">
-                            <FontAwesomeIcon icon={faFileLines} className="text-3xl text-text-faint/50 mb-1" />
-                            <p>{t('feed.noDrafts')}</p>
-                            <p className="text-xs">{t('feed.draftsDesc')}</p>
-                        </div>
-                    ) : (
-                        drafts.map((draft) => {
-                            const comm = draft.communityId ? getCommunityById(draft.communityId) : null;
-                            return (
-                                <div
-                                    key={draft.id}
-                                    className="p-3.5 bg-surface-hover/40 border border-border rounded-xl flex flex-col gap-2 hover:border-primary/40 transition-all group"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                            {comm && (
-                                                <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">
-                                                    {comm.name}
-                                                </span>
-                                            )}
-                                            <h4 className="font-semibold text-sm text-text truncate">
-                                                {draft.title || (draft.content ? draft.content.slice(0, 50) + "..." : t('feed.noTitle'))}
-                                            </h4>
-                                            <p className="text-xs text-text-muted line-clamp-2">
-                                                {draft.content || t('feed.noContent')}
-                                            </p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteDraft(draft.id);
-                                            }}
-                                            title={t('feed.deleteDraft')}
-                                            className="text-text-faint hover:text-error p-1.5 rounded-lg hover:bg-error/10 transition-colors"
-                                        >
-                                            <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-2 border-t border-border/50 text-[11px] text-text-faint mt-1">
-                                        <span className="flex items-center gap-1">
-                                            <FontAwesomeIcon icon={faClock} className="w-3" />
-                                            {t('feed.savedAt', { time: draft.updatedAt })}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                onSelectDraft(draft);
-                                                onClose();
-                                            }}
-                                            className="px-3 py-1 bg-primary text-white rounded-lg font-medium hover:bg-primary-hover transition-colors shadow-sm"
-                                        >
-                                            {t('feed.continueEdit')}
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
-};
-
-export const CreatePostBox = ({ 
-    onPost,
-    defaultCommunityId,
-    hideCommunitySelector
-}: { 
-    onPost: (data: CreatePostPayload) => Promise<void>;
-    defaultCommunityId?: string | number;
+interface CreatePostBoxProps {
+    onPostCreated?: (payload: CreatePostPayload) => void;
+    defaultCommunityId?: number | null;
     hideCommunitySelector?: boolean;
-}) => {
+    initialTitle?: string;
+    initialContent?: string;
+}
+
+export const CreatePostBox = ({
+    onPostCreated,
+    defaultCommunityId = null,
+    hideCommunitySelector = false,
+    initialTitle = "",
+    initialContent = "",
+}: CreatePostBoxProps) => {
     const { t } = useTranslation();
-    const user = useAuthStore((state) => state.user);
-    const communities = useCommunitiesStore((state) => state.communities);
-    const joinedCommunities = useMemo(() => communities.filter((c) => c.joined), [communities]);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
-    const [privacy, setPrivacy] = useState<PostPrivacy>("public");
+    const user = useAuthStore((s) => s.user);
+    const avatarUrl = user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+
+    const { communities } = useCommunitiesStore();
+    const joinedCommunities = useMemo(
+        () => communities.filter((c) => c.isJoined),
+        [communities]
+    );
+
+    const saveDraft = useDraftsStore((s) => s.saveDraft);
+
+    const [isExpanded, setExpanded] = useState(false);
+    const [title, setTitle] = useState(initialTitle);
+    const [content, setContent] = useState(initialContent);
+    const [communityId, setCommunityId] = useState<number | null>(defaultCommunityId);
     const [allowComments, setAllowComments] = useState(true);
     const [pinned, setPinned] = useState(false);
-    const [communityId, setCommunityId] = useState<string | number | null>(defaultCommunityId ?? null);
-    const [expanded, setExpanded] = useState(false);
+    const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
     const [isPosting, setIsPosting] = useState(false);
-    const [showDraftsModal, setShowDraftsModal] = useState(false);
-    const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
-    const [isDraftSaved, setIsDraftSaved] = useState(false);
-    const drafts = useDraftsStore((state) => state.drafts);
-    const saveDraft = useDraftsStore((state) => state.saveDraft);
-    const deleteDraft = useDraftsStore((state) => state.deleteDraft);
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const highlightRef = useRef<HTMLDivElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
-    const handleTextareaScroll = () => {
-        if (highlightRef.current && textareaRef.current) {
-            highlightRef.current.scrollTop = textareaRef.current.scrollTop;
-            highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
-        }
-    };
+    const isActive = isExpanded || content.length > 0 || title.length > 0 || attachments.length > 0;
 
-    const isActive = expanded || content.trim().length > 0 || attachments.length > 0 || title.trim().length > 0;
+    // Auto-save draft silently when user closes/collapses or when component unmounts with non-empty content
+    useEffect(() => {
+        return () => {
+            if (content.trim() || title.trim()) {
+                saveDraft({
+                    title,
+                    content,
+                    communityId,
+                    attachments,
+                    privacy: "public",
+                    allowComments,
+                    pinned,
+                });
+            }
+        };
+    }, [content, title, communityId, attachments, allowComments, pinned, saveDraft]);
+
+    useEffect(() => {
+        if (initialTitle) setTitle(initialTitle);
+        if (initialContent) setContent(initialContent);
+    }, [initialTitle, initialContent]);
 
     useEffect(() => {
         const el = textareaRef.current;
         if (!el) return;
         el.style.height = "auto";
-        const newHeight = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT);
-        el.style.height = `${newHeight}px`;
-        el.style.overflowY = el.scrollHeight > MAX_TEXTAREA_HEIGHT ? "auto" : "hidden";
-    }, [content, isActive]);
+        const nextHeight = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT);
+        el.style.height = `${nextHeight}px`;
+    }, [content, isExpanded]);
 
-    const canPost = content.trim().length > 0 && !!communityId && !isPosting;
-    const avatarUrl =
-        user?.user_metadata?.avatar_url ??
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
+    const handleTextareaScroll = () => {
+        if (textareaRef.current && highlightRef.current) {
+            highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+        }
+    };
+
+    const handleQuickImageClick = () => {
+        setExpanded(true);
+        setTimeout(() => {
+            imageInputRef.current?.click();
+        }, 50);
+    };
+
+    const handleQuickImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const newAttachments: EditableAttachment[] = [];
+        Array.from(files).forEach((file) => {
+            const isImage = file.type.startsWith("image/");
+            newAttachments.push(createAttachmentFromFile(file, isImage ? "image" : "file"));
+        });
+        setAttachments((prev) => [...prev, ...newAttachments]);
+        e.target.value = "";
+    };
+
+    const handleQuickGameClick = () => {
+        setExpanded(true);
+        setTimeout(() => {
+            textareaRef.current?.focus();
+        }, 50);
+    };
+
+    const canPost = (content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0) && !isPosting;
 
     const handlePost = async () => {
-        if (!canPost || !communityId) return;
-
+        if (!canPost) return;
         setIsPosting(true);
+
+        const payload: CreatePostPayload = {
+            title: title.trim() || undefined,
+            content: content.trim(),
+            communityId: communityId ?? undefined,
+            privacy: "public",
+            allowComments,
+            pinned,
+            hashtags: extractHashtags(content),
+            attachments,
+        };
+
         try {
-            await onPost({
-                title: title.trim(),
-                content: content.trim(),
-                attachments,
-                privacy,
-                tags: extractHashtags(content),
-                allowComments,
-                pinned,
-                communityId,
-            });
-            if (currentDraftId) {
-                deleteDraft(currentDraftId);
-                setCurrentDraftId(null);
-            }
-            revokeAttachmentUrls(attachments);
+            onPostCreated?.(payload);
             setTitle("");
             setContent("");
             setAttachments([]);
-            setPrivacy("public");
-            setAllowComments(true);
-            setPinned(false);
-            setCommunityId(null);
             setExpanded(false);
         } finally {
             setIsPosting(false);
         }
     };
 
-    const handleSaveDraft = () => {
-        if (!content.trim() && !title.trim()) return;
-        const savedId = saveDraft({
-            id: currentDraftId || undefined,
-            title: title.trim(),
-            content: content.trim(),
-            privacy,
-            allowComments,
-            pinned,
-            communityId,
-        });
-        setCurrentDraftId(savedId);
-        setIsDraftSaved(true);
-        setTimeout(() => setIsDraftSaved(false), 2500);
-    };
-
-    const handleSelectDraft = (draft: PostDraft) => {
-        setTitle(draft.title);
-        setContent(draft.content);
-        setPrivacy(draft.privacy);
-        setAllowComments(draft.allowComments);
-        setPinned(draft.pinned);
-        setCommunityId(draft.communityId);
-        setCurrentDraftId(draft.id);
-        setExpanded(true);
+    const handleCancel = () => {
+        if (content.trim() || title.trim()) {
+            saveDraft({
+                title,
+                content,
+                communityId,
+                attachments,
+                privacy: "public",
+                allowComments,
+                pinned,
+            });
+        }
+        setTitle("");
+        setContent("");
+        revokeAttachmentUrls(attachments);
+        setAttachments([]);
+        setExpanded(false);
     };
 
     return (
@@ -473,52 +379,71 @@ export const CreatePostBox = ({
             id="create-post"
             className="
                 relative z-20
-                w-full p-3
+                w-full p-4 sm:p-5
                 bg-surface/95 backdrop-blur-md
-                rounded-xl
-                shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_15px_-5px_rgba(0,0,0,0.08)]
-                dark:shadow-[0_12px_35px_-5px_rgba(0,0,0,0.45),0_4px_15px_-5px_rgba(0,0,0,0.25)]
+                rounded-2xl sm:rounded-3xl
+                shadow-sm hover:shadow-md
                 transition-all duration-300 ease-out
+                flex flex-col gap-3
             "
         >
-            <div className="flex gap-2.5 items-start">
-                <img
-                    src={avatarUrl}
-                    alt="User"
-                    className={`w-8 h-8 rounded-full object-cover ring-1 ring-border shrink-0 transition-all duration-200 ease-out ${
-                        isActive ? "" : "self-center"
-                    }`}
-                />
-                <div className="flex flex-col gap-1.5 w-full min-w-0">
+            {/* Hidden Input for Quick Image Button */}
+            <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                onChange={handleQuickImageChange}
+                className="hidden"
+            />
+
+            {/* Top User Info & Input Area */}
+            <div className="flex gap-3 items-start">
+                <div className="relative shrink-0">
+                    <img
+                        src={avatarUrl}
+                        alt="User"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20 shadow-xs"
+                    />
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-surface" title="Online" />
+                </div>
+
+                <div className="flex flex-col gap-2.5 w-full min-w-0">
+                    {/* Community Selector & Title when active */}
                     <div
                         className={`grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out ${
                             isActive
                                 ? "grid-rows-[1fr] opacity-100"
-                                : "grid-rows-[0fr] opacity-0 -mb-1.5 pointer-events-none"
+                                : "grid-rows-[0fr] opacity-0 -mb-2 pointer-events-none"
                         }`}
                         aria-hidden={!isActive}
                     >
-                        <div className={`min-h-0 flex flex-col gap-1.5 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
+                        <div className={`min-h-0 flex flex-col gap-2 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
                             {!hideCommunitySelector && (
-                                <CommunitySelector
-                                    value={communityId}
-                                    onChange={setCommunityId}
-                                    communities={joinedCommunities}
-                                />
+                                <div className="flex-1 min-w-0">
+                                    <CommunitySelector
+                                        value={communityId}
+                                        onChange={setCommunityId}
+                                        communities={joinedCommunities}
+                                    />
+                                </div>
                             )}
+
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder={t('feed.postTitle')}
+                                placeholder={t('feed.postTitle') || "Tiêu đề bài viết (không bắt buộc)..."}
                                 tabIndex={isActive ? 0 : -1}
-                                className="w-full h-9 px-3 bg-surface-hover border border-border rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all text-text placeholder:text-text-faint"
+                                className="w-full h-10 px-3.5 bg-surface-hover/80 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all text-text placeholder:text-text-faint"
                             />
                         </div>
                     </div>
+
+                    {/* Main Textarea Container */}
                     <div
-                        className={`relative w-full bg-surface-hover border border-border rounded-xl transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 ${
-                            isActive ? "min-h-19" : "min-h-9"
+                        className={`relative w-full bg-surface-hover/80 rounded-2xl transition-all duration-200 ease-out focus-within:ring-2 focus-within:ring-primary/15 ${
+                            isActive ? "min-h-24" : "min-h-11"
                         }`}
                     >
                         <textarea
@@ -532,15 +457,15 @@ export const CreatePostBox = ({
                             }}
                             placeholder={t('feed.whatOnMind')}
                             rows={1}
-                            className={`block w-full px-3 bg-transparent border-none outline-none text-sm text-transparent caret-text placeholder:text-text-faint resize-none leading-snug transition-[padding] duration-200 ease-out ${
-                                isActive ? "min-h-19 py-2" : "min-h-9 py-1.5"
+                            className={`block w-full px-3.5 bg-transparent border-none outline-none text-sm font-medium text-transparent caret-text placeholder:text-text-faint resize-none leading-relaxed transition-[padding] duration-200 ease-out ${
+                                isActive ? "min-h-24 py-3" : "min-h-11 py-2.5"
                             }`}
                         />
                         <div
                             ref={highlightRef}
                             aria-hidden
-                            className={`absolute inset-0 px-3 text-sm leading-snug whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-text transition-[padding] duration-200 ease-out ${
-                                isActive ? "py-2" : "py-1.5"
+                            className={`absolute inset-0 px-3.5 text-sm font-medium leading-relaxed whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-text transition-[padding] duration-200 ease-out ${
+                                isActive ? "py-3" : "py-2.5"
                             }`}
                         >
                             {renderHighlightedContent(content)}
@@ -548,44 +473,38 @@ export const CreatePostBox = ({
                         </div>
                     </div>
 
+                    {/* Unexpanded Quick Action Shortcuts */}
+                    {!isActive && (
+                        <div className="flex items-center gap-1.5 sm:gap-2 pt-1 overflow-x-auto no-scrollbar">
+                            <button
+                                type="button"
+                                onClick={handleQuickImageClick}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text text-xs font-bold transition-all cursor-pointer shrink-0"
+                            >
+                                <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
+                                <span>Ảnh / Video</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleQuickGameClick}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text text-xs font-bold transition-all cursor-pointer shrink-0"
+                            >
+                                <FontAwesomeIcon icon={faGamepad} className="text-primary text-xs" />
+                                <span>Thảo Luận Game</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Attachment Picker & Bottom Action Bar */}
                     <AttachmentPicker
                         attachments={attachments}
                         onChange={setAttachments}
                         showToolbar={isActive}
                         compactToolbar
-                        className="gap-1.5"
+                        className="gap-2 pt-1"
                         toolbarTrailing={
                             <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowDraftsModal(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-hover border border-border text-text hover:border-primary/50 transition-all shrink-0"
-                                    title={t('feed.drafts')}
-                                >
-                                    <FontAwesomeIcon icon={faBookmark} className="text-primary w-3.5" />
-                                    <span>{t('feed.drafts')}</span>
-                                    {drafts.length > 0 && (
-                                        <span className="bg-primary text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                                            {drafts.length}
-                                        </span>
-                                    )}
-                                </button>
-                                {isActive && (
-                                    <button
-                                        type="button"
-                                        onClick={handleSaveDraft}
-                                        disabled={!content.trim() && !title.trim()}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all shrink-0 ${
-                                            isDraftSaved
-                                                ? "bg-success/15 border-success text-success"
-                                                : "bg-surface-hover border-border text-text-muted hover:text-text hover:border-primary/50"
-                                        }`}
-                                        title={t('feed.saveDraftTooltip')}
-                                    >
-                                        <FontAwesomeIcon icon={isDraftSaved ? faCheck : faFileLines} className="w-3.5" />
-                                        <span>{isDraftSaved ? t('feed.draftSaved') : t('feed.saveDraft')}</span>
-                                    </button>
-                                )}
                                 {isActive && (
                                     <PostSettingsMenu
                                         allowComments={allowComments}
@@ -594,28 +513,35 @@ export const CreatePostBox = ({
                                         onPinnedChange={setPinned}
                                     />
                                 )}
+
+                                {isActive && (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancel}
+                                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-surface-hover text-text-muted hover:text-text transition-all cursor-pointer"
+                                    >
+                                        Hủy
+                                    </button>
+                                )}
+
                                 <button
                                     type="button"
                                     onClick={handlePost}
                                     disabled={!canPost}
-                                    className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                                    className={`shrink-0 px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
                                         canPost
-                                            ? "bg-primary text-white hover:bg-primary-hover shadow-[0_2px_10px_rgba(124,77,255,0.35)]"
+                                            ? "bg-primary hover:bg-primary-hover text-white shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 hover:-translate-y-0.5 active:translate-y-0"
                                             : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                                 >
-                                    {isPosting ? t('common.loading') : t('feed.postButton')}
+                                    <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                                    <span>{isPosting ? t('common.loading') : t('feed.postButton')}</span>
                                 </button>
                             </div>
                         }
                     />
                 </div>
             </div>
-            <DraftsModal
-                isOpen={showDraftsModal}
-                onClose={() => setShowDraftsModal(false)}
-                onSelectDraft={handleSelectDraft}
-            />
         </div>
     );
 };

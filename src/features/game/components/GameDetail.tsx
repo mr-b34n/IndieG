@@ -155,8 +155,8 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         alt={game.name}
                         className="w-full h-full object-cover object-top sm:object-center transform hover:scale-105 transition-transform duration-700 opacity-95"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-surface/90 via-surface/40 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/40 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-surface/40 via-transparent to-transparent" />
                 </div>
 
                 {/* Spacer to show off the banner artwork cleanly without overlapping issues */}

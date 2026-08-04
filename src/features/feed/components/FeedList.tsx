@@ -10,7 +10,6 @@ import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features
 
 import { useCommunitiesStore } from "@/features/community";
 import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
-import { GamePromoBanner } from "./GamePromoBanner";
 import { type PostDataWithSettings } from "../types";
 
 export const FeedList = () => {
@@ -99,8 +98,6 @@ export const FeedList = () => {
 
     return (
         <div className="w-full flex flex-col gap-3">
-            <GamePromoBanner />
-
             {isLoggedIn && <CreatePostBox onPost={handleCreatePost} />}
 
             {displayedPosts.length > 0 ? (

@@ -1,5 +1,5 @@
 import {
-    faGamepad, faLocationDot as _faLocationDot, faCrown, faShieldHalved, faTrophy, faFire, faClock, faMedal,
+    faGamepad, faCrown, faShieldHalved, faTrophy, faFire, faClock, faMedal,
     faDesktop, faHeadphones, faMicrochip, faComputerMouse, faKeyboard,
     faMicrophone, faLayerGroup, faVolumeHigh, faTv,
 } from "@fortawesome/free-solid-svg-icons";

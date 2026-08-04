@@ -1,11 +1,11 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
-import { Post } from "@/features/post";
+import { Post, type PostData } from "@/features/post";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 
 interface PostsTabProps {
-    posts: any[]; // Post type comes from @/features/post
+    posts: PostData[];
     t: TranslateFn;
 }
 

@@ -147,8 +147,8 @@ export const GamePromoBanner = () => {
                             />
 
                             {/* Overlays tối ưu để không che đi bg img quá nhiều */}
-                            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-transparent h-[70%] top-auto bottom-0 pointer-events-none" />
-                            <div className="absolute inset-0 bg-linear-to-r from-black/75 via-black/30 to-transparent pointer-events-none" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent h-[45%] top-auto bottom-0 pointer-events-none" />
+                            <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-transparent pointer-events-none" />
 
                             {/* Content bên trong thẻ - Cấu trúc cố định giống hệt nhau cho tất cả các thẻ để không bao giờ bị nhảy hay tràn chữ khi chuyển animation */}
                             <div className="relative z-10 flex flex-col justify-end p-4 sm:p-6 text-left w-full pointer-events-none">

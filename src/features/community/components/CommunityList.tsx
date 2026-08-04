@@ -46,8 +46,8 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                     />
                 )}
                 
-                {/* Lớp gradient tối phủ lên trên để làm nổi bật logo và text (fade từ dưới lên) */}
-                <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/70 to-transparent" />
+                {/* Lớp gradient nhẹ nhàng phủ lên phía dưới banner để làm nổi bật logo */}
+                <div className="absolute inset-x-0 bottom-0 h-[45%] bg-linear-to-t from-surface via-surface/30 to-transparent pointer-events-none" />
 
                 {/* Badge Featured bên góc phải trên */}
                 <div className="absolute z-20 top-3 right-3 flex items-center gap-1.5">
@@ -57,13 +57,6 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
                             HOT
                         </span>
                     )}
-                </div>
-
-                {/* Chỉ số Online Live ngay trên banner */}
-                <div className="absolute z-20 bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-[11px] font-semibold border border-white/10">
-                    <span className="w-2 h-2 rounded-full bg-success-500 inline-flex" />
-                    <span className="text-success-400 font-bold ml-1">{formatCompactNumber(community.onlineNow)}</span>
-                    <span className="text-white/80 text-[10px]">online</span>
                 </div>
             </div>
 
