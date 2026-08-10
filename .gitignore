@@ -28,3 +28,6 @@ dist-ssr
 *.tanstack
 
 .env
+.env.local
+backend-vote/backend-vote
+node_modules
