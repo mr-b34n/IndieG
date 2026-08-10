@@ -51,7 +51,7 @@ function PostDetail() {
 
     return (
         <main className="flex-1 min-w-0">
-            <div className="w-full max-w-2xl mx-auto flex flex-col gap-4 pb-12 animate-fade-in">
+            <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 pb-12 animate-fade-in">
 
                 <div className="w-full flex flex-row items-center gap-3 mb-2 px-1">
                     <button

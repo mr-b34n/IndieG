@@ -87,8 +87,10 @@ export const en: typeof vi = {
         private: "Private",
         pinned: "Pin post",
         allowComments: "Allow comments",
+        pinPost: "Pin post",
         addAttachments: "Add attachments",
         selectCommunity: "Select community",
+        generalFeed: "General Feed",
         justNow: "Just now",
         hoursAgo: "{count} hours ago",
         loadingMore: "Automatically loading more posts...",
@@ -97,7 +99,13 @@ export const en: typeof vi = {
         emptyTitle: "No posts here yet",
         emptyDesc: "Check back later or create a new post.",
         selectCommunityRequired: "Select a community to post (required)",
-        noCommunitiesJoined: "You haven't joined any communities yet"
+        selectCommunityPlaceholder: "-- Select community to post --",
+        noCommunitiesJoined: "You haven't joined any communities yet",
+        mediaButton: "Media / Video",
+        gameDiscussion: "Game Discussion",
+        tagsPlaceholder: "Add tags (separated by commas)...",
+        tagPlaceholder: "Add tags (separated by commas)...",
+        spoiler: "Content Warning (Spoiler)"
     },
     post: {
         post: "Post",
@@ -169,7 +177,13 @@ export const en: typeof vi = {
         title: "Explore",
         subtitle: "Catch up with the latest trends, events, and viral posts.",
         ongoingEvents: "Ongoing Events",
-        viral: "Viral Now"
+        viral: "Viral Now",
+        vietnamGames: {
+            title: "New & Featured Vietnamese Games",
+            subtitle: "Discover impressive games developed by Vietnamese Studios & Developers",
+            exploreBtn: "Explore Now",
+            discussBtn: "Community Discussion"
+        }
     },
     community: {
         discover: "Discover",
@@ -586,6 +600,7 @@ export const en: typeof vi = {
         title: "Settings",
         tabs: {
             general: "General Settings",
+            quickAccess: "Quick Access Games",
             account: "Account & Security",
             blocked: "Blocked List",
             feedback: "Feedback & Bug Report"
@@ -599,6 +614,13 @@ export const en: typeof vi = {
             languageDesc: "Change application language",
             vi: "Tiếng Việt",
             en: "English"
+        },
+        quickAccess: {
+            title: "Customize Quick Access (Max 4)",
+            desc: "Select up to 4 favorite games to display directly in the quick access menu on the left sidebar.",
+            saveSuccess: "Saved successfully!",
+            selectedCount: "Selected {{count}}/4",
+            saveBtn: "Save Changes"
         },
         account: {
             title: "Account Management",
@@ -645,5 +667,28 @@ export const en: typeof vi = {
         grandmaster: "Scholarly Master",
         legend: "Living Encyclopedia",
         immortal: "Privileged Advisor"
+    },
+    report: {
+        reportPost: "Report Post",
+        reportSubmitted: "Report Submitted",
+        reportSubmittedDesc: "Thank you for helping keep our community safe. We will review your report shortly.",
+        reportingPostBy: "You are reporting a post by {author}. Please select a reason:",
+        additionalDetails: "Additional details (optional)",
+        provideExtraContext: "Provide any extra context here...",
+        cancel: "Cancel",
+        submitReport: "Submit Report"
+    },
+    search: {
+        title: "Search Games, Communities & Discussions",
+        placeholder: "Enter game title, community name, post content, or #hashtag...",
+        hotKeywords: "Hot keywords:",
+        tabAll: "All",
+        tabGames: "Games",
+        tabCommunities: "Communities",
+        tabPosts: "Posts",
+        tabSquads: "Squads / LFG",
+        searchBtn: "Search",
+        noResultsTitle: "No matching results found",
+        noResultsDesc: "Try searching with a different keyword or check your spelling."
     }
 };

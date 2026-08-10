@@ -8,16 +8,14 @@ import {
     faFileLines,
     faUserGroup,
     faXmark,
-    faHashtag,
     faCheck,
     faPlus,
     faChevronRight,
-    faFire,
     faFilter,
     faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { usePostsStore, Post } from "@/features/post";
+import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useSquadStore } from "@/features/squad";
 import { useGameStore } from "@/features/game";
@@ -50,6 +48,7 @@ export const SearchResultsPage = () => {
     // Sync input with route query param if URL changes
     useEffect(() => {
         if (searchParams.q !== undefined) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setInputValue(searchParams.q);
         }
     }, [searchParams.q]);
@@ -92,12 +91,12 @@ export const SearchResultsPage = () => {
         });
     };
 
-    const tabsList: { key: SearchTabCategory; label: string; icon: any; count: number }[] = [
-        { key: "all", label: "Tất cả", icon: faFilter, count: results.totalCount },
-        { key: "games", label: "Games", icon: faGamepad, count: results.games.length },
-        { key: "communities", label: "Cộng đồng", icon: faUsers, count: results.communities.length },
-        { key: "posts", label: "Bài viết", icon: faFileLines, count: results.posts.length },
-        { key: "squads", label: "Tổ đội / LFG", icon: faUserGroup, count: results.squads.length },
+    const tabsList: { key: SearchTabCategory; label: string; icon: import("@fortawesome/fontawesome-svg-core").IconDefinition; count: number }[] = [
+        { key: "all", label: t('search.tabAll'), icon: faFilter, count: results.totalCount },
+        { key: "games", label: t('search.tabGames'), icon: faGamepad, count: results.games.length },
+        { key: "communities", label: t('search.tabCommunities'), icon: faUsers, count: results.communities.length },
+        { key: "posts", label: t('search.tabPosts'), icon: faFileLines, count: results.posts.length },
+        { key: "squads", label: t('search.tabSquads'), icon: faUserGroup, count: results.squads.length },
     ];
 
     return (
@@ -110,7 +109,7 @@ export const SearchResultsPage = () => {
                             <FontAwesomeIcon icon={faMagnifyingGlass} />
                         </span>
                         <h1 className="text-xl sm:text-2xl font-black text-text">
-                            Tìm Kiếm Game, Cộng Đồng & Thảo Luận
+                            {t('search.title')}
                         </h1>
                     </div>
 
@@ -122,7 +121,7 @@ export const SearchResultsPage = () => {
                                 type="text"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Nhập tựa game, tên cộng đồng, nội dung bài viết hoặc #hashtag..."
+                                placeholder={t('search.placeholder')}
                                 className="w-full bg-transparent text-text placeholder:text-text-faint text-sm sm:text-base font-medium focus:outline-none"
                             />
                             {inputValue && (
@@ -141,7 +140,7 @@ export const SearchResultsPage = () => {
                                 type="submit"
                                 className="shrink-0 px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
                             >
-                                Tìm kiếm
+                                {t('search.searchBtn')}
                             </button>
                         </div>
                     </form>
@@ -150,7 +149,7 @@ export const SearchResultsPage = () => {
                     <div className="flex items-center gap-2 flex-wrap pt-1">
                         <span className="text-xs font-bold text-text-faint flex items-center gap-1 shrink-0">
                             <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-400 text-xs" />
-                            Từ khóa hot:
+                            {t('search.hotKeywords')}
                         </span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {POPULAR_TAGS.map((tag) => (
@@ -214,9 +213,9 @@ export const SearchResultsPage = () => {
                     <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl font-bold mb-2">
                         <FontAwesomeIcon icon={faXmark} />
                     </div>
-                    <h3 className="text-lg font-bold text-text">Không tìm thấy kết quả phù hợp</h3>
+                    <h3 className="text-lg font-bold text-text">{t('search.noResultsTitle')}</h3>
                     <p className="text-sm text-text-muted max-w-md">
-                        Thử kiểm tra lại chính tả hoặc tìm kiếm với từ khóa ngắn hơn như tên game, #tag hoặc tên tác giả.
+                        {t('search.noResultsDesc')}
                     </p>
                 </div>
             ) : (
@@ -412,7 +411,7 @@ export const SearchResultsPage = () => {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500">
                                                     {sq.currentMembers}/{sq.maxMembers} Người
                                                 </span>
                                             </div>

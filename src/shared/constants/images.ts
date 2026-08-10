@@ -1,3 +1,7 @@
+import login3dGear from "../../assets/images/login_3d_gaming_gear_1785929924900.jpg";
+
+export const LOGIN_3D_GEAR = login3dGear;
+
 // Centralized external image assets provided by the user
 // All physical asset images have been removed and replaced with these Steam/SteamGridDB URLs.
 

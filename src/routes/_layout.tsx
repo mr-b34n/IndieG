@@ -35,8 +35,12 @@ function MainLayout() {
         closeRight()
     }, [pathname, closeLeft, closeRight])
 
-    const hideSidebars = pathname.startsWith('/settings') || pathname.startsWith('/profile') || pathname.match(/^\/community\/[^/]+$/) || pathname.startsWith('/explore')
-   
+    const hideSidebars = 
+        pathname.startsWith('/settings') || 
+        pathname.startsWith('/profile') || 
+        pathname.startsWith('/explore') || 
+        pathname.startsWith('/game') ||
+        (pathname.startsWith('/community/') && pathname !== '/community')
 
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
@@ -95,7 +99,7 @@ function MainLayout() {
                     
                     {/* Left Sidebar */}
                     {!hideSidebars && (
-                        <aside className="hidden lg:block shrink-0 w-56 xl:w-60 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
+                        <aside className="hidden lg:block shrink-0 w-64 xl:w-[280px] sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
                             <LeftBar />
                         </aside>
                     )}
@@ -107,7 +111,7 @@ function MainLayout() {
 
                     {/* Right Sidebar */}
                     {!hideSidebars && (
-                        <aside className="hidden lg:block shrink-0 w-64 xl:w-72 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
+                        <aside className="hidden lg:block shrink-0 w-64 xl:w-[280px] sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
                             <RightBar />
                         </aside>
                     )}

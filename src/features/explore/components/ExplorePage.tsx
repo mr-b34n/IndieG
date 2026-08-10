@@ -2,7 +2,7 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faFire, faArrowTrendUp, faHeart, faTrophy,
-    faCalendarDay, faBolt, faPlay, faArrowLeft, faGamepad
+    faCalendarDay, faBolt, faPlay, faGamepad
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { GamePromoBanner } from "@/features/feed/components/GamePromoBanner";
@@ -117,14 +117,7 @@ export const ExplorePage = () => {
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-8 pb-20 animate-fade-in p-2 sm:p-0">
             {/* ── Page Header ── */}
-            <div className="flex items-center gap-4 mt-4">
-                <button
-                    onClick={() => window.history.back()}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-surface hover:bg-surface-hover text-text border border-border/40 hover:border-primary/50 transition-all cursor-pointer shadow-sm"
-                    title={t("common.back")}
-                >
-                    <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
-                </button>
+            <div className="flex items-center gap-4 mt-4 px-4 sm:px-0">
                 <div className="flex flex-col gap-1">
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-text tracking-tight flex items-center gap-3">
                         {t('explore.title')}

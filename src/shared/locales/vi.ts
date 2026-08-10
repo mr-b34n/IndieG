@@ -85,8 +85,10 @@ export const vi = {
         private: "Chỉ mình tôi",
         pinned: "Ghim bài viết",
         allowComments: "Cho phép bình luận",
+        pinPost: "Ghim bài viết",
         addAttachments: "Thêm tệp/ảnh",
         selectCommunity: "Chọn cộng đồng",
+        generalFeed: "Bảng tin chung",
         justNow: "Vừa xong",
         hoursAgo: "{count} giờ trước",
         loadingMore: "Đang tự động tải thêm bài viết...",
@@ -95,7 +97,13 @@ export const vi = {
         emptyTitle: "Chưa có bài viết nào",
         emptyDesc: "Hãy kiểm tra lại sau hoặc tạo một bài viết mới.",
         selectCommunityRequired: "Chọn cộng đồng để đăng bài (bắt buộc)",
-        noCommunitiesJoined: "Bạn chưa tham gia cộng đồng nào"
+        selectCommunityPlaceholder: "-- Chọn cộng đồng để đăng bài --",
+        noCommunitiesJoined: "Bạn chưa tham gia cộng đồng nào",
+        mediaButton: "Ảnh / Video",
+        gameDiscussion: "Thảo luận Game",
+        tagsPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
+        tagPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
+        spoiler: "Cảnh báo nội dung (Spoiler)"
     },
     post: {
         post: "Đăng bài",
@@ -167,7 +175,13 @@ export const vi = {
         title: "Khám Phá",
         subtitle: "Bắt nhịp với những xu hướng, sự kiện và bài viết nổi bật nhất.",
         ongoingEvents: "Sự kiện đang diễn ra",
-        viral: "Đang Viral"
+        viral: "Đang Viral",
+        vietnamGames: {
+            title: "Game Việt Nam Mới & Nổi Bật",
+            subtitle: "Khám phá các tựa game ấn tượng do các Studio & Developer Việt Nam phát triển",
+            exploreBtn: "Khám Phá Ngay",
+            discussBtn: "Thảo Luận Cộng Đồng"
+        }
     },
     community: {
         discover: "Khám phá",
@@ -584,6 +598,7 @@ export const vi = {
         title: "Cài đặt",
         tabs: {
             general: "Cài đặt chung",
+            quickAccess: "Game Truy Cập Nhanh",
             account: "Tài khoản & Bảo mật",
             blocked: "Danh sách chặn",
             feedback: "Báo lỗi & Góp ý"
@@ -597,6 +612,13 @@ export const vi = {
             languageDesc: "Thay đổi ngôn ngữ ứng dụng",
             vi: "Tiếng Việt",
             en: "English"
+        },
+        quickAccess: {
+            title: "Tùy chỉnh game truy cập nhanh (Tối đa 4)",
+            desc: "Chọn tối đa 4 tựa game yêu thích để hiển thị trực tiếp trong menu truy cập nhanh ở thanh bên trái.",
+            saveSuccess: "Đã lưu thành công!",
+            selectedCount: "Đã chọn {{count}}/4",
+            saveBtn: "Lưu Thay Đổi"
         },
         account: {
             title: "Quản lý tài khoản",
@@ -643,5 +665,28 @@ export const vi = {
         grandmaster: "Học giả uyên bác",
         legend: "Bách khoa toàn thư",
         immortal: "Cố vấn đặc quyền"
+    },
+    report: {
+        reportPost: "Báo cáo bài viết",
+        reportSubmitted: "Đã gửi báo cáo",
+        reportSubmittedDesc: "Cảm ơn bạn đã giúp giữ cho cộng đồng của chúng tôi an toàn. Chúng tôi sẽ xem xét báo cáo của bạn sớm.",
+        reportingPostBy: "Bạn đang báo cáo bài viết của {author}. Vui lòng chọn lý do:",
+        additionalDetails: "Chi tiết bổ sung (không bắt buộc)",
+        provideExtraContext: "Cung cấp thêm ngữ cảnh ở đây...",
+        cancel: "Hủy",
+        submitReport: "Gửi báo cáo"
+    },
+    search: {
+        title: "Tìm Kiếm Game, Cộng Đồng & Thảo Luận",
+        placeholder: "Nhập tựa game, tên cộng đồng, nội dung bài viết hoặc #hashtag...",
+        hotKeywords: "Từ khóa hot:",
+        tabAll: "Tất cả",
+        tabGames: "Games",
+        tabCommunities: "Cộng đồng",
+        tabPosts: "Bài viết",
+        tabSquads: "Tổ đội / LFG",
+        searchBtn: "Tìm kiếm",
+        noResultsTitle: "Không tìm thấy kết quả phù hợp",
+        noResultsDesc: "Thử tìm kiếm với từ khóa khác hoặc kiểm tra lại chính tả."
     }
 };

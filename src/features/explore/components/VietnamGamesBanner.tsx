@@ -89,7 +89,7 @@ const VIETNAM_GAMES: VietnamGame[] = [
 ];
 
 export const VietnamGamesBanner = () => {
-    const { lang } = useTranslation();
+    const { lang, t } = useTranslation();
     const navigate = useNavigate();
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -127,13 +127,13 @@ export const VietnamGamesBanner = () => {
                     </span>
                     <div className="flex flex-col">
                         <h2 className="text-base sm:text-lg font-black text-text tracking-tight flex items-center gap-2">
-                            <span>Game Việt Nam Mới & Nổi Bật</span>
+                            <span>{t('explore.vietnamGames.title')}</span>
                             <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase tracking-wider">
                                 HOT INDIE VIỆT
                             </span>
                         </h2>
                         <p className="text-xs text-text-muted font-medium">
-                            Khám phá các tựa game ấn tượng do các Studio & Developer Việt Nam phát triển
+                            {t('explore.vietnamGames.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -195,7 +195,7 @@ export const VietnamGamesBanner = () => {
                     {/* Top Badges */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-black uppercase tracking-wider border border-white/20 flex items-center gap-1.5 shadow-sm">
+                            <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                                 <FontAwesomeIcon icon={faGamepad} className="text-rose-400" />
                                 {currentGame.developer}
                             </span>
@@ -246,7 +246,7 @@ export const VietnamGamesBanner = () => {
                                 className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-rose-500/25 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
                             >
                                 <FontAwesomeIcon icon={faFire} />
-                                <span>Khám Phá Ngay</span>
+                                <span>{t('explore.vietnamGames.exploreBtn')}</span>
                             </button>
 
                             <button
@@ -255,7 +255,7 @@ export const VietnamGamesBanner = () => {
                                 className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/20 transition-all cursor-pointer hidden sm:flex items-center gap-2"
                             >
                                 <FontAwesomeIcon icon={faWandMagicSparkles} />
-                                <span>Thảo Luận Cộng Đồng</span>
+                                <span>{t('explore.vietnamGames.discussBtn')}</span>
                             </button>
                         </div>
                     </div>

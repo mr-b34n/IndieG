@@ -134,7 +134,7 @@ export const RightBar = () => {
                                      </div>
 
                                      {m.playtime && (
-                                         <span className="text-[10px] font-semibold text-text-muted bg-surface-hover px-1.5 py-0.5 rounded-md shrink-0 border border-border/40">
+                                         <span className="text-[10px] font-semibold text-text-muted bg-surface-hover px-1.5 py-0.5 rounded-md shrink-0">
                                              {m.playtime}
                                          </span>
                                      )}
@@ -193,7 +193,7 @@ export const RightBar = () => {
                                     <span>·</span>
                                     <FontAwesomeIcon icon={faUsers} className="text-[9px] text-text-faint" />
                                     <span className="font-medium text-text-faint">{t('post.repliesCount', { count: post.replies })}</span>
-                                    <span className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-surface-hover text-text-muted border border-border/40">{post.heat}</span>
+                                    <span className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded bg-surface-hover text-text-muted">{post.heat}</span>
                                 </div>
                             </div>
                         </div>

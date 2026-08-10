@@ -21,4 +21,14 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     getCommunityById: (id) => get().communities.find((c) => c.id === id),
     addCommunity: (community) =>
         set((state) => ({ communities: [community, ...state.communities] })),
+    updateCommunity: (id, data) =>
+        set((state) => ({
+            communities: state.communities.map((c) =>
+                c.id === id ? { ...c, ...data } : c
+            ),
+        })),
+    deleteCommunity: (id) =>
+        set((state) => ({
+            communities: state.communities.filter((c) => c.id !== id),
+        })),
 }));

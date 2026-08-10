@@ -31,6 +31,7 @@ import { ReportModal } from "@/features/report"
 import { useBookmarksStore } from "@/features/bookmark"
 import { EditPostModal } from ".."
 import { RANK_CONFIG, getUserRankConfig, getRankLabel } from "../helpers/userRanks"
+import { useCommunitiesStore } from "@/features/community";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
 import { useTranslation } from "@/shared/hooks/useTranslate"
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo"
@@ -151,6 +152,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
     const [showEditModal, setShowEditModal] = useState(false);
     const [hidden, setHidden] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [isRevealed, setIsRevealed] = useState(!post.isSpoiler);
+
+    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
+    const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
 
     const [voteState, setVoteState] = useState<"up" | "down" | null>(null);
     const [score, setScore] = useState(post.likes);
@@ -288,17 +293,33 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     </div>
                     <div className="flex flex-row items-center gap-1.5 text-xs text-text-faint mt-1">
                         <span>{formatTimeAgo(post.timeAgo, t)}</span>
+                        {postCommunity && (
+                            <>
+                                <span>•</span>
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate({ to: `/community/${postCommunity.id}` });
+                                    }}
+                                    className="hover:text-primary hover:underline transition-colors font-bold text-primary/80 cursor-pointer"
+                                >
+                                    c/{postCommunity.name}
+                                </span>
+                            </>
+                        )}
                         <span>•</span>
-                        <span
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const gameInfo = getGameBySlug(post.gameTag);
-                                navigate({ to: `/game/${gameInfo.slug}` });
-                            }}
-                            className="hover:text-primary hover:underline transition-colors font-medium cursor-pointer"
-                        >
-                            {post.gameTag}
-                        </span>
+                        {post.gameTag && (
+                            <span
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const gameInfo = getGameBySlug(post.gameTag!);
+                                    navigate({ to: `/game/${gameInfo.slug}` });
+                                }}
+                                className="hover:text-primary hover:underline transition-colors font-medium cursor-pointer"
+                            >
+                                {post.gameTag}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -357,33 +378,55 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                 </div>
             </div>
 
-            <div className="px-4 pb-3 flex flex-col gap-2">
-                <p className="font-semibold text-base text-text leading-snug">
-                    {post.title}
-                </p>
-                <p className="text-sm text-text-muted leading-relaxed whitespace-pre-line">
-                    {post.content}
-                </p>
-
-                {post.tags.length > 0 && (
-                    <div className="flex flex-row gap-1.5 flex-wrap pt-0.5">
-                        {post.tags.map((tag, idx) => (
-                            <span
-                                key={tag}
-                                className={`px-2 py-0.5 rounded-full text-xs font-medium
-                                    hover:opacity-75 transition-opacity
-                                    ${POST_TAG_CLASSES[idx % POST_TAG_CLASSES.length]}`}
-                            >
-                                #{tag}
-                            </span>
-                        ))}
+            <div className="px-4 pb-3 flex flex-col gap-2 relative">
+                {post.isSpoiler && !isRevealed && (
+                    <div 
+                        onClick={(e) => { e.stopPropagation(); setIsRevealed(true); }}
+                        className="absolute inset-0 z-10 flex items-center justify-center bg-surface/40 backdrop-blur-md rounded-xl cursor-pointer hover:bg-surface/50 transition-colors"
+                    >
+                        <div className="px-4 py-2 bg-black/60 rounded-full text-white text-xs font-bold flex items-center gap-2">
+                            <FontAwesomeIcon icon={faEyeSlash} />
+                            <span>CLICK TO VIEW SPOILER</span>
+                        </div>
                     </div>
                 )}
+                
+                <div className={post.isSpoiler && !isRevealed ? "blur-md select-none pointer-events-none" : ""}>
+                    <p className="font-semibold text-base text-text leading-snug">
+                        {post.title}
+                    </p>
+                    <p className="text-sm text-text-muted leading-relaxed whitespace-pre-line">
+                        {post.content}
+                    </p>
+
+                    {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-row gap-1.5 flex-wrap pt-0.5">
+                            {post.tags.map((tag, idx) => (
+                                <span
+                                    key={tag}
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium
+                                        hover:opacity-75 transition-opacity
+                                        ${POST_TAG_CLASSES[idx % POST_TAG_CLASSES.length]}`}
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {post.images && post.images.length > 0 && (
-                <div className="px-4 pb-3">
-                    <ImageGallery images={post.images} onImageClick={setLightboxIndex} />
+                <div className="px-4 pb-3 relative">
+                     {post.isSpoiler && !isRevealed && (
+                        <div 
+                            onClick={(e) => { e.stopPropagation(); setIsRevealed(true); }}
+                            className="absolute inset-x-4 inset-y-0 z-10 flex items-center justify-center bg-surface/20 backdrop-blur-xl rounded-xl cursor-pointer"
+                        />
+                    )}
+                    <div className={post.isSpoiler && !isRevealed ? "blur-xl select-none pointer-events-none" : ""}>
+                        <ImageGallery images={post.images} onImageClick={setLightboxIndex} />
+                    </div>
                 </div>
             )}
 
@@ -396,7 +439,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
             <div className="flex flex-row items-center gap-1.5 px-3 py-2.5 border-t border-border">
 
                 {/* Reddit-style Upvote / Downvote Pill */}
-                <div className="flex flex-row items-center bg-surface-hover/70 rounded-full border border-border/50 px-1 py-0.5" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-row items-center bg-surface-hover/70 rounded-full border border-border/50 px-1.5 py-1" onClick={(e) => e.stopPropagation()}>
                     <button
                         type="button"
                         onClick={() => {
@@ -412,15 +455,15 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                                 setVoteState("up");
                             }
                         }}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                        className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
                             voteState === "up" ? "text-orange-500 bg-orange-500/15 font-bold" : "text-text-muted hover:text-orange-500 hover:bg-surface-hover"
                         }`}
                         title="Upvote"
                     >
-                        <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
+                        <FontAwesomeIcon icon={faArrowUp} className="text-sm" />
                     </button>
 
-                    <span className={`px-1.5 text-xs font-bold ${voteState === "up" ? "text-orange-500" : voteState === "down" ? "text-indigo-500" : "text-text"}`}>
+                    <span className={`px-2 text-sm font-bold ${voteState === "up" ? "text-orange-500" : voteState === "down" ? "text-indigo-500" : "text-text"}`}>
                         {score}
                     </span>
 
@@ -439,12 +482,12 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                                 setVoteState("down");
                             }
                         }}
-                        className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                        className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
                             voteState === "down" ? "text-indigo-500 bg-indigo-500/15 font-bold" : "text-text-muted hover:text-indigo-500 hover:bg-surface-hover"
                         }`}
                         title="Downvote"
                     >
-                        <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                        <FontAwesomeIcon icon={faArrowDown} className="text-sm" />
                     </button>
                 </div>
 
@@ -469,39 +512,39 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                             }
                             setIsEmojiOpen((prev) => !prev);
                         }}
-                        className={`flex flex-row items-center gap-1.5 px-3 py-1.5 select-none rounded-full text-xs font-semibold transition-all ${
+                        className={`flex flex-row items-center justify-center w-9 h-9 sm:w-10 sm:h-10 select-none rounded-full text-sm font-semibold transition-all cursor-pointer ${
                             activeReaction
                                 ? "bg-primary/15 text-primary border border-primary/30"
-                                : "text-text-muted hover:bg-surface-hover hover:text-text"
+                                : "text-text-muted hover:bg-surface-hover hover:text-text border border-transparent"
                         }`}
+                        title={activeReaction ? t('post.reacted') : t('post.react')}
                     >
-                        <span className="text-sm">{activeReaction || "😍"}</span>
-                        <span>{activeReaction ? t('post.reacted') : t('post.react')}</span>
+                        <span className="text-lg leading-none">{activeReaction || "😍"}</span>
                     </button>
                 </div>
 
                 {post.allowComments === false ? (
                     <div
                         className="
-                        flex flex-row items-center gap-1.5 px-3 py-1.5
+                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
                         rounded-full text-sm font-medium
                         text-text-faint bg-surface-hover/40 cursor-not-allowed
                     "
                         title={t('post.commentsDisabledTitle')}
                     >
-                        <FontAwesomeIcon icon={faLock} className="text-xs" />
-                        <span>{t('post.commentsDisabled')}</span>
+                        <FontAwesomeIcon icon={faLock} className="text-sm" />
+                        <span className="hidden sm:inline">{t('post.commentsDisabled')}</span>
                     </div>
                 ) : (
                     <button
                         onClick={(e) => { e.stopPropagation(); if (!isDetailView) handleNavigate(); }}
                         className="
-                        flex flex-row items-center gap-1.5 px-3 py-1.5
-                        rounded-full text-sm font-medium
+                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
+                        rounded-full text-sm font-semibold
                         text-text-muted hover:bg-surface-hover hover:text-text
-                        transition-colors duration-150
+                        transition-colors duration-150 cursor-pointer
                     ">
-                        <FontAwesomeIcon icon={faComment} className="text-xs" />
+                        <FontAwesomeIcon icon={faComment} className="text-sm" />
                         <span>{post.comments}</span>
                     </button>
                 )}
@@ -510,13 +553,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowShareMenu(prev => !prev); setShowActionMenu(false); }}
                         className="
-                        flex flex-row items-center gap-1.5 px-3 py-1.5
-                        rounded-full text-sm font-medium
+                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
+                        rounded-full text-sm font-semibold
                         text-text-muted hover:bg-surface-hover hover:text-text
-                        transition-colors duration-150
+                        transition-colors duration-150 cursor-pointer
                     ">
-                        <FontAwesomeIcon icon={faShare} className="text-xs" />
-                        <span>{t('post.share')}</span>
+                        <FontAwesomeIcon icon={faShare} className="text-sm" />
+                        <span className="hidden sm:inline">{t('post.share')}</span>
                     </button>
 
                     {showShareMenu && (

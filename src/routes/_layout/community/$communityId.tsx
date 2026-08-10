@@ -19,6 +19,7 @@ import {
     faSignOutAlt,
     faListUl,
     faUserCheck,
+    faPen,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { DEFAULT_AVATAR as avatarGame } from '@/shared/constants/images';
@@ -28,6 +29,8 @@ import { INITIAL_GAMES } from '@/features/game/constants';
 import { getCurrentAuthor, prepareAttachmentsForSave, usePostsStore, type PostData, Post } from '@/features/post';
 import { useAuthStore } from '@/features/auth';
 import { useCommunitiesStore, formatCompactNumber } from '@/features/community';
+import { EditCommunityModal } from '@/features/community/components/EditCommunityModal';
+import { MemberListModal } from '@/features/community/components/MemberListModal';
 import { useSquadStore } from '@/features/squad/store/useSquadStore';
 import { CreatePostBox, type CreatePostPayload } from '@/features/feed';
 
@@ -49,6 +52,7 @@ function CommunityDetail() {
 
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
+    const updateCommunity = useCommunitiesStore((state) => state.updateCommunity);
 
     const posts = usePostsStore((state) => state.posts);
     const addPost = usePostsStore((state) => state.addPost);
@@ -65,10 +69,19 @@ function CommunityDetail() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showSearch, setShowSearch] = useState(false);
     const [showJoinMenu, setShowJoinMenu] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showMembersModal, setShowMembersModal] = useState(false);
 
     const currentAuthor = getCurrentAuthor();
 
     const community = communities.find((c) => c.id.toString() === communityId);
+
+    const isOwnerOrAdmin = useMemo(() => {
+        if (!community) return false;
+        if (community.owner === currentAuthor) return true;
+        if (community.admins?.includes(currentAuthor)) return true;
+        return currentAuthor === "ghostrider" || currentAuthor === "IndieGamer";
+    }, [community, currentAuthor]);
 
     const communityPosts = useMemo(() => {
         if (!community) return [];
@@ -138,6 +151,24 @@ function CommunityDetail() {
 
     return (
         <main className="flex-1 min-w-0 pb-16">
+            {showEditModal && community && (
+                <EditCommunityModal
+                    community={community}
+                    onClose={() => setShowEditModal(false)}
+                />
+            )}
+
+            {showMembersModal && community && (
+                <MemberListModal
+                    community={community}
+                    isOwnerOrAdmin={isOwnerOrAdmin}
+                    onClose={() => setShowMembersModal(false)}
+                    onUpdateMembers={(updated) => {
+                        updateCommunity(community.id, { memberList: updated });
+                    }}
+                />
+            )}
+
             <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 flex flex-col gap-5 animate-fade-in">
 
                 {/* Top Navigation Bar */}
@@ -204,6 +235,17 @@ function CommunityDetail() {
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+                                {isOwnerOrAdmin && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditModal(true)}
+                                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+                                    >
+                                        <FontAwesomeIcon icon={faPen} />
+                                        <span>Chỉnh sửa</span>
+                                    </button>
+                                )}
+
                                 {game && (
                                     <button
                                         type="button"
@@ -245,7 +287,10 @@ function CommunityDetail() {
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setShowJoinMenu(false)} />
                                                 <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-fade-in-up">
-                                                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text hover:bg-surface-hover transition-colors text-left font-bold cursor-pointer">
+                                                    <button
+                                                        onClick={() => { setShowMembersModal(true); setShowJoinMenu(false); }}
+                                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-text hover:bg-surface-hover transition-colors text-left font-bold cursor-pointer"
+                                                    >
                                                         <FontAwesomeIcon icon={faListUl} className="w-4 text-primary" />
                                                         {t('community.memberList')}
                                                     </button>
@@ -277,11 +322,14 @@ function CommunityDetail() {
 
                         {/* Quick Stats Bar */}
                         <div className="flex items-center gap-6 pt-3 border-t border-border/60 text-xs font-bold text-text-muted overflow-x-auto no-scrollbar">
-                            <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={() => setShowMembersModal(true)}
+                                className="flex items-center gap-2 shrink-0 hover:text-primary transition-colors cursor-pointer"
+                            >
                                 <FontAwesomeIcon icon={faUsers} className="text-primary text-sm" />
                                 <span className="text-text font-extrabold">{formatCompactNumber(community.members)}</span>
                                 <span className="text-text-faint">{t('community.members')}</span>
-                            </div>
+                            </button>
                             <div className="flex items-center gap-2 shrink-0">
                                 <FontAwesomeIcon icon={faCircle} className="text-emerald-500 text-[8px]" />
                                 <span className="text-text font-extrabold">{formatCompactNumber(community.onlineNow)}</span>
@@ -405,10 +453,16 @@ function CommunityDetail() {
                                     {t('community.rulesOfConduct')}
                                 </span>
                                 <ol className="list-decimal list-inside space-y-1.5 text-xs text-text-muted p-3 rounded-xl bg-surface-hover/50 border border-border/40 leading-relaxed font-medium">
-                                    <li>{t('community.rule1')}</li>
-                                    <li>{t('community.rule2')}</li>
-                                    <li>{t('community.rule3')}</li>
-                                    <li>{t('community.rule4')}</li>
+                                    {community.rules && community.rules.length > 0 ? (
+                                        community.rules.map((rule, idx) => <li key={idx}>{rule}</li>)
+                                    ) : (
+                                        <>
+                                            <li>{t('community.rule1')}</li>
+                                            <li>{t('community.rule2')}</li>
+                                            <li>{t('community.rule3')}</li>
+                                            <li>{t('community.rule4')}</li>
+                                        </>
+                                    )}
                                 </ol>
                             </div>
                         </div>

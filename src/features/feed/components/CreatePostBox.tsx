@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { 
-    faChevronDown, 
     faGear, 
     faThumbtack, 
     faComment, 
     faImage,
-    faGamepad,
-    faPenToSquare,
-    faPaperPlane
+    faPaperPlane,
+    faChevronDown,
+    faCheck,
+    faUsers,
+    faEyeSlash
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -80,11 +81,15 @@ const PostSettingsMenu = ({
     onAllowCommentsChange,
     pinned,
     onPinnedChange,
+    isSpoiler,
+    onSpoilerChange,
 }: {
     allowComments: boolean;
     onAllowCommentsChange: (v: boolean) => void;
     pinned: boolean;
     onPinnedChange: (v: boolean) => void;
+    isSpoiler: boolean;
+    onSpoilerChange: (v: boolean) => void;
 }) => {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -164,6 +169,12 @@ const PostSettingsMenu = ({
                             label={t('feed.pinPost')}
                             icon={faThumbtack}
                         />
+                        <ToggleSwitch
+                            checked={isSpoiler}
+                            onChange={onSpoilerChange}
+                            label={t('feed.spoiler')}
+                            icon={faEyeSlash}
+                        />
                     </div>,
                     document.body
                 )}
@@ -176,56 +187,126 @@ const CommunitySelector = ({
     onChange,
     communities,
 }: {
-    value: number | null;
-    onChange: (id: number | null) => void;
+    value: number | string | null;
+    onChange: (id: number | string | null) => void;
     communities: CommunityData[];
 }) => {
     const { t } = useTranslation();
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const selectedCommunity = useMemo(
+        () => communities.find((c) => c.id === value) || null,
+        [communities, value]
+    );
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     return (
-        <div className="flex flex-col gap-1.5 w-full">
+        <div className="flex flex-col gap-1.5 w-full relative" ref={dropdownRef}>
             <span className="text-[11px] font-bold text-text-muted flex items-center gap-1">
-                <span>{t('feed.selectCommunity') || "Đăng trong cộng đồng đã gia nhập:"}</span>
+                <span>{t('feed.selectCommunityRequired')}</span>
+                <span className="text-rose-500">*</span>
             </span>
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                <button
-                    type="button"
-                    onClick={() => onChange(null)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                        value === null
-                            ? "bg-primary text-white shadow-xs"
-                            : "bg-surface-hover text-text-muted hover:text-text hover:bg-surface-hover/80"
-                    }`}
-                >
-                    <span>🌐 {t('feed.generalFeed') || "Bảng tin chung"}</span>
-                </button>
-                {communities.map((c) => (
-                    <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => onChange(c.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                            value === c.id
-                                ? "bg-primary text-white shadow-xs"
-                                : "bg-surface-hover text-text-muted hover:text-text hover:bg-surface-hover/80"
-                        }`}
-                    >
+
+            {/* Dropdown Button Trigger */}
+            <button
+                type="button"
+                onClick={() => setIsOpen((prev) => !prev)}
+                className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                    isOpen
+                        ? "border-primary ring-2 ring-primary/20 bg-surface shadow-xs"
+                        : selectedCommunity
+                        ? "border-border/80 bg-surface hover:bg-surface-hover text-text"
+                        : "border-rose-500/40 bg-rose-500/5 text-text-muted hover:bg-rose-500/10"
+                }`}
+            >
+                {selectedCommunity ? (
+                    <div className="flex items-center gap-2 min-w-0">
                         <img
-                            src={c.logo}
-                            alt={c.name}
-                            className="w-4 h-4 rounded-full object-cover shrink-0"
+                            src={selectedCommunity.logo}
+                            alt={selectedCommunity.name}
+                            className="w-5 h-5 rounded-full object-cover shrink-0"
                         />
-                        <span className="truncate max-w-[140px]">{c.name}</span>
-                    </button>
-                ))}
-            </div>
+                        <span className="truncate font-bold text-text">{selectedCommunity.name}</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 text-text-muted">
+                        <FontAwesomeIcon icon={faUsers} className="text-text-faint text-xs" />
+                        <span>{t('feed.selectCommunityPlaceholder')}</span>
+                    </div>
+                )}
+                <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className={`text-xs text-text-faint transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-primary" : ""
+                    }`}
+                />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto animate-fade-in p-1 flex flex-col gap-0.5">
+                    {communities.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-text-faint text-center">
+                            {t('feed.noCommunitiesJoined')}
+                        </div>
+                    ) : (
+                        communities.map((c) => {
+                            const isSelected = c.id === value;
+                            return (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(c.id);
+                                        setIsOpen(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                                        isSelected
+                                            ? "bg-primary/10 text-primary font-bold"
+                                            : "hover:bg-surface-hover text-text"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <img
+                                            src={c.logo}
+                                            alt={c.name}
+                                            className="w-6 h-6 rounded-full object-cover shrink-0"
+                                        />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="truncate font-bold leading-tight">{c.name}</span>
+                                            {c.membersCount && (
+                                                <span className="text-[10px] text-text-faint">
+                                                    {c.membersCount.toLocaleString()} thành viên
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {isSelected && (
+                                        <FontAwesomeIcon icon={faCheck} className="text-primary text-xs shrink-0" />
+                                    )}
+                                </button>
+                            );
+                        })
+                    )}
+                </div>
+            )}
         </div>
     );
 };
 
 interface CreatePostBoxProps {
     onPostCreated?: (payload: CreatePostPayload) => void;
-    defaultCommunityId?: number | null;
+    defaultCommunityId?: number | string | null;
     hideCommunitySelector?: boolean;
     initialTitle?: string;
     initialContent?: string;
@@ -243,27 +324,50 @@ export const CreatePostBox = ({
     const avatarUrl = user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
 
     const { communities } = useCommunitiesStore();
-    const joinedCommunities = useMemo(
-        () => communities.filter((c) => c.isJoined),
-        [communities]
-    );
+    const joinedCommunities = useMemo(() => {
+        const joined = communities.filter((c) => c.joined || (c as CommunityData & { isJoined?: boolean }).isJoined);
+        return joined.length > 0 ? joined : communities;
+    }, [communities]);
 
     const saveDraft = useDraftsStore((s) => s.saveDraft);
+
+    const drafts = useDraftsStore((s) => s.drafts);
 
     const [isExpanded, setExpanded] = useState(false);
     const [title, setTitle] = useState(initialTitle);
     const [content, setContent] = useState(initialContent);
-    const [communityId, setCommunityId] = useState<number | null>(defaultCommunityId);
+    const [manualTags, setManualTags] = useState("");
+    const [communityId, setCommunityId] = useState<number | string | null>(defaultCommunityId);
     const [allowComments, setAllowComments] = useState(true);
     const [pinned, setPinned] = useState(false);
+    const [isSpoiler, setIsSpoiler] = useState(false);
     const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
     const [isPosting, setIsPosting] = useState(false);
+
+    // Load draft if available and no initial data provided (once on mount)
+    const hasLoadedDraft = useRef(false);
+    useEffect(() => {
+        if (!hasLoadedDraft.current && !initialTitle && !initialContent && drafts.length > 0) {
+            const draft = drafts[0];
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (draft.title) setTitle(draft.title);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (draft.content) {
+                setContent(draft.content);
+            }
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (draft.communityId) setCommunityId(draft.communityId);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (draft.isSpoiler !== undefined) setIsSpoiler(draft.isSpoiler);
+            hasLoadedDraft.current = true;
+        }
+    }, [drafts, initialTitle, initialContent]);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const highlightRef = useRef<HTMLDivElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
-    const isActive = isExpanded || content.length > 0 || title.length > 0 || attachments.length > 0;
+    const isActive = isExpanded;
 
     // Auto-save draft silently when user closes/collapses or when component unmounts with non-empty content
     useEffect(() => {
@@ -283,8 +387,13 @@ export const CreatePostBox = ({
     }, [content, title, communityId, attachments, allowComments, pinned, saveDraft]);
 
     useEffect(() => {
-        if (initialTitle) setTitle(initialTitle);
-        if (initialContent) setContent(initialContent);
+        if (initialTitle) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setTitle(initialTitle);
+        }
+        if (initialContent) {
+            setContent(initialContent);
+        }
     }, [initialTitle, initialContent]);
 
     useEffect(() => {
@@ -320,18 +429,19 @@ export const CreatePostBox = ({
         e.target.value = "";
     };
 
-    const handleQuickGameClick = () => {
-        setExpanded(true);
-        setTimeout(() => {
-            textareaRef.current?.focus();
-        }, 50);
-    };
-
-    const canPost = (content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0) && !isPosting;
+    const canPost = communityId !== null && communityId !== undefined && (content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0) && !isPosting;
 
     const handlePost = async () => {
         if (!canPost) return;
         setIsPosting(true);
+
+        const contentHashtags = extractHashtags(content);
+        const splitManualTags = manualTags
+            .split(/[, ]+/)
+            .filter(t => t.trim().length > 0)
+            .map(t => t.startsWith('#') ? t.slice(1) : t);
+        
+        const combinedTags = Array.from(new Set([...contentHashtags, ...splitManualTags]));
 
         const payload: CreatePostPayload = {
             title: title.trim() || undefined,
@@ -340,7 +450,8 @@ export const CreatePostBox = ({
             privacy: "public",
             allowComments,
             pinned,
-            hashtags: extractHashtags(content),
+            isSpoiler,
+            tags: combinedTags,
             attachments,
         };
 
@@ -348,6 +459,7 @@ export const CreatePostBox = ({
             onPostCreated?.(payload);
             setTitle("");
             setContent("");
+            setManualTags("");
             setAttachments([]);
             setExpanded(false);
         } finally {
@@ -419,15 +531,17 @@ export const CreatePostBox = ({
                         aria-hidden={!isActive}
                     >
                         <div className={`min-h-0 flex flex-col gap-2 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
-                            {!hideCommunitySelector && (
-                                <div className="flex-1 min-w-0">
-                                    <CommunitySelector
-                                        value={communityId}
-                                        onChange={setCommunityId}
-                                        communities={joinedCommunities}
-                                    />
-                                </div>
-                            )}
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                {!hideCommunitySelector && (
+                                    <div className="flex-1 min-w-0">
+                                        <CommunitySelector
+                                            value={communityId}
+                                            onChange={setCommunityId}
+                                            communities={joinedCommunities}
+                                        />
+                                    </div>
+                                )}
+                            </div>
 
                             <input
                                 type="text"
@@ -436,6 +550,15 @@ export const CreatePostBox = ({
                                 placeholder={t('feed.postTitle') || "Tiêu đề bài viết (không bắt buộc)..."}
                                 tabIndex={isActive ? 0 : -1}
                                 className="w-full h-10 px-3.5 bg-surface-hover/80 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all text-text placeholder:text-text-faint"
+                            />
+
+                            <input
+                                type="text"
+                                value={manualTags}
+                                onChange={(e) => setManualTags(e.target.value)}
+                                placeholder={t('feed.tagsPlaceholder')}
+                                tabIndex={isActive ? 0 : -1}
+                                className="w-full h-10 px-3.5 bg-surface-hover/80 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all text-primary placeholder:text-text-faint"
                             />
                         </div>
                     </div>
@@ -482,16 +605,7 @@ export const CreatePostBox = ({
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text text-xs font-bold transition-all cursor-pointer shrink-0"
                             >
                                 <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
-                                <span>Ảnh / Video</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleQuickGameClick}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text text-xs font-bold transition-all cursor-pointer shrink-0"
-                            >
-                                <FontAwesomeIcon icon={faGamepad} className="text-primary text-xs" />
-                                <span>Thảo Luận Game</span>
+                                <span>{t('feed.mediaButton')}</span>
                             </button>
                         </div>
                     )}
@@ -511,6 +625,8 @@ export const CreatePostBox = ({
                                         onAllowCommentsChange={setAllowComments}
                                         pinned={pinned}
                                         onPinnedChange={setPinned}
+                                        isSpoiler={isSpoiler}
+                                        onSpoilerChange={setIsSpoiler}
                                     />
                                 )}
 
@@ -520,7 +636,7 @@ export const CreatePostBox = ({
                                         onClick={handleCancel}
                                         className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-surface-hover text-text-muted hover:text-text transition-all cursor-pointer"
                                     >
-                                        Hủy
+                                        {t('common.cancel')}
                                     </button>
                                 )}
 

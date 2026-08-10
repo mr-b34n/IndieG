@@ -12,12 +12,15 @@ import {
     faFilter,
     faChevronDown,
     faChevronUp,
+    faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import { type CommunityData, type CommunityTabKey } from "../types";
 import { BANNER_GRADIENTS, COMMUNITY_TABS, formatCompactNumber } from "../constants";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { CreateCommunityModal } from "./CreateCommunityModal";
+import { useAuthStore } from "@/features/auth";
 
 const CommunityCard = ({ community, index }: { community: CommunityData; index: number }) => {
     const { t } = useTranslation();
@@ -113,12 +116,18 @@ const CommunityCard = ({ community, index }: { community: CommunityData; index: 
 
 export const CommunityList = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+
     const communities = useCommunitiesStore((state) => state.communities);
     
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [showAllCategories, setShowAllCategories] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
@@ -158,6 +167,10 @@ export const CommunityList = () => {
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in">
+            {showCreateModal && (
+                <CreateCommunityModal onClose={() => setShowCreateModal(false)} />
+            )}
+
             {/* Hero Header Banner */}
             <div className="relative w-full overflow-hidden bg-linear-to-r from-primary/15 via-accent-500/10 to-brand-500/15 border border-border/80 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-lg">
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -204,6 +217,23 @@ export const CommunityList = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Action: Create Community */}
+                    <div className="flex flex-col gap-2 shrink-0 self-start md:self-center">
+                        <button
+                            onClick={() => {
+                                if (!isLoggedIn) {
+                                    navigate({ to: "/auth" });
+                                    return;
+                                }
+                                setShowCreateModal(true);
+                            }}
+                            className="px-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-102 active:scale-98 transition-all cursor-pointer flex items-center gap-2"
+                        >
+                            <FontAwesomeIcon icon={faPlus} />
+                            <span>Tạo cộng đồng</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -234,28 +264,31 @@ export const CommunityList = () => {
                     </div>
 
                     {/* Filter Tabs */}
-                    <div className="flex items-center gap-1 bg-bg p-1 rounded-xl border border-border/60 shrink-0 overflow-x-auto">
-                        {COMMUNITY_TABS.map((tab) => (
-                            <button
-                                key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
-                                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                                    activeTab === tab.key
-                                        ? "bg-primary text-white shadow-sm"
-                                        : "text-text-muted hover:text-text hover:bg-surface-hover"
-                                }`}
-                            >
-                                <FontAwesomeIcon icon={tab.icon} className="text-xs" />
-                                <span>{t(`community.${tab.key}`)}</span>
-                                {tab.key === "joined" && (
-                                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                                        activeTab === "joined" ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
-                                    }`}>
-                                        {communities.filter((c) => c.joined).length}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                    <div className="flex items-center gap-1.5 bg-surface-hover/60 p-1.5 rounded-2xl border border-border/80 shrink-0 overflow-x-auto scrollbar-none">
+                        {COMMUNITY_TABS.map((tab) => {
+                            const isActive = activeTab === tab.key;
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                                        isActive
+                                            ? "bg-surface text-text shadow-xs border border-border/80 ring-1 ring-border/50"
+                                            : "text-text-muted hover:text-text hover:bg-surface/50 border border-transparent"
+                                    }`}
+                                >
+                                    <FontAwesomeIcon icon={tab.icon} className={isActive ? "text-primary" : "text-text-faint"} />
+                                    <span>{t(`community.${tab.key}`)}</span>
+                                    {tab.key === "joined" && (
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-colors ${
+                                            isActive ? "bg-primary/15 text-primary" : "bg-surface-hover text-text-muted"
+                                        }`}>
+                                            {communities.filter((c) => c.joined).length}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -266,7 +299,7 @@ export const CommunityList = () => {
                             <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
                                 <FontAwesomeIcon icon={faFilter} className="text-primary" />
                                 <span>{t('community.category')}</span>
-                                <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold border border-primary/20">
+                                <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold">
                                     {activeCategory ? activeCategory : t('community.allCommunities', { count: communities.length })}
                                 </span>
                                 {activeCategory && (
@@ -294,28 +327,29 @@ export const CommunityList = () => {
                             <div className="flex flex-wrap items-center gap-2 p-3 bg-surface-hover/50 rounded-2xl border border-border/60 animate-fade-in">
                                 <button
                                     onClick={() => setActiveCategory(null)}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
                                         activeCategory === null
-                                            ? "bg-primary text-white shadow-sm"
-                                            : "bg-surface text-text-muted border border-border hover:text-text hover:border-primary/50"
+                                            ? "bg-primary/15 text-primary shadow-2xs"
+                                            : "bg-surface text-text-muted hover:text-text hover:bg-surface-hover"
                                     }`}
                                 >
                                     {t('community.allCommunities', { count: communities.length })}
                                 </button>
                                 {categories.map((cat) => {
                                     const count = communities.filter((c) => c.category === cat).length;
+                                    const isSelected = activeCategory === cat;
                                     return (
                                         <button
                                             key={cat}
                                             onClick={() => setActiveCategory(cat)}
-                                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                                activeCategory === cat
-                                                    ? "bg-primary text-white shadow-sm"
-                                                    : "bg-surface text-text-muted border border-border hover:text-text hover:border-primary/50"
+                                            className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                                isSelected
+                                                    ? "bg-primary/15 text-primary shadow-2xs"
+                                                    : "bg-surface text-text-muted hover:text-text hover:bg-surface-hover"
                                             }`}
                                         >
                                             <span>{cat}</span>
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${activeCategory === cat ? "bg-white/20 text-white" : "bg-surface-hover text-text-faint"}`}>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${isSelected ? "bg-primary/20 text-primary" : "bg-surface-hover text-text-faint"}`}>
                                                 {count}
                                             </span>
                                         </button>

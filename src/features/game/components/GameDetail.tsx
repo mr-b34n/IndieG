@@ -404,7 +404,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         >
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-primary/15 text-primary border border-primary/25 font-mono whitespace-nowrap">
+                                                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-primary/15 text-primary font-mono whitespace-nowrap">
                                                         {note.version}
                                                     </span>
                                                     <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold border whitespace-nowrap ${typeColors[note.type] || "bg-primary/10 text-primary border-primary/20"}`}>

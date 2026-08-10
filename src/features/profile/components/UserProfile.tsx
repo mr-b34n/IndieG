@@ -4,10 +4,11 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
+import { EditProfileModal } from "./EditProfileModal";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileSidebar } from "./ProfileSidebar";
 import { ProfileTabBar } from "./ProfileTabBar";
@@ -51,6 +52,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
     const [customBg, setCustomBg] = useState<string>(DEFAULT_COVER);
+
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [profileLocation, setProfileLocation] = useState("Vietnam / SEA");
+    const isLoading = false;
+    const isError = userId === "error" || userId === "not-found";
 
     const [isEditingBio, setIsEditingBio] = useState(false);
     const [isEditingGear, setIsEditingGear] = useState(false);
@@ -139,6 +145,34 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         </span>
     );
 
+    if (isLoading) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-4xl text-primary" />
+                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ...</p>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-surface border border-rose-500/30 flex flex-col items-center text-center gap-4 shadow-xl animate-fade-in">
+                <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-3xl">
+                    <FontAwesomeIcon icon={faExclamationTriangle} />
+                </div>
+                <h3 className="text-xl font-extrabold text-text">Không tìm thấy hồ sơ người dùng</h3>
+                <p className="text-sm text-text-muted">Hồ sơ người dùng này không tồn tại, đã bị xóa hoặc đường dẫn không chính xác.</p>
+                <button
+                    onClick={() => window.history.back()}
+                    className="mt-2 px-6 py-2.5 rounded-2xl bg-primary text-white text-xs font-bold hover:bg-primary-hover flex items-center gap-2 transition-all cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                    <span>Quay lại</span>
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full mx-auto flex flex-col gap-6 pb-20 animate-fade-in">
             {showSuccessToast && (
@@ -146,6 +180,31 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
                     <span className="font-semibold text-sm">{t("profile.editSuccess")}</span>
                 </div>
+            )}
+
+            {showEditModal && (
+                <EditProfileModal
+                    identity={identity}
+                    location={profileLocation}
+                    onSave={(updated, newLoc) => {
+                        setIdentity((prev: ProfileIdentity) => ({ ...prev, ...updated }));
+                        setProfileLocation(newLoc);
+                        setShowEditModal(false);
+                        triggerToast();
+                    }}
+                    onClose={() => setShowEditModal(false)}
+                    onSelectAvatarFile={(file) => {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => ev.target?.result && setRawAvatarSrc(ev.target.result as string);
+                        reader.readAsDataURL(file);
+                    }}
+                    onSelectCoverFile={(file) => {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => ev.target?.result && setRawCoverSrc(ev.target.result as string);
+                        reader.readAsDataURL(file);
+                    }}
+                    t={t}
+                />
             )}
 
             {showBadgeSelector && (
@@ -180,11 +239,12 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 }}
                 onSaveIdentity={triggerToast}
                 onOpenBadgeSelector={() => setShowBadgeSelector(true)}
+                onOpenEditModal={() => setShowEditModal(true)}
                 onAddFriend={() => toggleFriend(identity.name)}
                 onUnfriend={() => toggleFriend(identity.name)}
                 onBlock={() => { setIsBlocked(true); triggerToast(); }}
                 onUnblock={() => { setIsBlocked(false); triggerToast(); }}
-                location="Vietnam / SEA"
+                location={profileLocation}
                 joinedDate="Tháng 6, 2026"
                 reputationPercent={98}
                 t={t}

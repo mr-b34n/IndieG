@@ -161,6 +161,12 @@ export const getUserRank = (username?: string): UserRank => {
     if (KNOWN_USER_RANKS[cleanName]) {
         return KNOWN_USER_RANKS[cleanName];
     }
+    const foundKey = Object.keys(KNOWN_USER_RANKS).find(
+        (key) => key.toLowerCase() === cleanName.toLowerCase()
+    );
+    if (foundKey) {
+        return KNOWN_USER_RANKS[foundKey];
+    }
     let hash = 0;
     for (let i = 0; i < cleanName.length; i++) {
         hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);

@@ -13,7 +13,7 @@ export interface PostData {
     author: string;
     authorAvatar: string;
     authorRank?: UserRank;
-    gameTag: string;
+    gameTag?: string;
     timeAgo: string;
     title: string;
     content: string;
@@ -26,6 +26,7 @@ export interface PostData {
     privacy: "public" | "friends" | "private";
     pinned?: boolean;
     allowComments?: boolean;
+    isSpoiler?: boolean;
 }
 
 export interface PostDraft {
@@ -35,6 +36,7 @@ export interface PostDraft {
     privacy: "public" | "friends" | "private";
     allowComments: boolean;
     pinned: boolean;
+    isSpoiler?: boolean;
     communityId: string | number | null;
     updatedAt: string;
 }

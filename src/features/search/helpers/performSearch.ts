@@ -35,7 +35,7 @@ export function performSearch(
     const matchedGames = gamesList.filter((game) => {
         if (!game) return false;
         const nameMatch = game.name?.toLowerCase().includes(q) ?? false;
-        const tagMatch = (game as any).tags?.some((t: any) => typeof t === "string" && t.toLowerCase().includes(q)) ?? false;
+        const tagMatch = (game as Record<string, unknown>).tags && Array.isArray((game as Record<string, unknown>).tags) ? ((game as Record<string, unknown>).tags as unknown[]).some((t) => typeof t === "string" && t.toLowerCase().includes(q)) : false;
         const aliasMatch = game.aliases?.some((a) => typeof a === "string" && a.toLowerCase().includes(q)) ?? false;
         const genreMatch = Array.isArray(game.genre)
             ? game.genre.some((g) => typeof g === "string" && g.toLowerCase().includes(q))

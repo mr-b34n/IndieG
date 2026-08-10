@@ -60,7 +60,7 @@ export const LeftBar = () => {
 
     return (
         <div className="
-            w-full h-fit flex flex-col overflow-hidden
+            w-full flex flex-col overflow-hidden
             bg-surface border border-border/80
             rounded-xl shadow-xs
         ">
@@ -217,18 +217,16 @@ export const LeftBar = () => {
                 </>
             )}
 
-            {isLoggedIn && (
-                <div className="border-t border-border px-2 py-1.5">
-                    <button
-                        type="button"
-                        onClick={() => navigate({to: "/settings"})}
-                        className={`${isSettingsActive ? navItemActive : navItem}`}
-                    >
-                        <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
-                        <span>{t('common.settings')}</span>
-                    </button>
-                </div>
-            )}
+            <div className="border-t border-border px-2 py-1.5 mt-2">
+                <button
+                    type="button"
+                    onClick={() => navigate({to: "/settings"})}
+                    className={`${isSettingsActive ? navItemActive : navItem}`}
+                >
+                    <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
+                    <span>{t('common.settings')}</span>
+                </button>
+            </div>
         </div>
     )
 }

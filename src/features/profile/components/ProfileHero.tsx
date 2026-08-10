@@ -25,6 +25,7 @@ interface ProfileHeroProps {
     onSelectAvatarFile: (file: File) => void;
     onSaveIdentity: () => void;
     onOpenBadgeSelector: () => void;
+    onOpenEditModal?: () => void;
     onAddFriend: () => void;
     onUnfriend: () => void;
     onBlock: () => void;
@@ -35,7 +36,7 @@ interface ProfileHeroProps {
     t: TranslateFn;
 }
 
-const STATUS_OPTIONS: { val: ProfileStatus; label: string; color: string }[] = [
+const STATUS_OPTIONS: { val: ProfileStatus; label: sthttps://github.com/mr-b34n/IndieG/pull/49/conflict?name=src%252Ffeatures%252Fprofile%252Fcomponents%252FProfileHero.tsx&base_oid=649036760b64dd72fbdc0c2a0d6e35b229baaa29&head_oid=c326749be0cf2836ea291636c1f6545075d35fc5ring; color: string }[] = [
     { val: "online",  label: "Online",  color: "bg-emerald-500" },
     { val: "in-game", label: "In‑Game", color: "bg-primary" },
     { val: "offline", label: "Offline", color: "bg-neutral-500" },
@@ -47,7 +48,7 @@ const statusCfg = (s: ProfileStatus) =>
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
     isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity, onOpenBadgeSelector,
-    onAddFriend, onUnfriend, onBlock, onUnblock, location, joinedDate, reputationPercent, t,
+    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location, joinedDate, reputationPercent, t,
 }: ProfileHeroProps) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
@@ -216,12 +217,22 @@ export const ProfileHero = ({
                     {/* Right: action buttons */}
                     <div className="flex items-center gap-2 shrink-0 pb-1">
                         {isOwnProfile ? (
-                            <button onClick={onOpenBadgeSelector}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white text-xs font-bold border border-white/15 hover:bg-white/20 transition-all"
-                            >
-                                <FontAwesomeIcon icon={faAward} className="text-amber-300" />
-                                <span>{t("profile.changeBadge")}</span>
-                            </button>
+                            <>
+                                {onOpenEditModal && (
+                                    <button onClick={onOpenEditModal}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:brightness-110 transition-all shadow-md cursor-pointer"
+                                    >
+                                        <FontAwesomeIcon icon={faPen} />
+                                        <span>Chỉnh sửa hồ sơ</span>
+                                    </button>
+                                )}
+                                <button onClick={onOpenBadgeSelector}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white text-xs font-bold border border-white/15 hover:bg-white/20 transition-all cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faAward} className="text-amber-300" />
+                                    <span>{t("profile.changeBadge")}</span>
+                                </button>
+                            </>
                         ) : isBlocked ? (
                             <button onClick={onUnblock}
                                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 hover:bg-rose-500/30 transition-all"

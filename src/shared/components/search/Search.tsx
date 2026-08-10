@@ -26,7 +26,15 @@ export const Search = () => {
     const navigate = useNavigate();
     const [focused, setFocused] = useState(false);
     const [value, setValue] = useState("");
-    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+    const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+        try {
+            const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+            if (saved) return JSON.parse(saved);
+        } catch {
+            // ignore
+        }
+        return ["CS2 update patch", "Raft co-op tips", "RDR2 mods"];
+    });
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -35,20 +43,6 @@ export const Search = () => {
     const { communities } = useCommunitiesStore();
     const { squads } = useSquadStore();
 
-    // Load recent searches from localStorage
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
-            if (saved) {
-                setRecentSearches(JSON.parse(saved));
-            } else {
-                setRecentSearches(["CS2 update patch", "Raft co-op tips", "RDR2 mods"]);
-            }
-        } catch (e) {
-            setRecentSearches(["CS2 update patch", "Raft co-op tips", "RDR2 mods"]);
-        }
-    }, []);
-
     const saveRecentSearch = (query: string) => {
         const clean = query.trim();
         if (!clean) return;
@@ -56,7 +50,7 @@ export const Search = () => {
         setRecentSearches(updated);
         try {
             localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-        } catch (e) {
+        } catch {
             // ignore
         }
     };
@@ -65,7 +59,7 @@ export const Search = () => {
         setRecentSearches([]);
         try {
             localStorage.removeItem(RECENT_SEARCHES_KEY);
-        } catch (e) {
+        } catch {
             // ignore
         }
     };
@@ -75,7 +69,7 @@ export const Search = () => {
         setRecentSearches(updated);
         try {
             localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-        } catch (e) {
+        } catch {
             // ignore
         }
     };
@@ -123,19 +117,20 @@ export const Search = () => {
             {/* Search Input Bar */}
             <div
                 className={`
-                flex flex-row items-center gap-2 px-3.5 py-1.5 sm:py-2
+                flex flex-row items-center gap-2.5 px-4 py-2 sm:py-2.5
                 w-full
-                bg-surface/90 backdrop-blur-md
+                bg-surface hover:bg-surface-hover backdrop-blur-md
                 border-2 rounded-full
                 shadow-[0_2px_12px_rgba(0,0,0,0.06)]
                 dark:shadow-[0_2px_14px_rgba(0,0,0,0.28)]
-                transition-all duration-200
+                transition-all duration-200 cursor-text
                 ${
                     focused
-                        ? "border-primary shadow-[0_4px_20px_rgba(124,77,255,0.18)]"
-                        : "border-border hover:border-neutral-300 dark:hover:border-neutral-700"
+                        ? "border-primary bg-surface shadow-[0_4px_20px_rgba(124,77,255,0.18)]"
+                        : "border-border/60 hover:border-primary/40 dark:hover:border-primary/40"
                 }
             `}
+                onClick={() => inputRef.current?.focus()}
             >
                 <FontAwesomeIcon
                     icon={faMagnifyingGlass}
