@@ -30,4 +30,3 @@ dist-ssr
 .env
 .env.local
 backend-vote/backend-vote
-node_modules

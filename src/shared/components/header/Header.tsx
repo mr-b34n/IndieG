@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useThemeStore } from "../../store/useThemeStore";
 import { useSidebarStore } from "../../store/useSidebarStore";
 import { useNotificationStore, NotificationDropdown } from '@/features/notification';
 import { useTranslation } from '@/shared/hooks/useTranslate';
-
 import { Search } from '../search/Search';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -41,6 +40,8 @@ export const Header = () => {
 
     const toggleLeft = useSidebarStore((state) => state.toggleLeft);
     const toggleRight = useSidebarStore((state) => state.toggleRight);
+    const { pathname } = useLocation();
+    const hideSidebars = pathname.startsWith('/settings') || pathname.startsWith('/profile');
 
     const [showNotifications, setShowNotifications] = useState(false);
     const notifications = useNotificationStore((state) => state.notifications);
@@ -50,13 +51,15 @@ export const Header = () => {
         <header className="w-full sticky top-0 z-[60] flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-2 sm:gap-3 px-2 sm:px-4 py-1 sm:py-1.5">
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 order-1">
-                <button
-                    onClick={toggleLeft}
-                    title={t('common.menu')}
-                    className={`lg:hidden shrink-0 ${floatCard} w-8 h-8 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary hover:bg-primary-soft transition-colors cursor-pointer`}
-                >
-                    <FontAwesomeIcon icon={faBars} className="text-sm sm:text-base" />
-                </button>
+                {!hideSidebars && (
+                    <button
+                        onClick={toggleLeft}
+                        title={t('common.menu')}
+                        className={`lg:hidden shrink-0 ${floatCard} w-8 h-8 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary hover:bg-primary-soft transition-colors cursor-pointer`}
+                    >
+                        <FontAwesomeIcon icon={faBars} className="text-sm sm:text-base" />
+                    </button>
+                )}
 
                 <div
                     className={`shrink-0 ${floatCard} rounded-xl sm:rounded-2xl px-3 sm:px-4 py-1 sm:py-1.5
@@ -76,15 +79,17 @@ export const Header = () => {
 
             <div className={`shrink-0 ${floatCard} rounded-full px-1.5 sm:px-2 py-1 sm:py-1.5
                 flex flex-row items-center gap-1 order-2 md:order-3`}>
-                <button
-                    onClick={toggleRight}
-                    title={t('common.openExplore')}
-                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-full
-                        text-primary bg-primary/10 hover:bg-primary/20
-                        transition-colors duration-150 cursor-pointer shrink-0"
-                >
-                    <FontAwesomeIcon icon={faGamepad} className="text-xs sm:text-sm" />
-                </button>
+                {!hideSidebars && (
+                    <button
+                        onClick={toggleRight}
+                        title={t('common.openExplore')}
+                        className="lg:hidden w-8 h-8 flex items-center justify-center rounded-full
+                            text-primary bg-primary/10 hover:bg-primary/20
+                            transition-colors duration-150 cursor-pointer shrink-0"
+                    >
+                        <FontAwesomeIcon icon={faGamepad} className="text-xs sm:text-sm" />
+                    </button>
+                )}
 
                 <button
                     onClick={toggleLanguage}
@@ -94,7 +99,7 @@ export const Header = () => {
                         hover:bg-primary-soft hover:text-primary
                         transition-colors duration-150 cursor-pointer shrink-0"
                 >
-                    <p className="font-extrabold text-xs sm:text-sm">{language === "en" ? "EN" : "VN"}</p>
+                    <p className="font-extrabold text-xs sm:text-sm">{language.toUpperCase()}</p>
                 </button>
 
                 <button
@@ -120,9 +125,7 @@ export const Header = () => {
                         >
                             <FontAwesomeIcon icon={faBell} className="text-xs sm:text-sm" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-like text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-surface">
-                                    {unreadCount > 9 ? "9+" : unreadCount}
-                                </span>
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-like ring-2 ring-surface" />
                             )}
                         </button>
                         {showNotifications && (

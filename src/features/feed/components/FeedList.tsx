@@ -98,7 +98,6 @@ export const FeedList = () => {
 
     return (
         <div className="w-full flex flex-col gap-3">
-
             {isLoggedIn && <CreatePostBox onPost={handleCreatePost} />}
 
             {displayedPosts.length > 0 ? (

@@ -35,7 +35,8 @@ function MainLayout() {
         closeRight()
     }, [pathname, closeLeft, closeRight])
 
-    const hideSidebars = pathname.startsWith('/settings')
+    const hideSidebars = pathname.startsWith('/settings') || pathname.startsWith('/profile') || pathname.match(/^\/community\/[^/]+$/) || pathname.startsWith('/explore')
+   
 
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
@@ -90,11 +91,11 @@ function MainLayout() {
                 ref={scrollContainerRef} 
                 className="relative flex-1 overflow-y-auto overflow-x-hidden w-full"
             >
-                <div className={`w-full ${hideSidebars ? 'max-w-5xl' : 'max-w-[1400px]'} mx-auto flex flex-row items-start gap-3 lg:gap-4 px-2 sm:px-4 py-3 pb-12`}>
+                <div className={`w-full ${hideSidebars ? 'max-w-[1280px]' : 'max-w-[1536px]'} mx-auto flex flex-row items-start gap-4 xl:gap-6 px-3 sm:px-6 py-3 pb-12`}>
                     
                     {/* Left Sidebar */}
                     {!hideSidebars && (
-                        <aside className="hidden lg:block shrink-0 w-52 xl:w-56 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
+                        <aside className="hidden lg:block shrink-0 w-56 xl:w-60 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
                             <LeftBar />
                         </aside>
                     )}
@@ -106,7 +107,7 @@ function MainLayout() {
 
                     {/* Right Sidebar */}
                     {!hideSidebars && (
-                        <aside className="hidden lg:block shrink-0 w-60 xl:w-64 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-border/40 hover:scrollbar-thumb-border">
+                        <aside className="hidden lg:block shrink-0 w-64 xl:w-72 sticky top-2 max-h-[calc(100vh-4.5rem)] overflow-y-auto scrollbar-none">
                             <RightBar />
                         </aside>
                     )}

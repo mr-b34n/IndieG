@@ -13,6 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
+import { Route as LayoutExploreRouteImport } from './routes/_layout/explore'
 import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
 import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
@@ -41,6 +43,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSearchRoute = LayoutSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutExploreRoute = LayoutExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
@@ -104,6 +116,8 @@ const LayoutCommunityCommunityIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
+  '/explore': typeof LayoutExploreRoute
+  '/search': typeof LayoutSearchRoute
   '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
@@ -119,6 +133,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
+  '/explore': typeof LayoutExploreRoute
+  '/search': typeof LayoutSearchRoute
   '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
@@ -136,6 +152,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_layout': typeof LayoutRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_layout/explore': typeof LayoutExploreRoute
+  '/_layout/search': typeof LayoutSearchRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/_layout/game/$gameSlug': typeof LayoutGameGameSlugRoute
@@ -154,6 +172,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/explore'
+    | '/search'
     | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
@@ -169,6 +189,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/explore'
+    | '/search'
     | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
@@ -185,6 +207,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_layout'
     | '/auth'
+    | '/_layout/explore'
+    | '/_layout/search'
     | '/_layout/'
     | '/_layout/community/$communityId'
     | '/_layout/game/$gameSlug'
@@ -233,6 +257,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/search': {
+      id: '/_layout/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof LayoutSearchRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/explore': {
+      id: '/_layout/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof LayoutExploreRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/squad/': {
@@ -330,6 +368,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface LayoutRouteChildren {
+  LayoutExploreRoute: typeof LayoutExploreRoute
+  LayoutSearchRoute: typeof LayoutSearchRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutCommunityCommunityIdRoute: typeof LayoutCommunityCommunityIdRoute
   LayoutGameGameSlugRoute: typeof LayoutGameGameSlugRoute
@@ -343,6 +383,8 @@ interface LayoutRouteChildren {
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutExploreRoute: LayoutExploreRoute,
+  LayoutSearchRoute: LayoutSearchRoute,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutCommunityCommunityIdRoute: LayoutCommunityCommunityIdRoute,
   LayoutGameGameSlugRoute: LayoutGameGameSlugRoute,

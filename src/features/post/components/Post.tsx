@@ -1,11 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
-    faHeart as faHeartOutline,
     faComment,
     faBookmark as faBookmarkOutline,
 } from "@fortawesome/free-regular-svg-icons"
 import {
-    faHeart as faHeartSolid,
     faBookmark as faBookmarkSolid,
     faShare,
     faEllipsis,
@@ -19,10 +17,13 @@ import {
     faDownload,
     faLock,
     faBan,
+    faArrowUp,
+    faArrowDown,
 } from "@fortawesome/free-solid-svg-icons"
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
+import { useAuthStore } from "@/features/auth"
 import { formatFileSize } from "../helpers/postAttachmentLimits"
 import EmojiBox from "@/shared/components/ui/EmojiBox"
 import { Lightbox } from "@/shared/components/ui/Lightbox"
@@ -32,6 +33,7 @@ import { EditPostModal } from ".."
 import { RANK_CONFIG, getUserRankConfig, getRankLabel } from "../helpers/userRanks"
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
 import { useTranslation } from "@/shared/hooks/useTranslate"
+import { formatTimeAgo } from "@/shared/utils/formatTimeAgo"
 import { type PostFileAttachment, type PostData } from "../types";
 import { POST_TAG_CLASSES, POST_BADGE_MAP } from "../constants";
 import { getGameBySlug } from "@/features/game";
@@ -136,8 +138,10 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
 
 export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor, isDetailView = false }: PostProps) => {
     const { t, language } = useTranslation();
-    const [liked, setLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(post.likes);
+    const user = useAuthStore((state) => state.user);
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+
     const bookmarked = useBookmarksStore((state) => state.isBookmarked(post.id));
     const toggleBookmark = useBookmarksStore((state) => state.toggleBookmark);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -148,21 +152,17 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
     const [hidden, setHidden] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
 
-    const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+    const [voteState, setVoteState] = useState<"up" | "down" | null>(null);
+    const [score, setScore] = useState(post.likes);
+    const [activeReaction, setActiveReaction] = useState<string | null>(null);
 
-    const pressHoldTimeoutRef = useRef<number | null>(null);
-    const isLongPressRef = useRef(false);
+    const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
     const navigate = useNavigate();
 
     if (hidden) return null;
 
     const postUrl = `${window.location.origin}/post/${post.id}`;
-
-    const toggleLike = () => {
-        setLiked((prev) => !prev);
-        setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
-    };
 
     const handleNavigate = () => {
         if (isDetailView) return;
@@ -232,39 +232,6 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
         setShowActionMenu(false);
     };
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        isLongPressRef.current = false;
-
-        pressHoldTimeoutRef.current = setTimeout(() => {
-            setIsEmojiOpen(true);
-            isLongPressRef.current = true;
-        }, 700);
-    };
-
-    const handleMouseUp = (e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        if (pressHoldTimeoutRef.current) {
-            clearTimeout(pressHoldTimeoutRef.current);
-        }
-
-        if (!isLongPressRef.current) {
-            toggleLike();
-        }
-    };
-
-    const handleMouseLeave = () => {
-        if (pressHoldTimeoutRef.current) {
-            clearTimeout(pressHoldTimeoutRef.current);
-        }
-    };
-
-    const handleSelectEmoji = (reactionId: string, char: string) => {
-        console.log(`Đã chọn cảm xúc: ${reactionId} (${char})`);
-        setIsEmojiOpen(false);
-    };
-
     const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
     const rank = post.authorRank ? (RANK_CONFIG[post.authorRank] || getUserRankConfig(post.author)) : getUserRankConfig(post.author);
 
@@ -274,6 +241,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
             className={`
             w-full ${(showActionMenu || showShareMenu || isEmojiOpen) ? "!overflow-visible relative z-[100]" : "overflow-hidden relative"}
             bg-surface/95 backdrop-blur-sm
+            border border-border
             rounded-xl
             shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_4px_12px_-5px_rgba(0,0,0,0.06)]
             dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.40),0_4px_12px_-5px_rgba(0,0,0,0.20)]
@@ -319,7 +287,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                         )}
                     </div>
                     <div className="flex flex-row items-center gap-1.5 text-xs text-text-faint mt-1">
-                        <span>{post.timeAgo}</span>
+                        <span>{formatTimeAgo(post.timeAgo, t)}</span>
                         <span>•</span>
                         <span
                             onClick={(e) => {
@@ -379,7 +347,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                                         </button>
                                         <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); alert("Đã chặn người dùng: " + post.author); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium">
                                             <FontAwesomeIcon icon={faBan} className="w-4" />
-                                            Chặn người dùng
+                                            {t('post.blockUser')}
                                         </button>
                                     </>
                                 )}
@@ -425,27 +393,90 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                 </div>
             )}
 
-            <div className="flex flex-row items-center gap-0.5 px-3 py-2.5 border-t border-border">
+            <div className="flex flex-row items-center gap-1.5 px-3 py-2.5 border-t border-border">
 
+                {/* Reddit-style Upvote / Downvote Pill */}
+                <div className="flex flex-row items-center bg-surface-hover/70 rounded-full border border-border/50 px-1 py-0.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!isLoggedIn) {
+                                navigate({ to: "/auth" });
+                                return;
+                            }
+                            if (voteState === "up") {
+                                setVoteState(null);
+                                setScore((s) => s - 1);
+                            } else {
+                                setScore((s) => s + (voteState === "down" ? 2 : 1));
+                                setVoteState("up");
+                            }
+                        }}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                            voteState === "up" ? "text-orange-500 bg-orange-500/15 font-bold" : "text-text-muted hover:text-orange-500 hover:bg-surface-hover"
+                        }`}
+                        title="Upvote"
+                    >
+                        <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
+                    </button>
+
+                    <span className={`px-1.5 text-xs font-bold ${voteState === "up" ? "text-orange-500" : voteState === "down" ? "text-indigo-500" : "text-text"}`}>
+                        {score}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!isLoggedIn) {
+                                navigate({ to: "/auth" });
+                                return;
+                            }
+                            if (voteState === "down") {
+                                setVoteState(null);
+                                setScore((s) => s + 1);
+                            } else {
+                                setScore((s) => s - (voteState === "up" ? 2 : 1));
+                                setVoteState("down");
+                            }
+                        }}
+                        className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                            voteState === "down" ? "text-indigo-500 bg-indigo-500/15 font-bold" : "text-text-muted hover:text-indigo-500 hover:bg-surface-hover"
+                        }`}
+                        title="Downvote"
+                    >
+                        <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                    </button>
+                </div>
+
+                {/* FB-style Emoji Reaction Picker */}
                 <div className="relative inline-block">
                     <EmojiBox
                         isOpen={isEmojiOpen}
                         onClose={() => setIsEmojiOpen(false)}
-                        onSelect={handleSelectEmoji}
+                        onSelect={(_id, char) => {
+                            setActiveReaction((prev) => (prev === char ? null : char));
+                            setIsEmojiOpen(false);
+                        }}
                     />
 
                     <button
-                        onMouseDown={handleMouseDown}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseLeave}
-                        className={`flex flex-row items-center gap-1.5 px-3 py-1.5 select-none
-                    rounded-full text-sm font-medium transition-colors duration-150
-                    ${liked
-                                ? "text-like bg-like/10"
-                                : "text-text-muted hover:bg-surface-hover hover:text-text"}`}
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isLoggedIn) {
+                                navigate({ to: "/auth" });
+                                return;
+                            }
+                            setIsEmojiOpen((prev) => !prev);
+                        }}
+                        className={`flex flex-row items-center gap-1.5 px-3 py-1.5 select-none rounded-full text-xs font-semibold transition-all ${
+                            activeReaction
+                                ? "bg-primary/15 text-primary border border-primary/30"
+                                : "text-text-muted hover:bg-surface-hover hover:text-text"
+                        }`}
                     >
-                        <FontAwesomeIcon icon={liked ? faHeartSolid : faHeartOutline} className="text-xs" />
-                        <span>{likeCount}</span>
+                        <span className="text-sm">{activeReaction || "😍"}</span>
+                        <span>{activeReaction ? t('post.reacted') : t('post.react')}</span>
                     </button>
                 </div>
 
@@ -515,10 +546,14 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, onUnfollowAuthor
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
+                        if (!isLoggedIn) {
+                            navigate({ to: "/auth" });
+                            return;
+                        }
                         toggleBookmark(post.id);
                     }}
                     className={`ml-auto w-8 h-8 flex items-center justify-center
-                        rounded-full transition-colors duration-150
+                        rounded-full transition-colors duration-150 cursor-pointer
                         ${bookmarked
                             ? "text-primary "
                             : "text-text-faint hover:text-text hover:bg-surface-hover"}`}

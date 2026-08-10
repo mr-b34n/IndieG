@@ -12,6 +12,8 @@ import { useNotificationStore } from "@/features/notification/store/useNotificat
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
+import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
+import EmojiBox from "@/shared/components/ui/EmojiBox";
 
 
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -350,6 +352,7 @@ const CommentItem = ({
     const [likeCount, setLikeCount] = useState(comment.likes);
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
+    const [showSubEmoji, setShowSubEmoji] = useState(false);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
@@ -366,9 +369,12 @@ const CommentItem = ({
     const isAuthor = comment.author === currentAuthor || comment.author === "You";
 
     const toggleLike = () => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
         setLiked((prev) => !prev);
         setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
-        
     };
 
     const handleReplyClick = () => {
@@ -446,7 +452,7 @@ const CommentItem = ({
                                     <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
                                     {getRankLabel(getUserRankConfig(comment.author))}
                                 </span>
-                                <span className="text-xs text-text-faint">· {comment.timeAgo}</span>
+                                <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 
                                         className="inline-flex items-center justify-center w-5 h-5 text-primary bg-primary/10 rounded-full"
@@ -650,6 +656,25 @@ const CommentItem = ({
                                     <FontAwesomeIcon icon={faImage} className="text-sm" />
                                 </button>
 
+                                <div className="relative">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowSubEmoji((prev) => !prev)}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
+                                        title="Add emoji"
+                                    >
+                                        <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                    </button>
+                                    <EmojiBox
+                                        isOpen={showSubEmoji}
+                                        onClose={() => setShowSubEmoji(false)}
+                                        onSelect={(_id, char) => {
+                                            setReplyText((prev) => prev + char);
+                                            setShowSubEmoji(false);
+                                        }}
+                                    />
+                                </div>
+
                                 <div className="flex flex-row gap-2">
                                     <button
                                         onClick={() => {
@@ -710,6 +735,7 @@ const CommentItem = ({
 
 export const CommentSection = ({ postId }: CommentSectionProps) => {
     const { t } = useTranslation();
+    const [showMainEmoji, setShowMainEmoji] = useState(false);
     const post = usePostsStore((state) => state.getPostById(postId));
     const isCommentsAllowed = post?.allowComments !== false;
     const [commentText, setCommentText] = useState("");
@@ -945,9 +971,24 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                     >
                                         <FontAwesomeIcon icon={faImage} className="text-sm" />
                                     </button>
-                                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" title="Add emoji">
-                                        <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
-                                    </button>
+                                    <div className="relative">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowMainEmoji((prev) => !prev)}
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
+                                            title="Add emoji"
+                                        >
+                                            <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                        </button>
+                                        <EmojiBox
+                                            isOpen={showMainEmoji}
+                                            onClose={() => setShowMainEmoji(false)}
+                                            onSelect={(_id, char) => {
+                                                setCommentText((prev) => prev + char);
+                                                setShowMainEmoji(false);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <button 
                                     onClick={handleMainReplySubmit}
