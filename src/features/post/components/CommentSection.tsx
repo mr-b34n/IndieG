@@ -12,6 +12,8 @@ import { useNotificationStore } from "@/features/notification/store/useNotificat
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
+import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
+import EmojiBox from "@/shared/components/ui/EmojiBox";
 
 
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -181,11 +183,12 @@ const renderCommentContent = (text: string) => {
         if (/^@\w+$/.test(part)) {
             const username = part.slice(1);
             const rankConfig = getUserRankConfig(username);
+            const textColor = rankConfig.textColor.replace(/font-extrabold|font-bold/g, "").trim();
             return (
                 <span
                     key={idx}
-                    className={`${rankConfig.textColor} hover:underline cursor-pointer transition-colors inline-block font-bold`}
-                    title={`Mentioned user ${part} (${getRankLabel(rankConfig)})`}
+                    className={`${textColor} font-medium hover:underline cursor-pointer transition-colors inline-block`}
+                    title={`Mentioned user ${part}`}
                 >
                     {part}
                 </span>
@@ -257,32 +260,21 @@ const MentionTextArea = ({
     return (
         <div className="relative w-full">
             {mentionState && filteredUsers.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-1 w-56 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in">
-                    <div className="px-3 py-1.5 bg-surface-hover/60 border-b border-border/50 text-[10px] font-bold text-text-faint uppercase tracking-wider flex items-center justify-between">
-                        <span>Tag người dùng (@username)</span>
-                        <span>↑↓ Enter</span>
-                    </div>
-                    <div className="max-h-40 overflow-y-auto">
+                <div className="absolute bottom-full left-0 mb-1 w-52 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in p-1">
+                    <div className="max-h-40 overflow-y-auto flex flex-col gap-0.5">
                         {filteredUsers.map((user, idx) => {
                             const rankConfig = getUserRankConfig(user);
+                            const textColor = rankConfig.textColor.replace(/font-extrabold|font-bold/g, "").trim();
                             return (
                                 <button
                                     key={user}
                                     type="button"
                                     onClick={() => insertMention(user)}
-                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-xs transition-colors ${
-                                        idx === selectedIndex ? "bg-surface-hover/80 font-semibold" : "hover:bg-surface-hover"
+                                    className={`w-full flex items-center px-3 py-1.5 rounded-lg text-left text-xs transition-colors ${
+                                        idx === selectedIndex ? "bg-surface-hover font-semibold" : "hover:bg-surface-hover"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${rankConfig.classes}`}>
-                                            <FontAwesomeIcon icon={rankConfig.icon} />
-                                        </span>
-                                        <span className={`truncate ${rankConfig.textColor}`}>@{user}</span>
-                                    </div>
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${rankConfig.classes} shrink-0`}>
-                                        {getRankLabel(rankConfig)}
-                                    </span>
+                                    <span className={`truncate font-semibold ${textColor}`}>@{user}</span>
                                 </button>
                             );
                         })}
@@ -350,6 +342,7 @@ const CommentItem = ({
     const [likeCount, setLikeCount] = useState(comment.likes);
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
+    const [showSubEmoji, setShowSubEmoji] = useState(false);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
@@ -366,9 +359,12 @@ const CommentItem = ({
     const isAuthor = comment.author === currentAuthor || comment.author === "You";
 
     const toggleLike = () => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
         setLiked((prev) => !prev);
         setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
-        
     };
 
     const handleReplyClick = () => {
@@ -446,7 +442,7 @@ const CommentItem = ({
                                     <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
                                     {getRankLabel(getUserRankConfig(comment.author))}
                                 </span>
-                                <span className="text-xs text-text-faint">· {comment.timeAgo}</span>
+                                <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 
                                         className="inline-flex items-center justify-center w-5 h-5 text-primary bg-primary/10 rounded-full"
@@ -620,13 +616,13 @@ const CommentItem = ({
 
                     {/* Reply Input */}
                     {isReplying && isCommentsAllowed && (
-                        <div className="flex flex-col gap-2 mt-3 p-3 bg-surface-hover/40 border border-border/60 rounded-xl animate-fade-in">
+                        <div className="flex flex-col gap-2 mt-3 p-3 bg-surface hover:bg-surface-hover/30 border border-border/60 rounded-xl focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-sm transition-all duration-200 animate-fade-in">
                             <MentionTextArea
                                 inputRef={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
                                 placeholder={t('comment.placeholderReply', { author: comment.author })}
-                                className="w-full bg-transparent text-sm text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-8"
+                                className="w-full bg-transparent text-sm text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-[24px]"
                                 rows={1}
                                 autoFocus
                             />
@@ -640,7 +636,7 @@ const CommentItem = ({
                                 <p className="text-xs text-accent-500 font-medium">{replyImage.error}</p>
                             )}
 
-                            <div className="flex flex-row items-center justify-between gap-2 pt-1 border-t border-border/40">
+                            <div className="flex flex-row items-center justify-between gap-2 pt-2 border-t border-border/60">
                                 <button
                                     type="button"
                                     onClick={replyImage.openPicker}
@@ -649,6 +645,25 @@ const CommentItem = ({
                                 >
                                     <FontAwesomeIcon icon={faImage} className="text-sm" />
                                 </button>
+
+                                <div className="relative">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowSubEmoji((prev) => !prev)}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
+                                        title="Add emoji"
+                                    >
+                                        <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                    </button>
+                                    <EmojiBox
+                                        isOpen={showSubEmoji}
+                                        onClose={() => setShowSubEmoji(false)}
+                                        onSelect={(_id, char) => {
+                                            setReplyText((prev) => prev + char);
+                                            setShowSubEmoji(false);
+                                        }}
+                                    />
+                                </div>
 
                                 <div className="flex flex-row gap-2">
                                     <button
@@ -710,6 +725,7 @@ const CommentItem = ({
 
 export const CommentSection = ({ postId }: CommentSectionProps) => {
     const { t } = useTranslation();
+    const [showMainEmoji, setShowMainEmoji] = useState(false);
     const post = usePostsStore((state) => state.getPostById(postId));
     const isCommentsAllowed = post?.allowComments !== false;
     const [commentText, setCommentText] = useState("");
@@ -915,14 +931,14 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     </div>
                 ) : isLoggedIn ? (
                     <>
-                        <img src={avatarUser} alt="You" className="w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0" />
-                        <div className="flex flex-col flex-1 gap-2">
+                        <img src={avatarUser} alt="You" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-1 ring-border shrink-0" />
+                        <div className="flex flex-col flex-1 gap-2 bg-surface hover:bg-surface-hover/30 border border-border/80 rounded-xl p-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200">
                             <MentionTextArea
                                 inputRef={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
                                 placeholder={t('comment.placeholderMain')}
-                                className="w-full bg-transparent text-[15px] text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-6"
+                                className="w-full bg-transparent text-sm sm:text-[15px] text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-[24px]"
                                 rows={1}
                             />
 
@@ -935,7 +951,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 <p className="text-xs text-accent-500 font-medium">{mainImage.error}</p>
                             )}
 
-                            <div className="flex flex-row justify-between items-center pt-2 border-t border-border">
+                            <div className="flex flex-row justify-between items-center pt-2 border-t border-border/60">
                                 <div className="flex flex-row gap-1">
                                     <button
                                         type="button"
@@ -945,9 +961,24 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                     >
                                         <FontAwesomeIcon icon={faImage} className="text-sm" />
                                     </button>
-                                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" title="Add emoji">
-                                        <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
-                                    </button>
+                                    <div className="relative">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowMainEmoji((prev) => !prev)}
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
+                                            title="Add emoji"
+                                        >
+                                            <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                        </button>
+                                        <EmojiBox
+                                            isOpen={showMainEmoji}
+                                            onClose={() => setShowMainEmoji(false)}
+                                            onSelect={(_id, char) => {
+                                                setCommentText((prev) => prev + char);
+                                                setShowMainEmoji(false);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <button 
                                     onClick={handleMainReplySubmit}

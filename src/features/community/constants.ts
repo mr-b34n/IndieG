@@ -14,11 +14,7 @@ import { faCompass, faFire, faLayerGroup } from "@fortawesome/free-solid-svg-ico
 import { type CommunityData, type CommunityTabKey } from "./types";
 
 export const TAG_CLASSES = [
-    "bg-tag-1/10 text-tag-1 border border-tag-1/20",
-    "bg-tag-2/10 text-tag-2 border border-tag-2/20",
-    "bg-tag-3/10 text-tag-3 border border-tag-3/20",
-    "bg-tag-4/10 text-tag-4 border border-tag-4/20",
-    "bg-tag-5/10 text-tag-5 border border-tag-5/20",
+    "bg-surface-hover/70 text-text-muted border border-border/50 hover:bg-surface-hover transition-colors",
 ];
 
 export const BANNER_GRADIENTS = [
@@ -161,3 +157,14 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         featured: false,
     },
 ];
+
+export const formatCompactNumber = (num: number): string => {
+    if (num >= 1_000_000) {
+        return (num / 1_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'M';
+    }
+    if (num >= 1_000) {
+        return (num / 1_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'k';
+    }
+    return num.toString();
+};
+

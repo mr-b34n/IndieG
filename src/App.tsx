@@ -15,8 +15,7 @@ const App = () => {
     const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
     useEffect(() => {
-        const unsubscribe = initializeAuth();
-        return () => unsubscribe();
+        initializeAuth();
     }, [initializeAuth]);
 
     return (

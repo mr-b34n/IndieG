@@ -18,7 +18,7 @@
     @media (min-width: 1024px) {
         * {
             scrollbar-width: thin;
-            scrollbar-color: var(--color-border) transparent;
+            scrollbar-color: var(--color-surface-hover) transparent;
         }
         *::-webkit-scrollbar {
             display: block;
@@ -29,7 +29,7 @@
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
-            background-color: var(--color-border);
+            background-color: var(--color-surface-hover);
             border-radius: 9999px;
             transition: background-color 0.2s ease;
         }
@@ -133,17 +133,33 @@
 
     /* Neutral: Đen ánh xanh + Xám tro (nền tối cho gaming) */
     --color-neutral-0: #ffffff;
-    --color-neutral-50: #f1f3f9;
-    --color-neutral-100: #e2e5f0;
-    --color-neutral-200: #c7cbdd;
-    --color-neutral-300: #9aa0bd;
-    --color-neutral-400: #6e7395;
-    --color-neutral-500: #4c5170;
-    --color-neutral-600: #363a52;
-    --color-neutral-700: #23263a;
-    --color-neutral-800: #171928;
-    --color-neutral-900: #0e0f1a;
+    --color-neutral-50: #f4f6fb;
+    --color-neutral-100: #e8ecf5;
+    --color-neutral-200: #d1d7e8;
+    --color-neutral-300: #a9b2cd;
+    --color-neutral-400: #7b85a6;
+    --color-neutral-500: #555d80;
+    --color-neutral-600: #3c4261;
+    --color-neutral-700: #262a42;
+    --color-neutral-800: #181b2e;
+    --color-neutral-900: #0e101d;
     --color-neutral-950: #07080f;
+
+    /* Extended Color Bands: Warning, Indigo/Purple, Cyan, Emerald */
+    --color-warning-300: #fde047;
+    --color-warning-400: #facc15;
+    --color-warning-500: #eab308;
+    --color-warning-600: #ca8a04;
+
+    --color-purple-400: #c084fc;
+    --color-purple-500: #a855f7;
+    --color-purple-600: #9333ea;
+
+    --color-cyan-400: #22d3ee;
+    --color-cyan-500: #06b6d4;
+
+    --color-emerald-400: #34d399;
+    --color-emerald-500: #10b981;
 
     /* Tag: đa sắc rực rỡ cho thể loại/chủ đề game */
     --color-tag-1: #00aaff;
@@ -155,7 +171,10 @@
     --color-bg: var(--color-neutral-50);
     --color-surface: var(--color-neutral-0);
     --color-surface-hover: var(--color-neutral-100);
-    --color-border: var(--color-neutral-200);
+    --color-surface-active: #dbe2f0;
+    --color-border: transparent;
+    --color-border-subtle: transparent;
+    --color-border-strong: transparent;
 
     --color-text: var(--color-neutral-900);
     --color-text-muted: var(--color-neutral-500);
@@ -170,10 +189,13 @@
 }
 
 .dark {
-    --color-bg: #05060c;
-    --color-surface: var(--color-neutral-900);
-    --color-surface-hover: var(--color-neutral-800);
-    --color-border: var(--color-neutral-700);
+    --color-bg: #07080f;
+    --color-surface: #141726;
+    --color-surface-hover: #1c2035;
+    --color-surface-active: #252b48;
+    --color-border: transparent;
+    --color-border-subtle: transparent;
+    --color-border-strong: transparent;
 
     --color-text: #e8eaf5;
     --color-text-muted: #8b90b5;
@@ -185,4 +207,11 @@
 
     --color-like: #ff3d5e;
     --color-like-soft: color-mix(in srgb, var(--color-accent-400) 16%, transparent);
+}
+
+.dark .bg-surface,
+.dark .bg-surface\/95,
+.dark .bg-surface\/90,
+.dark .bg-surface\/80 {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
 }

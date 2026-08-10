@@ -11,7 +11,9 @@ export interface CreatePostPayload {
     tags: string[];
     allowComments: boolean;
     pinned: boolean;
+    isSpoiler: boolean;
     communityId: string | number;
+    gameTag?: string;
 }
 
 export type PostDataWithSettings = PostData & {

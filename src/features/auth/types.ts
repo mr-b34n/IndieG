@@ -1,13 +1,31 @@
-import type { User } from "@supabase/supabase-js";
+export interface AuthUser {
+    id: string;
+    email: string;
+    username: string;
+    avatar_url?: string;
+    isVerified?: boolean;
+    createdAt?: string;
+}
+
+export type AuthMode = 'login' | 'register' | 'forgot-password' | 'verify-email' | 'reset-password';
 
 export interface AuthState {
-    user: User | null;
+    user: AuthUser | null;
+    accessToken: string | null;
+    refreshToken: string | null;
     loading: boolean;
     mockLogin: boolean;
     customAvatar: string | null;
     setCustomAvatar: (avatar: string | null) => void;
-    initializeAuth: () => () => void;
+    initializeAuth: () => void;
+    login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => void;
+    logout: () => void;
+    refreshTokens: () => Promise<boolean>;
     toggleMockLogin: () => void;
+    verifyEmail: (code: string) => Promise<{ success: boolean; error?: string }>;
+    forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+    resetPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+    changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export interface ValidationRule {
@@ -29,3 +47,4 @@ export interface PasswordValidationResult {
     strengthConfig: PasswordStrengthConfig;
     isEmpty: boolean;
 }
+

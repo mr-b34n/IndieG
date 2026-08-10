@@ -161,6 +161,12 @@ export const getUserRank = (username?: string): UserRank => {
     if (KNOWN_USER_RANKS[cleanName]) {
         return KNOWN_USER_RANKS[cleanName];
     }
+    const foundKey = Object.keys(KNOWN_USER_RANKS).find(
+        (key) => key.toLowerCase() === cleanName.toLowerCase()
+    );
+    if (foundKey) {
+        return KNOWN_USER_RANKS[foundKey];
+    }
     let hash = 0;
     for (let i = 0; i < cleanName.length; i++) {
         hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
@@ -174,8 +180,11 @@ export const getUserRankConfig = (username?: string): UserRankConfig => {
     return RANK_CONFIG[rankKey] || RANK_CONFIG.rookie;
 };
 
-export const getRankLabel = (rank: UserRankConfig, language?: string): string => {
-    if (language === 'en') return rank.labelEn;
+export const getRankLabel = (rank: UserRankConfig, tOrLang?: string | ((key: string) => string)): string => {
+    if (typeof tOrLang === 'function') {
+        return tOrLang(`ranks.${rank.id}`);
+    }
+    if (tOrLang === 'en') return rank.labelEn;
     return rank.labelVi || rank.label;
 };
 

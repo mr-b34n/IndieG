@@ -6,7 +6,6 @@ import {
     faShareNodes,
     faCheck,
     faCircleInfo,
-    faUsers,
     faStar,
     faDesktop,
     faCode,
@@ -156,8 +155,8 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         alt={game.name}
                         className="w-full h-full object-cover object-top sm:object-center transform hover:scale-105 transition-transform duration-700 opacity-95"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/90 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-surface/90 via-surface/40 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/40 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-r from-surface/40 via-transparent to-transparent" />
                 </div>
 
                 {/* Spacer to show off the banner artwork cleanly without overlapping issues */}
@@ -275,14 +274,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 </button>
                             )}
 
-                            <button
-                                type="button"
-                                onClick={() => navigate({ to: "/squad" })}
-                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer hidden sm:flex"
-                            >
-                                <FontAwesomeIcon icon={faUsers} className="text-brand-400" />
-                                <span>{t('game.findSquad')}</span>
-                            </button>
+
                         </div>
 
                         <div className="text-xs font-semibold text-text-muted self-center ml-auto hidden md:flex items-center gap-2 bg-surface-hover px-3.5 py-2 rounded-xl border border-border/60">
@@ -412,7 +404,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         >
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-primary/15 text-primary border border-primary/25 font-mono whitespace-nowrap">
+                                                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-primary/15 text-primary font-mono whitespace-nowrap">
                                                         {note.version}
                                                     </span>
                                                     <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold border whitespace-nowrap ${typeColors[note.type] || "bg-primary/10 text-primary border-primary/20"}`}>
@@ -466,14 +458,14 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         onClick={() => setSysReqType("minimum")}
                                         className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "minimum" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
                                     >
-                                        {t('game.minimumReqs') || "Tối thiểu"}
+                                        {t('game.minimumReqs')}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setSysReqType("recommended")}
                                         className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "recommended" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
                                     >
-                                        {t('game.recommendedReqs') || "Đề nghị"}
+                                        {t('game.recommendedReqs')}
                                     </button>
                                 </div>
                             </div>
@@ -481,7 +473,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {Object.entries(game.systemReqs[sysReqType]).map(([key, val]) => (
                                     <div key={key} className="flex flex-col p-4 rounded-2xl bg-surface-hover/40 border border-border/50">
-                                        <span className="font-semibold uppercase tracking-wider text-text-faint text-[11px] mb-1">{t(`game.${key}`) || key}</span>
+                                        <span className="font-semibold uppercase tracking-wider text-text-faint text-[11px] mb-1">{t(`game.${key}`)}</span>
                                         <span className="text-text font-medium text-sm leading-relaxed break-words">{val}</span>
                                     </div>
                                 ))}

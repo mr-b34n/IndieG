@@ -2,10 +2,12 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
 
 export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
+    const { t } = useTranslation();
     const [selectedReason, setSelectedReason] = useState<string>("");
     const [details, setDetails] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -36,7 +38,7 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
             <div className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
 
                 <div className="flex flex-row items-center justify-between px-5 py-4 border-b border-border bg-surface-hover/30">
-                    <h3 className="font-bold text-lg text-text">Report Post</h3>
+                    <h3 className="font-bold text-lg text-text">{t('report.reportPost')}</h3>
                     <button
                         onClick={onClose}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:bg-surface-hover hover:text-text transition-colors"
@@ -48,16 +50,16 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
                 {isSubmitted ? (
                     <div className="flex flex-col items-center justify-center p-8 gap-4">
                         <FontAwesomeIcon icon={faCheckCircle} className="text-5xl text-success-500" />
-                        <h4 className="font-bold text-xl text-text">Report Submitted</h4>
+                        <h4 className="font-bold text-xl text-text">{t('report.reportSubmitted')}</h4>
                         <p className="text-center text-text-muted text-sm">
-                            Thank you for helping keep our community safe. We will review your report shortly.
+                            {t('report.reportSubmittedDesc')}
                         </p>
                     </div>
                 ) : (
                     <div className="flex flex-col p-5 gap-5">
                         <div>
                             <p className="text-sm text-text-muted mb-3">
-                                You are reporting a post by <span className="font-semibold text-text">{author}</span>. Please select a reason:
+                                {t('report.reportingPostBy', { author })}
                             </p>
                             <div className="flex flex-col gap-2">
                                 {REPORT_REASONS.map((reason) => (
@@ -80,11 +82,11 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-sm font-semibold text-text">Additional details (optional)</label>
+                            <label className="text-sm font-semibold text-text">{t('report.additionalDetails')}</label>
                             <textarea
                                 value={details}
                                 onChange={(e) => setDetails(e.target.value)}
-                                placeholder="Provide any extra context here..."
+                                placeholder={t('report.provideExtraContext')}
                                 className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-24"
                             />
                         </div>
@@ -94,7 +96,7 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
                                 onClick={onClose}
                                 className="flex-1 py-2.5 rounded-full font-semibold text-sm text-text bg-surface-hover hover:bg-border transition-colors"
                             >
-                                Cancel
+                                {t('report.cancel')}
                             </button>
                             <button
                                 onClick={handleSubmit}
@@ -104,7 +106,7 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
                                     : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                             >
-                                Submit Report
+                                {t('report.submitReport')}
                             </button>
                         </div>
                     </div>
