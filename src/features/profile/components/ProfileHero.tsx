@@ -7,9 +7,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
-import { useClickOutside } from "../hooks/useClickOutside";
 import type { Badge, ProfileIdentity, ProfileStatus } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 interface ProfileHeroProps {
     coverSrc: string;
@@ -38,7 +38,7 @@ interface ProfileHeroProps {
 
 const STATUS_OPTIONS: { val: ProfileStatus; label: sthttps://github.com/mr-b34n/IndieG/pull/49/conflict?name=src%252Ffeatures%252Fprofile%252Fcomponents%252FProfileHero.tsx&base_oid=649036760b64dd72fbdc0c2a0d6e35b229baaa29&head_oid=c326749be0cf2836ea291636c1f6545075d35fc5ring; color: string }[] = [
     { val: "online",  label: "Online",  color: "bg-emerald-500" },
-    { val: "in-game", label: "In‑Game", color: "bg-primary" },
+    { val: "in-game", label: "In-Game", color: "bg-primary" },
     { val: "offline", label: "Offline", color: "bg-neutral-500" },
 ];
 
