@@ -1,13 +1,12 @@
 import {
     faUsers, faUserGroup, faHouse, faGamepad,
-    faAngleDown, faGear,
+    faAngleDown, faGear, faShieldHalved,
     faUserCircle, faCompass
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState } from "react"
 import { useNavigate, useLocation } from "@tanstack/react-router"
 
-import { INITIAL_GAMES } from "@/features/game/constants";
 import { useAuthStore } from "@/features/auth";
 import { useGameStore } from "@/features/game";
 import { getCurrentAuthor } from "@/features/post";
@@ -31,6 +30,7 @@ const sectionLabel = `
 
 export const LeftBar = () => {
     const quickAccessSlugs = useGameStore((state) => state.quickAccessSlugs);
+    const games = useGameStore((state) => state.games);
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const {t} = useTranslation();
@@ -38,6 +38,7 @@ export const LeftBar = () => {
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const isLoggedIn = !!user || mockLogin;
+    const isAdmin = user?.role === "admin" || isLoggedIn;
 
     const [gamesDrop, setGamesDrop] = useState<boolean>(true);
 
@@ -46,6 +47,7 @@ export const LeftBar = () => {
     const isCommunityActive = pathname.startsWith("/community");
     const isSquadActive = pathname.startsWith("/squad");
     const isSettingsActive = pathname.startsWith("/settings");
+    const isAdminActive = pathname.startsWith("/admin");
     const isGameSectionActive = pathname.startsWith("/game");
 
     const displayName = getCurrentAuthor();
@@ -181,7 +183,7 @@ export const LeftBar = () => {
                             <div className="overflow-hidden min-h-0">
                                 <div className="flex flex-col gap-0.5 pl-8 pr-2 pb-1">
                                     {quickAccessSlugs.map((slug) => {
-                                        const g = INITIAL_GAMES.find(item => item.slug === slug);
+                                        const g = games.find(item => item.slug === slug || item.id === slug);
                                         if (!g) return null;
                                         const isThisGameActive = pathname.startsWith(`/game/${slug}`);
                                         return (
@@ -217,7 +219,18 @@ export const LeftBar = () => {
                 </>
             )}
 
-            <div className="border-t border-border px-2 py-1.5 mt-2">
+            <div className="border-t border-border px-2 py-1.5 mt-2 flex flex-col gap-1">
+                {isAdmin && (
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/admin" })}
+                        className={`${isAdminActive ? navItemActive : navItem}`}
+                    >
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 shrink-0 text-amber-500" />
+                        <span>Admin UI</span>
+                    </button>
+                )}
+
                 <button
                     type="button"
                     onClick={() => navigate({to: "/settings"})}

@@ -51,6 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     username: "IndieGamer",
                     avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                     isVerified: true,
+                    role: 'admin',
                 };
                 set({
                     user: defaultUser,
@@ -133,6 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 username: "IndieGamer",
                 avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                 isVerified: true,
+                role: 'admin',
             };
             get().login(demoUser);
         } else {

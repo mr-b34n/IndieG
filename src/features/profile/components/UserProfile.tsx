@@ -78,7 +78,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const avatarUrl =
         isOwnProfile && customAvatar ? customAvatar
-        : isOwnProfile && user?.avatar_url ? user.avatar_url
+        : isOwnProfile && user?.avatar_url ? user?.avatar_url
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`;
 
     const handleAddGuestbook = (e: React.FormEvent) => {
@@ -291,7 +291,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 <div className="lg:col-span-8 flex flex-col gap-0 w-full">
                     <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} friendsCount={friendsList.length} showBookmarks={showBookmarks} t={t} />
 
-                    <div className="pt-5 transition-all duration-300 min-h-[480px]">
+                    <div className="pt-5 transition-all duration-300 min-h-120">
                         {activeTab === "library" && <LibraryTab games={LIBRARY_GAMES} t={t} />}
                         {activeTab === "posts" && <PostsTab posts={displayPosts} t={t} />}
                         {activeTab === "friends" && (

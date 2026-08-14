@@ -7,10 +7,10 @@ import {
     faGamepad,
     faUsers,
     faFileLines,
-    faUserGroup,
     faArrowRight,
     faHistory,
     faTrash,
+    faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { usePostsStore } from "@/features/post";
@@ -196,11 +196,11 @@ export const Search = () => {
                             ) : (
                                 <>
                                     {/* Games preview */}
-                                    {searchResults.games.length > 0 && (
+                                    {(searchResults.games || []).length > 0 && (
                                         <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faGamepad} className="text-primary" />
-                                                <span>Tựa game ({searchResults.games.length})</span>
+                                                <span>Tựa game ({(searchResults.games || []).length})</span>
                                             </p>
                                             {searchResults.games.slice(0, 3).map((game) => (
                                                 <button
@@ -231,11 +231,11 @@ export const Search = () => {
                                     )}
 
                                     {/* Communities preview */}
-                                    {searchResults.communities.length > 0 && (
+                                    {(searchResults.communities || []).length > 0 && (
                                         <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faUsers} className="text-emerald-500" />
-                                                <span>Cộng đồng ({searchResults.communities.length})</span>
+                                                <span>Cộng đồng ({(searchResults.communities || []).length})</span>
                                             </p>
                                             {searchResults.communities.slice(0, 3).map((comm) => (
                                                 <button
@@ -265,34 +265,34 @@ export const Search = () => {
                                         </div>
                                     )}
 
-                                    {/* Squads preview */}
-                                    {searchResults.squads.length > 0 && (
+                                    {/* Users preview */}
+                                    {(searchResults.users || []).length > 0 && (
                                         <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUserGroup} className="text-amber-500" />
-                                                <span>Tổ đội LFG ({searchResults.squads.length})</span>
+                                                <FontAwesomeIcon icon={faUser} className="text-cyan-500" />
+                                                <span>Người dùng ({(searchResults.users || []).length})</span>
                                             </p>
-                                            {searchResults.squads.slice(0, 2).map((sq) => (
+                                            {searchResults.users.slice(0, 3).map((u) => (
                                                 <button
-                                                    key={sq.id}
+                                                    key={u.id}
                                                     onClick={() => {
-                                                        saveRecentSearch(sq.name);
+                                                        saveRecentSearch(u.name);
                                                         setFocused(false);
-                                                        navigate({ to: "/squad" });
+                                                        navigate({ to: "/profile" });
                                                     }}
                                                     className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
                                                 >
                                                     <img
-                                                        src={sq.gameLogo}
-                                                        alt={sq.game}
-                                                        className="w-7 h-7 rounded-lg object-cover shrink-0"
+                                                        src={u.avatar}
+                                                        alt={u.name}
+                                                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-border"
                                                     />
                                                     <div className="flex flex-col min-w-0">
                                                         <span className="text-xs font-bold text-text truncate">
-                                                            {sq.name}
+                                                            {u.name}
                                                         </span>
-                                                        <span className="text-[10px] text-text-muted">
-                                                            {sq.game} ({sq.currentMembers}/{sq.maxMembers})
+                                                        <span className="text-[10px] text-text-muted truncate">
+                                                            {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
                                                         </span>
                                                     </div>
                                                 </button>
@@ -301,11 +301,11 @@ export const Search = () => {
                                     )}
 
                                     {/* Posts preview */}
-                                    {searchResults.posts.length > 0 && (
+                                    {(searchResults.posts || []).length > 0 && (
                                         <div className="flex flex-col pb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faFileLines} className="text-rose-500" />
-                                                <span>Thảo luận & Bài viết ({searchResults.posts.length})</span>
+                                                <span>Thảo luận & Bài viết ({(searchResults.posts || []).length})</span>
                                             </p>
                                             {searchResults.posts.slice(0, 3).map((post) => (
                                                 <button

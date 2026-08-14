@@ -5,6 +5,7 @@ import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityData } from "../types";
 import { getCurrentAuthor } from "@/features/post";
 import { useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/features/auth";
 
 const CATEGORY_OPTIONS = ["FPS", "RPG", "MOBA", "Survival", "Open World", "Strategy", "Sports", "MMORPG", "Casual", "Fighting"];
 
@@ -30,6 +31,7 @@ interface CreateCommunityModalProps {
 export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onClose }) => {
     const navigate = useNavigate();
     const addCommunity = useCommunitiesStore((state) => state.addCommunity);
+    const user = useAuthStore((state) => state.user);
 
     const [name, setName] = useState("");
     const [category, setCategory] = useState("FPS");
@@ -40,6 +42,19 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
     const [rulesInput, setRulesInput] = useState(
         "1. Tôn trọng tất cả các thành viên trong cộng đồng.\n2. Không đả kích, toxic hoặc xúc phạm cá nhân.\n3. Không đăng bài quảng cáo rác (spam)."
     );
+
+    // Safety check: if user is not admin/moderator, close modal immediately
+    const canCreate = user?.role === 'admin' || user?.role === 'moderator';
+    
+    React.useEffect(() => {
+        if (!canCreate) {
+            onClose();
+        }
+    }, [canCreate, onClose]);
+
+    if (!canCreate) {
+        return null;
+    }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

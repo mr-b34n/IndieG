@@ -1,19 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faBan } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 import { DEFAULT_AVATAR as avatarUser } from "@/shared/constants/images";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore } from "../store/usePostsStore";
-import { useNotificationStore } from "@/features/notification/store/useNotificationStore";
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
+import { notificationApi } from "@/features/notification";
 
 
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -143,171 +143,9 @@ const CommentImagePreview = ({ url, onRemove }: { url: string; onRemove: () => v
     );
 };
 
-const MENTION_USERS = [
-    "ProGamer99",
-    "DevCreator",
-    "ChillVibes",
-    "CyberSamurai",
-    "PixelQueen",
-    "Alex_Dev",
-    "Elena_V",
-    "GamerMaster",
-    "RetroKing",
-    "Shouko_Pro",
-    "NeoCyber",
-    "GamerX99",
-];
-
-const triggerMentionNotifications = (text: string, postId: string) => {
-    const matches = text.match(/@(\w+)/g) || [];
-    const seen = new Set<string>();
-    matches.forEach((m) => {
-        const username = m.slice(1);
-        if (seen.has(username)) return;
-        seen.add(username);
-        useNotificationStore.getState().addNotification({
-            type: "mention",
-            title: `${getCurrentAuthor()} đã nhắc đến bạn (@${username}) trong một bình luận`,
-            message: text.slice(0, 100),
-            avatarUrl: avatarUser,
-            timestamp: "Vừa xong",
-            link: `/post/${postId}`,
-        });
-    });
-};
-
 const renderCommentContent = (text: string) => {
     if (!text) return null;
-    const parts = text.split(/(@\w+)/g);
-    return parts.map((part, idx) => {
-        if (/^@\w+$/.test(part)) {
-            const username = part.slice(1);
-            const rankConfig = getUserRankConfig(username);
-            const textColor = rankConfig.textColor.replace(/font-extrabold|font-bold/g, "").trim();
-            return (
-                <span
-                    key={idx}
-                    className={`${textColor} font-medium hover:underline cursor-pointer transition-colors inline-block`}
-                    title={`Mentioned user ${part}`}
-                >
-                    {part}
-                </span>
-            );
-        }
-        return <span key={idx}>{part}</span>;
-    });
-};
-
-const MentionTextArea = ({
-    value,
-    onChange,
-    placeholder,
-    className = "",
-    rows = 1,
-    autoFocus = false,
-    inputRef,
-}: {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    placeholder?: string;
-    className?: string;
-    rows?: number;
-    autoFocus?: boolean;
-    inputRef?: React.RefObject<HTMLTextAreaElement | null>;
-}) => {
-    const [mentionState, setMentionState] = useState<{ query: string; start: number; end: number } | null>(null);
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const internalRef = useRef<HTMLTextAreaElement>(null);
-    const ref = inputRef || internalRef;
-
-    const filteredUsers = useMemo(() => {
-        if (!mentionState) return [];
-        return MENTION_USERS.filter((u) => u.toLowerCase().startsWith(mentionState.query)).slice(0, 5);
-    }, [mentionState]);
-
-    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const val = e.target.value;
-        onChange(e);
-
-        const cursor = e.target.selectionStart;
-        const textBeforeCursor = val.slice(0, cursor);
-        const match = textBeforeCursor.match(/@(\w*)$/);
-        if (match) {
-            setMentionState({ query: match[1].toLowerCase(), start: match.index!, end: cursor });
-            setSelectedIndex(0);
-        } else {
-            setMentionState(null);
-        }
-    };
-
-    const insertMention = (username: string) => {
-        if (!mentionState) return;
-        const before = value.slice(0, mentionState.start);
-        const after = value.slice(mentionState.end);
-        const nextVal = `${before}@${username} ${after}`;
-
-        if (ref.current) {
-            ref.current.value = nextVal;
-            const fakeEvent = {
-                target: ref.current,
-                currentTarget: ref.current,
-            } as unknown as React.ChangeEvent<HTMLTextAreaElement>;
-            onChange(fakeEvent);
-        }
-        setMentionState(null);
-    };
-
-    return (
-        <div className="relative w-full">
-            {mentionState && filteredUsers.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-1 w-52 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in p-1">
-                    <div className="max-h-40 overflow-y-auto flex flex-col gap-0.5">
-                        {filteredUsers.map((user, idx) => {
-                            const rankConfig = getUserRankConfig(user);
-                            const textColor = rankConfig.textColor.replace(/font-extrabold|font-bold/g, "").trim();
-                            return (
-                                <button
-                                    key={user}
-                                    type="button"
-                                    onClick={() => insertMention(user)}
-                                    className={`w-full flex items-center px-3 py-1.5 rounded-lg text-left text-xs transition-colors ${
-                                        idx === selectedIndex ? "bg-surface-hover font-semibold" : "hover:bg-surface-hover"
-                                    }`}
-                                >
-                                    <span className={`truncate font-semibold ${textColor}`}>@{user}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-            <textarea
-                ref={ref as React.Ref<HTMLTextAreaElement>}
-                value={value}
-                onChange={handleTextChange}
-                onKeyDown={(e) => {
-                    if (mentionState && filteredUsers.length > 0) {
-                        if (e.key === "ArrowDown") {
-                            e.preventDefault();
-                            setSelectedIndex((prev) => (prev + 1) % filteredUsers.length);
-                        } else if (e.key === "ArrowUp") {
-                            e.preventDefault();
-                            setSelectedIndex((prev) => (prev - 1 + filteredUsers.length) % filteredUsers.length);
-                        } else if (e.key === "Enter" || e.key === "Tab") {
-                            e.preventDefault();
-                            insertMention(filteredUsers[selectedIndex]);
-                        } else if (e.key === "Escape") {
-                            setMentionState(null);
-                        }
-                    }
-                }}
-                placeholder={placeholder}
-                className={className}
-                rows={rows}
-                autoFocus={autoFocus}
-            />
-        </div>
-    );
+    return <span>{text}</span>;
 };
 
 const sortComments = (list: CommentData[], sort: "top" | "newest" = "top"): CommentData[] => {
@@ -524,18 +362,6 @@ const CommentItem = ({
 
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setShowMenu(false);
-                                                    alert("Đã chặn người dùng: " + comment.author);
-                                                }}
-                                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium"
-                                            >
-                                                <FontAwesomeIcon icon={faBan} className="w-3.5" />
-                                                <span>Chặn người dùng</span>
-                                            </button>
-
-                                            <button
-                                                type="button"
                                                 onClick={handleDelete}
                                                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/40 mt-0.5 pt-2"
                                             >
@@ -617,8 +443,8 @@ const CommentItem = ({
                     {/* Reply Input */}
                     {isReplying && isCommentsAllowed && (
                         <div className="flex flex-col gap-2 mt-3 p-3 bg-surface hover:bg-surface-hover/30 border border-border/60 rounded-xl focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-sm transition-all duration-200 animate-fade-in">
-                            <MentionTextArea
-                                inputRef={replyTextareaRef}
+                            <textarea
+                                ref={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
                                 placeholder={t('comment.placeholderReply', { author: comment.author })}
@@ -808,21 +634,29 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     
     const handleMainReplySubmit = async () => {
         if (!commentText.trim() && !mainImage.previewUrl) return;
+        const textContent = commentText.trim();
         const imageDataUrl = await mainImage.toDataUrl();
         const newComment: CommentData = {
             id: `${postId}-${Date.now()}`,
             author: getCurrentAuthor(),
             authorAvatar: avatarUser,
-            content: commentText.trim(),
+            content: textContent,
             timeAgo: "Vừa xong",
             likes: 0,
             image: imageDataUrl,
         };
         setComments((prev) => [...prev, newComment]);
-        triggerMentionNotifications(commentText.trim(), postId);
         setCommentText("");
         mainImage.clear();
         if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
+
+        void notificationApi.createNotification({
+            type: "comment",
+            referenceId: String(postId),
+            title: "Bình luận mới trên bài viết",
+            message: textContent ? `Bạn đã đăng bình luận: "${textContent.slice(0, 40)}${textContent.length > 40 ? "..." : ""}"` : "Bạn đã đính kèm ảnh trong bình luận",
+            link: `/post/${postId}`,
+        });
     };
 
     
@@ -837,7 +671,14 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             image,
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));
-        triggerMentionNotifications(text, postId);
+
+        void notificationApi.createNotification({
+            type: "reply",
+            referenceId: String(postId),
+            title: "Phản hồi mới cho bình luận",
+            message: `Bạn đã trả lời: "${text.slice(0, 40)}${text.length > 40 ? "..." : ""}"`,
+            link: `/post/${postId}`,
+        });
     };
 
     const canSubmitMain = commentText.trim().length > 0 || !!mainImage.previewUrl;
@@ -933,8 +774,8 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     <>
                         <img src={avatarUser} alt="You" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-1 ring-border shrink-0" />
                         <div className="flex flex-col flex-1 gap-2 bg-surface hover:bg-surface-hover/30 border border-border/80 rounded-xl p-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200">
-                            <MentionTextArea
-                                inputRef={mainTextareaRef}
+                            <textarea
+                                ref={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
                                 placeholder={t('comment.placeholderMain')}

@@ -7,9 +7,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
+import { useClickOutside } from "../hooks/useClickOutside";
 import type { Badge, ProfileIdentity, ProfileStatus } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
-import { useClickOutside } from "../hooks/useClickOutside";
 
 interface ProfileHeroProps {
     coverSrc: string;
@@ -38,7 +38,7 @@ interface ProfileHeroProps {
 
 const STATUS_OPTIONS: { val: ProfileStatus; label: string; color: string }[] = [
     { val: "online",  label: "Online",  color: "bg-emerald-500" },
-    { val: "in-game", label: "In-Game", color: "bg-primary" },
+    { val: "in-game", label: "In‑Game", color: "bg-primary" },
     { val: "offline", label: "Offline", color: "bg-neutral-500" },
 ];
 
