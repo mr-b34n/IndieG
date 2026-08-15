@@ -78,7 +78,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const avatarUrl =
         isOwnProfile && customAvatar ? customAvatar
-        : isOwnProfile && user?.avatar_url ? user.avatar_url
+        : isOwnProfile && user?.user_metadata?.avatar_url ? user.user_metadata.avatar_url
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`;
 
     const handleAddGuestbook = (e: React.FormEvent) => {

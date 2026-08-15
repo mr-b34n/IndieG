@@ -5,6 +5,7 @@ import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
+import { adminApi } from "../api/adminApi";
 
 export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     const { t } = useTranslation();
@@ -12,9 +13,15 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     const [details, setDetails] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!selectedReason) return;
-        console.log("Reporting post", postId, "reason:", selectedReason, "details:", details);
+        await adminApi.createReport({
+            targetType: "post",
+            targetId: String(postId),
+            reason: selectedReason,
+            description: details,
+            targetAuthor: author,
+        });
         setIsSubmitted(true);
         setTimeout(() => {
             onClose();

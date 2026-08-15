@@ -5,6 +5,7 @@ export interface AuthUser {
     avatar_url?: string;
     isVerified?: boolean;
     createdAt?: string;
+    role?: 'admin' | 'moderator' | 'user';
 }
 
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'verify-email' | 'reset-password';

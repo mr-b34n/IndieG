@@ -1,22 +1,32 @@
-export type NotificationType = "like" | "comment" | "follow" | "mention" | "system";
+export type NotificationType = "comment" | "reply" | "like" | "community" | "mention" | "system";
 
-export interface NotificationItem {
+export interface NotificationEntity {
     id: string;
+    userId: string;
     type: NotificationType;
-    title: string;
+    referenceId: string;
     message: string;
-    avatarUrl?: string;
-    timestamp: string; // e.g. "5 phút trước", "1 giờ trước"
     isRead: boolean;
+    createdAt: string;
+    title?: string;
+    avatarUrl?: string;
     link?: string;
 }
 
+export type NotificationItem = NotificationEntity;
+
 export interface NotificationState {
     notifications: NotificationItem[];
-    addNotification: (notification: Omit<NotificationItem, "id" | "isRead">) => void;
+    addNotification: (
+        notification: Partial<NotificationEntity> & {
+            type: NotificationType;
+            message: string;
+        }
+    ) => NotificationItem;
+    listNotifications: (userId?: string) => NotificationItem[];
     markAsRead: (id: string) => void;
-    markAllAsRead: () => void;
+    markAllAsRead: (userId?: string) => void;
     deleteNotification: (id: string) => void;
     clearAll: () => void;
+    setNotifications: (notifications: NotificationItem[]) => void;
 }
-

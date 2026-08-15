@@ -351,13 +351,10 @@ export const CreatePostBox = ({
             const draft = drafts[0];
             // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.title) setTitle(draft.title);
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.content) {
                 setContent(draft.content);
             }
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.communityId) setCommunityId(draft.communityId);
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.isSpoiler !== undefined) setIsSpoiler(draft.isSpoiler);
             hasLoadedDraft.current = true;
         }

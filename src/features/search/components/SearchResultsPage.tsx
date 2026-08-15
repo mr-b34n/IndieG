@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -6,21 +6,25 @@ import {
     faGamepad,
     faUsers,
     faFileLines,
-    faUserGroup,
+    faUserCheck,
+    faUserPlus,
     faXmark,
     faCheck,
     faPlus,
     faChevronRight,
     faFilter,
     faWandMagicSparkles,
+    faChevronLeft,
+    faUser,
+    faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
-import { useSquadStore } from "@/features/squad";
 import { useGameStore } from "@/features/game";
-import { performSearch } from "../helpers/performSearch";
-import { type SearchTabCategory } from "../types";
+import { fetchSearchResults } from "../api/searchApi";
+import { MOCK_USERS } from "../mockUsers";
+import { type SearchTabCategory, type SearchResponse, type SearchUser } from "../types";
 import { formatCompactNumber } from "@/features/community/constants";
 
 const POPULAR_TAGS = [
@@ -30,8 +34,8 @@ const POPULAR_TAGS = [
     "#raft",
     "#esports",
     "#rdr2",
-    "#eldenring",
-    "#lfg",
+    "#ghostrider",
+    "#s1mple",
     "#highlight",
     "#mods",
 ];
@@ -39,13 +43,59 @@ const POPULAR_TAGS = [
 export const SearchResultsPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const searchParams = useSearch({ strict: false }) as { q?: string; tab?: SearchTabCategory };
+    const searchParams = useSearch({ strict: false }) as {
+        q?: string;
+        tab?: SearchTabCategory;
+        type?: SearchTabCategory;
+        page?: number;
+        size?: number;
+    };
 
     const initialQuery = searchParams.q || "";
-    const [inputValue, setInputValue] = useState(initialQuery);
-    const [activeTab, setActiveTab] = useState<SearchTabCategory>(searchParams.tab || "all");
+    const activeTab = searchParams.type || searchParams.tab || "all";
+    const currentPage = Number(searchParams.page) || 1;
+    const pageSize = Number(searchParams.size) || 10;
 
-    // Sync input with route query param if URL changes
+    const [inputValue, setInputValue] = useState(initialQuery);
+    const [, startTransition] = useTransition();
+
+    // Data stores for client fallback context
+    const { posts } = usePostsStore();
+    const { communities, toggleJoinCommunity } = useCommunitiesStore();
+    const { followedSlugs, toggleFollowGame } = useGameStore();
+
+    // Local state for friends management in user search results
+    const [usersList, setUsersList] = useState<SearchUser[]>(MOCK_USERS);
+
+    // Response state from API
+    const [searchData, setSearchData] = useState<SearchResponse>({
+        success: true,
+        query: initialQuery,
+        type: activeTab,
+        pagination: {
+            page: currentPage,
+            size: pageSize,
+            total: 0,
+            totalPages: 0,
+            hasMore: false,
+        },
+        data: {
+            posts: [],
+            users: [],
+            communities: [],
+            games: [],
+        },
+        meta: {
+            totalPosts: 0,
+            totalUsers: 0,
+            totalCommunities: 0,
+            totalGames: 0,
+        },
+    });
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Sync input value when route search params change
     useEffect(() => {
         if (searchParams.q !== undefined) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -53,64 +103,117 @@ export const SearchResultsPage = () => {
         }
     }, [searchParams.q]);
 
-    // Data stores
-    const { posts } = usePostsStore();
-    const { communities, toggleJoinCommunity } = useCommunitiesStore();
-    const { squads, joinSquad } = useSquadStore();
-    const { followedSlugs, toggleFollowGame } = useGameStore();
+    // Fetch search results from /api/search
+    useEffect(() => {
+        let isMounted = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
 
-    // Perform Search
-    const results = useMemo(() => {
-        return performSearch(inputValue, posts, communities, squads);
-    }, [inputValue, posts, communities, squads]);
+        fetchSearchResults(initialQuery, activeTab, currentPage, pageSize, {
+            posts,
+            communities,
+            users: usersList,
+        }).then((res) => {
+            if (isMounted) {
+                setSearchData(res);
+                setIsLoading(false);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [initialQuery, activeTab, currentPage, pageSize, posts, communities, usersList]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (inputValue.trim()) {
+        const clean = inputValue.trim();
+        startTransition(() => {
             navigate({
                 to: "/search",
-                search: { q: inputValue.trim(), tab: activeTab },
+                search: { q: clean, type: activeTab, page: 1, size: pageSize },
             });
-        }
+        });
     };
 
     const handleTagClick = (tag: string) => {
         const cleanTag = tag.replace("#", "");
         setInputValue(cleanTag);
-        navigate({
-            to: "/search",
-            search: { q: cleanTag, tab: "all" },
+        startTransition(() => {
+            navigate({
+                to: "/search",
+                search: { q: cleanTag, type: "all", page: 1, size: pageSize },
+            });
         });
     };
 
-    const handleTabChange = (tab: SearchTabCategory) => {
-        setActiveTab(tab);
-        navigate({
-            to: "/search",
-            search: { q: inputValue, tab },
+    const handleTabChange = (type: SearchTabCategory) => {
+        startTransition(() => {
+            navigate({
+                to: "/search",
+                search: { q: inputValue, type, page: 1, size: pageSize },
+            });
         });
     };
 
-    const tabsList: { key: SearchTabCategory; label: string; icon: import("@fortawesome/fontawesome-svg-core").IconDefinition; count: number }[] = [
-        { key: "all", label: t('search.tabAll'), icon: faFilter, count: results.totalCount },
-        { key: "games", label: t('search.tabGames'), icon: faGamepad, count: results.games.length },
-        { key: "communities", label: t('search.tabCommunities'), icon: faUsers, count: results.communities.length },
-        { key: "posts", label: t('search.tabPosts'), icon: faFileLines, count: results.posts.length },
-        { key: "squads", label: t('search.tabSquads'), icon: faUserGroup, count: results.squads.length },
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || newPage > searchData.pagination.totalPages) return;
+        startTransition(() => {
+            navigate({
+                to: "/search",
+                search: { q: inputValue, type: activeTab, page: newPage, size: pageSize },
+            });
+        });
+    };
+
+    const handleSizeChange = (newSize: number) => {
+        startTransition(() => {
+            navigate({
+                to: "/search",
+                search: { q: inputValue, type: activeTab, page: 1, size: newSize },
+            });
+        });
+    };
+
+    const toggleFriendStatus = (userId: string) => {
+        setUsersList((prev) =>
+            prev.map((u) => (u.id === userId ? { ...u, isFriend: !u.isFriend } : u))
+        );
+    };
+
+    const tabsList: {
+        key: SearchTabCategory;
+        label: string;
+        icon: import("@fortawesome/fontawesome-svg-core").IconDefinition;
+        count: number;
+    }[] = [
+        { key: "all", label: t("search.tabAll"), icon: faFilter, count: searchData.pagination.total },
+        { key: "games", label: t("search.tabGames"), icon: faGamepad, count: searchData.meta.totalGames },
+        { key: "communities", label: t("search.tabCommunities"), icon: faUsers, count: searchData.meta.totalCommunities },
+        { key: "posts", label: t("search.tabPosts"), icon: faFileLines, count: searchData.meta.totalPosts },
+        { key: "users", label: t("search.tabUsers"), icon: faUser, count: searchData.meta.totalUsers },
     ];
+
+    const { posts: resPosts, users: resUsers, communities: resCommunities, games: resGames } = searchData.data;
 
     return (
         <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto py-4 px-3 sm:px-6">
             {/* Top Search Banner */}
             <div className="relative overflow-hidden rounded-3xl bg-surface p-5 sm:p-8 shadow-lg border border-border">
                 <div className="relative z-10 flex flex-col gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                            <FontAwesomeIcon icon={faMagnifyingGlass} />
-                        </span>
-                        <h1 className="text-xl sm:text-2xl font-black text-text">
-                            {t('search.title')}
-                        </h1>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                                <FontAwesomeIcon icon={faMagnifyingGlass} />
+                            </span>
+                            <h1 className="text-xl sm:text-2xl font-black text-text">
+                                {t("search.title")}
+                            </h1>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-hover border border-border text-[11px] font-bold text-text-muted">
+                            <FontAwesomeIcon icon={faGlobe} className="text-primary" />
+                            <span>GET /api/search</span>
+                        </div>
                     </div>
 
                     {/* Search Form */}
@@ -121,7 +224,7 @@ export const SearchResultsPage = () => {
                                 type="text"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                placeholder={t('search.placeholder')}
+                                placeholder={t("search.placeholder")}
                                 className="w-full bg-transparent text-text placeholder:text-text-faint text-sm sm:text-base font-medium focus:outline-none"
                             />
                             {inputValue && (
@@ -129,7 +232,9 @@ export const SearchResultsPage = () => {
                                     type="button"
                                     onClick={() => {
                                         setInputValue("");
-                                        navigate({ to: "/search", search: { q: "", tab: activeTab } });
+                                        startTransition(() => {
+                                            navigate({ to: "/search", search: { q: "", type: activeTab, page: 1, size: pageSize } });
+                                        });
                                     }}
                                     className="p-1 rounded-full text-text-faint hover:text-text hover:bg-surface transition-colors text-xs"
                                 >
@@ -140,7 +245,7 @@ export const SearchResultsPage = () => {
                                 type="submit"
                                 className="shrink-0 px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
                             >
-                                {t('search.searchBtn')}
+                                {t("search.searchBtn")}
                             </button>
                         </div>
                     </form>
@@ -149,7 +254,7 @@ export const SearchResultsPage = () => {
                     <div className="flex items-center gap-2 flex-wrap pt-1">
                         <span className="text-xs font-bold text-text-faint flex items-center gap-1 shrink-0">
                             <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-400 text-xs" />
-                            {t('search.hotKeywords')}
+                            {t("search.hotKeywords")}
                         </span>
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {POPULAR_TAGS.map((tag) => (
@@ -167,71 +272,94 @@ export const SearchResultsPage = () => {
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-                {tabsList.map((tab) => {
-                    const isActive = activeTab === tab.key;
-                    return (
-                        <button
-                            key={tab.key}
-                            onClick={() => handleTabChange(tab.key)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
-                                isActive
-                                    ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]"
-                                    : "bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border"
-                            }`}
-                        >
-                            <FontAwesomeIcon icon={tab.icon} className={isActive ? "text-white" : "text-text-faint"} />
-                            <span>{tab.label}</span>
-                            <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                    isActive ? "bg-white/20 text-white" : "bg-surface-hover text-text-faint"
+            {/* Target Category Tabs (Games, Communities, Posts, Users) */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-1">
+                <div className="flex items-center gap-2 shrink-0">
+                    {tabsList.map((tab) => {
+                        const isActive = activeTab === tab.key;
+                        return (
+                            <button
+                                key={tab.key}
+                                onClick={() => handleTabChange(tab.key)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                                    isActive
+                                        ? "bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]"
+                                        : "bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border"
                                 }`}
                             >
-                                {tab.count}
-                            </span>
-                        </button>
-                    );
-                })}
+                                <FontAwesomeIcon icon={tab.icon} className={isActive ? "text-white" : "text-text-faint"} />
+                                <span>{tab.label}</span>
+                                <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                        isActive ? "bg-white/20 text-white" : "bg-surface-hover text-text-faint"
+                                    }`}
+                                >
+                                    {tab.count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Page Size selector */}
+                <div className="hidden md:flex items-center gap-2 shrink-0 text-xs font-medium text-text-muted bg-surface px-3 py-1.5 rounded-2xl border border-border">
+                    <span>{t("search.pageSize")}:</span>
+                    <select
+                        value={pageSize}
+                        onChange={(e) => handleSizeChange(Number(e.target.value))}
+                        className="bg-transparent text-text font-bold focus:outline-none cursor-pointer"
+                    >
+                        <option value={5} className="bg-surface text-text">5</option>
+                        <option value={10} className="bg-surface text-text">10</option>
+                        <option value={20} className="bg-surface text-text">20</option>
+                    </select>
+                </div>
             </div>
 
+            {/* Loading Indicator */}
+            {isLoading && (
+                <div className="flex items-center justify-center p-8 text-primary gap-2 font-bold text-sm">
+                    <span className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <span>Đang tìm kiếm...</span>
+                </div>
+            )}
+
             {/* Results Section */}
-            {!inputValue.trim() ? (
-                /* Empty state when query is blank */
-                <div className="flex flex-col items-center justify-center p-12 bg-surface rounded-3xl border border-border text-center gap-3">
-                    <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold mb-2">
-                        <FontAwesomeIcon icon={faMagnifyingGlass} />
+            {!isLoading && (
+                !inputValue.trim() ? (
+                    <div className="flex flex-col items-center justify-center p-12 bg-surface rounded-3xl border border-border text-center gap-3">
+                        <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold mb-2">
+                            <FontAwesomeIcon icon={faMagnifyingGlass} />
+                        </div>
+                        <h3 className="text-lg font-bold text-text">Hãy nhập từ khóa để tìm kiếm</h3>
+                        <p className="text-sm text-text-muted max-w-md">
+                            Bạn có thể tìm kiếm tựa game, cộng đồng thảo luận, bài viết kinh nghiệm hoặc tài khoản người dùng trên hệ thống.
+                        </p>
                     </div>
-                    <h3 className="text-lg font-bold text-text">Hãy nhập từ khóa để tìm kiếm</h3>
-                    <p className="text-sm text-text-muted max-w-md">
-                        Bạn có thể tìm kiếm tựa game yêu thích, cộng đồng thảo luận, bài viết chia sẻ kinh nghiệm hoặc tổ đội tuyển thành viên.
-                    </p>
-                </div>
-            ) : results.totalCount === 0 ? (
-                /* Empty state when no match */
-                <div className="flex flex-col items-center justify-center p-12 bg-surface rounded-3xl border border-border text-center gap-3">
-                    <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl font-bold mb-2">
-                        <FontAwesomeIcon icon={faXmark} />
+                ) : searchData.pagination.total === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-12 bg-surface rounded-3xl border border-border text-center gap-3">
+                        <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl font-bold mb-2">
+                            <FontAwesomeIcon icon={faXmark} />
+                        </div>
+                        <h3 className="text-lg font-bold text-text">{t("search.noResultsTitle")}</h3>
+                        <p className="text-sm text-text-muted max-w-md">
+                            {t("search.noResultsDesc")}
+                        </p>
                     </div>
-                    <h3 className="text-lg font-bold text-text">{t('search.noResultsTitle')}</h3>
-                    <p className="text-sm text-text-muted max-w-md">
-                        {t('search.noResultsDesc')}
-                    </p>
-                </div>
-            ) : (
+                ) : (
                 <div className="flex flex-col gap-8">
                     {/* 🎮 GAMES SECTION */}
-                    {(activeTab === "all" || activeTab === "games") && results.games.length > 0 && (
+                    {(activeTab === "all" || activeTab === "games") && resGames.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGamepad} className="text-primary" />
-                                    <span>Tựa Game ({results.games.length})</span>
+                                    <span>Games ({searchData.meta.totalGames})</span>
                                 </h2>
-                                {activeTab === "all" && results.games.length > 3 && (
+                                {activeTab === "all" && searchData.meta.totalGames > 3 && (
                                     <button
                                         onClick={() => handleTabChange("games")}
-                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                     >
                                         <span>Xem tất cả</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
@@ -240,7 +368,7 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                                {(activeTab === "all" ? results.games.slice(0, 3) : results.games).map((game) => {
+                                {resGames.map((game) => {
                                     const isFollowed = followedSlugs.includes(game.slug.toLowerCase());
                                     return (
                                         <div
@@ -250,13 +378,13 @@ export const SearchResultsPage = () => {
                                         >
                                             <div className="flex gap-3">
                                                 <img
-                                                    src={game.bannerUrl || game.logoUrl}
+                                                    src={game.bannerUrl || game.logoUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
                                                     alt={game.name}
                                                     className="w-16 h-20 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
                                                 />
                                                 <div className="flex flex-col gap-1 min-w-0">
                                                     <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                                                        {Array.isArray(game.genre) ? game.genre.join(", ") : (game.genre || "")}
+                                                        {Array.isArray(game.genre) ? game.genre.join(", ") : game.genre || ""}
                                                     </span>
                                                     <h3 className="text-sm font-bold text-text group-hover:text-primary transition-colors line-clamp-1">
                                                         {game.name}
@@ -295,17 +423,17 @@ export const SearchResultsPage = () => {
                     )}
 
                     {/* 🌐 COMMUNITIES SECTION */}
-                    {(activeTab === "all" || activeTab === "communities") && results.communities.length > 0 && (
+                    {(activeTab === "all" || activeTab === "communities") && resCommunities.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUsers} className="text-emerald-500" />
-                                    <span>Cộng Đồng ({results.communities.length})</span>
+                                    <span>Cộng Đồng ({searchData.meta.totalCommunities})</span>
                                 </h2>
-                                {activeTab === "all" && results.communities.length > 3 && (
+                                {activeTab === "all" && searchData.meta.totalCommunities > 3 && (
                                     <button
                                         onClick={() => handleTabChange("communities")}
-                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                     >
                                         <span>Xem tất cả</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
@@ -314,7 +442,7 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                                {(activeTab === "all" ? results.communities.slice(0, 3) : results.communities).map((comm) => {
+                                {resCommunities.map((comm) => {
                                     return (
                                         <div
                                             key={comm.id}
@@ -323,7 +451,7 @@ export const SearchResultsPage = () => {
                                         >
                                             <div className="flex items-center gap-3">
                                                 <img
-                                                    src={comm.logo}
+                                                    src={comm.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
                                                     alt={comm.name}
                                                     className="w-12 h-12 rounded-2xl object-cover shrink-0 border border-border group-hover:scale-105 transition-transform"
                                                 />
@@ -368,18 +496,18 @@ export const SearchResultsPage = () => {
                         </div>
                     )}
 
-                    {/* 👥 SQUADS SECTION */}
-                    {(activeTab === "all" || activeTab === "squads") && results.squads.length > 0 && (
+                    {/* 👤 USERS SECTION (Target: Users) */}
+                    {(activeTab === "all" || activeTab === "users") && resUsers.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faUserGroup} className="text-amber-500" />
-                                    <span>Tổ Đội & LFG ({results.squads.length})</span>
+                                    <FontAwesomeIcon icon={faUser} className="text-cyan-500" />
+                                    <span>{t("search.usersTitle", { count: searchData.meta.totalUsers })}</span>
                                 </h2>
-                                {activeTab === "all" && results.squads.length > 3 && (
+                                {activeTab === "all" && searchData.meta.totalUsers > 4 && (
                                     <button
-                                        onClick={() => handleTabChange("squads")}
-                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                        onClick={() => handleTabChange("users")}
+                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                     >
                                         <span>Xem tất cả</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
@@ -388,60 +516,73 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                {(activeTab === "all" ? results.squads.slice(0, 4) : results.squads).map((sq) => {
+                                {resUsers.map((u) => {
                                     return (
                                         <div
-                                            key={sq.id}
-                                            onClick={() => navigate({ to: "/squad" })}
+                                            key={u.id}
+                                            onClick={() => navigate({ to: "/profile" })}
                                             className="group flex flex-col justify-between p-4 rounded-2xl bg-surface hover:bg-surface-hover border border-border transition-all cursor-pointer shadow-xs hover:shadow-md"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={sq.gameLogo}
-                                                        alt={sq.game}
-                                                        className="w-10 h-10 rounded-xl object-cover shrink-0"
-                                                    />
+                                                    <div className="relative shrink-0">
+                                                        <img
+                                                            src={u.avatar}
+                                                            alt={u.name}
+                                                            className="w-12 h-12 rounded-2xl object-cover border border-border group-hover:scale-105 transition-transform"
+                                                        />
+                                                        <span
+                                                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-surface ${
+                                                                u.status === "online"
+                                                                    ? "bg-emerald-500"
+                                                                    : u.status === "in-game"
+                                                                    ? "bg-amber-500"
+                                                                    : "bg-gray-400"
+                                                            }`}
+                                                        />
+                                                    </div>
                                                     <div className="flex flex-col min-w-0">
-                                                        <h3 className="text-sm font-bold text-text group-hover:text-primary transition-colors line-clamp-1">
-                                                            {sq.name}
+                                                        <h3 className="text-sm font-bold text-text group-hover:text-primary transition-colors truncate">
+                                                            {u.name}
                                                         </h3>
-                                                        <span className="text-xs text-text-muted font-medium">
-                                                            {sq.game}
+                                                        <span className="text-xs text-text-faint font-medium">
+                                                            {u.username}
                                                         </span>
+                                                        {u.game && (
+                                                            <span className="text-[10px] font-bold text-amber-500 mt-0.5">
+                                                                🎮 {u.game}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500">
-                                                    {sq.currentMembers}/{sq.maxMembers} Người
-                                                </span>
-                                            </div>
 
-                                            <p className="text-xs text-text-muted mt-2.5 line-clamp-2">
-                                                {sq.description}
-                                            </p>
-
-                                            <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/60">
-                                                <div className="flex items-center gap-1.5">
-                                                    {sq.tags?.map((tag) => (
-                                                        <span key={tag} className="text-[10px] font-semibold text-text-faint bg-surface-hover px-2 py-0.5 rounded-md">
-                                                            {tag}
-                                                        </span>
-                                                    ))}
-                                                </div>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        joinSquad(sq.id);
+                                                        toggleFriendStatus(u.id);
                                                     }}
-                                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                                                        sq.isMySquad
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                                                        u.isFriend
                                                             ? "bg-emerald-500/10 text-emerald-500"
-                                                            : "bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
+                                                            : "bg-primary/10 text-primary hover:bg-primary hover:text-white"
                                                     }`}
                                                 >
-                                                    {sq.isMySquad ? "Đã tham gia" : "Vào Squad"}
+                                                    <FontAwesomeIcon icon={u.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
+                                                    <span>{u.isFriend ? t("search.friend") : t("search.addFriend")}</span>
                                                 </button>
+                                            </div>
+
+                                            {u.bio && (
+                                                <p className="text-xs text-text-muted mt-2.5 line-clamp-2 leading-relaxed">
+                                                    {u.bio}
+                                                </p>
+                                            )}
+
+                                            <div className="flex items-center justify-end pt-3 mt-2 border-t border-border/60">
+                                                <span className="text-xs font-bold text-primary hover:underline">
+                                                    {t("search.viewProfile")} →
+                                                </span>
                                             </div>
                                         </div>
                                     );
@@ -451,17 +592,17 @@ export const SearchResultsPage = () => {
                     )}
 
                     {/* 📝 POSTS SECTION */}
-                    {(activeTab === "all" || activeTab === "posts") && results.posts.length > 0 && (
+                    {(activeTab === "all" || activeTab === "posts") && resPosts.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faFileLines} className="text-rose-500" />
-                                    <span>Bài Viết & Thảo Luận ({results.posts.length})</span>
+                                    <span>Bài Viết ({searchData.meta.totalPosts})</span>
                                 </h2>
-                                {activeTab === "all" && results.posts.length > 5 && (
+                                {activeTab === "all" && searchData.meta.totalPosts > 5 && (
                                     <button
                                         onClick={() => handleTabChange("posts")}
-                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                                     >
                                         <span>Xem tất cả</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
@@ -470,7 +611,7 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="flex flex-col gap-3">
-                                {(activeTab === "all" ? results.posts.slice(0, 5) : results.posts).map((post) => {
+                                {resPosts.map((post) => {
                                     return (
                                         <div
                                             key={post.id}
@@ -480,7 +621,7 @@ export const SearchResultsPage = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2.5">
                                                     <img
-                                                        src={post.author.avatar}
+                                                        src={post.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"}
                                                         alt={post.author.name}
                                                         className="w-8 h-8 rounded-full object-cover"
                                                     />
@@ -530,7 +671,60 @@ export const SearchResultsPage = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Pagination Bar */}
+                    {searchData.pagination.totalPages > 1 && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-surface border border-border mt-4">
+                            <span className="text-xs font-medium text-text-muted">
+                                {t("search.pagination", {
+                                    page: searchData.pagination.page,
+                                    totalPages: searchData.pagination.totalPages,
+                                    total: searchData.pagination.total,
+                                })}
+                            </span>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    disabled={searchData.pagination.page <= 1}
+                                    onClick={() => handlePageChange(searchData.pagination.page - 1)}
+                                    className="px-3 py-1.5 rounded-xl bg-surface-hover border border-border text-xs font-bold text-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                    <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
+                                    <span>{t("search.prevPage")}</span>
+                                </button>
+
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: searchData.pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => handlePageChange(p)}
+                                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                p === searchData.pagination.page
+                                                    ? "bg-primary text-white"
+                                                    : "bg-surface-hover text-text-muted hover:text-text"
+                                            }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    disabled={!searchData.pagination.hasMore}
+                                    onClick={() => handlePageChange(searchData.pagination.page + 1)}
+                                    className="px-3 py-1.5 rounded-xl bg-surface-hover border border-border text-xs font-bold text-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                    <span>{t("search.nextPage")}</span>
+                                    <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+            )
             )}
         </div>
     );

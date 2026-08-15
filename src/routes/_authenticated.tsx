@@ -8,7 +8,8 @@ export const Route = createFileRoute('/_authenticated')({
         const waitForAuthChecked = () => {
             return new Promise<void>((resolve) => {
                 if (!useAuthStore.getState().loading) {
-                    return resolve;
+                    resolve();
+                    return;
                 }
 
                 const unsub = useAuthStore.subscribe((state) => {

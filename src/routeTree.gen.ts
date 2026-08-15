@@ -20,8 +20,8 @@ import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settin
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
 import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
+import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as LayoutProfileUserIdRouteImport } from './routes/_layout/profile/$userId'
 import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$postId'
 import { Route as LayoutGameGameSlugRouteImport } from './routes/_layout/game/$gameSlug'
@@ -80,17 +80,17 @@ const LayoutBookmarkIndexRoute = LayoutBookmarkIndexRouteImport.update({
   path: '/bookmark/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const AuthenticatedDeveloperIndexRoute =
   AuthenticatedDeveloperIndexRouteImport.update({
     id: '/developer/',
     path: '/developer/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const LayoutProfileUserIdRoute = LayoutProfileUserIdRouteImport.update({
   id: '/profile/$userId',
   path: '/profile/$userId',
@@ -122,8 +122,8 @@ export interface FileRoutesByFullPath {
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
   '/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/admin/': typeof LayoutAdminIndexRoute
   '/bookmark/': typeof LayoutBookmarkIndexRoute
   '/community/': typeof LayoutCommunityIndexRoute
   '/profile/': typeof LayoutProfileIndexRoute
@@ -139,8 +139,8 @@ export interface FileRoutesByTo {
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
   '/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
   '/developer': typeof AuthenticatedDeveloperIndexRoute
+  '/admin': typeof LayoutAdminIndexRoute
   '/bookmark': typeof LayoutBookmarkIndexRoute
   '/community': typeof LayoutCommunityIndexRoute
   '/profile': typeof LayoutProfileIndexRoute
@@ -159,8 +159,8 @@ export interface FileRoutesById {
   '/_layout/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/_layout/post/$postId': typeof LayoutPostPostIdRoute
   '/_layout/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
+  '/_layout/admin/': typeof LayoutAdminIndexRoute
   '/_layout/bookmark/': typeof LayoutBookmarkIndexRoute
   '/_layout/community/': typeof LayoutCommunityIndexRoute
   '/_layout/profile/': typeof LayoutProfileIndexRoute
@@ -178,8 +178,8 @@ export interface FileRouteTypes {
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/profile/$userId'
-    | '/admin/'
     | '/developer/'
+    | '/admin/'
     | '/bookmark/'
     | '/community/'
     | '/profile/'
@@ -195,8 +195,8 @@ export interface FileRouteTypes {
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/profile/$userId'
-    | '/admin'
     | '/developer'
+    | '/admin'
     | '/bookmark'
     | '/community'
     | '/profile'
@@ -214,8 +214,8 @@ export interface FileRouteTypes {
     | '/_layout/game/$gameSlug'
     | '/_layout/post/$postId'
     | '/_layout/profile/$userId'
-    | '/_authenticated/admin/'
     | '/_authenticated/developer/'
+    | '/_layout/admin/'
     | '/_layout/bookmark/'
     | '/_layout/community/'
     | '/_layout/profile/'
@@ -308,18 +308,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutBookmarkIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/admin/': {
+      id: '/_layout/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof LayoutAdminIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_authenticated/developer/': {
       id: '/_authenticated/developer/'
       path: '/developer'
       fullPath: '/developer/'
       preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_layout/profile/$userId': {
@@ -354,12 +354,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
 }
 
@@ -375,6 +373,7 @@ interface LayoutRouteChildren {
   LayoutGameGameSlugRoute: typeof LayoutGameGameSlugRoute
   LayoutPostPostIdRoute: typeof LayoutPostPostIdRoute
   LayoutProfileUserIdRoute: typeof LayoutProfileUserIdRoute
+  LayoutAdminIndexRoute: typeof LayoutAdminIndexRoute
   LayoutBookmarkIndexRoute: typeof LayoutBookmarkIndexRoute
   LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
@@ -390,6 +389,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutGameGameSlugRoute: LayoutGameGameSlugRoute,
   LayoutPostPostIdRoute: LayoutPostPostIdRoute,
   LayoutProfileUserIdRoute: LayoutProfileUserIdRoute,
+  LayoutAdminIndexRoute: LayoutAdminIndexRoute,
   LayoutBookmarkIndexRoute: LayoutBookmarkIndexRoute,
   LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,

@@ -120,6 +120,7 @@ export const CommunityList = () => {
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
+    const canCreateCommunity = user?.role === 'admin' || user?.role === 'moderator';
 
     const communities = useCommunitiesStore((state) => state.communities);
     
@@ -219,21 +220,23 @@ export const CommunityList = () => {
                     </div>
 
                     {/* Action: Create Community */}
-                    <div className="flex flex-col gap-2 shrink-0 self-start md:self-center">
-                        <button
-                            onClick={() => {
-                                if (!isLoggedIn) {
-                                    navigate({ to: "/auth" });
-                                    return;
-                                }
-                                setShowCreateModal(true);
-                            }}
-                            className="px-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-102 active:scale-98 transition-all cursor-pointer flex items-center gap-2"
-                        >
-                            <FontAwesomeIcon icon={faPlus} />
-                            <span>Tạo cộng đồng</span>
-                        </button>
-                    </div>
+                    {canCreateCommunity && (
+                        <div className="flex flex-col gap-2 shrink-0 self-start md:self-center">
+                            <button
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        navigate({ to: "/auth" });
+                                        return;
+                                    }
+                                    setShowCreateModal(true);
+                                }}
+                                className="px-5 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-102 active:scale-98 transition-all cursor-pointer flex items-center gap-2"
+                            >
+                                <FontAwesomeIcon icon={faPlus} />
+                                <span>Tạo cộng đồng</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

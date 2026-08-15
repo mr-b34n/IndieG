@@ -1,11 +1,47 @@
 import { create } from "zustand";
-import { type GameGuide, type GameReview } from "../types";
+import { type GameData, type GameGuide, type GameReview } from "../types";
+import { INITIAL_GAMES, getGameBySlug as fallbackGetGameBySlug } from "../constants";
+
+const STORAGE_KEY = "indieg_games_data";
+
+const loadInitialGames = (): GameData[] => {
+    if (typeof window === "undefined") return INITIAL_GAMES;
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+        }
+    } catch {
+        // Fallback to INITIAL_GAMES on parse error
+    }
+    return INITIAL_GAMES;
+};
+
+const saveGamesToStorage = (games: GameData[]) => {
+    if (typeof window !== "undefined") {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+        } catch {
+            // Ignore quota errors
+        }
+    }
+};
 
 interface GameStoreState {
+    games: GameData[];
     followedSlugs: string[];
     quickAccessSlugs: string[];
     customGuides: Record<string, GameGuide[]>; // slug -> guides
     customReviews: Record<string, GameReview[]>; // slug -> reviews
+    
+    getGameBySlug: (slug: string) => GameData;
+    addGame: (game: GameData) => void;
+    updateGame: (slug: string, updates: Partial<GameData>) => void;
+    deleteGame: (slug: string) => void;
+
     toggleFollowGame: (slug: string) => void;
     setQuickAccessSlugs: (slugs: string[]) => void;
     isFollowing: (slug: string) => boolean;
@@ -16,10 +52,56 @@ interface GameStoreState {
 }
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
+    games: loadInitialGames(),
     followedSlugs: ["counter-strike-2", "raft", "red-dead-redemption-2", "grand-theft-auto-v", "elden-ring"],
     quickAccessSlugs: ["raft", "red-dead-redemption-2", "counter-strike-2", "grand-theft-auto-v"],
     customGuides: {},
     customReviews: {},
+
+    getGameBySlug: (slug: string) => {
+        if (!slug) return get().games[0] || INITIAL_GAMES[0];
+        const cleanSlug = slug.trim().toLowerCase();
+        const found = get().games.find(
+            (g) =>
+                g.slug === cleanSlug ||
+                g.id === cleanSlug ||
+                g.aliases?.includes(cleanSlug) ||
+                g.tag.toLowerCase() === cleanSlug.replace(/-/g, " ")
+        );
+        if (found) return found;
+        return fallbackGetGameBySlug(cleanSlug);
+    },
+
+    addGame: (newGame: GameData) => {
+        set((state) => {
+            const exists = state.games.some((g) => g.slug === newGame.slug);
+            const updated = exists
+                ? state.games.map((g) => (g.slug === newGame.slug ? { ...g, ...newGame } : g))
+                : [newGame, ...state.games];
+            saveGamesToStorage(updated);
+            return { games: updated };
+        });
+    },
+
+    updateGame: (slug: string, updates: Partial<GameData>) => {
+        const cleanSlug = slug.trim().toLowerCase();
+        set((state) => {
+            const updated = state.games.map((g) =>
+                g.slug === cleanSlug || g.id === cleanSlug ? { ...g, ...updates } : g
+            );
+            saveGamesToStorage(updated);
+            return { games: updated };
+        });
+    },
+
+    deleteGame: (slug: string) => {
+        const cleanSlug = slug.trim().toLowerCase();
+        set((state) => {
+            const updated = state.games.filter((g) => g.slug !== cleanSlug && g.id !== cleanSlug);
+            saveGamesToStorage(updated);
+            return { games: updated };
+        });
+    },
 
     toggleFollowGame: (slug: string) => {
         const cleanSlug = slug.toLowerCase();
@@ -102,3 +184,4 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         });
     },
 }));
+

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useSidebarStore } from "../../store/useSidebarStore";
-import { useNotificationStore, NotificationDropdown } from '@/features/notification';
+import { useNotificationStore, NotificationDropdown, useNotificationPolling } from '@/features/notification';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { Search } from '../search/Search';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -44,6 +44,8 @@ export const Header = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const notifications = useNotificationStore((state) => state.notifications);
     const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+    useNotificationPolling(15000);
 
     return (
         <header className="w-full sticky top-0 z-[60] flex flex-wrap md:flex-nowrap items-center justify-between gap-3 px-2 sm:px-4 py-2 sm:py-3 bg-bg/80 backdrop-blur-lg border-b border-border/50">
