@@ -1,15 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { CommunityList } from '@/features/community';
 
 const Community = () => {
-	useTheme("Community");
+    useTheme("Community");
 
-	return (
-		<CommunityList />
-	);
-}
+    return (
+        <CommunityList />
+    );
+};
 
-export const Route = createFileRoute('/_layout/community/')(
-	{ component: Community }
-)
+export const Route = createFileRoute('/_layout/community/')({
+    component: Community,
+});
+

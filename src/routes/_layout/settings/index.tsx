@@ -314,10 +314,10 @@ export function SettingsPage() {
             </div>
 
             {/* Layout Grid: Left Clean Navigation Deck + Right Content Frame */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <div className="flex flex-col lg:flex-row gap-5 items-start w-full min-w-0">
                 
                 {/* Left Navigation Deck */}
-                <div className="lg:col-span-4 bg-surface border border-border/80 rounded-lg p-2 space-y-1">
+                <div className="w-full lg:w-72 shrink-0 bg-surface border border-border/80 rounded-lg p-2 space-y-1">
                     <div className="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-text-muted/80 border-b border-border/40 mb-1">
                         Danh mục cài đặt
                     </div>
@@ -329,32 +329,30 @@ export function SettingsPage() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors cursor-pointer text-left ${
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors cursor-pointer text-left border-l-4 ${
                                         isActive
                                             ? tab.isDanger
-                                                ? "bg-rose-500/15 border-l-4 border-rose-500 text-rose-500 font-bold"
-                                                : "bg-primary/10 border-l-4 border-primary text-primary font-bold"
+                                                ? "bg-rose-500/15 border-rose-500 text-rose-500 font-semibold"
+                                                : "bg-primary/10 border-primary text-primary font-semibold"
                                             : tab.isDanger
-                                            ? "hover:bg-rose-500/10 text-rose-500 font-medium"
-                                            : "hover:bg-surface-hover/80 text-text-muted hover:text-text font-medium"
+                                            ? "border-transparent hover:bg-rose-500/10 text-rose-500 font-medium"
+                                            : "border-transparent hover:bg-surface-hover/80 text-text-muted hover:text-text font-medium"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                         <FontAwesomeIcon 
                                             icon={tab.icon} 
-                                            className={`text-xs shrink-0 ${
+                                            className={`text-xs shrink-0 w-4 text-center ${
                                                 isActive 
                                                     ? tab.isDanger ? "text-rose-500" : "text-primary" 
                                                     : "text-text-muted"
                                             }`} 
                                         />
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-xs tracking-tight truncate">{tab.label}</span>
-                                        </div>
+                                        <span className="text-xs tracking-tight truncate flex-1 min-w-0">{tab.label}</span>
                                     </div>
                                     <FontAwesomeIcon 
                                         icon={faChevronRight} 
-                                        className={`text-[10px] shrink-0 ${isActive ? (tab.isDanger ? "text-rose-500" : "text-primary") : "text-text-muted/40"}`} 
+                                        className={`text-[10px] shrink-0 ml-1 ${isActive ? (tab.isDanger ? "text-rose-500" : "text-primary") : "text-text-muted/40"}`} 
                                     />
                                 </button>
                             );
@@ -362,8 +360,8 @@ export function SettingsPage() {
                     </div>
                 </div>
 
-                {/* Right Content Panel (Stable & Clean, No Scaling) */}
-                <div className="lg:col-span-8 bg-surface border border-border/80 rounded-lg p-5 sm:p-6 min-h-[460px]">
+                {/* Right Content Panel (Stable & Clean, Fixed Dimensions) */}
+                <div className="flex-1 w-full min-w-0 bg-surface border border-border/80 rounded-lg p-5 sm:p-6 min-h-[480px]">
                     
                     {/* TAB 1: GENERAL */}
                     {activeTab === "general" && (
