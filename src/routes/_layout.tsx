@@ -41,7 +41,7 @@ function MainLayout() {
         pathname.startsWith('/explore') || 
         pathname.startsWith('/game') ||
         pathname.startsWith('/admin') ||
-        (pathname.startsWith('/community/') && pathname !== '/community')
+        (pathname.startsWith('/community') && pathname !== '/community')
 
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
@@ -94,7 +94,7 @@ function MainLayout() {
             
             <div 
                 ref={scrollContainerRef} 
-                className="relative flex-1 overflow-y-auto overflow-x-hidden w-full"
+                className="relative flex-1 overflow-y-scroll [scrollbar-gutter:stable] overflow-x-hidden w-full"
             >
                 <div className={`w-full ${hideSidebars ? 'max-w-[1280px]' : 'max-w-[1536px]'} mx-auto flex flex-row items-start gap-4 xl:gap-6 px-3 sm:px-6 py-3 pb-12`}>
                     
