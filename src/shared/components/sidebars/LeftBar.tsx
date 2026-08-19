@@ -1,7 +1,7 @@
 import {
     faUsers, faUserGroup, faHouse, faGamepad,
     faAngleDown, faGear, faShieldHalved,
-    faUserCircle, faCompass
+    faCompass, faPlus
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useState } from "react"
@@ -10,27 +10,29 @@ import { useNavigate, useLocation } from "@tanstack/react-router"
 import { useAuthStore } from "@/features/auth";
 import { useGameStore } from "@/features/game";
 import { getCurrentAuthor } from "@/features/post";
+import { useCommunitiesStore } from "@/features/community";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const navItem = `
-    w-full flex flex-row items-center gap-2.5 px-3 py-2
-    rounded-xl text-xs sm:text-sm font-bold text-text-muted
-    bg-transparent hover:bg-surface-hover hover:text-text
-    transition-all duration-150 cursor-pointer select-none
+    w-full flex flex-row items-center gap-3 px-3 py-2
+    rounded-md text-xs sm:text-sm font-semibold text-text-muted
+    hover:text-text hover:bg-surface-hover/70
+    transition-colors duration-150 cursor-pointer select-none
 `;
 const navItemActive = `
-    w-full flex flex-row items-center gap-2.5 px-3 py-2
-    rounded-xl text-xs sm:text-sm font-extrabold
-    bg-primary-soft text-primary shadow-xs cursor-pointer select-none
+    w-full flex flex-row items-center gap-3 px-3 py-2
+    rounded-md text-xs sm:text-sm font-bold
+    bg-primary/10 text-primary cursor-pointer select-none
 `;
 const sectionLabel = `
-    px-3 pt-3 pb-1
-    text-[10px] font-black uppercase tracking-wider text-text-faint/80
+    px-3 pt-3 pb-1.5
+    text-[10px] font-black uppercase tracking-wider text-text-faint/90
 `;
 
 export const LeftBar = () => {
     const quickAccessSlugs = useGameStore((state) => state.quickAccessSlugs);
     const games = useGameStore((state) => state.games);
+    const communities = useCommunitiesStore((state) => state.communities);
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const {t} = useTranslation();
@@ -60,65 +62,53 @@ export const LeftBar = () => {
         navigate({ to: "/profile/$userId", params: { userId: "me" } });
     };
 
-    return (
-        <div className="
-            w-full flex flex-col overflow-hidden
-            bg-surface border border-border/80
-            rounded-xl shadow-xs
-        ">
+    const joinedCommunities = communities.filter((c) => c.joined);
 
+    return (
+        <div className="w-full flex flex-col gap-1 py-1 text-text select-none">
+            {/* User Profile Mini Snippet */}
             {isLoggedIn ? (
-                <button
-                    type="button"
+                <div
                     onClick={handleProfileClick}
-                    className="flex flex-row items-center gap-2.5 px-3 py-2.5
-                        border-b border-border w-full text-left
-                        cursor-pointer hover:bg-surface-hover transition-colors duration-150"
+                    className="flex flex-row items-center gap-3 px-3 py-2.5 mb-1
+                        rounded-md cursor-pointer hover:bg-surface-hover/70 transition-colors"
                 >
                     <img
                         src={avatarUrl}
                         alt="avatar"
-                        className="w-8 h-8 rounded-full ring-2 ring-primary/30 shrink-0 object-cover"
+                        className="w-8 h-8 rounded-full ring-1 ring-border/80 shrink-0 object-cover"
                     />
                     <div className="flex flex-col leading-tight min-w-0 flex-1">
-                        <p className="font-semibold text-xs sm:text-sm text-text truncate">{displayName}</p>
+                        <p className="font-bold text-xs sm:text-sm text-text truncate">{displayName}</p>
                         <p className="text-[11px] text-text-faint">
                             {user ? t('common.viewProfile') : t('common.signedInDemo')}
                         </p>
                     </div>
-                </button>
+                </div>
             ) : (
-                <div className="flex flex-col items-center gap-2.5 px-3 py-3.5 border-b border-border text-center">
-                    <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center">
-                        <FontAwesomeIcon icon={faUserCircle} className="text-xl text-text-faint" />
-                    </div>
-                    <div>
-                        <p className="font-semibold text-xs sm:text-sm text-text">{t('authenticate.notLoginRemindTitle')}</p>
-                        <p className="text-[11px] text-text-faint mt-0.5 leading-relaxed">
-                            {t('authenticate.notLoginRemindDetail')}
-                        </p>
-                    </div>
+                <div className="flex flex-col gap-2 px-3 py-2 mb-2 pb-3 border-b border-border/40">
+                    <p className="text-xs font-semibold text-text-muted">{t('authenticate.notLoginRemindTitle')}</p>
                     <button
                         type="button"
                         onClick={() => navigate({ to: "/auth" })}
-                        className="w-full px-3 py-1.5 rounded-full text-xs font-semibold
+                        className="w-full px-3 py-1.5 rounded-md text-xs font-bold
                             bg-primary text-white hover:bg-primary-hover
-                            shadow-[0_2px_10px_rgba(124,77,255,0.35)]
-                            transition-colors duration-150 cursor-pointer"
+                            transition-colors duration-150 cursor-pointer text-center"
                     >
                         {t('authenticate.login')}
                     </button>
                 </div>
             )}
 
-            <p className={sectionLabel}>{t('common.menu')}</p>
-            <div className="flex flex-col gap-1 px-2 pb-1">
+            {/* SECTION: SOCIAL */}
+            <p className={sectionLabel}>Social</p>
+            <div className="flex flex-col gap-0.5 px-1 pb-2">
                 <button
                     type="button"
                     onClick={() => navigate({to: "/"})}
                     className={isHomeActive ? navItemActive : navItem}
                 >
-                    <FontAwesomeIcon icon={faHouse} className="w-4 shrink-0" />
+                    <FontAwesomeIcon icon={faHouse} className="w-4 shrink-0 text-text-muted" />
                     <span>{t('common.home')}</span>
                 </button>
 
@@ -127,7 +117,7 @@ export const LeftBar = () => {
                     onClick={() => navigate({to: "/explore"})}
                     className={isExploreActive ? navItemActive : navItem}
                 >
-                    <FontAwesomeIcon icon={faCompass} className="w-4 shrink-0" />
+                    <FontAwesomeIcon icon={faCompass} className="w-4 shrink-0 text-text-muted" />
                     <span>{t('common.explore', { defaultValue: 'Explore' })}</span>
                 </button>
 
@@ -136,7 +126,7 @@ export const LeftBar = () => {
                     onClick={() => navigate({ to: "/community" })}
                     className={isCommunityActive ? navItemActive : navItem}
                 >
-                    <FontAwesomeIcon icon={faUsers} className="w-4 shrink-0" />
+                    <FontAwesomeIcon icon={faUsers} className="w-4 shrink-0 text-text-muted" />
                     <span>{t('common.community')}</span>
                 </button>
 
@@ -146,23 +136,74 @@ export const LeftBar = () => {
                         onClick={() => navigate({ to: "/squad" })}
                         className={isSquadActive ? navItemActive : navItem}
                     >
-                        <FontAwesomeIcon icon={faUserGroup} className="w-4 shrink-0" />
+                        <FontAwesomeIcon icon={faUserGroup} className="w-4 shrink-0 text-text-muted" />
                         <span>{t('common.squad')}</span>
                     </button>
                 )}
             </div>
 
+            {/* SECTION: MY COMMUNITIES */}
+            <div className="border-t border-divider-primary pt-4 mt-3">
+                <div className="flex items-center justify-between px-3 pb-2">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-text-faint/90">
+                        My Communities
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/community" })}
+                        className="text-[10px] font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                        title="Khám phá thêm cộng đồng"
+                    >
+                        <FontAwesomeIcon icon={faPlus} className="text-[9px]" />
+                        <span>Khám phá</span>
+                    </button>
+                </div>
+
+                <div className="flex flex-col gap-0.5 px-1 pb-1">
+                    {joinedCommunities.length > 0 ? (
+                        joinedCommunities.map((c) => {
+                            const isThisCommActive = pathname.startsWith(`/community/${c.id}`);
+                            return (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => navigate({ to: `/community/${c.id}` })}
+                                    className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                                        isThisCommActive
+                                            ? "bg-primary/10 text-primary font-bold"
+                                            : "text-text-muted hover:text-text hover:bg-surface-hover/70"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                        <span className="truncate">{c.name}</span>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-text-faint shrink-0">
+                                        {c.onlineNow ? `${c.onlineNow} online` : "active"}
+                                    </span>
+                                </button>
+                            );
+                        })
+                    ) : (
+                        <div className="px-3 py-2 text-xs text-text-faint">
+                            Chưa có cộng đồng nào
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* SECTION: LIBRARY */}
             {isLoggedIn && (
-                <>
+                <div className="border-t border-divider-primary pt-4 mt-3">
                     <p className={sectionLabel}>{t('common.library')}</p>
-                    <div className="flex flex-col gap-1 px-2 pb-1.5">
+                    <div className="flex flex-col gap-0.5 px-1 pb-1">
                         <button
                             type="button"
                             onClick={() => setGamesDrop(!gamesDrop)}
-                            className={`${isGameSectionActive ? navItemActive : navItem} justify-between ${gamesDrop && !isGameSectionActive ? "bg-surface-hover text-text" : ""}`}
+                            className={`${isGameSectionActive ? navItemActive : navItem} justify-between`}
                         >
-                            <div className="flex flex-row items-center gap-2.5">
-                                <FontAwesomeIcon icon={faGamepad} className="w-4 shrink-0" />
+                            <div className="flex flex-row items-center gap-3">
+                                <FontAwesomeIcon icon={faGamepad} className="w-4 shrink-0 text-text-muted" />
                                 <span>{t('common.game')}</span>
                             </div>
                             <FontAwesomeIcon
@@ -181,7 +222,7 @@ export const LeftBar = () => {
                             aria-hidden={!gamesDrop}
                         >
                             <div className="overflow-hidden min-h-0">
-                                <div className="flex flex-col gap-0.5 pl-8 pr-2 pb-1">
+                                <div className="flex flex-col gap-0.5 pl-8 pr-1 pb-1">
                                     {quickAccessSlugs.map((slug) => {
                                         const g = games.find(item => item.slug === slug || item.id === slug);
                                         if (!g) return null;
@@ -191,23 +232,16 @@ export const LeftBar = () => {
                                                 key={slug}
                                                 onClick={() => navigate({ to: `/game/${slug}` })}
                                                 className={`flex flex-row items-center gap-2 px-2 py-1.5
-                                                    rounded-lg text-xs sm:text-sm
-                                                    hover:bg-surface-hover
+                                                    rounded-md text-xs
+                                                    hover:bg-surface-hover/70
                                                     transition-colors duration-150 cursor-pointer
-                                                    ${isThisGameActive ? "text-primary font-bold bg-primary-soft/60" : "text-text-muted"}`}
+                                                    ${isThisGameActive ? "text-primary font-bold bg-primary/10" : "text-text-muted"}`}
                                             >
-                                                <div className="relative shrink-0">
-                                                    <img
-                                                        src={g.logoUrl}
-                                                        alt={g.name}
-                                                        className="w-3.5 h-3.5 rounded object-cover"
-                                                    />
-                                                    {isThisGameActive && (
-                                                        <span className="absolute -top-0.5 -right-0.5
-                                                            w-1.5 h-1.5 rounded-full bg-primary
-                                                            ring-1 ring-surface" />
-                                                    )}
-                                                </div>
+                                                <img
+                                                    src={g.logoUrl}
+                                                    alt={g.name}
+                                                    className="w-3.5 h-3.5 rounded object-cover shrink-0"
+                                                />
                                                 <span className="truncate">{g.name}</span>
                                             </div>
                                         );
@@ -216,10 +250,11 @@ export const LeftBar = () => {
                             </div>
                         </div>
                     </div>
-                </>
+                </div>
             )}
 
-            <div className="border-t border-border px-2 py-1.5 mt-2 flex flex-col gap-1">
+            {/* SYSTEM SETTINGS */}
+            <div className="border-t border-divider-primary pt-4 mt-3 px-1 flex flex-col gap-0.5">
                 {isAdmin && (
                     <button
                         type="button"
@@ -236,7 +271,7 @@ export const LeftBar = () => {
                     onClick={() => navigate({to: "/settings"})}
                     className={`${isSettingsActive ? navItemActive : navItem}`}
                 >
-                    <FontAwesomeIcon icon={faGear} className="w-4 shrink-0" />
+                    <FontAwesomeIcon icon={faGear} className="w-4 shrink-0 text-text-muted" />
                     <span>{t('common.settings')}</span>
                 </button>
             </div>

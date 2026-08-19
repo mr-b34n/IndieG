@@ -10,18 +10,21 @@ import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
 import { EditProfileModal } from "./EditProfileModal";
 import { ProfileHero } from "./ProfileHero";
-import { ProfileSidebar } from "./ProfileSidebar";
 import { ProfileTabBar } from "./ProfileTabBar";
 
 import {
     DEFAULT_COVER, DEFAULT_GEAR, LIBRARY_GAMES,
-    INITIAL_FRIENDS, INITIAL_FRIEND_REQUESTS, INITIAL_GUESTBOOK, getBadgeCatalogue,
+    INITIAL_FRIENDS, INITIAL_FRIEND_REQUESTS, INITIAL_GUESTBOOK,
+    COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES, getBadgeCatalogue,
 } from "../constants";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
-import { FriendsTab } from "./tabs/FriendsTab";
-import { LibraryTab } from "./tabs/LibraryTab";
+import { OverviewTab } from "./tabs/OverviewTab";
+import { GamesTab } from "./tabs/GamesTab";
+import { CommunitiesTab } from "./tabs/CommunitiesTab";
+import { AchievementsTab } from "./tabs/AchievementsTab";
 import { PostsTab } from "./tabs/PostsTab";
+import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
 
@@ -47,7 +50,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor });
 
-    const [activeTab, setActiveTab] = useState<ProfileTab>("library");
+    const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
@@ -58,8 +61,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isLoading = false;
     const isError = userId === "error" || userId === "not-found";
 
-    const [isEditingBio, setIsEditingBio] = useState(false);
-    const [isEditingGear, setIsEditingGear] = useState(false);
     const [gearData, setGearData] = useState<Record<string, string>>(DEFAULT_GEAR);
 
     const [showBadgeSelector, setShowBadgeSelector] = useState(false);
@@ -149,7 +150,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return (
             <div className="w-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-4xl text-primary" />
-                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ...</p>
+                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ gamer...</p>
             </div>
         );
     }
@@ -174,7 +175,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     }
 
     return (
-        <div className="w-full mx-auto flex flex-col gap-6 pb-20 animate-fade-in">
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 pb-20 animate-fade-in">
             {showSuccessToast && (
                 <div className="fixed top-20 right-6 z-50 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-emerald-400/30 flex items-center gap-3 animate-slide-left">
                     <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
@@ -217,6 +218,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 />
             )}
 
+            {/* Gamer Hero Header */}
             <ProfileHero
                 coverSrc={customBg}
                 avatarUrl={avatarUrl}
@@ -255,7 +257,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     rawImageSrc={rawCoverSrc}
                     onClose={() => setRawCoverSrc(null)}
                     onSave={(url) => { setCustomBg(url); setRawCoverSrc(null); triggerToast(); }}
-                    aspectRatio={3}
+                    aspectRatio={4.5}
                     title={t("profile.uploadCover", { defaultValue: "Căn chỉnh ảnh bìa" })}
                     outputWidth={1200}
                 />
@@ -269,56 +271,65 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 />
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full items-start">
-                {/* Sticky player card sidebar */}
-                <div className="lg:col-span-4 lg:sticky lg:top-6">
-                    <ProfileSidebar
-                        isOwnProfile={isOwnProfile}
-                        bio={identity.bio}
-                        onBioChange={(bio) => setIdentity((prev: ProfileIdentity) => ({ ...prev, bio }))}
-                        isEditingBio={isEditingBio}
-                        onToggleEditBio={() => setIsEditingBio((v) => !v)}
-                        onSaveBio={() => { setIsEditingBio(false); triggerToast(); }}
+            {/* Profile Tab Navigation Bar */}
+            <ProfileTabBar
+                activeTab={activeTab}
+                onChange={setActiveTab}
+                friendsCount={friendsList.length}
+                showBookmarks={showBookmarks}
+                t={t}
+            />
+
+            {/* Tab Views */}
+            <div className="w-full transition-all duration-300 min-h-[480px]">
+                {activeTab === "overview" && (
+                    <OverviewTab
+                        identity={identity}
+                        games={LIBRARY_GAMES}
+                        badges={badges}
+                        reputations={COMMUNITY_REPUTATIONS}
+                        activities={RECENT_ACTIVITIES}
                         gearData={gearData}
-                        onGearChange={(key, value) => setGearData((prev: Record<string, string>) => ({ ...prev, [key]: value }))}
-                        isEditingGear={isEditingGear}
-                        onToggleEditGear={() => setIsEditingGear((v) => !v)}
-                        onSaveGear={() => { setIsEditingGear(false); triggerToast(); }}
+                        isOwnProfile={isOwnProfile}
+                        onGearChange={(key, val) => setGearData((prev) => ({ ...prev, [key]: val }))}
+                        onSaveGear={triggerToast}
                         t={t}
                     />
-                </div>
+                )}
 
-                <div className="lg:col-span-8 flex flex-col gap-0 w-full">
-                    <ProfileTabBar activeTab={activeTab} onChange={setActiveTab} friendsCount={friendsList.length} showBookmarks={showBookmarks} t={t} />
+                {activeTab === "games" && <GamesTab games={LIBRARY_GAMES} t={t} />}
 
-                    <div className="pt-5 transition-all duration-300 min-h-[480px]">
-                        {activeTab === "library" && <LibraryTab games={LIBRARY_GAMES} t={t} />}
-                        {activeTab === "posts" && <PostsTab posts={displayPosts} t={t} />}
-                        {activeTab === "friends" && (
-                            <FriendsTab
-                                friends={friendsList}
-                                requests={friendRequestsList}
-                                onToggleFriend={toggleFriend}
-                                onBlockFriend={blockFriend}
-                                onAcceptRequest={handleAcceptRequest}
-                                onDeclineRequest={handleDeclineRequest}
-                                t={t}
-                            />
-                        )}
-                        {activeTab === "bookmarks" && showBookmarks && <BookmarkList />}
-                        {activeTab === "guestbook" && (
-                            <GuestbookTab
-                                comments={guestbookComments}
-                                newCommentText={newCommentText}
-                                onChangeNewComment={setNewCommentText}
-                                onSubmit={handleAddGuestbook}
-                                onToggleLike={toggleLikeComment}
-                                displayName={identity.name}
-                                t={t}
-                            />
-                        )}
-                    </div>
-                </div>
+                {activeTab === "communities" && <CommunitiesTab reputations={COMMUNITY_REPUTATIONS} t={t} />}
+
+                {activeTab === "achievements" && <AchievementsTab badges={badges} t={t} />}
+
+                {activeTab === "posts" && <PostsTab posts={displayPosts} t={t} />}
+
+                {activeTab === "friends" && (
+                    <FriendsTab
+                        friends={friendsList}
+                        requests={friendRequestsList}
+                        onToggleFriend={toggleFriend}
+                        onBlockFriend={blockFriend}
+                        onAcceptRequest={handleAcceptRequest}
+                        onDeclineRequest={handleDeclineRequest}
+                        t={t}
+                    />
+                )}
+
+                {activeTab === "bookmarks" && showBookmarks && <BookmarkList />}
+
+                {activeTab === "guestbook" && (
+                    <GuestbookTab
+                        comments={guestbookComments}
+                        newCommentText={newCommentText}
+                        onChangeNewComment={setNewCommentText}
+                        onSubmit={handleAddGuestbook}
+                        onToggleLike={toggleLikeComment}
+                        displayName={identity.name}
+                        t={t}
+                    />
+                )}
             </div>
         </div>
     );

@@ -89,7 +89,7 @@ export const en: typeof vi = {
         allowComments: "Allow comments",
         pinPost: "Pin post",
         addAttachments: "Add attachments",
-        selectCommunity: "Select community",
+        selectCommunity: "Communities",
         generalFeed: "General Feed",
         justNow: "Just now",
         hoursAgo: "{count} hours ago",
@@ -98,9 +98,9 @@ export const en: typeof vi = {
         allLoaded: "You have seen all posts on the feed ✨",
         emptyTitle: "No posts here yet",
         emptyDesc: "Check back later or create a new post.",
-        selectCommunityRequired: "Select a community to post (required)",
-        selectCommunityPlaceholder: "-- Select community to post --",
-        noCommunitiesJoined: "You haven't joined any communities yet",
+        selectCommunityRequired: "Please select a community",
+        selectCommunityPlaceholder: "Choose community",
+        noCommunitiesJoined: "No communities joined",
         mediaButton: "Media / Video",
         gameDiscussion: "Game Discussion",
         tagsPlaceholder: "Add tags (separated by commas)...",
@@ -393,10 +393,14 @@ export const en: typeof vi = {
             repScore: "Reputation"
         },
         tabs: {
-            posts: "Posts & Feed",
+            overview: "Overview",
+            games: "Game Mastery",
+            posts: "Posts",
+            communities: "Communities",
+            achievements: "Achievements",
+            friends: "Friends",
             library: "Game Library",
-            badges: "Badges & Titles",
-            friends: "Squad & Friends"
+            badges: "Badges & Titles"
         },
         library: {
             hoursPlayed: "{hours} hours played",
@@ -727,6 +731,14 @@ export const en: typeof vi = {
         viewCommunityFeed: "View Community Feed",
         noRelatedPosts: "No related posts for this game yet.",
         noRelatedPostsSub: "Be the first to start a discussion or post news about this game!"
+    },
+    pagination: {
+        showingResults: "Showing {start} to {end} of {total} results",
+        pageSummary: "Page {page} of {totalPages}",
+        firstPage: "First page",
+        prevPage: "Previous page",
+        nextPage: "Next page",
+        lastPage: "Last page"
     },
     admin: {
         title: "Game Management Portal (Admin UI)",

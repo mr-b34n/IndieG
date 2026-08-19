@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark, faSearchPlus, faCrop } from "@fortawesome/free-solid-svg-icons";
 
-const CONTAINER_WIDTH = 256;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.05;
@@ -28,18 +27,19 @@ export const ImageCropperModal = ({
     title = "Căn chỉnh ảnh đại diện",
     outputWidth = 400,
 }: ImageCropperModalProps) => {
-    const containerHeight = CONTAINER_WIDTH / aspectRatio;
+    const containerWidth = aspectRatio > 2 ? 360 : 256;
+    const containerHeight = Math.round(containerWidth / aspectRatio);
     const [zoom, setZoom] = useState(1);
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [imgDimensions, setImgDimensions] = useState({ baseWidth: 256, baseHeight: 256 });
+    const [imgDimensions, setImgDimensions] = useState({ baseWidth: containerWidth, baseHeight: containerHeight });
     const imgRef = useRef<HTMLImageElement | null>(null);
 
     const clampOffset = (newX: number, newY: number, currentZoom: number) => {
         const currentW = imgDimensions.baseWidth * currentZoom;
         const currentH = imgDimensions.baseHeight * currentZoom;
-        const overflowX = Math.max(0, (currentW - CONTAINER_WIDTH) / 2);
+        const overflowX = Math.max(0, (currentW - containerWidth) / 2);
         const overflowY = Math.max(0, (currentH - containerHeight) / 2);
         return {
             x: Math.max(-overflowX, Math.min(overflowX, newX)),
@@ -52,7 +52,7 @@ export const ImageCropperModal = ({
         imgRef.current = img;
         const naturalW = img.naturalWidth || img.width;
         const naturalH = img.naturalHeight || img.height;
-        const scale = Math.max(CONTAINER_WIDTH / naturalW, containerHeight / naturalH);
+        const scale = Math.max(containerWidth / naturalW, containerHeight / naturalH);
 
         setImgDimensions({ baseWidth: naturalW * scale, baseHeight: naturalH * scale });
         setOffset({ x: 0, y: 0 });
@@ -79,8 +79,8 @@ export const ImageCropperModal = ({
     const handleCrop = () => {
         if (!imgRef.current) return;
         const canvasWidth = outputWidth;
-        const canvasHeight = outputWidth / aspectRatio;
-        const ratio = canvasWidth / CONTAINER_WIDTH;
+        const canvasHeight = Math.round(outputWidth / aspectRatio);
+        const ratio = canvasWidth / containerWidth;
 
         const canvas = document.createElement("canvas");
         canvas.width = canvasWidth;
@@ -104,7 +104,7 @@ export const ImageCropperModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-surface rounded-3xl p-6 max-w-md w-full flex flex-col items-center gap-4 shadow-2xl">
+            <div className={`bg-surface rounded-3xl p-6 w-full flex flex-col items-center gap-4 shadow-2xl ${aspectRatio > 2 ? 'max-w-lg' : 'max-w-md'}`}>
                 <div className="w-full flex items-center justify-between border-b border-border/40 pb-3">
                     <h4 className="font-bold text-text flex items-center gap-2">
                         <FontAwesomeIcon icon={faCrop} className="text-primary" />
@@ -117,7 +117,7 @@ export const ImageCropperModal = ({
 
                 <div
                     className="relative rounded-2xl overflow-hidden bg-black border-2 border-primary/60 cursor-move flex items-center justify-center shadow-inner select-none touch-none"
-                    style={{ width: CONTAINER_WIDTH, height: containerHeight }}
+                    style={{ width: containerWidth, height: containerHeight }}
                     onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
                     onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
                     onMouseUp={endDrag}

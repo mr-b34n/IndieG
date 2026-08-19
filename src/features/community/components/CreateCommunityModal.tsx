@@ -43,8 +43,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         "1. Tôn trọng tất cả các thành viên trong cộng đồng.\n2. Không đả kích, toxic hoặc xúc phạm cá nhân.\n3. Không đăng bài quảng cáo rác (spam)."
     );
 
-    // Safety check: if user is not admin/moderator, close modal immediately
-    const canCreate = user?.role === 'admin' || user?.role === 'moderator';
+    const canCreate = user?.role === 'admin';
     
     React.useEffect(() => {
         if (!canCreate) {
@@ -107,28 +106,29 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+            <div className="relative w-full max-w-xl bg-surface border border-divider-primary rounded-[6px] shadow-2xl overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h3 className="text-lg font-extrabold text-text flex items-center gap-2">
-                        <FontAwesomeIcon icon={faUsers} className="text-primary" />
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-divider-primary">
+                    <h3 className="text-sm font-black text-text uppercase tracking-wider flex items-center gap-2">
+                        <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
                         <span>Tạo Cộng Đồng Mới</span>
                     </h3>
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-surface-hover text-text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer"
+                        className="w-7 h-7 rounded-[4px] bg-surface-hover text-text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer border border-divider-primary"
                     >
-                        <FontAwesomeIcon icon={faXmark} />
+                        <FontAwesomeIcon icon={faXmark} className="text-xs" />
                     </button>
                 </div>
 
                 {/* Body form */}
-                <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+                <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
                     {/* Community Name */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
+                            <FontAwesomeIcon icon={faUsers} className="text-primary text-[10px]" />
                             <span>Tên cộng đồng</span>
                         </label>
                         <input
@@ -136,21 +136,21 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="VD: Valorant Vietnam Esports"
-                            className="h-11 px-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-semibold focus:outline-none focus:border-primary transition-all"
+                            className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary transition-colors"
                             required
                         />
                     </div>
 
                     {/* Category */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faLayerGroup} className="text-primary text-xs" />
+                            <FontAwesomeIcon icon={faLayerGroup} className="text-primary text-[10px]" />
                             <span>Thể loại Game</span>
                         </label>
                         <select
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="h-11 px-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-semibold focus:outline-none focus:border-primary cursor-pointer transition-all"
+                            className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary cursor-pointer transition-colors"
                         >
                             {CATEGORY_OPTIONS.map((cat) => (
                                 <option key={cat} value={cat}>
@@ -161,21 +161,21 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     </div>
 
                     {/* Description */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted">Mô tả ngắn</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={3}
                             placeholder="Giới thiệu mục tiêu, phong cách chơi hoặc chủ đề thảo luận chính của cộng đồng..."
-                            className="p-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-medium focus:outline-none focus:border-primary resize-none transition-all"
+                            className="p-2.5 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-medium focus:outline-none focus:border-primary resize-none transition-colors"
                         />
                     </div>
 
                     {/* Logo preset selector */}
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faImage} className="text-primary text-xs" />
+                            <FontAwesomeIcon icon={faImage} className="text-primary text-[10px]" />
                             <span>Biểu tượng (Logo)</span>
                         </label>
                         <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -184,8 +184,8 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                                     key={idx}
                                     type="button"
                                     onClick={() => setLogo(url)}
-                                    className={`w-12 h-12 rounded-2xl border-2 overflow-hidden transition-all shrink-0 cursor-pointer ${
-                                        logo === url ? "border-primary ring-2 ring-primary/30 scale-105" : "border-border opacity-70 hover:opacity-100"
+                                    className={`w-10 h-10 rounded-[4px] border overflow-hidden transition-all shrink-0 cursor-pointer ${
+                                        logo === url ? "border-primary ring-2 ring-primary/30 scale-105" : "border-divider-primary opacity-70 hover:opacity-100"
                                     }`}
                                 >
                                     <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
@@ -195,9 +195,9 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     </div>
 
                     {/* Backdrop preset selector */}
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faImage} className="text-amber-500 text-xs" />
+                            <FontAwesomeIcon icon={faImage} className="text-amber-500 text-[10px]" />
                             <span>Ảnh bìa (Backdrop)</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -206,8 +206,8 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                                     key={idx}
                                     type="button"
                                     onClick={() => setBackdrop(url)}
-                                    className={`h-16 rounded-xl border-2 overflow-hidden transition-all shrink-0 cursor-pointer relative ${
-                                        backdrop === url ? "border-primary ring-2 ring-primary/30" : "border-border opacity-70 hover:opacity-100"
+                                    className={`h-14 rounded-[4px] border overflow-hidden transition-all shrink-0 cursor-pointer relative ${
+                                        backdrop === url ? "border-primary ring-2 ring-primary/30" : "border-divider-primary opacity-70 hover:opacity-100"
                                     }`}
                                 >
                                     <img src={url} alt={`Backdrop ${idx}`} className="w-full h-full object-cover" />
@@ -217,9 +217,9 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     </div>
 
                     {/* Tags */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faTag} className="text-primary text-xs" />
+                            <FontAwesomeIcon icon={faTag} className="text-primary text-[10px]" />
                             <span>Thẻ tìm kiếm (Tags, phân cách bằng dấu phẩy)</span>
                         </label>
                         <input
@@ -227,38 +227,38 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                             value={tagsInput}
                             onChange={(e) => setTagsInput(e.target.value)}
                             placeholder="fps, esports, gaming, recruitment"
-                            className="h-11 px-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-semibold focus:outline-none focus:border-primary transition-all"
+                            className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary transition-colors"
                         />
                     </div>
 
                     {/* Rules */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-500 text-xs" />
+                            <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-500 text-[10px]" />
                             <span>Nội quy cộng đồng (mỗi dòng 1 quy tắc)</span>
                         </label>
                         <textarea
                             value={rulesInput}
                             onChange={(e) => setRulesInput(e.target.value)}
                             rows={3}
-                            className="p-3.5 rounded-2xl border border-border bg-bg text-xs text-text font-medium focus:outline-none focus:border-primary resize-none transition-all leading-relaxed"
+                            className="p-2.5 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-medium focus:outline-none focus:border-primary resize-none transition-colors leading-relaxed"
                         />
                     </div>
 
                     {/* Submit button */}
-                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                    <div className="flex items-center justify-end gap-2 pt-3 border-t border-divider-primary">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-2xl bg-surface-hover text-text-muted text-xs font-bold hover:text-text transition-colors cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-[4px] bg-surface-hover text-text-muted text-xs font-bold hover:text-text transition-colors cursor-pointer border border-divider-primary"
                         >
                             Hủy
                         </button>
                         <button
                             type="submit"
-                            className="px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover text-white text-xs font-extrabold shadow-md shadow-primary/25 transition-all cursor-pointer flex items-center gap-1.5"
+                            className="px-4 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                         >
-                            <FontAwesomeIcon icon={faPlus} />
+                            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
                             <span>Tạo cộng đồng</span>
                         </button>
                     </div>

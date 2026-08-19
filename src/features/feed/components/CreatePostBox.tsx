@@ -5,11 +5,12 @@ import {
     faThumbtack, 
     faComment, 
     faImage,
-    faPaperPlane,
     faChevronDown,
     faCheck,
     faUsers,
-    faEyeSlash
+    faEyeSlash,
+    faPaperclip,
+    faXmark
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -63,7 +64,7 @@ const ToggleSwitch = ({
             role="switch"
             aria-checked={checked}
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
                 checked ? "bg-primary" : "bg-surface-hover"
             }`}
         >
@@ -141,12 +142,12 @@ const PostSettingsMenu = ({
                 ref={buttonRef}
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className={`p-2 rounded-xl text-xs font-semibold hover:bg-surface-hover text-text-muted transition-colors cursor-pointer ${
+                className={`p-1.5 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer ${
                     open ? "bg-surface-hover text-text" : ""
                 }`}
-                title={t('feed.settings')}
+                title={t('feed.settings') || "Post Settings"}
             >
-                <FontAwesomeIcon icon={faGear} className="w-4 h-4" />
+                <FontAwesomeIcon icon={faGear} className="w-3.5 h-3.5" />
             </button>
 
             {open &&
@@ -155,24 +156,24 @@ const PostSettingsMenu = ({
                     <div
                         ref={menuRef}
                         style={{ top: coords.top, left: coords.left }}
-                        className="fixed z-[9999] w-56 rounded-2xl bg-surface shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-scale-up"
+                        className="fixed z-[9999] w-56 rounded-[6px] bg-surface border border-divider-primary shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-scale-up"
                     >
                         <ToggleSwitch
                             checked={allowComments}
                             onChange={onAllowCommentsChange}
-                            label={t('feed.allowComments')}
+                            label={t('feed.allowComments') || "Allow comments"}
                             icon={faComment}
                         />
                         <ToggleSwitch
                             checked={pinned}
                             onChange={onPinnedChange}
-                            label={t('feed.pinPost')}
+                            label={t('feed.pinPost') || "Pin post"}
                             icon={faThumbtack}
                         />
                         <ToggleSwitch
                             checked={isSpoiler}
                             onChange={onSpoilerChange}
-                            label={t('feed.spoiler')}
+                            label={t('feed.spoiler') || "Spoiler warning"}
                             icon={faEyeSlash}
                         />
                     </div>,
@@ -186,17 +187,19 @@ const CommunitySelector = ({
     value,
     onChange,
     communities,
+    hasError = false,
 }: {
     value: number | string | null;
     onChange: (id: number | string | null) => void;
     communities: CommunityData[];
+    hasError?: boolean;
 }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const selectedCommunity = useMemo(
-        () => communities.find((c) => c.id === value) || null,
+        () => communities.find((c) => String(c.id) === String(value)) || null,
         [communities, value]
     );
 
@@ -211,57 +214,62 @@ const CommunitySelector = ({
     }, []);
 
     return (
-        <div className="flex flex-col gap-1.5 w-full relative" ref={dropdownRef}>
-            <span className="text-[11px] font-bold text-text-muted flex items-center gap-1">
-                <span>{t('feed.selectCommunityRequired')}</span>
-                <span className="text-rose-500">*</span>
-            </span>
-
+        <div className="flex flex-col gap-1 w-full relative" ref={dropdownRef}>
             {/* Dropdown Button Trigger */}
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                className={`w-full h-8 flex items-center justify-between gap-2 px-2.5 rounded-[6px] border text-xs font-semibold transition-all cursor-pointer whitespace-nowrap overflow-hidden ${
                     isOpen
-                        ? "border-primary ring-2 ring-primary/20 bg-surface shadow-xs"
+                        ? "border-primary ring-1 ring-primary/30 bg-surface-hover/70"
+                        : hasError && !selectedCommunity
+                        ? "border-rose-500 bg-rose-500/10 text-rose-400"
                         : selectedCommunity
-                        ? "border-border/80 bg-surface hover:bg-surface-hover text-text"
-                        : "border-rose-500/40 bg-rose-500/5 text-text-muted hover:bg-rose-500/10"
+                        ? "border-divider-primary bg-surface-hover/50 hover:bg-surface-hover text-text"
+                        : "border-divider-primary bg-surface-hover/30 hover:bg-surface-hover/60 text-text-muted"
                 }`}
             >
                 {selectedCommunity ? (
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
                         <img
                             src={selectedCommunity.logo}
                             alt={selectedCommunity.name}
-                            className="w-5 h-5 rounded-full object-cover shrink-0"
+                            className="w-4 h-4 rounded-full object-cover shrink-0"
                         />
-                        <span className="truncate font-bold text-text">{selectedCommunity.name}</span>
+                        <span className="truncate font-bold text-text text-xs">{selectedCommunity.name}</span>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2 text-text-muted">
-                        <FontAwesomeIcon icon={faUsers} className="text-text-faint text-xs" />
-                        <span>{t('feed.selectCommunityPlaceholder')}</span>
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate text-text-muted">
+                        <FontAwesomeIcon icon={faUsers} className="text-text-faint text-[11px] shrink-0" />
+                        <span className="truncate text-xs">{t('feed.selectCommunityPlaceholder') || "Choose community"}</span>
                     </div>
                 )}
                 <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-xs text-text-faint transition-transform duration-200 ${
+                    className={`text-[9px] text-text-faint transition-transform duration-200 shrink-0 ml-1 ${
                         isOpen ? "rotate-180 text-primary" : ""
                     }`}
                 />
             </button>
 
+            {/* Error Message if user clicked Post without selecting */}
+            {hasError && !selectedCommunity && (
+                <span className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 pt-0.5 animate-fade-in whitespace-nowrap">
+                    <span>⚠</span>
+                    <span>{t('feed.selectCommunityRequired') || "Please select a community"}</span>
+                </span>
+            )}
+
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto animate-fade-in p-1 flex flex-col gap-0.5">
+                <div className="absolute top-full left-0 mt-1 min-w-[200px] w-full bg-surface border border-divider-primary rounded-[6px] shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto animate-fade-in p-1 flex flex-col gap-0.5">
                     {communities.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-text-faint text-center">
-                            {t('feed.noCommunitiesJoined')}
+                        <div className="px-3 py-2 text-xs text-text-faint text-center whitespace-nowrap">
+                            {t('feed.noCommunitiesJoined') || "No communities joined"}
                         </div>
                     ) : (
                         communities.map((c) => {
-                            const isSelected = c.id === value;
+                            const isSelected = String(c.id) === String(value);
                             return (
                                 <button
                                     key={c.id}
@@ -270,29 +278,22 @@ const CommunitySelector = ({
                                         onChange(c.id);
                                         setIsOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-[4px] text-left text-xs transition-colors cursor-pointer whitespace-nowrap ${
                                         isSelected
                                             ? "bg-primary/10 text-primary font-bold"
                                             : "hover:bg-surface-hover text-text"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0 truncate">
                                         <img
                                             src={c.logo}
                                             alt={c.name}
-                                            className="w-6 h-6 rounded-full object-cover shrink-0"
+                                            className="w-4 h-4 rounded-full object-cover shrink-0"
                                         />
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="truncate font-bold leading-tight">{c.name}</span>
-                                            {c.membersCount && (
-                                                <span className="text-[10px] text-text-faint">
-                                                    {c.membersCount.toLocaleString()} thành viên
-                                                </span>
-                                            )}
-                                        </div>
+                                        <span className="truncate font-semibold text-xs">{c.name}</span>
                                     </div>
                                     {isSelected && (
-                                        <FontAwesomeIcon icon={faCheck} className="text-primary text-xs shrink-0" />
+                                        <FontAwesomeIcon icon={faCheck} className="text-primary text-xs shrink-0 ml-1.5" />
                                     )}
                                 </button>
                             );
@@ -329,8 +330,12 @@ export const CreatePostBox = ({
         return joined.length > 0 ? joined : communities;
     }, [communities]);
 
-    const saveDraft = useDraftsStore((s) => s.saveDraft);
+    const activeFilteredCommunity = useMemo(() => {
+        if (!defaultCommunityId) return null;
+        return joinedCommunities.find((c) => String(c.id) === String(defaultCommunityId)) || null;
+    }, [joinedCommunities, defaultCommunityId]);
 
+    const saveDraft = useDraftsStore((s) => s.saveDraft);
     const drafts = useDraftsStore((s) => s.drafts);
 
     const [isExpanded, setExpanded] = useState(false);
@@ -343,6 +348,15 @@ export const CreatePostBox = ({
     const [isSpoiler, setIsSpoiler] = useState(false);
     const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
     const [isPosting, setIsPosting] = useState(false);
+    const [submitAttempted, setSubmitAttempted] = useState(false);
+
+    // Update communityId if defaultCommunityId changes
+    useEffect(() => {
+        if (defaultCommunityId !== null && defaultCommunityId !== undefined) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setCommunityId(defaultCommunityId);
+        }
+    }, [defaultCommunityId]);
 
     // Load draft if available and no initial data provided (once on mount)
     const hasLoadedDraft = useRef(false);
@@ -351,20 +365,17 @@ export const CreatePostBox = ({
             const draft = drafts[0];
             // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.title) setTitle(draft.title);
-            if (draft.content) {
-                setContent(draft.content);
-            }
-            if (draft.communityId) setCommunityId(draft.communityId);
+            if (draft.content) setContent(draft.content);
+            if (draft.communityId && !defaultCommunityId) setCommunityId(draft.communityId);
             if (draft.isSpoiler !== undefined) setIsSpoiler(draft.isSpoiler);
             hasLoadedDraft.current = true;
         }
-    }, [drafts, initialTitle, initialContent]);
+    }, [drafts, initialTitle, initialContent, defaultCommunityId]);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const highlightRef = useRef<HTMLDivElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
-
-    const isActive = isExpanded;
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Auto-save draft silently when user closes/collapses or when component unmounts with non-empty content
     useEffect(() => {
@@ -384,13 +395,9 @@ export const CreatePostBox = ({
     }, [content, title, communityId, attachments, allowComments, pinned, saveDraft]);
 
     useEffect(() => {
-        if (initialTitle) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setTitle(initialTitle);
-        }
-        if (initialContent) {
-            setContent(initialContent);
-        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (initialTitle) setTitle(initialTitle);
+        if (initialContent) setContent(initialContent);
     }, [initialTitle, initialContent]);
 
     useEffect(() => {
@@ -414,6 +421,13 @@ export const CreatePostBox = ({
         }, 50);
     };
 
+    const handleQuickFileClick = () => {
+        setExpanded(true);
+        setTimeout(() => {
+            fileInputRef.current?.click();
+        }, 50);
+    };
+
     const handleQuickImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -426,10 +440,31 @@ export const CreatePostBox = ({
         e.target.value = "";
     };
 
-    const canPost = communityId !== null && communityId !== undefined && (content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0) && !isPosting;
+    const handleQuickFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const newAttachments: EditableAttachment[] = [];
+        Array.from(files).forEach((file) => {
+            newAttachments.push(createAttachmentFromFile(file, "file"));
+        });
+        setAttachments((prev) => [...prev, ...newAttachments]);
+        e.target.value = "";
+    };
+
+    const hasValidContent = content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0;
+    const canPost = communityId !== null && communityId !== undefined && hasValidContent && !isPosting;
 
     const handlePost = async () => {
-        if (!canPost) return;
+        setSubmitAttempted(true);
+
+        if (!communityId) {
+            return;
+        }
+
+        if (!hasValidContent) {
+            return;
+        }
+
         setIsPosting(true);
 
         const contentHashtags = extractHashtags(content);
@@ -458,6 +493,7 @@ export const CreatePostBox = ({
             setContent("");
             setManualTags("");
             setAttachments([]);
+            setSubmitAttempted(false);
             setExpanded(false);
         } finally {
             setIsPosting(false);
@@ -480,23 +516,16 @@ export const CreatePostBox = ({
         setContent("");
         revokeAttachmentUrls(attachments);
         setAttachments([]);
+        setSubmitAttempted(false);
         setExpanded(false);
     };
 
     return (
         <div
             id="create-post"
-            className="
-                relative z-20
-                w-full p-4 sm:p-5
-                bg-surface/95 backdrop-blur-md
-                rounded-2xl sm:rounded-3xl
-                shadow-sm hover:shadow-md
-                transition-all duration-300 ease-out
-                flex flex-col gap-3
-            "
+            className="w-full pb-2 flex flex-col gap-3"
         >
-            {/* Hidden Input for Quick Image Button */}
+            {/* Hidden File Inputs */}
             <input
                 ref={imageInputRef}
                 type="file"
@@ -505,156 +534,223 @@ export const CreatePostBox = ({
                 onChange={handleQuickImageChange}
                 className="hidden"
             />
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleQuickFileChange}
+                className="hidden"
+            />
 
-            {/* Top User Info & Input Area */}
-            <div className="flex gap-3 items-start">
-                <div className="relative shrink-0">
-                    <img
-                        src={avatarUrl}
-                        alt="User"
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20 shadow-xs"
-                    />
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-surface" title="Online" />
+            {!isExpanded ? (
+                /* ================= COLLAPSED CLOSED STATE ================= */
+                <div
+                    onClick={() => setExpanded(true)}
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-[6px] bg-surface-hover/30 hover:bg-surface-hover/60 border border-transparent hover:border-divider-primary transition-all cursor-pointer group"
+                >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="relative shrink-0">
+                            <img
+                                src={avatarUrl}
+                                alt="User"
+                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
+                            />
+                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-bg" />
+                        </div>
+
+                        <div className="flex flex-col justify-center min-w-0 flex-1">
+                            <span className="text-xs sm:text-sm text-text-muted group-hover:text-text transition-colors">
+                                {t('feed.whatOnMind') || "What's on your mind?"}
+                            </span>
+                            {activeFilteredCommunity && (
+                                <span className="text-[11px] text-primary font-bold truncate mt-0.5 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                    <span>{activeFilteredCommunity.name}</span>
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickImageClick();
+                            }}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
+                        >
+                            <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
+                            <span className="hidden sm:inline">{t('feed.mediaButton') || "Media"}</span>
+                        </button>
+                    </div>
                 </div>
+            ) : (
+                /* ================= OPEN EXPANDED EDITOR STATE ================= */
+                <div className="w-full flex flex-col gap-3 animate-fade-in">
+                    {/* Header: CREATE POST */}
+                    <div className="flex items-center justify-between pb-2 border-b border-divider-primary">
+                        <span className="text-xs font-black uppercase tracking-wider text-text">
+                            {t('feed.createPost') || "CREATE POST"}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            className="text-text-faint hover:text-text text-xs p-1 cursor-pointer transition-colors"
+                            title={t('common.cancel') || "Cancel"}
+                        >
+                            <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                    </div>
 
-                <div className="flex flex-col gap-2.5 w-full min-w-0">
-                    {/* Community Selector & Title when active */}
-                    <div
-                        className={`grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out ${
-                            isActive
-                                ? "grid-rows-[1fr] opacity-100"
-                                : "grid-rows-[0fr] opacity-0 -mb-2 pointer-events-none"
-                        }`}
-                        aria-hidden={!isActive}
-                    >
-                        <div className={`min-h-0 flex flex-col gap-2 ${isActive ? "overflow-visible" : "overflow-hidden"}`}>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                {!hideCommunitySelector && (
+                    {/* Metadata: User & Community Selector */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <img
+                                src={avatarUrl}
+                                alt="User"
+                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80 shrink-0"
+                            />
+
+                            {!hideCommunitySelector && (
+                                <div className="flex items-center gap-2 min-w-0 w-full sm:w-80">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-text-faint shrink-0">
+                                        {t('feed.selectCommunity') || "Communities"}
+                                    </span>
                                     <div className="flex-1 min-w-0">
                                         <CommunitySelector
                                             value={communityId}
-                                            onChange={setCommunityId}
+                                            onChange={(val) => {
+                                                setCommunityId(val);
+                                                setSubmitAttempted(false);
+                                            }}
                                             communities={joinedCommunities}
+                                            hasError={submitAttempted && !communityId}
                                         />
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
+                    {/* Editor Fields */}
+                    <div className="flex flex-col gap-2 pt-1">
+                        {/* Title Field */}
+                        <div className="w-full border-b border-divider-secondary pb-1">
                             <input
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder={t('feed.postTitle') || "Tiêu đề bài viết (không bắt buộc)..."}
-                                tabIndex={isActive ? 0 : -1}
-                                className="w-full h-10 px-3.5 bg-surface-hover/80 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all text-text placeholder:text-text-faint"
+                                placeholder={t('feed.postTitlePlaceholder') || "Give your post a title..."}
+                                className="w-full bg-transparent border-none outline-none text-sm font-bold text-text placeholder:text-text-faint py-1.5 px-0.5"
                             />
+                        </div>
 
+                        {/* Tags Field */}
+                        <div className="w-full border-b border-divider-secondary pb-1">
                             <input
                                 type="text"
                                 value={manualTags}
                                 onChange={(e) => setManualTags(e.target.value)}
-                                placeholder={t('feed.tagsPlaceholder')}
-                                tabIndex={isActive ? 0 : -1}
-                                className="w-full h-10 px-3.5 bg-surface-hover/80 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all text-primary placeholder:text-text-faint"
+                                placeholder={t('feed.tagsPlaceholder') || "Add tags (e.g. #CS2 #Tips)..."}
+                                className="w-full bg-transparent border-none outline-none text-xs font-semibold text-primary placeholder:text-text-faint py-1 px-0.5"
                             />
                         </div>
-                    </div>
 
-                    {/* Main Textarea Container */}
-                    <div
-                        className={`relative w-full bg-surface-hover/80 rounded-2xl transition-all duration-200 ease-out focus-within:ring-2 focus-within:ring-primary/15 ${
-                            isActive ? "min-h-24" : "min-h-11"
-                        }`}
-                    >
-                        <textarea
-                            ref={textareaRef}
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            onScroll={handleTextareaScroll}
-                            onFocus={() => setExpanded(true)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
-                            }}
-                            placeholder={t('feed.whatOnMind')}
-                            rows={1}
-                            className={`block w-full px-3.5 bg-transparent border-none outline-none text-sm font-medium text-transparent caret-text placeholder:text-text-faint resize-none leading-relaxed transition-[padding] duration-200 ease-out ${
-                                isActive ? "min-h-24 py-3" : "min-h-11 py-2.5"
-                            }`}
-                        />
-                        <div
-                            ref={highlightRef}
-                            aria-hidden
-                            className={`absolute inset-0 px-3.5 text-sm font-medium leading-relaxed whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-text transition-[padding] duration-200 ease-out ${
-                                isActive ? "py-3" : "py-2.5"
-                            }`}
-                        >
-                            {renderHighlightedContent(content)}
-                            {content.endsWith("\n") ? "\u200b" : null}
+                        {/* Body Editor Area */}
+                        <div className="relative w-full pt-1">
+                            <textarea
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                onScroll={handleTextareaScroll}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
+                                }}
+                                placeholder={t('feed.writeSomething') || "What's on your mind? Write something..."}
+                                rows={6}
+                                className="block w-full min-h-[160px] sm:min-h-[200px] p-2 bg-transparent border-none outline-none text-xs sm:text-sm font-normal text-transparent caret-text placeholder:text-text-faint resize-none leading-relaxed"
+                            />
+                            <div
+                                ref={highlightRef}
+                                aria-hidden
+                                className="absolute inset-0 pt-3 p-2 text-xs sm:text-sm font-normal leading-relaxed whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-text"
+                            >
+                                {renderHighlightedContent(content)}
+                                {content.endsWith("\n") ? "\u200b" : null}
+                            </div>
                         </div>
+
+                        {/* Attachments preview */}
+                        {attachments.length > 0 && (
+                            <div className="pt-2">
+                                <AttachmentPicker
+                                    attachments={attachments}
+                                    onChange={setAttachments}
+                                    showToolbar={false}
+                                    compactToolbar
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    {/* Unexpanded Quick Action Shortcuts */}
-                    {!isActive && (
-                        <div className="flex items-center gap-1.5 sm:gap-2 pt-1 overflow-x-auto no-scrollbar">
+                    {/* Bottom Toolbar */}
+                    <div className="flex items-center justify-between pt-3 border-t border-divider-primary mt-1">
+                        {/* Media and Attachment Buttons */}
+                        <div className="flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={handleQuickImageClick}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text text-xs font-bold transition-all cursor-pointer shrink-0"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
-                                <span>{t('feed.mediaButton')}</span>
+                                <span>Media</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleQuickFileClick}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faPaperclip} className="text-primary text-xs" />
+                                <span>Attachment</span>
                             </button>
                         </div>
-                    )}
 
-                    {/* Attachment Picker & Bottom Action Bar */}
-                    <AttachmentPicker
-                        attachments={attachments}
-                        onChange={setAttachments}
-                        showToolbar={isActive}
-                        compactToolbar
-                        className="gap-2 pt-1"
-                        toolbarTrailing={
-                            <div className="flex items-center gap-2 shrink-0">
-                                {isActive && (
-                                    <PostSettingsMenu
-                                        allowComments={allowComments}
-                                        onAllowCommentsChange={setAllowComments}
-                                        pinned={pinned}
-                                        onPinnedChange={setPinned}
-                                        isSpoiler={isSpoiler}
-                                        onSpoilerChange={setIsSpoiler}
-                                    />
-                                )}
+                        {/* Settings & Post Action */}
+                        <div className="flex items-center gap-3">
+                            <PostSettingsMenu
+                                allowComments={allowComments}
+                                onAllowCommentsChange={setAllowComments}
+                                pinned={pinned}
+                                onPinnedChange={setPinned}
+                                isSpoiler={isSpoiler}
+                                onSpoilerChange={setIsSpoiler}
+                            />
 
-                                {isActive && (
-                                    <button
-                                        type="button"
-                                        onClick={handleCancel}
-                                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-surface-hover text-text-muted hover:text-text transition-all cursor-pointer"
-                                    >
-                                        {t('common.cancel')}
-                                    </button>
-                                )}
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                className="px-3 py-1.5 rounded-[6px] text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-hover/60 transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
 
-                                <button
-                                    type="button"
-                                    onClick={handlePost}
-                                    disabled={!canPost}
-                                    className={`shrink-0 px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                                        canPost
-                                            ? "bg-primary hover:bg-primary-hover text-white shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 hover:-translate-y-0.5 active:translate-y-0"
-                                            : "bg-surface-hover text-text-faint cursor-not-allowed"
-                                    }`}
-                                >
-                                    <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
-                                    <span>{isPosting ? t('common.loading') : t('feed.postButton')}</span>
-                                </button>
-                            </div>
-                        }
-                    />
+                            <button
+                                type="button"
+                                onClick={handlePost}
+                                disabled={isPosting}
+                                className={`px-5 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
+                                    canPost
+                                        ? "bg-primary hover:bg-primary-hover text-white shadow-xs"
+                                        : "bg-primary text-white opacity-40 cursor-not-allowed"
+                                }`}
+                            >
+                                <span>{isPosting ? t('common.loading') : "Post"}</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

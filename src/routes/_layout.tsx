@@ -38,7 +38,6 @@ function MainLayout() {
     const hideSidebars = 
         pathname.startsWith('/settings') || 
         pathname.startsWith('/profile') || 
-        pathname.startsWith('/explore') || 
         pathname.startsWith('/game') ||
         pathname.startsWith('/admin') ||
         (pathname.startsWith('/community') && pathname !== '/community')

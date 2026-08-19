@@ -411,7 +411,6 @@ export function SettingsPage() {
                                     </div>
                                 </div>
 
-                                {/* Language */}
                                 <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 flex items-center justify-between gap-4">
                                     <div>
                                         <div className="text-xs font-bold text-text">Ngôn ngữ hiển thị (Language)</div>

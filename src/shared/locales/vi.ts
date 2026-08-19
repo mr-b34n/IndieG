@@ -87,7 +87,7 @@ export const vi = {
         allowComments: "Cho phép bình luận",
         pinPost: "Ghim bài viết",
         addAttachments: "Thêm tệp/ảnh",
-        selectCommunity: "Chọn cộng đồng",
+        selectCommunity: "Cộng đồng",
         generalFeed: "Bảng tin chung",
         justNow: "Vừa xong",
         hoursAgo: "{count} giờ trước",
@@ -96,9 +96,9 @@ export const vi = {
         allLoaded: "Bạn đã xem hết tất cả bài viết trên bảng tin ✨",
         emptyTitle: "Chưa có bài viết nào",
         emptyDesc: "Hãy kiểm tra lại sau hoặc tạo một bài viết mới.",
-        selectCommunityRequired: "Chọn cộng đồng để đăng bài (bắt buộc)",
-        selectCommunityPlaceholder: "-- Chọn cộng đồng để đăng bài --",
-        noCommunitiesJoined: "Bạn chưa tham gia cộng đồng nào",
+        selectCommunityRequired: "Vui lòng chọn cộng đồng",
+        selectCommunityPlaceholder: "Chọn cộng đồng",
+        noCommunitiesJoined: "Chưa tham gia cộng đồng nào",
         mediaButton: "Ảnh / Video",
         gameDiscussion: "Thảo luận Game",
         tagsPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
@@ -391,10 +391,14 @@ export const vi = {
             repScore: "Điểm uy tín"
         },
         tabs: {
+            overview: "Tổng quan",
+            games: "Game Mastery",
             posts: "Bài viết",
+            communities: "Cộng đồng",
+            achievements: "Thành tựu & Huy hiệu",
+            friends: "Bạn bè & Đồng đội",
             library: "Thư viện game",
-            badges: "Huy hiệu & Danh hiệu",
-            friends: "Chiến hữu & Tổ đội"
+            badges: "Huy hiệu & Danh hiệu"
         },
         library: {
             hoursPlayed: "{hours} giờ chơi",
@@ -725,6 +729,14 @@ export const vi = {
         viewCommunityFeed: "Xem Bảng tin Cộng đồng",
         noRelatedPosts: "Chưa có bài viết liên quan cho trò chơi này.",
         noRelatedPostsSub: "Hãy là người đầu tiên thảo luận hoặc đăng tin tức về trò chơi này!"
+    },
+    pagination: {
+        showingResults: "Hiển thị {start} - {end} trong tổng số {total} kết quả",
+        pageSummary: "Trang {page} / {totalPages}",
+        firstPage: "Trang đầu",
+        prevPage: "Trang trước",
+        nextPage: "Trang sau",
+        lastPage: "Trang cuối"
     },
     admin: {
         title: "Trung Tâm Quản Lý Trò Chơi (Admin Portal)",

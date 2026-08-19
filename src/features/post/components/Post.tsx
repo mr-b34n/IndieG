@@ -34,7 +34,7 @@ import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
 import { useTranslation } from "@/shared/hooks/useTranslate"
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo"
 import { type PostFileAttachment, type PostData } from "../types";
-import { POST_TAG_CLASSES, POST_BADGE_MAP } from "../constants";
+import { POST_BADGE_MAP } from "../constants";
 import { getGameBySlug } from "@/features/game";
 import { useLikeInteraction, useBookmarkInteraction } from "../api/interaction-api";
 
@@ -60,7 +60,7 @@ const ImageGallery = ({ images, onImageClick }: { images: string[], onImageClick
             <img
                 src={images[0]}
                 alt=""
-                className="w-full max-h-80 object-cover rounded-xl border border-border cursor-pointer hover:opacity-95 transition-opacity"
+                className="w-full max-h-96 object-cover rounded-md cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={(e) => { e.stopPropagation(); onImageClick(0); }}
             />
         );
@@ -68,7 +68,7 @@ const ImageGallery = ({ images, onImageClick }: { images: string[], onImageClick
 
     if (count === 2) {
         return (
-            <div className="grid grid-cols-2 gap-1 aspect-4/3 sm:aspect-video rounded-xl overflow-hidden border border-border">
+            <div className="grid grid-cols-2 gap-1.5 aspect-4/3 sm:aspect-video rounded-md overflow-hidden">
                 <img src={images[0]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(0); }} className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" />
                 <img src={images[1]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(1); }} className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" />
             </div>
@@ -77,9 +77,9 @@ const ImageGallery = ({ images, onImageClick }: { images: string[], onImageClick
 
     if (count === 3) {
         return (
-            <div className="grid grid-cols-2 gap-1 aspect-4/3 sm:aspect-video rounded-xl overflow-hidden border border-border">
+            <div className="grid grid-cols-2 gap-1.5 aspect-4/3 sm:aspect-video rounded-md overflow-hidden">
                 <img src={images[0]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(0); }} className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" />
-                <div className="flex flex-col gap-1 h-full min-h-0">
+                <div className="flex flex-col gap-1.5 h-full min-h-0">
                     <img src={images[1]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(1); }} className="w-full flex-1 object-cover min-h-0 cursor-pointer hover:opacity-95 transition-opacity" />
                     <img src={images[2]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(2); }} className="w-full flex-1 object-cover min-h-0 cursor-pointer hover:opacity-95 transition-opacity" />
                 </div>
@@ -88,17 +88,17 @@ const ImageGallery = ({ images, onImageClick }: { images: string[], onImageClick
     }
 
     return (
-        <div className="grid grid-cols-2 gap-1 aspect-4/3 sm:aspect-video rounded-xl overflow-hidden border border-border">
-            <div className="flex flex-col gap-1 h-full min-h-0">
+        <div className="grid grid-cols-2 gap-1.5 aspect-4/3 sm:aspect-video rounded-md overflow-hidden">
+            <div className="flex flex-col gap-1.5 h-full min-h-0">
                 <img src={images[0]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(0); }} className="w-full flex-1 object-cover min-h-0 cursor-pointer hover:opacity-95 transition-opacity" />
                 <img src={images[1]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(1); }} className="w-full flex-1 object-cover min-h-0 cursor-pointer hover:opacity-95 transition-opacity" />
             </div>
-            <div className="flex flex-col gap-1 h-full min-h-0">
+            <div className="flex flex-col gap-1.5 h-full min-h-0">
                 <img src={images[2]} alt="" onClick={(e) => { e.stopPropagation(); onImageClick(2); }} className="w-full flex-1 object-cover min-h-0 cursor-pointer hover:opacity-95 transition-opacity" />
                 <div className="relative w-full flex-1 min-h-0 cursor-pointer hover:opacity-95 transition-opacity" onClick={(e) => { e.stopPropagation(); onImageClick(3); }}>
                     <img src={images[3]} alt="" className="w-full h-full object-cover" />
                     {count > 4 && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <span className="text-white text-xl font-bold">+{count - 4}</span>
                         </div>
                     )}
@@ -119,11 +119,11 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
                     href={file.url}
                     download={file.name}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex flex-row items-center gap-2 px-3 py-2 rounded-xl bg-surface-hover border border-border hover:border-primary/30 transition-colors"
+                    className="flex flex-row items-center gap-2.5 px-3 py-2 rounded-md bg-surface-hover/60 hover:bg-surface-hover transition-colors"
                 >
                     <FontAwesomeIcon icon={faFile} className="text-primary text-sm shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-text truncate">{file.name}</p>
+                        <p className="text-xs font-semibold text-text truncate">{file.name}</p>
                         {file.size > 0 && (
                             <p className="text-[10px] text-text-faint">{formatFileSize(file.size)}</p>
                         )}
@@ -259,120 +259,114 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         <article
             onClick={handleNavigate}
             className={`
-            w-full ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "overflow-hidden relative"}
-            bg-surface/95 backdrop-blur-sm
-            border border-border
-            rounded-xl
-            shadow-[0_10px_30px_-5px_rgba(0,0,0,0.12),0_4px_12px_-5px_rgba(0,0,0,0.06)]
-            dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.40),0_4px_12px_-5px_rgba(0,0,0,0.20)]
-            hover:shadow-[0_16px_40px_-5px_rgba(0,0,0,0.18),0_6px_16px_-5px_rgba(0,0,0,0.10)]
-            dark:hover:shadow-[0_16px_40px_-5px_rgba(0,0,0,0.50),0_6px_16px_-5px_rgba(0,0,0,0.28)]
-            hover:-translate-y-0.5
-            transition-all duration-300 ease-out
-            ${isDetailView ? "" : "cursor-pointer"}
-        `}>
-
-            <div className="flex flex-row items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
-                <div className="relative shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleAuthorClick}>
-                    <img
-                        src={post.authorAvatar}
-                        alt={post.author}
-                        className="w-8 h-8 rounded-full object-cover ring-1 ring-border"
-                    />
-                    {rank && (
-                        <span
-                            title={getRankLabel(rank, language)}
-                            className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-surface text-[8px] ${rank.classes}`}
-                        >
-                            <FontAwesomeIcon icon={rank.icon} />
-                        </span>
-                    )}
-                </div>
-
-                <div className="flex flex-col flex-1 leading-tight min-w-0">
-                    <div className="flex flex-row items-center gap-2 flex-wrap">
-                        <p onClick={handleAuthorClick} className={`font-semibold text-[15px] hover:underline cursor-pointer ${rank?.textColor || "text-text"}`}>{post.author}</p>
-
+                w-full py-4 pb-5 border-b border-divider-secondary
+                ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "relative"}
+                ${isDetailView ? "" : "cursor-pointer group"}
+            `}
+        >
+            {/* Header / Author row */}
+            <div className="flex flex-row items-center justify-between gap-3 mb-2.5">
+                <div className="flex flex-row items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity" onClick={handleAuthorClick}>
+                        <img
+                            src={post.authorAvatar}
+                            alt={post.author}
+                            className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
+                        />
                         {rank && (
-                            <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${rank.classes}`}>
-                                {getRankLabel(rank, language)}
-                            </span>
-                        )}
-
-                        {badge && (
-                            <span className={`flex flex-row items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider ${badge.classes}`}>
-                                <FontAwesomeIcon icon={badge.icon} />
-                                {badge.label}
+                            <span
+                                title={getRankLabel(rank, language)}
+                                className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 flex items-center justify-center rounded-full ring-1 ring-bg text-[7px] ${rank.classes}`}
+                            >
+                                <FontAwesomeIcon icon={rank.icon} />
                             </span>
                         )}
                     </div>
-                    <div className="flex flex-row items-center gap-1.5 text-xs text-text-faint mt-1">
-                        <span>{formatTimeAgo(post.timeAgo, t)}</span>
-                        {postCommunity && (
-                            <>
-                                <span>•</span>
+
+                    <div className="flex flex-col leading-tight min-w-0">
+                        <div className="flex flex-row items-center gap-1.5 flex-wrap">
+                            <span
+                                onClick={handleAuthorClick}
+                                className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${rank?.textColor || "text-text"}`}
+                            >
+                                {post.author}
+                            </span>
+
+                            {rank && (
+                                <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${rank.classes}`}>
+                                    {getRankLabel(rank, language)}
+                                </span>
+                            )}
+
+                            {badge && (
+                                <span className={`flex flex-row items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${badge.classes}`}>
+                                    <FontAwesomeIcon icon={badge.icon} />
+                                    {badge.label}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Community context & Time */}
+                        <div className="flex flex-row items-center gap-1.5 text-[11px] text-text-faint mt-0.5">
+                            {postCommunity ? (
                                 <span
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigate({ to: `/community/${postCommunity.id}` });
                                     }}
-                                    className="hover:text-primary hover:underline transition-colors font-bold text-primary/80 cursor-pointer"
+                                    className="font-bold text-primary hover:underline transition-colors cursor-pointer flex items-center gap-1"
                                 >
-                                    c/{postCommunity.name}
+                                    <span>{postCommunity.name}</span>
                                 </span>
-                            </>
-                        )}
-                        <span>•</span>
-                        {post.gameTag && (
-                            <span
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const gameInfo = getGameBySlug(post.gameTag!);
-                                    navigate({ to: `/game/${gameInfo.slug}` });
-                                }}
-                                className="hover:text-primary hover:underline transition-colors font-medium cursor-pointer"
-                            >
-                                {post.gameTag}
-                            </span>
-                        )}
+                            ) : post.gameTag ? (
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const gameInfo = getGameBySlug(post.gameTag!);
+                                        navigate({ to: `/game/${gameInfo.slug}` });
+                                    }}
+                                    className="font-bold text-text-muted hover:text-primary transition-colors cursor-pointer"
+                                >
+                                    {post.gameTag}
+                                </span>
+                            ) : null}
+                            <span>·</span>
+                            <span>{formatTimeAgo(post.timeAgo, t)}</span>
+                        </div>
                     </div>
                 </div>
 
-                <div className="relative">
+                {/* Top Action / More button */}
+                <div className="relative shrink-0">
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowActionMenu(prev => !prev); setShowShareMenu(false); }}
-                        className="
-                        w-8 h-8 flex items-center justify-center rounded-full
-                        text-text-faint hover:text-text hover:bg-surface-hover
-                        transition-colors duration-150
-                    ">
-                        <FontAwesomeIcon icon={faEllipsis} />
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-text-faint hover:text-text hover:bg-surface-hover/70 transition-colors cursor-pointer"
+                    >
+                        <FontAwesomeIcon icon={faEllipsis} className="text-xs" />
                     </button>
 
                     {showActionMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); }} />
                             <div
-                                className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in py-1"
-                                >
+                                className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border/80 rounded-md shadow-xl z-50 overflow-hidden animate-fade-in py-1"
+                            >
                                 {isOwner ? (
                                     <>
-                                        <button onClick={handleEdit} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
-                                            <FontAwesomeIcon icon={faPen} className="w-4" />
+                                        <button onClick={handleEdit} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer">
+                                            <FontAwesomeIcon icon={faPen} className="w-3.5" />
                                             {t('post.edit')}
                                         </button>
-                                        <button onClick={handleDelete} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/50">
-                                            <FontAwesomeIcon icon={faTrash} className="w-4" />
+                                        <button onClick={handleDelete} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/40 cursor-pointer">
+                                            <FontAwesomeIcon icon={faTrash} className="w-3.5" />
                                             {t('post.delete')}
                                         </button>
                                     </>
                                 ) : (
-                                    <>
-                                        <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); setShowReportModal(true); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent-500 hover:bg-surface-hover transition-colors text-left">
-                                            <FontAwesomeIcon icon={faFlag} className="w-4" />
-                                            {t('post.report')}
-                                        </button>
-                                    </>
+                                    <button onClick={(e) => { e.stopPropagation(); setShowActionMenu(false); setShowReportModal(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-rose-500 hover:bg-surface-hover transition-colors text-left cursor-pointer">
+                                        <FontAwesomeIcon icon={faFlag} className="w-3.5" />
+                                        {t('post.report')}
+                                    </button>
                                 )}
                             </div>
                         </>
@@ -380,13 +374,14 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 </div>
             </div>
 
-            <div className="px-4 pb-3 flex flex-col gap-2 relative">
+            {/* Content Body */}
+            <div className="flex flex-col gap-2 relative">
                 {post.isSpoiler && !isRevealed && (
                     <div 
                         onClick={(e) => { e.stopPropagation(); setIsRevealed(true); }}
-                        className="absolute inset-0 z-10 flex items-center justify-center bg-surface/40 backdrop-blur-md rounded-xl cursor-pointer hover:bg-surface/50 transition-colors"
+                        className="absolute inset-0 z-10 flex items-center justify-center bg-surface/60 backdrop-blur-md rounded cursor-pointer"
                     >
-                        <div className="px-4 py-2 bg-black/60 rounded-full text-white text-xs font-bold flex items-center gap-2">
+                        <div className="px-3 py-1.5 bg-black/80 rounded text-white text-[11px] font-bold flex items-center gap-2">
                             <FontAwesomeIcon icon={faEyeSlash} />
                             <span>CLICK TO VIEW SPOILER</span>
                         </div>
@@ -394,21 +389,23 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 )}
                 
                 <div className={post.isSpoiler && !isRevealed ? "blur-md select-none pointer-events-none" : ""}>
-                    <p className="font-semibold text-base text-text leading-snug">
-                        {post.title}
-                    </p>
-                    <p className="text-sm text-text-muted leading-relaxed whitespace-pre-line">
+                    {post.title && (
+                        <h2 className={`font-bold text-text leading-snug tracking-tight mb-2 group-hover:text-primary transition-colors break-words ${
+                            isDetailView ? "text-xl sm:text-[26px]" : "text-lg sm:text-[22px] md:text-[24px]"
+                        }`}>
+                            {post.title}
+                        </h2>
+                    )}
+                    <p className="text-xs sm:text-sm text-text-muted leading-relaxed whitespace-pre-line font-normal">
                         {post.content}
                     </p>
 
                     {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-row gap-1.5 flex-wrap pt-0.5">
-                            {post.tags.map((tag, idx) => (
+                        <div className="flex flex-row gap-1.5 flex-wrap pt-2">
+                            {post.tags.map((tag) => (
                                 <span
                                     key={tag}
-                                    className={`px-2 py-0.5 rounded-full text-xs font-medium
-                                        hover:opacity-75 transition-opacity
-                                        ${POST_TAG_CLASSES[idx % POST_TAG_CLASSES.length]}`}
+                                    className="text-xs font-medium text-primary hover:underline cursor-pointer"
                                 >
                                     #{tag}
                                 </span>
@@ -418,12 +415,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 </div>
             </div>
 
+            {/* Media Gallery */}
             {post.images && post.images.length > 0 && (
-                <div className="px-4 pb-3 relative">
-                     {post.isSpoiler && !isRevealed && (
+                <div className="mt-3 relative">
+                    {post.isSpoiler && !isRevealed && (
                         <div 
                             onClick={(e) => { e.stopPropagation(); setIsRevealed(true); }}
-                            className="absolute inset-x-4 inset-y-0 z-10 flex items-center justify-center bg-surface/20 backdrop-blur-xl rounded-xl cursor-pointer"
+                            className="absolute inset-0 z-10 flex items-center justify-center bg-surface/40 backdrop-blur-xl rounded cursor-pointer"
                         />
                     )}
                     <div className={post.isSpoiler && !isRevealed ? "blur-xl select-none pointer-events-none" : ""}>
@@ -432,85 +430,75 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 </div>
             )}
 
+            {/* Files */}
             {post.files && post.files.length > 0 && (
-                <div className="px-4 pb-3">
+                <div className="mt-2.5">
                     <FileAttachments files={post.files} />
                 </div>
             )}
 
-            <div className="flex flex-row items-center gap-1.5 px-3 py-2.5 border-t border-border">
-
+            {/* Action Row */}
+            <div className="flex flex-row items-center gap-4 sm:gap-6 pt-3 mt-1 text-xs text-text-muted">
                 {/* Like Button */}
                 <button
                     onClick={handleLike}
                     className={`
-                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
-                        rounded-full text-sm font-semibold transition-all duration-200
+                        flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
                         ${isLiked 
-                            ? "bg-like/10 text-like shadow-sm shadow-like/10" 
-                            : "text-text-muted hover:bg-surface-hover hover:text-text"}
+                            ? "text-rose-500 font-bold" 
+                            : "hover:text-text"}
                     `}
                 >
-                    <FontAwesomeIcon icon={isLiked ? faHeartSolid : faHeartOutline} className="text-sm" />
+                    <FontAwesomeIcon icon={isLiked ? faHeartSolid : faHeartOutline} className="text-xs" />
                     <span>{likeCount}</span>
                 </button>
 
+                {/* Comment Button */}
                 {post.allowComments === false ? (
                     <div
-                        className="
-                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
-                        rounded-full text-sm font-medium
-                        text-text-faint bg-surface-hover/40 cursor-not-allowed
-                    "
+                        className="flex flex-row items-center gap-1.5 text-text-faint cursor-not-allowed"
                         title={t('post.commentsDisabledTitle')}
                     >
-                        <FontAwesomeIcon icon={faLock} className="text-sm" />
-                        <span className="hidden sm:inline">{t('post.commentsDisabled')}</span>
+                        <FontAwesomeIcon icon={faLock} className="text-xs" />
+                        <span className="text-[11px]">{t('post.commentsDisabled')}</span>
                     </div>
                 ) : (
                     <button
                         onClick={(e) => { e.stopPropagation(); if (!isDetailView) handleNavigate(); }}
-                        className="
-                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
-                        rounded-full text-sm font-semibold
-                        text-text-muted hover:bg-surface-hover hover:text-text
-                        transition-colors duration-150 cursor-pointer
-                    ">
-                        <FontAwesomeIcon icon={faComment} className="text-sm" />
-                        <span>{post.comments}</span>
+                        className="flex flex-row items-center gap-1.5 font-semibold hover:text-text transition-colors cursor-pointer"
+                    >
+                        <FontAwesomeIcon icon={faComment} className="text-xs" />
+                        <span>{post.comments} {t('post.replies', { defaultValue: 'Replies' })}</span>
                     </button>
                 )}
 
+                {/* Share Button */}
                 <div className="relative">
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowShareMenu(prev => !prev); setShowActionMenu(false); }}
-                        className="
-                        flex flex-row items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2
-                        rounded-full text-sm font-semibold
-                        text-text-muted hover:bg-surface-hover hover:text-text
-                        transition-colors duration-150 cursor-pointer
-                    ">
-                        <FontAwesomeIcon icon={faShare} className="text-sm" />
-                        <span className="hidden sm:inline">{t('post.share')}</span>
+                        className="flex flex-row items-center gap-1.5 font-semibold hover:text-text transition-colors cursor-pointer"
+                    >
+                        <FontAwesomeIcon icon={faShare} className="text-xs" />
+                        <span>{t('post.share')}</span>
                     </button>
 
                     {showShareMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowShareMenu(false); }} />
                             <div
-                                className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-fade-in py-1"
+                                className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border/80 rounded-md shadow-xl z-50 overflow-hidden animate-fade-in py-1"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
-                                    <FontAwesomeIcon icon={faLink} className="w-4" />
+                                <button onClick={handleCopyLink} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer">
+                                    <FontAwesomeIcon icon={faLink} className="w-3.5" />
                                     {linkCopied ? t('post.copied') : t('post.copyLink')}
                                 </button>
-                                <button onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
-                                    <FontAwesomeIcon icon={faTwitter} className="w-4 text-[#1DA1F2]" />
+                                <button onClick={handleShareX} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer">
+                                    <FontAwesomeIcon icon={faTwitter} className="w-3.5 text-[#1DA1F2]" />
                                     {t('post.shareX')}
                                 </button>
-                                <button onClick={handleShareFacebook} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left">
-                                    <FontAwesomeIcon icon={faFacebook} className="w-4 text-[#1877F2]" />
+                                <button onClick={handleShareFacebook} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer">
+                                    <FontAwesomeIcon icon={faFacebook} className="w-3.5 text-[#1877F2]" />
                                     {t('post.shareFB')}
                                 </button>
                             </div>
@@ -518,13 +506,15 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                     )}
                 </div>
 
+                {/* Bookmark Button */}
                 <button
                     onClick={handleToggleBookmark}
-                    className={`ml-auto w-8 h-8 flex items-center justify-center
-                        rounded-full transition-colors duration-150 cursor-pointer
-                        ${bookmarked
-                            ? "text-primary "
-                            : "text-text-faint hover:text-text hover:bg-surface-hover"}`}
+                    className={`ml-auto flex items-center justify-center transition-colors cursor-pointer ${
+                        bookmarked
+                            ? "text-primary font-bold"
+                            : "text-text-faint hover:text-text"
+                    }`}
+                    title={bookmarked ? "Đã lưu" : "Lưu bài viết"}
                 >
                     <FontAwesomeIcon icon={bookmarked ? faBookmarkSolid : faBookmarkOutline} className="text-xs" />
                 </button>
@@ -559,5 +549,5 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 />
             )}
         </article>
-    )
-}
+    );
+};

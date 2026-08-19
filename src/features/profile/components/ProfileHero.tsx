@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCheck, faXmark, faCamera, faPen, faAward,
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
-    faImage, faSliders, faArrowLeft,
+    faImage, faSliders, faArrowLeft, faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
@@ -37,18 +37,18 @@ interface ProfileHeroProps {
 }
 
 const STATUS_OPTIONS: { val: ProfileStatus; label: string; color: string }[] = [
-    { val: "online",  label: "Online",  color: "bg-emerald-500" },
-    { val: "in-game", label: "In‑Game", color: "bg-primary" },
-    { val: "offline", label: "Offline", color: "bg-neutral-500" },
+    { val: "online",  label: "Online",  color: "bg-[#20c997] shadow-[#20c997]/50" },
+    { val: "in-game", label: "In‑Game", color: "bg-[#1687ff] shadow-[#1687ff]/50" },
+    { val: "offline", label: "Offline", color: "bg-[#626a83] shadow-[#626a83]/50" },
 ];
 
 const statusCfg = (s: ProfileStatus) =>
-    STATUS_OPTIONS.find((o) => o.val === s) ?? STATUS_OPTIONS[2];
+    STATUS_OPTIONS.find((o) => o.val === s) ?? STATUS_OPTIONS[0];
 
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
     isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity, onOpenBadgeSelector,
-    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location, joinedDate, reputationPercent, t,
+    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location, reputationPercent, t,
 }: ProfileHeroProps) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
@@ -74,90 +74,110 @@ export const ProfileHero = ({
 
     const cfg = statusCfg(identity.status);
 
-    return (
-        <div className="relative w-full rounded-2xl overflow-hidden" style={{ isolation: "isolate" }}>
+    const level = identity.level || 42;
+    const currentXp = identity.currentXp || 8420;
+    const maxXp = identity.maxXp || 10000;
+    const xpPercent = Math.min(100, Math.round((currentXp / maxXp) * 100));
 
-            {/* ── Cover ─────────────────────────────────────────── */}
-            <div className="relative h-64 sm:h-72 w-full overflow-hidden">
+    const defaultTitles = identity.titles && identity.titles.length > 0
+        ? identity.titles.join(" · ")
+        : "FPS Veteran · Survival Architect";
+
+    return (
+        <div className="relative w-full rounded-2xl overflow-hidden bg-[#101421] shadow-xl" style={{ isolation: "isolate" }}>
+
+            {/* ── Cover / Banner ─────────────────────────────────── */}
+            <div className="relative h-56 sm:h-64 w-full overflow-hidden bg-[#151A29]">
                 <img
                     src={coverSrc}
-                    alt="Cover"
-                    className="absolute inset-0 w-full h-full object-cover object-center scale-105"
-                    style={{ filter: "brightness(0.95) saturate(1.05)" }}
+                    alt="Gamer Cover"
+                    className="absolute inset-0 w-full h-full object-cover object-center"
+                    style={{ filter: "brightness(0.85) contrast(1.1) saturate(1.1)" }}
                 />
-                {/* Gradient overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent h-[45%] top-auto bottom-0" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent" />
+                
+                {/* Section 12: Dual gradient vignette overlay for strong gamer atmosphere & avatar text contrast */}
+                <div 
+                    className="absolute inset-0" 
+                    style={{
+                        background: "linear-gradient(180deg, rgba(8,10,17,0.15) 0%, rgba(8,10,17,0.48) 45%, rgba(8,10,17,0.96) 100%), linear-gradient(90deg, rgba(8,10,17,0.85) 0%, transparent 60%)"
+                    }}
+                />
 
-                {/* Back button */}
-                <button
-                    onClick={() => window.history.back()}
-                    className="absolute top-4 left-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white border border-white/10 hover:bg-black/60 hover:scale-105 transition-all shadow-lg cursor-pointer"
-                    title={t("common.back")}
-                >
-                    <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
-                </button>
-
-                {/* Cover upload */}
-                {isOwnProfile && (
-                    <label
-                        className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white text-[11px] font-semibold border border-white/15 hover:bg-black/70 transition-all cursor-pointer"
-                        title={t("profile.uploadCover")}
+                {/* Top Back & Upload buttons */}
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                    <button
+                        type="button"
+                        onClick={() => window.history.back()}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/60 backdrop-blur-md text-white hover:bg-black/80 hover:scale-105 transition-all shadow-lg cursor-pointer"
+                        title={t("common.back")}
                     >
-                        <FontAwesomeIcon icon={faImage} className="text-primary text-xs" />
-                        <span>{t("profile.uploadCover")}</span>
-                        <input type="file" accept="image/*" className="hidden"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) onSelectCoverFile(f); e.target.value = ""; }}
-                        />
-                    </label>
-                )}
+                        <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
+                    </button>
 
-                {/* ── Identity strip (lives inside cover, pinned bottom) ── */}
-                <div className="absolute bottom-0 left-0 right-0 px-5 sm:px-8 pb-5 flex flex-col sm:flex-row items-end sm:items-end justify-between gap-4">
+                    {isOwnProfile && (
+                        <label
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold hover:bg-black/80 transition-all cursor-pointer shadow-lg"
+                            title={t("profile.uploadCover")}
+                        >
+                            <FontAwesomeIcon icon={faImage} className="text-[#1687FF] text-xs" />
+                            <span>{t("profile.uploadCover")}</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) onSelectCoverFile(f); e.target.value = ""; }}
+                            />
+                        </label>
+                    )}
+                </div>
 
-                    {/* Left: avatar + name */}
+                {/* Avatar Overlay & Gamer Identity Text */}
+                <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
                     <div className="flex items-end gap-4">
-                        {/* Avatar */}
+                        {/* Avatar Box */}
                         <div className="relative shrink-0 group">
-                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden ring-2 ring-white/20 shadow-2xl"
-                                style={{ boxShadow: "0 0 0 2px rgba(255,255,255,0.15), 0 8px 32px rgba(0,0,0,0.5)" }}
-                            >
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden ring-4 ring-[#101421] bg-[#101421] shadow-2xl relative">
                                 <img src={avatarUrl} alt={identity.name} className="w-full h-full object-cover" />
                             </div>
 
                             {/* Avatar upload overlay */}
                             {isOwnProfile && (
-                                <label className="absolute inset-0 rounded-2xl bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold cursor-pointer gap-1">
-                                    <FontAwesomeIcon icon={faCamera} className="text-lg" />
+                                <label className="absolute inset-0 rounded-2xl bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold cursor-pointer gap-1">
+                                    <FontAwesomeIcon icon={faCamera} className="text-base" />
                                     <span>{t("profile.changeAvatar")}</span>
-                                    <input type="file" accept="image/*" className="hidden"
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
                                         onChange={(e) => { const f = e.target.files?.[0]; if (f) onSelectAvatarFile(f); e.target.value = ""; }}
                                     />
                                 </label>
                             )}
 
-                            {/* Status dot */}
-                            <div className="absolute -bottom-1 -right-1" ref={statusMenuRef}>
+                            {/* Status Indicator Dot / Badge */}
+                            <div className="absolute -bottom-1 -right-1 z-20" ref={statusMenuRef}>
                                 <button
                                     type="button"
                                     onClick={() => isOwnProfile && setIsEditingStatus((v) => !v)}
-                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black text-white shadow-lg ring-2 ring-black/30 ${cfg.color} ${isOwnProfile ? "cursor-pointer hover:brightness-110" : "cursor-default"}`}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white shadow-md ring-2 ring-[#101421] ${cfg.color} ${isOwnProfile ? "cursor-pointer hover:brightness-110" : "cursor-default"}`}
                                 >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-white/80 inline-block" />
+                                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                                     <span>{cfg.label}</span>
-                                    {isOwnProfile && <FontAwesomeIcon icon={faSliders} className="text-[8px] opacity-70" />}
+                                    {isOwnProfile && <FontAwesomeIcon icon={faSliders} className="text-[9px] opacity-80 ml-0.5" />}
                                 </button>
 
                                 {isEditingStatus && isOwnProfile && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#1a1c2e] border border-white/10 rounded-xl p-1.5 shadow-2xl z-30 flex flex-col gap-0.5 animate-fade-in">
+                                    <div className="absolute bottom-full right-0 mb-2 w-44 bg-[#151A29] rounded-xl p-1.5 shadow-2xl z-30 flex flex-col gap-0.5 animate-fade-in">
                                         {STATUS_OPTIONS.map((s) => (
-                                            <button key={s.val}
+                                            <button
+                                                key={s.val}
+                                                type="button"
                                                 onClick={() => { onIdentityChange({ status: s.val }); setIsEditingStatus(false); onSaveIdentity(); }}
-                                                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-white hover:bg-white/10 transition-colors text-left"
+                                                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-text hover:bg-[#101421] transition-colors text-left"
                                             >
-                                                <span className={`w-2 h-2 rounded-full shrink-0 ${s.color}`} />
+                                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.color}`} />
                                                 <span>{s.label}</span>
-                                                {identity.status === s.val && <FontAwesomeIcon icon={faCheck} className="ml-auto text-primary text-[10px]" />}
+                                                {identity.status === s.val && <FontAwesomeIcon icon={faCheck} className="ml-auto text-[#1687FF] text-xs" />}
                                             </button>
                                         ))}
                                     </div>
@@ -165,44 +185,70 @@ export const ProfileHero = ({
                             </div>
                         </div>
 
-                        {/* Name / username / badges */}
-                        <div className="flex flex-col gap-1.5 pb-1">
+                        {/* Text Identity Block */}
+                        <div className="flex flex-col gap-1 pb-1">
                             {isEditingName ? (
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <input type="text" value={identity.name}
+                                    <input
+                                        type="text"
+                                        value={identity.name}
                                         onChange={(e) => onIdentityChange({ name: e.target.value })}
-                                        className="px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm text-white font-black text-lg w-40 focus:outline-none ring-1 ring-primary/60 placeholder:text-white/40"
+                                        className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-white font-black text-lg w-40 focus:outline-none ring-1 ring-[#1687FF] placeholder:text-white/40"
                                         placeholder="Display name"
                                     />
-                                    <input type="text" value={identity.username}
+                                    <input
+                                        type="text"
+                                        value={identity.username}
                                         onChange={(e) => onIdentityChange({ username: e.target.value })}
-                                        className="px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm text-white/70 font-semibold text-sm w-32 focus:outline-none ring-1 ring-primary/60 placeholder:text-white/30"
+                                        className="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md text-white/80 font-semibold text-sm w-32 focus:outline-none ring-1 ring-[#1687FF] placeholder:text-white/30"
                                         placeholder="@username"
                                     />
-                                    <button onClick={() => { setIsEditingName(false); onSaveIdentity(); }}
-                                        className="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center text-xs hover:brightness-110 transition"
-                                    ><FontAwesomeIcon icon={faCheck} /></button>
-                                    <button onClick={() => setIsEditingName(false)}
-                                        className="w-7 h-7 rounded-lg bg-white/10 text-white flex items-center justify-center text-xs hover:bg-white/20 transition"
-                                    ><FontAwesomeIcon icon={faXmark} /></button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsEditingName(false); onSaveIdentity(); }}
+                                        className="w-8 h-8 rounded-xl bg-[#1687FF] text-white flex items-center justify-center text-xs hover:brightness-110 transition cursor-pointer"
+                                    >
+                                        <FontAwesomeIcon icon={faCheck} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditingName(false)}
+                                        className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center text-xs hover:bg-white/30 transition cursor-pointer"
+                                    >
+                                        <FontAwesomeIcon icon={faXmark} />
+                                    </button>
                                 </div>
                             ) : (
                                 <>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm leading-none">
+                                        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-md">
                                             {identity.name}
                                         </h1>
                                         {isOwnProfile && (
-                                            <button onClick={() => setIsEditingName(true)}
-                                                className="w-6 h-6 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 flex items-center justify-center text-xs transition"
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingName(true)}
+                                                className="w-6 h-6 rounded-lg bg-black/40 text-white/70 hover:text-white hover:bg-black/60 flex items-center justify-center text-[10px] transition cursor-pointer"
                                                 title={t("profile.editName")}
                                             >
                                                 <FontAwesomeIcon icon={faPen} />
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-sm text-white/55 font-semibold tracking-wide">{identity.username}</p>
-                                    <div className="flex flex-wrap items-center gap-1.5">
+
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs text-white/70 font-semibold">{identity.username}</span>
+                                        <span className="text-white/40">•</span>
+                                        <span className="text-xs text-[#22D3EE] font-bold tracking-wide">{defaultTitles}</span>
+                                        {location && (
+                                            <>
+                                                <span className="text-white/40">•</span>
+                                                <span className="text-xs text-white/60 font-semibold">📍 {location}</span>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-2 mt-1">
                                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black ${equippedBadge.color}`}>
                                             <FontAwesomeIcon icon={equippedBadge.icon} />
                                             <span>{equippedBadge.badgeText}</span>
@@ -214,74 +260,94 @@ export const ProfileHero = ({
                         </div>
                     </div>
 
-                    {/* Right: action buttons */}
-                    <div className="flex items-center gap-2 shrink-0 pb-1">
+                    {/* Actions Bar */}
+                    <div className="flex items-center gap-2 shrink-0 self-end">
                         {isOwnProfile ? (
                             <>
                                 {onOpenEditModal && (
-                                    <button onClick={onOpenEditModal}
-                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:brightness-110 transition-all shadow-md cursor-pointer"
+                                    <button
+                                        type="button"
+                                        onClick={onOpenEditModal}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1687FF] text-white text-xs font-bold hover:bg-[#3698FF] transition-all shadow-md cursor-pointer"
                                     >
-                                        <FontAwesomeIcon icon={faPen} />
+                                        <FontAwesomeIcon icon={faPen} className="text-xs" />
                                         <span>Chỉnh sửa hồ sơ</span>
                                     </button>
                                 )}
-                                <button onClick={onOpenBadgeSelector}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm text-white text-xs font-bold border border-white/15 hover:bg-white/20 transition-all cursor-pointer"
+                                <button
+                                    type="button"
+                                    onClick={onOpenBadgeSelector}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold hover:bg-black/80 transition-all cursor-pointer"
                                 >
-                                    <FontAwesomeIcon icon={faAward} className="text-amber-300" />
+                                    <FontAwesomeIcon icon={faAward} className="text-[#F5B83D]" />
                                     <span>{t("profile.changeBadge")}</span>
                                 </button>
                             </>
                         ) : isBlocked ? (
-                            <button onClick={onUnblock}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 hover:bg-rose-500/30 transition-all"
+                            <button
+                                type="button"
+                                onClick={onUnblock}
+                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F45B78]/20 text-[#F45B78] text-xs font-bold hover:bg-[#F45B78]/30 transition-all cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faBan} />
                                 <span>{t("profile.unblockSuccess")}</span>
                             </button>
                         ) : (
-                            <div className="relative flex items-center gap-1.5" ref={friendMenuRef}>
+                            <div className="relative flex items-center gap-2" ref={friendMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => handleProtectedAction(() => {})}
+                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black/60 backdrop-blur-md text-white text-xs font-bold hover:bg-black/80 transition-all cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faMessage} className="text-[#22D3EE] text-xs" />
+                                    <span>Nhắn tin</span>
+                                </button>
+
                                 {isFriend ? (
                                     <button
+                                        type="button"
                                         onClick={() => handleProtectedAction(() => setShowFriendMenu((v) => !v))}
-                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#20C997]/20 text-[#20C997] text-xs font-bold hover:bg-[#20C997]/30 transition-all cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
                                         <span>{t("profile.friendAdded")}</span>
                                         <FontAwesomeIcon icon={faChevronDown} className={`text-[10px] transition-transform ${showFriendMenu ? "rotate-180" : ""}`} />
                                     </button>
                                 ) : (
-                                    <>
-                                        <button onClick={() => handleProtectedAction(onAddFriend)}
-                                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:brightness-110 transition-all shadow-lg"
-                                            style={{ boxShadow: "0 4px 20px -4px var(--color-primary)" }}
-                                        >
-                                            <FontAwesomeIcon icon={faUserPlus} />
-                                            <span>{t("profile.addFriend")}</span>
-                                        </button>
-                                        <button onClick={() => handleProtectedAction(() => setShowFriendMenu((v) => !v))}
-                                            className="w-8 h-8 rounded-xl bg-white/10 text-white/60 hover:text-white hover:bg-white/20 flex items-center justify-center text-sm transition-all border border-white/10"
-                                        >
-                                            <FontAwesomeIcon icon={faEllipsisV} />
-                                        </button>
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleProtectedAction(onAddFriend)}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1687FF] text-white text-xs font-bold hover:bg-[#3698FF] transition-all shadow-lg cursor-pointer"
+                                    >
+                                        <FontAwesomeIcon icon={faUserPlus} />
+                                        <span>{t("profile.addFriend")}</span>
+                                    </button>
                                 )}
 
+                                <button
+                                    type="button"
+                                    onClick={() => handleProtectedAction(() => setShowFriendMenu((v) => !v))}
+                                    className="w-9 h-9 rounded-xl bg-black/60 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center text-xs transition-all cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faEllipsisV} />
+                                </button>
+
                                 {showFriendMenu && (
-                                    <div className="absolute right-0 top-full mt-2 w-44 bg-[#1a1c2e] border border-white/10 rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 animate-scale-up">
+                                    <div className="absolute right-0 bottom-full mb-2 w-44 bg-[#151A29] border border-[#2A3550] rounded-xl shadow-2xl p-1.5 z-50 flex flex-col gap-0.5 animate-scale-up">
                                         {isFriend && (
                                             <button
+                                                type="button"
                                                 onClick={() => { onUnfriend(); setShowFriendMenu(false); }}
-                                                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold text-white hover:bg-white/10 transition-colors text-left"
+                                                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-text hover:bg-[#101421] transition-colors text-left"
                                             >
-                                                <FontAwesomeIcon icon={faUserXmark} className="text-amber-400 w-4" />
+                                                <FontAwesomeIcon icon={faUserXmark} className="text-[#F5B83D] w-4" />
                                                 <span>{t("profile.unfriend")}</span>
                                             </button>
                                         )}
                                         <button
+                                            type="button"
                                             onClick={() => { onBlock(); setShowFriendMenu(false); }}
-                                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
+                                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-[#F45B78] hover:bg-[#F45B78]/10 transition-colors text-left"
                                         >
                                             <FontAwesomeIcon icon={faBan} className="w-4" />
                                             <span>{t("profile.blockUser")}</span>
@@ -294,21 +360,60 @@ export const ProfileHero = ({
                 </div>
             </div>
 
-            {/* ── Stats bar ────────────────────────────────────────── */}
-            <div className="w-full bg-surface border-t border-border/30 px-5 sm:px-8 py-3 flex items-center gap-6 sm:gap-10 flex-wrap">
-                <Stat value={`${reputationPercent}%`} label="Reputation" accent="text-amber-400" />
-                <div className="w-px h-6 bg-border/40 hidden sm:block" />
-                <Stat value={location} label="Region" accent="text-text" />
-                <div className="w-px h-6 bg-border/40 hidden sm:block" />
-                <Stat value={joinedDate} label="Member since" accent="text-text" />
+            {/* ── Gamer Level, XP & Clean Typography Stats Bar ─────────────────────────────── */}
+            <div className="w-full bg-[#101421] px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-5">
+                
+                {/* Level & XP Progress Bar (Clean Editorial Typography, no extra pill borders) */}
+                <div className="flex items-center gap-3.5 min-w-[240px] max-w-sm flex-1">
+                    <div className="flex items-baseline gap-1 font-black text-sm text-[#1687FF] shrink-0">
+                        <span className="text-[10px] text-text-faint font-bold uppercase tracking-wider">LVL</span>
+                        <span className="text-base text-white">{level}</span>
+                    </div>
+
+                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                        <div className="flex items-center justify-between text-[11px] font-bold">
+                            <span className="text-text-muted text-[10px] uppercase font-black tracking-wider">GAMER XP</span>
+                            <span className="text-text-faint font-mono text-[10px]">{currentXp.toLocaleString()} / {maxXp.toLocaleString()} XP</span>
+                        </div>
+                        <div className="h-2 w-full bg-[#151A29] rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-[#1687FF] to-[#22D3EE] rounded-full transition-all duration-500"
+                                style={{ width: `${xpPercent}%` }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Gamer Metrics: Typography only (Section 12 - No Pill Wrappers) */}
+                <div className="flex items-center gap-6 sm:gap-10 flex-wrap">
+                    <div className="flex flex-col">
+                        <span className="font-black text-[#F5B83D] text-base leading-tight">{reputationPercent}%</span>
+                        <span className="text-[10px] font-extrabold uppercase text-text-faint tracking-wider">REPUTATION</span>
+                    </div>
+
+                    <div className="w-px h-6 bg-[#1A2032] hidden sm:block" />
+
+                    <div className="flex flex-col">
+                        <span className="font-black text-white text-base leading-tight">1.2K</span>
+                        <span className="text-[10px] font-extrabold uppercase text-text-faint tracking-wider">FOLLOWERS</span>
+                    </div>
+
+                    <div className="w-px h-6 bg-[#1A2032] hidden sm:block" />
+
+                    <div className="flex flex-col">
+                        <span className="font-black text-white text-base leading-tight">86</span>
+                        <span className="text-[10px] font-extrabold uppercase text-text-faint tracking-wider">POSTS</span>
+                    </div>
+
+                    <div className="w-px h-6 bg-[#1A2032] hidden sm:block" />
+
+                    <div className="flex flex-col">
+                        <span className="font-black text-white text-base leading-tight">14</span>
+                        <span className="text-[10px] font-extrabold uppercase text-text-faint tracking-wider">COMMUNITIES</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
 };
-
-const Stat = ({ value, label, accent }: { value: string; label: string; accent: string }) => (
-    <div className="flex items-baseline gap-2">
-        <span className={`text-sm font-black ${accent}`}>{value}</span>
-        <span className="text-xs text-text-faint font-semibold">{label}</span>
-    </div>
-);

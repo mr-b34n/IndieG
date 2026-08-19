@@ -1,23 +1,19 @@
 import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faUsers,
     faPlus,
     faSearch,
-    faGamepad,
-    faFilter,
-    faRocket,
     faChevronDown,
-    faChevronUp,
+    faFilter,
+    faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { faHubspot } from "@fortawesome/free-brands-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { useSquadStore } from "../store/useSquadStore";
-import { useGameStore } from "@/features/game/store/useGameStore";
 import { GAME_FILTERS } from "../constants";
 import { SquadCard } from "./SquadCard";
 import { CreateSquadModal } from "./CreateSquadModal";
+import { Pagination } from "@/shared/components/ui/Pagination";
 
 export const SquadList = () => {
     const { t } = useTranslation();
@@ -34,198 +30,273 @@ export const SquadList = () => {
         setFilterGame,
         setSearchQuery,
     } = useSquadStore();
-    const followedSlugs = useGameStore((state) => state.followedSlugs);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [showAllGames, setShowAllGames] = useState(false);
+    const [showMoreGames, setShowMoreGames] = useState(false);
+    const [sortOrder, setSortOrder] = useState<"recommended" | "newest" | "active">("recommended");
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 6;
 
-    const displayedGames = useMemo(() => {
-        if (showAllGames) return GAME_FILTERS;
-        const defaultPlayedGames = ["CS2", "Valorant", "League of Legends", "Dota 2", "PUBG", "Red Dead Redemption 2"];
-        return GAME_FILTERS.filter((game) => {
-            if (game === "all" || game === filterGame) return true;
-            const slug = game.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-            const isFollowed = followedSlugs.some((s) => s.includes(slug) || slug.includes(s));
-            if (isFollowed) return true;
-            if (followedSlugs.length === 0 && defaultPlayedGames.includes(game)) return true;
-            return false;
-        });
-    }, [showAllGames, filterGame, followedSlugs]);
-
-    const filteredSquads = squads.filter((squad) => {
-        if (activeTab === "my-squads" && !squad.isMySquad) return false;
-        if (filterGame !== "all" && squad.game !== filterGame) return false;
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            const matchName = squad.name.toLowerCase().includes(q);
-            const matchGame = squad.game.toLowerCase().includes(q);
-            const matchDesc = squad.description.toLowerCase().includes(q);
-            const matchTags = squad.tags.some((t) => t.toLowerCase().includes(q));
-            if (!matchName && !matchGame && !matchDesc && !matchTags) return false;
-        }
-        return true;
-    });
+    // Visible 5-6 primary games, rest in "+ more" popover
+    const PRIMARY_GAMES = ["all", "Counter Strike 2", "Valorant", "Minecraft", "Grand Theft Auto V", "Raft"];
+    const MORE_GAMES = GAME_FILTERS.filter((g) => !PRIMARY_GAMES.includes(g));
 
     const mySquadsCount = squads.filter((sq) => sq.isMySquad).length;
 
+    const filteredSquads = useMemo(() => {
+        let result = squads.filter((squad) => {
+            if (activeTab === "my-squads" && !squad.isMySquad) return false;
+            if (filterGame !== "all" && squad.game !== filterGame) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchName = squad.name.toLowerCase().includes(q);
+                const matchGame = squad.game.toLowerCase().includes(q);
+                const matchDesc = squad.description.toLowerCase().includes(q);
+                const matchTags = squad.tags.some((t) => t.toLowerCase().includes(q));
+                if (!matchName && !matchGame && !matchDesc && !matchTags) return false;
+            }
+            return true;
+        });
+
+        if (sortOrder === "newest") {
+            result = [...result].reverse();
+        } else if (sortOrder === "active") {
+            result = [...result].sort((a, b) => b.currentMembers - a.currentMembers);
+        }
+
+        return result;
+    }, [squads, activeTab, filterGame, searchQuery, sortOrder]);
+
+    const totalPages = Math.ceil(filteredSquads.length / ITEMS_PER_PAGE);
+    const paginatedSquads = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredSquads.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredSquads, currentPage]);
+
+    const handleTabSelect = (tab: "explore" | "my-squads") => {
+        setActiveTab(tab);
+        setCurrentPage(1);
+    };
+
+    const handleGameSelect = (game: string) => {
+        setFilterGame(game);
+        setShowMoreGames(false);
+        setCurrentPage(1);
+    };
+
     return (
-        <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 pb-12">
-            <div className="w-full bg-gradient-to-r from-primary/15 via-surface to-accent-500/15 border border-border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                <div className="flex flex-col gap-2 max-w-2xl z-10">
-                    <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full bg-primary/20 text-primary font-extrabold text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                            <FontAwesomeIcon icon={faHubspot} />
-                            {t('squad.heroBadge')}
-                        </span>
-                        <span className="text-xs font-semibold text-text-muted">{t('squad.squadSubtitle')}</span>
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight">
-                        {t('squad.heroTitle')}
+        <div className="w-full flex flex-col gap-6 text-text animate-fade-in pb-12 select-none">
+            {/* 1. FUNCTIONAL HERO (Clean, Editorial, Not a Marketing Banner) */}
+            <div className="w-full bg-surface-inner/60 border border-divider-primary/60 rounded-[4px] p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden">
+                <div className="flex flex-col gap-1.5 max-w-2xl z-10">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
+                        MY SQUAD
+                    </span>
+                    <h1 className="text-xl sm:text-2xl font-black text-text uppercase tracking-tight">
+                        Find teammates and play together.
                     </h1>
-                    <p className="text-sm text-text-muted leading-relaxed">
-                        {t('squad.squadDesc')}
+                    <p className="text-xs text-text-muted leading-relaxed">
+                        Connect with compatible gamers based on games, playstyle, and availability across your communities.
                     </p>
                 </div>
 
                 {isLoggedIn && (
-                    <div className="shrink-0 z-10 w-full sm:w-auto flex justify-center sm:justify-end">
-                        <button
-                            type="button"
-                            onClick={() => setIsCreateOpen(true)}
-                            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white font-extrabold text-sm shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                            <FontAwesomeIcon icon={faPlus} className="text-base" />
-                            <span>{t('squad.createButton')}</span>
-                        </button>
-                    </div>
-                )}
-
-                <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-border pb-4">
-                <div className="flex items-center gap-1.5 bg-surface-hover/80 p-1.5 rounded-xl border border-border/80 overflow-x-auto scrollbar-none">
                     <button
                         type="button"
-                        onClick={() => setActiveTab("explore")}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
-                            activeTab === "explore"
-                                ? "bg-surface shadow-sm border border-border/50 text-text"
-                                : "text-text-muted hover:text-text hover:bg-surface/50 border border-transparent"
+                        onClick={() => setIsCreateOpen(true)}
+                        className="px-4 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-2 cursor-pointer shrink-0"
+                    >
+                        <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                        <span>Create Squad</span>
+                    </button>
+                )}
+            </div>
+
+            {/* 2. TEXT TABS (EXPLORE SQUADS 9    MY SQUADS 4, Underline Active State) */}
+            <div className="flex items-center gap-6 border-b border-divider-primary/60 pt-1">
+                <button
+                    type="button"
+                    onClick={() => handleTabSelect("explore")}
+                    className={`relative pb-2.5 text-xs font-bold transition-colors cursor-pointer tracking-wider uppercase flex items-center gap-2 ${
+                        activeTab === "explore" ? "text-primary" : "text-text-muted hover:text-text"
+                    }`}
+                >
+                    <span>EXPLORE SQUADS</span>
+                    <span className="font-mono text-[11px] text-text-faint">
+                        {squads.length}
+                    </span>
+                    {activeTab === "explore" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
+                    )}
+                </button>
+
+                {isLoggedIn && (
+                    <button
+                        type="button"
+                        onClick={() => handleTabSelect("my-squads")}
+                        className={`relative pb-2.5 text-xs font-bold transition-colors cursor-pointer tracking-wider uppercase flex items-center gap-2 ${
+                            activeTab === "my-squads" ? "text-primary" : "text-text-muted hover:text-text"
                         }`}
                     >
-                        <FontAwesomeIcon icon={faRocket} className={activeTab === "explore" ? "text-primary" : ""} />
-                        <span>{t('squad.exploreTab')}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeTab === "explore" ? "bg-primary/10 text-primary" : "bg-border text-text-muted"}`}>
-                            {squads.length}
-                        </span>
+                        <span>MY SQUADS</span>
+                        {mySquadsCount > 0 && (
+                            <span className="font-mono text-[11px] text-primary">
+                                {mySquadsCount}
+                            </span>
+                        )}
+                        {activeTab === "my-squads" && (
+                            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
+                        )}
                     </button>
+                )}
+            </div>
 
-                    {isLoggedIn && (
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("my-squads")}
-                            className={`flex items-center gap-2 px-5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
-                                activeTab === "my-squads"
-                                    ? "bg-surface shadow-sm border border-border/50 text-text"
-                                    : "text-text-muted hover:text-text hover:bg-surface/50 border border-transparent"
-                            }`}
-                        >
-                            <FontAwesomeIcon icon={faUsers} className={activeTab === "my-squads" ? "text-primary" : ""} />
-                            <span>{t('squad.mySquadsTab')}</span>
-                            {mySquadsCount > 0 && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                    activeTab === "my-squads" ? "bg-primary/10 text-primary" : "bg-border text-text-muted"
-                                }`}>
-                                    {mySquadsCount}
-                                </span>
+            {/* 3. CONSOLIDATED FILTER & SEARCH ROW */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+                {/* Games Filter List + Popover */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {PRIMARY_GAMES.map((game) => {
+                        const isSelected = filterGame === game;
+                        const label = game === "all" ? "All games" : game;
+                        return (
+                            <button
+                                key={game}
+                                type="button"
+                                onClick={() => handleGameSelect(game)}
+                                className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors cursor-pointer ${
+                                    isSelected
+                                        ? "bg-primary/10 text-primary border border-primary/30 font-bold"
+                                        : "bg-surface text-text-muted hover:text-text border border-divider-primary/60 hover:bg-surface-hover"
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+
+                    {/* Popover for remaining games */}
+                    {MORE_GAMES.length > 0 && (
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setShowMoreGames(!showMoreGames)}
+                                className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 border ${
+                                    MORE_GAMES.includes(filterGame)
+                                        ? "bg-primary/10 text-primary border-primary/30 font-bold"
+                                        : "bg-surface text-text-muted hover:text-text border-divider-primary/60 hover:bg-surface-hover"
+                                }`}
+                            >
+                                <span>{MORE_GAMES.includes(filterGame) ? filterGame : `+ ${MORE_GAMES.length} more`}</span>
+                                <FontAwesomeIcon icon={faChevronDown} className="text-[9px]" />
+                            </button>
+
+                            {showMoreGames && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setShowMoreGames(false)}
+                                    />
+                                    <div className="absolute left-0 top-full mt-1.5 w-48 bg-surface border border-divider-primary rounded-[4px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+                                        {MORE_GAMES.map((g) => (
+                                            <button
+                                                key={g}
+                                                type="button"
+                                                onClick={() => handleGameSelect(g)}
+                                                className={`w-full text-left px-2.5 py-1.5 rounded-[3px] text-xs font-medium transition-colors cursor-pointer ${
+                                                    filterGame === g
+                                                        ? "bg-primary/10 text-primary font-bold"
+                                                        : "text-text-muted hover:text-text hover:bg-surface-hover"
+                                                }`}
+                                            >
+                                                {g}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
                             )}
-                        </button>
+                        </div>
                     )}
                 </div>
 
-                <div className="relative w-full sm:w-72">
-                    <FontAwesomeIcon icon={faSearch} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-faint text-sm" />
-                    <input
-                        type="text"
-                        placeholder={t('squad.searchPlaceholder')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-surface-hover border border-border rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary font-medium transition-colors"
-                    />
-                </div>
-            </div>
+                {/* Right: Search & Sorting */}
+                <div className="flex items-center gap-3 self-end md:self-auto w-full md:w-auto">
+                    {/* Sort Text Tabs */}
+                    <div className="hidden sm:flex items-center gap-2 text-xs font-mono">
+                        {(["recommended", "newest", "active"] as const).map((s) => (
+                            <button
+                                key={s}
+                                type="button"
+                                onClick={() => setSortOrder(s)}
+                                className={`capitalize cursor-pointer transition-colors ${
+                                    sortOrder === s ? "text-primary font-bold underline" : "text-text-faint hover:text-text"
+                                }`}
+                            >
+                                {s}
+                            </button>
+                        ))}
+                    </div>
 
-            <div className="flex flex-col gap-3 pt-2 border-t border-border/60">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
-                        <FontAwesomeIcon icon={faGamepad} className="text-primary" />
-                        <span>{t('squad.filterGame')}</span>
-                        <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-extrabold border border-primary/20">
-                            {filterGame === "all" ? `🔥 ${t('squad.allGames')}` : filterGame}
-                        </span>
-                        {filterGame !== "all" && (
+                    {/* Search Input */}
+                    <div className="relative flex-1 md:w-60">
+                        <FontAwesomeIcon
+                            icon={faSearch}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint text-xs"
+                        />
+                        <input
+                            type="text"
+                            placeholder={t("squad.searchPlaceholder")}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-8 pl-8 pr-7 bg-surface hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/60 focus:border-primary rounded-[4px] text-xs font-semibold text-text placeholder:text-text-faint focus:outline-none transition-colors"
+                        />
+                        {searchQuery && (
                             <button
                                 type="button"
-                                onClick={() => setFilterGame("all")}
-                                className="text-[11px] text-text-faint hover:text-rose-500 underline ml-1 cursor-pointer"
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-text cursor-pointer"
                             >
-                                {t('squad.clearFilter')}
+                                <FontAwesomeIcon icon={faXmark} className="text-xs" />
                             </button>
                         )}
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setShowAllGames(!showAllGames)}
-                        className="px-3 py-1.5 rounded-xl bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
-                    >
-                        <span>{showAllGames ? t('squad.collapse') : t('squad.allGamesCount', { count: GAME_FILTERS.length - 1 })}</span>
-                        <FontAwesomeIcon icon={showAllGames ? faChevronUp : faChevronDown} className="text-[10px]" />
-                    </button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 p-3 bg-surface-hover/50 rounded-2xl border border-border/60 animate-fade-in">
-                    {displayedGames.map((game) => (
-                        <button
-                            key={game}
-                            type="button"
-                            onClick={() => setFilterGame(game)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border cursor-pointer ${
-                                filterGame === game
-                                    ? "bg-primary text-white border-primary shadow-2xs"
-                                    : "bg-surface hover:bg-surface-hover text-text-muted border-border"
-                            }`}
-                        >
-                            {game === "all" ? `🔥 ${t('squad.allGames')}` : game}
-                        </button>
-                    ))}
                 </div>
             </div>
 
+            {/* 4. SQUAD LIST (Structured Rows, One Container per Semantic Level) */}
             {filteredSquads.length > 0 ? (
-                <div className="flex flex-col gap-4 mt-2">
-                    {filteredSquads.map((squad) => (
+                <div className="flex flex-col divide-y divide-divider-primary/50 border-t border-divider-primary/60 mt-1">
+                    {paginatedSquads.map((squad) => (
                         <SquadCard key={squad.id} squad={squad} />
                     ))}
+
+                    <div className="pt-4">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                            totalItems={filteredSquads.length}
+                            itemsPerPage={ITEMS_PER_PAGE}
+                        />
+                    </div>
                 </div>
             ) : (
-                <div className="w-full bg-surface border border-border/80 rounded-3xl p-12 flex flex-col items-center justify-center text-center gap-4 my-4">
-                    <div className="w-16 h-16 rounded-3xl bg-surface-hover text-text-faint flex items-center justify-center text-3xl">
+                <div className="w-full py-16 flex flex-col items-center justify-center text-center gap-3 border-t border-divider-primary/60">
+                    <div className="w-12 h-12 rounded-[4px] bg-surface-inner text-text-faint flex items-center justify-center text-xl">
                         <FontAwesomeIcon icon={faFilter} />
                     </div>
                     <div className="max-w-md">
-                        <h3 className="text-lg font-bold text-text">{t('squad.emptyTitle')}</h3>
+                        <h3 className="text-sm font-bold text-text">{t("squad.emptyTitle")}</h3>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {t('squad.emptyDesc')}
+                            {t("squad.emptyDesc")}
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => setIsCreateOpen(true)}
-                        className="mt-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-white font-extrabold text-xs shadow-sm transition-all flex items-center gap-2"
+                        className="mt-2 px-4 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                        <FontAwesomeIcon icon={faPlus} />
-                        <span>{t('squad.createNow')}</span>
+                        <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                        <span>{t("squad.createNow")}</span>
                     </button>
                 </div>
             )}
