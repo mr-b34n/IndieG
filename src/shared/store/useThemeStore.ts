@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-type Theme = 'light' | 'dark';
-type Language = 'en' | 'vi';
+export type Theme = 'light' | 'dark';
+export type Language = 'en' | 'vi';
 
 interface ThemeState {
     theme: Theme;
@@ -13,10 +13,8 @@ interface ThemeState {
 
 const getInitialTheme = (): Theme => {
     if (typeof window === 'undefined') return 'light';
-
     const saved = localStorage.getItem('theme') as Theme | null;
     if (saved === 'light' || saved === 'dark') return saved;
-
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
@@ -30,10 +28,12 @@ const getInitialLanguage = (): Language => {
 const initialTheme = getInitialTheme();
 const initialLanguage = getInitialLanguage();
 
-if (initialTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-} else {
-    document.documentElement.classList.remove('dark');
+if (typeof document !== 'undefined') {
+    if (initialTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
@@ -43,10 +43,12 @@ export const useThemeStore = create<ThemeState>((set) => ({
         const nextTheme: Theme = state.theme === 'light' ? 'dark' : 'light';
         localStorage.setItem('theme', nextTheme);
 
-        if (nextTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+        if (typeof document !== 'undefined') {
+            if (nextTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
         }
 
         return { theme: nextTheme };
@@ -61,5 +63,5 @@ export const useThemeStore = create<ThemeState>((set) => ({
             localStorage.setItem('language', nextLang);
             return { language: nextLang };
         });
-    }
+    },
 }));

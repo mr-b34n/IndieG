@@ -14,7 +14,6 @@ import {
     faChevronRight,
     faFilter,
     faWandMagicSparkles,
-    faChevronLeft,
     faUser,
     faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
@@ -26,6 +25,7 @@ import { fetchSearchResults } from "../api/searchApi";
 import { MOCK_USERS } from "../mockUsers";
 import { type SearchTabCategory, type SearchResponse, type SearchUser } from "../types";
 import { formatCompactNumber } from "@/features/community/constants";
+import { Pagination } from "@/shared/components/ui/Pagination";
 
 const POPULAR_TAGS = [
     "#cs2",
@@ -673,56 +673,13 @@ export const SearchResultsPage = () => {
                     )}
 
                     {/* Pagination Bar */}
-                    {searchData.pagination.totalPages > 1 && (
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-surface border border-border mt-4">
-                            <span className="text-xs font-medium text-text-muted">
-                                {t("search.pagination", {
-                                    page: searchData.pagination.page,
-                                    totalPages: searchData.pagination.totalPages,
-                                    total: searchData.pagination.total,
-                                })}
-                            </span>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    disabled={searchData.pagination.page <= 1}
-                                    onClick={() => handlePageChange(searchData.pagination.page - 1)}
-                                    className="px-3 py-1.5 rounded-xl bg-surface-hover border border-border text-xs font-bold text-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary transition-all cursor-pointer flex items-center gap-1"
-                                >
-                                    <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
-                                    <span>{t("search.prevPage")}</span>
-                                </button>
-
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: searchData.pagination.totalPages }, (_, i) => i + 1).map((p) => (
-                                        <button
-                                            key={p}
-                                            type="button"
-                                            onClick={() => handlePageChange(p)}
-                                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                                                p === searchData.pagination.page
-                                                    ? "bg-primary text-white"
-                                                    : "bg-surface-hover text-text-muted hover:text-text"
-                                            }`}
-                                        >
-                                            {p}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    disabled={!searchData.pagination.hasMore}
-                                    onClick={() => handlePageChange(searchData.pagination.page + 1)}
-                                    className="px-3 py-1.5 rounded-xl bg-surface-hover border border-border text-xs font-bold text-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/10 hover:text-primary transition-all cursor-pointer flex items-center gap-1"
-                                >
-                                    <span>{t("search.nextPage")}</span>
-                                    <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    <Pagination
+                        currentPage={searchData.pagination.page}
+                        totalPages={searchData.pagination.totalPages}
+                        onPageChange={handlePageChange}
+                        totalItems={searchData.pagination.total}
+                        itemsPerPage={searchData.pagination.size}
+                    />
                 </div>
             )
             )}

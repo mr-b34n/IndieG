@@ -1,7 +1,7 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 export type ProfileStatus = "online" | "in-game" | "offline";
-export type ProfileTab = "library" | "posts" | "guestbook" | "friends" | "bookmarks";
+export type ProfileTab = "overview" | "games" | "posts" | "communities" | "achievements" | "friends" | "bookmarks" | "guestbook";
 
 export interface Badge {
     id: string;
@@ -10,6 +10,9 @@ export interface Badge {
     icon: IconDefinition;
     color: string;
     badgeText: string;
+    earnedDate?: string;
+    category?: string;
+    unlocked?: boolean;
 }
 
 export interface GearCategory {
@@ -31,6 +34,9 @@ export interface LibraryGame {
     mvpCount: string;
     kdRatio: string;
     tagColor: string;
+    skills?: { name: string; stars: number }[];
+    ratingScore?: string;
+    isFeatured?: boolean;
 }
 
 export interface FriendEntry {
@@ -64,4 +70,32 @@ export interface ProfileIdentity {
     username: string;
     bio: string;
     status: ProfileStatus;
+    level?: number;
+    currentXp?: number;
+    maxXp?: number;
+    titles?: string[];
+    mainRoles?: string[];
+    playstyles?: string[];
+    usuallyPlays?: string[];
+    accentColor?: string; // e.g. "from-cyan-500 to-blue-600"
+}
+
+export interface CommunityReputation {
+    id: string;
+    name: string;
+    icon: string;
+    tier: "Elite" | "Veteran" | "Regular" | "Member";
+    color: string;
+    postCount: number;
+    upvotesCount: number;
+}
+
+export interface RecentActivityItem {
+    id: string;
+    type: "played" | "post" | "achievement" | "reply";
+    title: string;
+    subtitle?: string;
+    timeAgo: string;
+    upvotes?: number;
+    icon?: string;
 }

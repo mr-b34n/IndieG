@@ -9,35 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
-import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as LayoutExploreRouteImport } from './routes/_layout/explore'
-import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
-import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
-import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
-import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
-import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
-import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
 import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
-import { Route as LayoutProfileUserIdRouteImport } from './routes/_layout/profile/$userId'
-import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$postId'
-import { Route as LayoutGameGameSlugRouteImport } from './routes/_layout/game/$gameSlug'
+import { Route as LayoutAdminIndexRouteImport } from './routes/_layout/admin/index'
+import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
+import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutCommunityCommunityIdRouteImport } from './routes/_layout/community/$communityId'
+import { Route as LayoutGameGameSlugRouteImport } from './routes/_layout/game/$gameSlug'
+import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$postId'
+import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
+import { Route as LayoutProfileUserIdRouteImport } from './routes/_layout/profile/$userId'
+import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
+import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
@@ -45,44 +45,14 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutSearchRoute = LayoutSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutExploreRoute = LayoutExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
-  id: '/squad/',
-  path: '/squad/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
-  id: '/profile/',
-  path: '/profile/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
-  id: '/community/',
-  path: '/community/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutBookmarkIndexRoute = LayoutBookmarkIndexRouteImport.update({
-  id: '/bookmark/',
-  path: '/bookmark/',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+const LayoutSearchRoute = LayoutSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => LayoutRoute,
 } as any)
 const AuthenticatedDeveloperIndexRoute =
@@ -91,19 +61,19 @@ const AuthenticatedDeveloperIndexRoute =
     path: '/developer/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const LayoutProfileUserIdRoute = LayoutProfileUserIdRouteImport.update({
-  id: '/profile/$userId',
-  path: '/profile/$userId',
+const LayoutAdminIndexRoute = LayoutAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutPostPostIdRoute = LayoutPostPostIdRouteImport.update({
-  id: '/post/$postId',
-  path: '/post/$postId',
+const LayoutBookmarkIndexRoute = LayoutBookmarkIndexRouteImport.update({
+  id: '/bookmark/',
+  path: '/bookmark/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutGameGameSlugRoute = LayoutGameGameSlugRouteImport.update({
-  id: '/game/$gameSlug',
-  path: '/game/$gameSlug',
+const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
+  id: '/community/',
+  path: '/community/',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutCommunityCommunityIdRoute =
@@ -112,6 +82,36 @@ const LayoutCommunityCommunityIdRoute =
     path: '/community/$communityId',
     getParentRoute: () => LayoutRoute,
   } as any)
+const LayoutGameGameSlugRoute = LayoutGameGameSlugRouteImport.update({
+  id: '/game/$gameSlug',
+  path: '/game/$gameSlug',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPostPostIdRoute = LayoutPostPostIdRouteImport.update({
+  id: '/post/$postId',
+  path: '/post/$postId',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProfileUserIdRoute = LayoutProfileUserIdRouteImport.update({
+  id: '/profile/$userId',
+  path: '/profile/$userId',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
+  id: '/squad/',
+  path: '/squad/',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -231,11 +231,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout': {
@@ -245,11 +245,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -259,13 +259,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/search': {
-      id: '/_layout/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof LayoutSearchRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/explore': {
       id: '/_layout/explore'
       path: '/explore'
@@ -273,46 +266,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutExploreRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/squad/': {
-      id: '/_layout/squad/'
-      path: '/squad'
-      fullPath: '/squad/'
-      preLoaderRoute: typeof LayoutSquadIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/settings/': {
-      id: '/_layout/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof LayoutSettingsIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/profile/': {
-      id: '/_layout/profile/'
-      path: '/profile'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof LayoutProfileIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/community/': {
-      id: '/_layout/community/'
-      path: '/community'
-      fullPath: '/community/'
-      preLoaderRoute: typeof LayoutCommunityIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/bookmark/': {
-      id: '/_layout/bookmark/'
-      path: '/bookmark'
-      fullPath: '/bookmark/'
-      preLoaderRoute: typeof LayoutBookmarkIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/admin/': {
-      id: '/_layout/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof LayoutAdminIndexRouteImport
+    '/_layout/search': {
+      id: '/_layout/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof LayoutSearchRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_authenticated/developer/': {
@@ -322,18 +280,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_layout/profile/$userId': {
-      id: '/_layout/profile/$userId'
-      path: '/profile/$userId'
-      fullPath: '/profile/$userId'
-      preLoaderRoute: typeof LayoutProfileUserIdRouteImport
+    '/_layout/admin/': {
+      id: '/_layout/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof LayoutAdminIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/post/$postId': {
-      id: '/_layout/post/$postId'
-      path: '/post/$postId'
-      fullPath: '/post/$postId'
-      preLoaderRoute: typeof LayoutPostPostIdRouteImport
+    '/_layout/bookmark/': {
+      id: '/_layout/bookmark/'
+      path: '/bookmark'
+      fullPath: '/bookmark/'
+      preLoaderRoute: typeof LayoutBookmarkIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/community/': {
+      id: '/_layout/community/'
+      path: '/community'
+      fullPath: '/community/'
+      preLoaderRoute: typeof LayoutCommunityIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/community/$communityId': {
+      id: '/_layout/community/$communityId'
+      path: '/community/$communityId'
+      fullPath: '/community/$communityId'
+      preLoaderRoute: typeof LayoutCommunityCommunityIdRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/game/$gameSlug': {
@@ -343,11 +315,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutGameGameSlugRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/community/$communityId': {
-      id: '/_layout/community/$communityId'
-      path: '/community/$communityId'
-      fullPath: '/community/$communityId'
-      preLoaderRoute: typeof LayoutCommunityCommunityIdRouteImport
+    '/_layout/post/$postId': {
+      id: '/_layout/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/post/$postId'
+      preLoaderRoute: typeof LayoutPostPostIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile/': {
+      id: '/_layout/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof LayoutProfileIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/profile/$userId': {
+      id: '/_layout/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof LayoutProfileUserIdRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/settings/': {
+      id: '/_layout/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof LayoutSettingsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/squad/': {
+      id: '/_layout/squad/'
+      path: '/squad'
+      fullPath: '/squad/'
+      preLoaderRoute: typeof LayoutSquadIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
   }

@@ -4,9 +4,12 @@ import {
     faSpinner, 
     faCircleCheck, 
     faExclamationTriangle,
-    faXmark
+    faXmark,
+    faUsers,
+    faCompass
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "@/shared/hooks/useTranslate"
 
 import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
@@ -16,10 +19,13 @@ import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features
 
 import { useCommunitiesStore } from "@/features/community";
 import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
+import { CommunitySwitcherRail } from "./CommunitySwitcherRail";
+import { type FeedSortOption } from "./FeedSortDropdown";
 import { type PostDataWithSettings } from "../types";
 
 export const FeedList = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
@@ -29,15 +35,31 @@ export const FeedList = () => {
     const updatePost = usePostsStore((state) => state.updatePost);
     const deletePost = usePostsStore((state) => state.deletePost);
 
+    const communities = useCommunitiesStore((state) => state.communities);
+    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
+
+    const joinedCommunities = useMemo(() => {
+        return communities.filter((c) => c.joined);
+    }, [communities]);
+
+    const joinedCommunityIds = useMemo(() => {
+        return new Set(joinedCommunities.map((c) => c.id.toString().toLowerCase()));
+    }, [joinedCommunities]);
+
+    const joinedCommunityNames = useMemo(() => {
+        return new Set(joinedCommunities.map((c) => c.name.toLowerCase()));
+    }, [joinedCommunities]);
+
+    const [activeCommunityFilter, setActiveCommunityFilter] = useState<string | null>(null);
+    const [sortOrder, setSortOrder] = useState<FeedSortOption>("latest");
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
-    const [displayLimit, setDisplayLimit] = useState(4);
+    const [displayLimit, setDisplayLimit] = useState(5);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
     const sentinelRef = useRef<HTMLDivElement>(null);
     const currentAuthor = getCurrentAuthor();
-    const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
 
     const handleCreatePost = async ({ title, content, attachments, privacy, tags, allowComments, pinned, communityId }: CreatePostPayload) => {
         setSubmitError(null);
@@ -64,6 +86,8 @@ export const FeedList = () => {
                 communityId,
             };
             addPost(newPost);
+            // Ensure new post is displayed at top
+            setDisplayLimit((prev) => Math.max(prev, 5));
         } catch {
             setSubmitError("Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!");
         }
@@ -80,18 +104,56 @@ export const FeedList = () => {
         setHiddenAuthors((prev) => [...prev, author]);
     };
 
+    // Filter and sort posts
     const filteredPosts = useMemo(() => {
-        return posts.filter((p) => {
-            if (hiddenAuthors.includes(p.author)) return false;
-            return true;
-        })
-        .slice()
-        .sort((a, b) => Number(!!(b as PostDataWithSettings).pinned) - Number(!!(a as PostDataWithSettings).pinned));
-    }, [posts, hiddenAuthors]);
+        return posts
+            .filter((p) => {
+                if (hiddenAuthors.includes(p.author)) return false;
 
-    const displayedPosts = filteredPosts.slice(0, displayLimit);
+                // My own posts always show
+                if (p.author === currentAuthor) return true;
+
+                const postCommId = p.communityId?.toString().toLowerCase();
+                const postGameTag = p.gameTag?.toLowerCase();
+
+                // If a specific community filter is selected
+                if (activeCommunityFilter) {
+                    const targetComm = communities.find((c) => String(c.id) === activeCommunityFilter);
+                    const targetId = activeCommunityFilter.toLowerCase();
+                    const targetName = targetComm?.name.toLowerCase();
+
+                    return postCommId === targetId || (postGameTag && targetName && postGameTag.includes(targetName));
+                }
+
+                // Otherwise, show posts from ANY joined community
+                const belongsToJoinedCommunity =
+                    (postCommId && joinedCommunityIds.has(postCommId)) ||
+                    (postGameTag && Array.from(joinedCommunityNames).some((name) => postGameTag.includes(name)));
+
+                return belongsToJoinedCommunity;
+            })
+            .slice()
+            .sort((a, b) => {
+                const pinDiff = Number(!!(b as PostDataWithSettings).pinned) - Number(!!(a as PostDataWithSettings).pinned);
+                if (pinDiff !== 0) return pinDiff;
+
+                if (sortOrder === "popular") {
+                    return (b.likes || 0) - (a.likes || 0);
+                }
+                if (sortOrder === "discussed") {
+                    return (b.comments || 0) - (a.comments || 0);
+                }
+                return Number(b.id) - Number(a.id);
+            });
+    }, [posts, hiddenAuthors, currentAuthor, activeCommunityFilter, sortOrder, communities, joinedCommunityIds, joinedCommunityNames]);
+
+    const displayedPosts = useMemo(() => {
+        return filteredPosts.slice(0, displayLimit);
+    }, [filteredPosts, displayLimit]);
+
     const hasMore = displayLimit < filteredPosts.length;
 
+    // Infinite Scroll IntersectionObserver
     useEffect(() => {
         if (!hasMore || isLoadingMore) return;
         const el = sentinelRef.current;
@@ -104,7 +166,7 @@ export const FeedList = () => {
                     setTimeout(() => {
                         setDisplayLimit((prev) => prev + 4);
                         setIsLoadingMore(false);
-                    }, 800);
+                    }, 500);
                 }
             },
             { threshold: 0.1 }
@@ -129,8 +191,46 @@ export const FeedList = () => {
                 </div>
             )}
 
+            {/* Home Feed Editorial Header */}
+            <div className="w-full flex flex-col pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-text tracking-tight uppercase">
+                            Home Feed
+                        </h1>
+                        <p className="text-xs text-text-muted mt-0.5">
+                            Discussions & updates from your joined communities
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/community" })}
+                        className="self-start sm:self-auto text-xs font-bold text-primary hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                        <FontAwesomeIcon icon={faUsers} className="text-[11px]" />
+                        <span>Manage communities</span>
+                    </button>
+                </div>
+
+                {/* Community Switcher Rail: YOUR FEED, Top Communities, +N More, and Sort Dropdown */}
+                <CommunitySwitcherRail
+                    joinedCommunities={joinedCommunities}
+                    activeCommunityId={activeCommunityFilter}
+                    onSelectCommunity={setActiveCommunityFilter}
+                    sortOrder={sortOrder}
+                    onSortChange={setSortOrder}
+                />
+            </div>
+
             {/* Create Post Area */}
-            {isLoggedIn && <CreatePostBox onPostCreated={handleCreatePost} />}
+            {isLoggedIn && (
+                <CreatePostBox
+                    key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
+                    defaultCommunityId={activeCommunityFilter}
+                    onPostCreated={handleCreatePost}
+                />
+            )}
 
             {/* Error State Display */}
             {hasError ? (
@@ -158,12 +258,12 @@ export const FeedList = () => {
                         />
                     ))}
 
-                    {/* Pagination / Infinite Scroll Sentinel */}
+                    {/* Infinite Scroll Sentinel / Load More */}
                     <div ref={sentinelRef} className="w-full py-4 flex flex-col items-center justify-center gap-2">
                         {isLoadingMore && (
-                            <div className="flex items-center gap-2.5 px-5 py-2.5 bg-surface/90 border border-border rounded-full shadow-xs text-sm font-semibold text-primary animate-pulse">
-                                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-base" />
-                                <span>{t('feed.loadingMore') || "Đang tải thêm..."}</span>
+                            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-primary animate-pulse">
+                                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+                                <span>{t('feed.loadingMore') || "Loading more posts..."}</span>
                             </div>
                         )}
                         {!isLoadingMore && hasMore && (
@@ -172,36 +272,66 @@ export const FeedList = () => {
                                 onClick={() => {
                                     setIsLoadingMore(true);
                                     setTimeout(() => {
-                                        setDisplayLimit((prev) => prev + 3);
+                                        setDisplayLimit((prev) => prev + 4);
                                         setIsLoadingMore(false);
-                                    }, 400);
+                                    }, 300);
                                 }}
-                                className="px-5 py-2 text-xs font-semibold text-text-muted hover:text-text bg-surface-hover hover:bg-border/60 border border-border rounded-full transition-all cursor-pointer"
+                                className="px-4 py-1.5 text-xs font-bold text-text-muted hover:text-text bg-surface-hover hover:bg-surface-hover/80 rounded transition-colors cursor-pointer"
                             >
-                                {t('feed.loadMoreCount', { count: filteredPosts.length - displayLimit }) || `Tải thêm (${filteredPosts.length - displayLimit})`}
+                                {t('feed.loadMoreCount', { count: filteredPosts.length - displayLimit })}
                             </button>
                         )}
                         {!hasMore && filteredPosts.length > 4 && (
-                            <div className="flex items-center gap-2 text-xs text-text-faint py-3 font-medium bg-surface/50 border border-border/50 rounded-xl px-4">
-                                <FontAwesomeIcon icon={faCircleCheck} className="text-primary" />
-                                <span>{t('feed.allLoaded') || "Đã hiển thị tất cả bài viết"}</span>
+                            <div className="flex items-center gap-2 text-xs text-text-faint py-3 font-medium">
+                                <FontAwesomeIcon icon={faCircleCheck} className="text-primary text-xs" />
+                                <span>{t('feed.allLoaded') || "You're all caught up ✨"}</span>
                             </div>
                         )}
                     </div>
                 </>
             ) : (
-                /* Empty Feed State */
-                <div className="w-full flex flex-col items-center justify-center gap-3 p-10 bg-surface/90 backdrop-blur-md border border-border rounded-2xl text-text-muted text-sm text-center">
-                    <FontAwesomeIcon icon={faInbox} className="text-3xl text-text-faint" />
-                    <p className="font-bold text-text">
-                        {t('feed.emptyTitle') || "Chưa có bài viết nào"}
-                    </p>
-                    <p className="text-text-faint text-xs max-w-sm">
-                        {t('feed.emptyDesc') || "Hãy là người đầu tiên tạo bài viết để chia sẻ cùng cộng đồng!"}
-                    </p>
+                /* Empty Feed State for Joined Communities */
+                <div className="w-full flex flex-col items-center justify-center gap-3 py-12 px-6 text-center border-b border-border/40">
+                    <div className="w-12 h-12 rounded-lg bg-surface-hover/70 flex items-center justify-center text-primary text-xl">
+                        <FontAwesomeIcon icon={joinedCommunities.length === 0 ? faCompass : faInbox} />
+                    </div>
+
+                    <div className="flex flex-col gap-1 max-w-sm">
+                        <p className="font-extrabold text-text text-sm">
+                            {joinedCommunities.length === 0
+                                ? "No communities joined yet"
+                                : selectedCommunityFilter
+                                ? "No posts in this community yet"
+                                : "No recent posts from your communities"}
+                        </p>
+                        <p className="text-text-muted text-xs leading-relaxed">
+                            {joinedCommunities.length === 0
+                                ? "Your home feed delivers discussions and guides from the game communities you follow. Explore and join communities to get started!"
+                                : "Be the first to start the conversation or check back soon."}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: "/community" })}
+                            className="px-4 py-1.5 rounded bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-2"
+                        >
+                            <FontAwesomeIcon icon={faCompass} />
+                            <span>Explore Communities</span>
+                        </button>
+                        {selectedCommunityFilter && (
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCommunityFilter(null)}
+                                className="px-3 py-1.5 rounded bg-surface-hover hover:bg-surface-hover/80 text-text text-xs font-semibold transition-colors cursor-pointer"
+                            >
+                                View All
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
     );
 }
-

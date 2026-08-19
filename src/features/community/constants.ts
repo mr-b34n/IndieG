@@ -56,7 +56,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         members: 76190,
         onlineNow: 1614,
         tags: ["cs2", "esports", "fps"],
-        joined: false,
+        joined: true,
         featured: true,
     },
     {
@@ -70,7 +70,7 @@ export const INITIAL_COMMUNITIES: CommunityData[] = [
         members: 9750,
         onlineNow: 128,
         tags: ["rdr2", "openworld", "story"],
-        joined: false,
+        joined: true,
     },
     {
         id: "cyberpunk",
