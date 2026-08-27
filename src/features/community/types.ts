@@ -20,6 +20,10 @@ export interface CommunityData {
     tags: string[];
     joined: boolean;
     featured?: boolean;
+    isLocked?: boolean;
+    autoApprovePosts?: boolean;
+    announcement?: string;
+    isNsfw?: boolean;
     owner?: string;
     admins?: string[];
     mods?: string[];

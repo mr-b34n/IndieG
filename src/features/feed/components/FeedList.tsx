@@ -196,10 +196,10 @@ export const FeedList = () => {
                 <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
                     <div>
                         <h1 className="text-xl sm:text-2xl font-black text-text tracking-tight uppercase">
-                            Home Feed
+                            {t('feed.homeFeedTitle', { defaultValue: 'Home Feed' })}
                         </h1>
                         <p className="text-xs text-text-muted mt-0.5">
-                            Discussions & updates from your joined communities
+                            {t('feed.homeFeedSub', { defaultValue: 'Discussions & updates from your joined communities' })}
                         </p>
                     </div>
 
@@ -209,7 +209,7 @@ export const FeedList = () => {
                         className="self-start sm:self-auto text-xs font-bold text-primary hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                         <FontAwesomeIcon icon={faUsers} className="text-[11px]" />
-                        <span>Manage communities</span>
+                        <span>{t('feed.manageCommunities', { defaultValue: 'Manage communities' })}</span>
                     </button>
                 </div>
 

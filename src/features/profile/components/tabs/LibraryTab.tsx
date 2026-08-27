@@ -24,19 +24,19 @@ export const LibraryTab = ({ games, t }: LibraryTabProps) => (
             return (
                 <div
                     key={game.name}
-                    className="group flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-surface-hover/40 border border-border/20 hover:border-border/50 hover:bg-surface-hover/70 transition-all duration-200"
+                    className="group flex items-center gap-4 px-4 py-3.5 rounded-[12px] bg-[#0D1220] hover:bg-[#151A29] transition-all duration-200 shadow-sm"
                 >
                     {/* Logo */}
                     <img
                         src={game.logo}
                         alt={game.name}
-                        className="w-12 h-12 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform duration-300"
+                        className="w-12 h-12 rounded-[8px] object-cover shrink-0 group-hover:scale-105 transition-transform duration-300"
                     />
 
                     {/* Info */}
                     <div className="flex flex-col min-w-0 flex-1 gap-1">
                         <div className="flex items-center justify-between gap-3">
-                            <h4 className="font-bold text-text text-sm truncate group-hover:text-primary transition-colors">
+                            <h4 className="font-bold text-[#F2F5FA] text-sm truncate group-hover:text-[#1597FF] transition-colors">
                                 {game.name}
                             </h4>
                             <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black ${game.tagColor}`}>
@@ -44,18 +44,18 @@ export const LibraryTab = ({ games, t }: LibraryTabProps) => (
                             </span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1597FF]">
                                 <FontAwesomeIcon icon={faFire} className="text-[10px]" />
                                 {game.hours} {t("profile.hoursPlayedLabel")}
                             </span>
-                            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-text-faint">
+                            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8D97AA]">
                                 <FontAwesomeIcon icon={faClock} className="text-[10px]" />
                                 {game.lastPlayed}
                             </span>
                         </div>
                         {/* Thin accent bar */}
-                        <div className="h-0.5 w-full rounded-full bg-border/30 mt-0.5">
-                            <div className={`h-full w-1/3 rounded-full ${bar} opacity-60`} />
+                        <div className="h-0.5 w-full rounded-full bg-[#151A29] mt-0.5">
+                            <div className={`h-full w-1/3 rounded-full ${bar} opacity-80`} />
                         </div>
                     </div>
                 </div>

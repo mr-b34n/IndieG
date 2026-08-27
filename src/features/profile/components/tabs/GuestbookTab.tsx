@@ -14,15 +14,13 @@ interface GuestbookTabProps {
 }
 
 /**
- * Chat-wall style guestbook: alternating left/right bubbles instead of
- * uniform cards, so the tab reads like a wall of messages rather than a
- * generic comment list.
+ * Chat-wall style guestbook: alternating left/right bubbles with clean monochrome tones.
  */
 export const GuestbookTab = ({ comments, newCommentText, onChangeNewComment, onSubmit, onToggleLike, displayName, t }: GuestbookTabProps) => (
     <div className="flex flex-col gap-5 animate-fade-in">
-        <form onSubmit={onSubmit} className="bg-surface-hover/30 border border-border/20 rounded-3xl p-5 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-sm font-bold text-text">
-                <FontAwesomeIcon icon={faPen} className="text-primary" />
+        <form onSubmit={onSubmit} className="bg-[#0A0C0E] rounded-[14px] p-5 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">
+                <FontAwesomeIcon icon={faPen} className="text-[#1688E8]" />
                 <span>{t("profile.guestbookFormTitle", { name: displayName })}</span>
             </div>
             <textarea
@@ -30,14 +28,14 @@ export const GuestbookTab = ({ comments, newCommentText, onChangeNewComment, onS
                 onChange={(e) => onChangeNewComment(e.target.value)}
                 rows={3}
                 placeholder={t("profile.guestbookPlaceholder")}
-                className="w-full px-4 py-3 rounded-xl bg-surface text-text text-sm focus:outline-none ring-1 ring-border/30 focus:ring-primary resize-none border border-border/20"
+                className="w-full px-4 py-3 rounded-[8px] bg-[#13161C] text-[#F0F1F2] placeholder-[#666A71] text-xs font-medium focus:outline-none focus:bg-[#181C24] resize-none"
             />
             <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-text-faint">{t("profile.guestbookHint")}</span>
+                <span className="text-xs text-[#8A8F98]">{t("profile.guestbookHint")}</span>
                 <button
                     type="submit"
                     disabled={!newCommentText.trim()}
-                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-white font-bold text-sm transition-colors shadow-md cursor-pointer flex items-center gap-2"
+                    className="px-4 py-2 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center gap-2"
                 >
                     <FontAwesomeIcon icon={faPaperPlane} />
                     <span>{t("profile.postComment")}</span>
@@ -51,24 +49,26 @@ export const GuestbookTab = ({ comments, newCommentText, onChangeNewComment, onS
                     const fromRight = idx % 2 === 1;
                     return (
                         <div key={c.id} className={`flex items-start gap-3 max-w-[92%] sm:max-w-[75%] ${fromRight ? "self-end flex-row-reverse" : "self-start"}`}>
-                            <img src={c.avatar} alt={c.author} className="w-11 h-11 rounded-full object-cover shrink-0 mt-0.5 shadow-xs" />
+                            <img src={c.avatar} alt={c.author} className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5" />
                             <div
-                                className={`flex flex-col gap-1.5 min-w-0 rounded-3xl px-4 py-3 border shadow-xs ${
-                                    fromRight ? "bg-primary/10 border-primary/20 rounded-tr-md" : "bg-surface-hover/40 border-border/20 rounded-tl-md"
+                                className={`flex flex-col gap-1.5 min-w-0 rounded-[12px] px-4 py-3 shadow-xs ${
+                                    fromRight 
+                                        ? "bg-[#181C24] rounded-tr-xs" 
+                                        : "bg-[#0A0C0E] rounded-tl-xs"
                                 }`}
                             >
                                 <div className={`flex items-center gap-2 ${fromRight ? "flex-row-reverse" : ""}`}>
-                                    <h5 className="font-extrabold text-text text-sm">{c.author}</h5>
-                                    <span className="text-[11px] text-text-faint">{c.date}</span>
+                                    <h5 className="font-bold text-[#F0F1F2] text-sm">{c.author}</h5>
+                                    <span className="text-[10px] text-[#8A8F98]">{c.date}</span>
                                 </div>
-                                <p className="text-sm text-text-muted leading-relaxed font-medium">{c.content}</p>
+                                <p className="text-xs text-[#9A9DA3] leading-relaxed font-medium">{c.content}</p>
                                 <button
                                     onClick={() => onToggleLike(c.id)}
-                                    className={`self-start flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                                        c.isLiked ? "bg-rose-500/15 text-rose-500" : "bg-surface text-text-muted hover:text-text border border-border/20"
+                                    className={`self-start flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
+                                        c.isLiked ? "bg-[#E05252]/15 text-[#E05252]" : "bg-[#13161C] text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#202530]"
                                     } ${fromRight ? "self-end" : ""}`}
                                 >
-                                    <FontAwesomeIcon icon={faHeart} className={c.isLiked ? "animate-bounce" : ""} />
+                                    <FontAwesomeIcon icon={faHeart} className={c.isLiked ? "animate-bounce text-[#E05252]" : ""} />
                                     <span>{c.likes > 0 ? c.likes : t("profile.likeBtn")}</span>
                                 </button>
                             </div>
@@ -76,7 +76,7 @@ export const GuestbookTab = ({ comments, newCommentText, onChangeNewComment, onS
                     );
                 })
             ) : (
-                <div className="bg-surface-hover/20 border border-border/20 rounded-3xl p-8 text-center text-text-faint text-sm">
+                <div className="bg-[#0A0C0E] rounded-[12px] p-8 text-center text-[#9A9DA3] text-xs shadow-xs">
                     {t("profile.noComments")}
                 </div>
             )}

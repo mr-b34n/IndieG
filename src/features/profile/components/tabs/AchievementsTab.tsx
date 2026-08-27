@@ -18,60 +18,63 @@ export const AchievementsTab = ({ badges }: AchievementsTabProps) => {
         : badges.filter((b) => b.category === selectedCategory);
 
     return (
-        <div className="flex flex-col gap-5 w-full animate-fade-in">
-            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+        <div className="flex flex-col gap-5 w-full animate-fade-in bg-[#0A0C0E] rounded-[14px] p-5 shadow-sm">
+            <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faTrophy} className="text-amber-400 text-lg" />
+                    <FontAwesomeIcon icon={faTrophy} className="text-[#E5A93D] text-base" />
                     <div>
-                        <h3 className="text-sm font-black uppercase tracking-wider text-text">Collectible Badges & Trophies</h3>
-                        <p className="text-xs text-text-faint font-semibold">Danh hiệu độc quyền thu thập qua quá trình chơi game & hoạt động</p>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Collectible Badges & Trophies</h3>
+                        <p className="text-xs text-[#9A9DA3]">Danh hiệu độc quyền thu thập qua quá trình chơi game & hoạt động</p>
                     </div>
                 </div>
-                <span className="text-xs font-black text-amber-400 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                <span className="text-xs font-semibold text-[#F0F1F2] px-3 py-1 rounded-[6px] bg-[#13161C]">
                     {badges.filter((b) => b.unlocked !== false).length} / {badges.length} Unlocked
                 </span>
             </div>
 
-            {/* Filter Pills */}
+            {/* Filter Pills with Subtle Background Selection */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
-                {categories.map((cat) => (
-                    <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            selectedCategory === cat
-                                ? "bg-amber-400/15 text-amber-400 border border-amber-400/30"
-                                : "bg-surface-hover/60 text-text-muted hover:text-text"
-                        }`}
-                    >
-                        {cat}
-                    </button>
-                ))}
+                {categories.map((cat) => {
+                    const isSelected = selectedCategory === cat;
+                    return (
+                        <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                    ? "bg-[#181C24] text-[#1688E8] font-bold"
+                                    : "bg-[#13161C] text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#181C24]"
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Badges Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {filteredBadges.map((badge) => {
                     const isUnlocked = badge.unlocked !== false;
 
                     return (
                         <div
                             key={badge.id}
-                            className={`flex flex-col justify-between p-5 rounded-2xl border transition-all ${
+                            className={`flex flex-col justify-between p-4 rounded-[10px] transition-all ${
                                 isUnlocked
-                                    ? "bg-surface border-border/60 shadow-sm hover:border-amber-400/50 hover:shadow-md"
-                                    : "bg-surface/30 border-border/20 opacity-50 grayscale"
+                                    ? "bg-[#13161C] hover:bg-[#181C24]"
+                                    : "bg-[#0E1014] opacity-35 grayscale"
                             }`}
                         >
                             <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 ${badge.color}`}>
+                                <div className="w-10 h-10 rounded-[8px] bg-[#181C24] flex items-center justify-center text-lg shrink-0 text-[#E5A93D]">
                                     <FontAwesomeIcon icon={badge.icon} />
                                 </div>
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold uppercase ${
                                     isUnlocked
-                                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                                        : "bg-neutral-500/10 text-text-faint border-neutral-500/20"
+                                        ? "bg-[#24C58A]/15 text-[#24C58A]"
+                                        : "bg-[#181C24] text-[#8A8F98]"
                                 }`}>
                                     <FontAwesomeIcon icon={isUnlocked ? faCheckCircle : faLock} className="mr-1 text-[9px]" />
                                     {isUnlocked ? "Unlocked" : "Locked"}
@@ -79,11 +82,11 @@ export const AchievementsTab = ({ badges }: AchievementsTabProps) => {
                             </div>
 
                             <div className="flex flex-col gap-1">
-                                <h4 className="font-black text-text text-sm">{badge.title}</h4>
-                                <p className="text-xs text-text-muted leading-relaxed">{badge.desc}</p>
+                                <h4 className="font-bold text-[#F0F1F2] text-sm">{badge.title}</h4>
+                                <p className="text-xs text-[#9A9DA3] leading-relaxed">{badge.desc}</p>
                             </div>
 
-                            <div className="flex items-center justify-between text-[11px] font-bold text-text-faint border-t border-border/30 pt-3 mt-4">
+                            <div className="flex items-center justify-between text-[11px] font-medium text-[#8A8F98] pt-3 mt-3 bg-[#0E1116] p-2 rounded-[6px]">
                                 <span>Category: {badge.category || "General"}</span>
                                 <span>{badge.earnedDate ? `Earned ${badge.earnedDate}` : "Locked"}</span>
                             </div>

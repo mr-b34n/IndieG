@@ -104,19 +104,19 @@ export const ImageCropperModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className={`bg-surface rounded-3xl p-6 w-full flex flex-col items-center gap-4 shadow-2xl ${aspectRatio > 2 ? 'max-w-lg' : 'max-w-md'}`}>
-                <div className="w-full flex items-center justify-between border-b border-border/40 pb-3">
-                    <h4 className="font-bold text-text flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCrop} className="text-primary" />
+            <div className={`bg-[#0D1220] rounded-[16px] p-6 w-full flex flex-col items-center gap-4 shadow-2xl ${aspectRatio > 2 ? 'max-w-lg' : 'max-w-md'}`}>
+                <div className="w-full flex items-center justify-between pb-1">
+                    <h4 className="font-black text-[#F2F5FA] flex items-center gap-2">
+                        <FontAwesomeIcon icon={faCrop} className="text-[#1597FF]" />
                         <span>{title}</span>
                     </h4>
-                    <button type="button" onClick={onClose} className="text-text-faint hover:text-text p-1 cursor-pointer" aria-label="Đóng">
+                    <button type="button" onClick={onClose} className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer" aria-label="Đóng">
                         <FontAwesomeIcon icon={faXmark} className="text-lg" />
                     </button>
                 </div>
 
                 <div
-                    className="relative rounded-2xl overflow-hidden bg-black border-2 border-primary/60 cursor-move flex items-center justify-center shadow-inner select-none touch-none"
+                    className="relative rounded-[12px] overflow-hidden bg-black cursor-move flex items-center justify-center shadow-inner select-none touch-none"
                     style={{ width: containerWidth, height: containerHeight }}
                     onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
                     onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
@@ -139,12 +139,12 @@ export const ImageCropperModal = ({
                             transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px)`,
                         }}
                     />
-                    <div className="absolute inset-0 pointer-events-none border border-white/20 rounded-2xl ring-12 ring-black/40" />
+                    <div className="absolute inset-0 pointer-events-none rounded-[12px] ring-12 ring-black/40" />
                 </div>
 
                 <div className="w-full flex flex-col gap-2 pt-2">
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-text-muted shrink-0">Thu phóng:</span>
+                        <span className="text-xs font-semibold text-[#8D97AA] shrink-0">Thu phóng:</span>
                         <input
                             type="range"
                             min={MIN_ZOOM}
@@ -152,29 +152,29 @@ export const ImageCropperModal = ({
                             step={ZOOM_STEP}
                             value={zoom}
                             onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                            className="flex-1 accent-primary cursor-pointer"
+                            className="flex-1 accent-[#1597FF] cursor-pointer"
                             aria-label="Thu phóng ảnh"
                         />
                         <button
                             type="button"
                             onClick={() => handleZoomChange(Math.min(MAX_ZOOM, zoom + 0.1))}
-                            className="text-text-faint hover:text-text p-1 cursor-pointer"
+                            className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer"
                             aria-label="Phóng to"
                         >
                             <FontAwesomeIcon icon={faSearchPlus} />
                         </button>
                     </div>
-                    <p className="text-[11px] text-center text-text-faint italic mt-1">* Kéo thả ảnh để di chuyển.</p>
+                    <p className="text-[11px] text-center text-[#5F697C] italic mt-1">* Kéo thả ảnh để di chuyển.</p>
                 </div>
 
                 <div className="w-full flex items-center justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-surface-hover hover:bg-border text-text font-bold text-xs transition-colors cursor-pointer">
+                    <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-[8px] bg-[#151A29] hover:bg-[#1A2032] text-[#8D97AA] hover:text-[#F2F5FA] font-bold text-xs transition-colors cursor-pointer">
                         Hủy
                     </button>
                     <button
                         type="button"
                         onClick={handleCrop}
-                        className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors shadow-md cursor-pointer flex items-center gap-2"
+                        className="px-5 py-2.5 rounded-[8px] bg-[#1597FF] hover:bg-[#35A8FF] text-white font-bold text-xs transition-colors shadow-md cursor-pointer flex items-center gap-2"
                     >
                         <FontAwesomeIcon icon={faCheck} />
                         <span>Cắt & Lưu ảnh</span>

@@ -99,6 +99,7 @@ export const CommunityList = () => {
                     if (!isAdmin) {
                         return;
                     }
+                    if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;
                     setShowCreateModal(true);
                 }}
             />

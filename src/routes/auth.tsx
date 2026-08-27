@@ -16,7 +16,6 @@ import {
     faEnvelope,
     faUser,
     faKey,
-    faUserCheck,
     faExclamationTriangle,
     faPaperPlane,
     faLock,
@@ -26,7 +25,7 @@ import { useState } from 'react';
 
 import { STRENGTH_LEVELS, validatePassword, type PasswordValidationResult } from '../features/auth/helpers/passwordValidator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
-import { useAuthStore, type AuthMode } from '@/features/auth';
+import { useAuthStore, type AuthMode, AccountSwitcher, TEST_ACCOUNTS } from '@/features/auth';
 
 const AuthPage = () => {
     const navigate = useNavigate();
@@ -35,7 +34,6 @@ const AuthPage = () => {
     const language = useThemeStore((state) => state.language);
     const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
     const loginStoreAction = useAuthStore((state) => state.login);
-    const toggleMockLogin = useAuthStore((state) => state.toggleMockLogin);
 
     const [mode, setMode] = useState<AuthMode>('login');
     const [isLoading, setIsLoading] = useState(false);
@@ -97,16 +95,6 @@ const AuthPage = () => {
         }
     };
 
-    const handleGuestLogin = () => {
-        setIsLoading(true);
-        setServerError(null);
-        setTimeout(() => {
-            toggleMockLogin();
-            setIsLoading(false);
-            navigate({ to: "/" });
-        }, 500);
-    };
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setServerError(null);
@@ -133,12 +121,21 @@ const AuthPage = () => {
                     return;
                 }
 
-                const userObj = {
-                    id: "usr_" + Math.random().toString(36).substring(2, 9),
-                    email: formData.email,
-                    username: formData.email.split("@")[0] || "IndiePlayer",
-                    isVerified: true,
-                };
+                const emailLower = formData.email.toLowerCase();
+                let userObj;
+                if (emailLower.includes("admin")) {
+                    userObj = TEST_ACCOUNTS.admin;
+                } else if (emailLower.includes("unverified") || emailLower.includes("chua")) {
+                    userObj = TEST_ACCOUNTS.unverifiedUser;
+                } else {
+                    userObj = {
+                        id: "usr_" + Math.random().toString(36).substring(2, 9),
+                        email: formData.email,
+                        username: formData.email.split("@")[0] || "IndiePlayer",
+                        role: "user" as const,
+                        isVerified: true,
+                    };
+                }
                 loginStoreAction(userObj);
                 setSuccessMessage("Đăng nhập thành công! Đang chuyển hướng...");
                 setTimeout(() => {
@@ -695,25 +692,11 @@ const AuthPage = () => {
                                 </button>
                             )}
 
-                            {/* Quick Guest Access (Demo) */}
+                            {/* Quick Account Switcher (Manual Test) */}
                             {(mode === 'login' || mode === 'register') && (
-                                <>
-                                    <div className="relative w-full flex items-center justify-center my-0.5">
-                                        <div className="w-full h-px bg-border" />
-                                        <span className="absolute bg-surface px-3 text-[10px] font-bold uppercase tracking-wider text-text-faint">
-                                            Hoặc
-                                        </span>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleGuestLogin}
-                                        className="w-full py-2.5 px-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                                    >
-                                        <FontAwesomeIcon icon={faUserCheck} />
-                                        <span>Trải Nghiệm Nhanh (Khách Demo)</span>
-                                    </button>
-                                </>
+                                <div className="mt-2 pt-2 border-t border-border/60">
+                                    <AccountSwitcher />
+                                </div>
                             )}
 
                         </div>

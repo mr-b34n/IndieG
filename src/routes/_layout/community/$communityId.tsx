@@ -15,6 +15,7 @@ import {
 import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { useAuthStore } from '@/features/auth';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
 import { CommunityHubHeader } from '@/features/community/components/hub/CommunityHubHeader';
@@ -38,6 +39,7 @@ import {
 } from '@/features/community/components/hub/CommunityHubRightRail';
 import { CommunityChatDrawer } from '@/features/community/components/hub/CommunityChatDrawer';
 import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
+import { AdminCommunityControllerModal } from '@/features/community';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetailPage,
@@ -57,6 +59,9 @@ export function CommunityDetailPage() {
     const navigate = useNavigate();
     const language = useThemeStore((state) => state.language);
     const isVi = language === "vi";
+
+    const user = useAuthStore((state) => state.user);
+    const isAdmin = user?.role === "admin";
 
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
@@ -104,6 +109,7 @@ export function CommunityDetailPage() {
     // Modals & Drawers
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isAdminControllerOpen, setIsAdminControllerOpen] = useState(false);
 
     // Categories definition
     const categoriesData: CategoryItem[] = [
@@ -315,6 +321,8 @@ export function CommunityDetailPage() {
         return result;
     }, [recentThreads, activeCategoryFilter, activeSidebarNav, activeSubTab, searchQuery, sortMode]);
 
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
     // Handle Discussion Creation
     const handleCreateThread = ({
         title,
@@ -324,6 +332,7 @@ export function CommunityDetailPage() {
         category: string;
         content: string;
     }) => {
+        if (!requireVerifiedEmail("tạo thảo luận mới")) return;
         const catObj = categoriesData.find((c) => c.id === category);
         const newThread: DiscussionThread = {
             id: `th-new-${Date.now()}`,
@@ -453,9 +462,22 @@ export function CommunityDetailPage() {
                         membersCount={community.members || 24540}
                         onlineCount={community.onlineNow || 416}
                         isJoined={!!community.joined}
-                        onToggleJoin={() => toggleJoin(community.id)}
-                        onStartDiscussion={() => setIsCreateModalOpen(true)}
+                        onToggleJoin={() => {
+                            if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+                            toggleJoin(community.id);
+                        }}
+                        onStartDiscussion={() => {
+                            if (!requireVerifiedEmail("đăng bài thảo luận")) return;
+                            setIsCreateModalOpen(true);
+                        }}
                         isVi={isVi}
+                        isAdmin={isAdmin}
+                        onOpenAdminController={() => setIsAdminControllerOpen(true)}
+                        isLocked={community.isLocked}
+                        autoApprovePosts={community.autoApprovePosts}
+                        announcement={community.announcement}
+                        featured={community.featured}
+                        isNsfw={community.isNsfw}
                     />
 
                     {/* Sub-navigation Under Header (Overview · Discussions · Guides · Showcase · Events) */}
@@ -524,6 +546,14 @@ export function CommunityDetailPage() {
                 communityName={community.name}
                 isVi={isVi}
             />
+
+            {/* ADMIN COMMUNITY CONTROLLER MODAL */}
+            {isAdminControllerOpen && (
+                <AdminCommunityControllerModal
+                    community={community}
+                    onClose={() => setIsAdminControllerOpen(false)}
+                />
+            )}
         </div>
     );
 }

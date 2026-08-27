@@ -1,6 +1,7 @@
 import {
     DEFAULT_AVATAR as avatarGame,
     RAFT_SCREENSHOTS,
+    RDR2_SCREENSHOTS,
     BUTTERFLY_EMERALD_IMG as butterflyEmeraldImg,
     CS2_BG as dust2Img,
     FIGURES_IMG as figuresImg
@@ -11,7 +12,50 @@ import type { PostData } from "./types";
 
 export const ALL_POSTS: PostData[] = [
     {
-        id: 19,
+        id: 100,
+        author: "PhotoLover",
+        authorAvatar: avatarGame,
+        authorRank: "grandmaster",
+        communityId: "rdr2",
+        gameTag: "Red Dead Redemption 2",
+        timeAgo: "2 phút trước",
+        title: "Kỷ niệm những chuyến đi dài",
+        content: `Cảnh sắc trong RDR2 thực sự là một kiệt tác nghệ thuật. Không cần làm nhiệm vụ, chỉ cần cưỡi ngựa thong dong ngắm cảnh cũng đủ thấy bình yên rồi. Dưới đây là những bức ảnh mình chụp được trong những lần đi săn.`,
+        tags: ["📸 Screenshot", "RDR2", "Scenery"],
+        images: [RDR2_SCREENSHOTS[0], RDR2_SCREENSHOTS[1], RDR2_SCREENSHOTS[2], RDR2_SCREENSHOTS[3], RDR2_SCREENSHOTS[4]],
+        likes: 1240,
+        comments: 85,
+        tab: "foryou",
+        privacy: "public",
+        allowComments: true,
+        pinned: false,
+    },
+    {
+        id: 99,
+        author: "StoryTeller",
+        authorAvatar: avatarGame,
+        authorRank: "master",
+        communityId: "rdr2",
+        gameTag: "Red Dead Redemption 2",
+        timeAgo: "Vừa xong",
+        title: "[Góc Nhìn] Chiều sâu cốt truyện và sự lụi tàn của băng Van der Linde",
+        content: `Arthur Morgan không chỉ là một trong những nhân vật chính xuất sắc nhất thế giới game, mà câu chuyện của anh còn phản ánh một thời đại đang dần suy tàn của miền Viễn Tây. Từ những ngày đầu ở Colter lạnh giá, cho đến trại Horseshoe Overlook đầy hứa hẹn, chúng ta đã thấy một gia đình gắn bó dưới sự dẫn dắt của Dutch. 
+
+Nhưng rồi, sự phát triển của nền văn minh, sự truy lùng gắt gao của Pinkertons, và quan trọng nhất là sự biến chất trong lý tưởng của Dutch đã đẩy tất cả vào bi kịch. 
+
+Đây là một bài viết rất dài để test tính năng "Xem thêm" (See more) của bài viết. Khi nội dung vượt quá 250 ký tự, hệ thống sẽ tự động cắt bớt và hiển thị nút "Xem thêm". Khi click vào nút này, toàn bộ nội dung của bài viết sẽ được hiển thị đầy đủ mà không cần phải chuyển sang trang chi tiết. Bạn có thể thấy đoạn văn này đang được ẩn đi lúc ban đầu. Trải nghiệm đọc trên Feed sẽ gọn gàng hơn rất nhiều nhờ tính năng này!
+ 
+Cuối cùng, câu nói "I gave you all I had" của Arthur vẫn luôn là khoảnh khắc chạm đến trái tim người chơi nhất. Mọi người nghĩ sao về hồi kết của tựa game này?`,
+        tags: ["💡 Thảo Luận & Guide", "RDR2", "Story", "Review"],
+        likes: 999,
+        comments: 42,
+        tab: "foryou",
+        privacy: "public",
+        allowComments: true,
+        pinned: false,
+    },
+    {
+        id: 98,
         author: "MojangStudios",
         authorAvatar: avatarGame,
         authorRank: "grandmaster",

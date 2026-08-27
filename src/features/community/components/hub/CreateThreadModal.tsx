@@ -6,6 +6,7 @@ import {
     faImages,
     faLink,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuthStore } from "@/features/auth";
 import type { CategoryItem } from "./CommunityHubCategories";
 
 interface CreateThreadModalProps {
@@ -35,6 +36,7 @@ export const CreateThreadModal = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) return;
+        if (!useAuthStore.getState().requireVerifiedEmail("tạo thảo luận mới")) return;
 
         setIsSubmitting(true);
         setTimeout(() => {

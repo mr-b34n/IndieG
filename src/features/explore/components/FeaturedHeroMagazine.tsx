@@ -8,6 +8,7 @@ import {
     faArrowRight
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import type { FeaturedStory } from "../types";
 
 interface FeaturedHeroMagazineProps {
@@ -15,6 +16,7 @@ interface FeaturedHeroMagazineProps {
 }
 
 export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
@@ -51,7 +53,7 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <span className="text-[11px] font-black uppercase tracking-wider text-text-faint">
-                        FEATURED
+                        {t('explore.featured', { defaultValue: 'FEATURED' })}
                     </span>
                     <span className="text-text-faint text-xs">•</span>
                     <span className="text-xs font-bold text-primary">
@@ -69,7 +71,7 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
                             type="button"
                             onClick={handlePrev}
                             className="w-7 h-7 rounded-[4px] bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer border border-divider-primary"
-                            title="Previous story"
+                            title={t('explore.prevStory', { defaultValue: 'Previous story' })}
                         >
                             <FontAwesomeIcon icon={faChevronLeft} className="text-[10px]" />
                         </button>
@@ -77,7 +79,7 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
                             type="button"
                             onClick={handleNext}
                             className="w-7 h-7 rounded-[4px] bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer border border-divider-primary"
-                            title="Next story"
+                            title={t('explore.nextStory', { defaultValue: 'Next story' })}
                         >
                             <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                         </button>
@@ -144,13 +146,13 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
                                 }}
                                 className="px-4 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white font-bold text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md"
                             >
-                                <span>Explore Community</span>
+                                <span>{t('explore.exploreCommunity', { defaultValue: 'Explore Community' })}</span>
                                 <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                             </button>
 
                             {currentStory.communityMembers && (
                                 <span className="text-xs font-semibold text-gray-300 hidden sm:inline-block">
-                                    {currentStory.communityMembers} discussing
+                                    {t('explore.discussingCount', { count: currentStory.communityMembers, defaultValue: `${currentStory.communityMembers} discussing` })}
                                 </span>
                             )}
                         </div>

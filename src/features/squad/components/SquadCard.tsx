@@ -324,6 +324,7 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                                     navigate({ to: "/auth" });
                                     return;
                                 }
+                                if (!useAuthStore.getState().requireVerifiedEmail("tham gia đội nhóm")) return;
                                 joinSquad(squad.id);
                             }}
                             className="px-4 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"

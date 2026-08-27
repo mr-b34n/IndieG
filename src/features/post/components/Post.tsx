@@ -17,6 +17,7 @@ import {
     faFile,
     faDownload,
     faLock,
+    faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons"
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
 import { useState } from "react"
@@ -150,6 +151,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const [showEditModal, setShowEditModal] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
     const [isRevealed, setIsRevealed] = useState(!post.isSpoiler);
+    const [isContentExpanded, setIsContentExpanded] = useState(isDetailView);
 
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
     const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
@@ -161,12 +163,16 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const likeMutation = useLikeInteraction(post.id);
     const bookmarkMutation = useBookmarkInteraction(post.id);
 
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
     const handleLike = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isLoggedIn) {
             navigate({ to: "/auth" });
             return;
         }
+        if (!requireVerifiedEmail("thả tim bài viết")) return;
+
         const nextLiked = !isLiked;
         setIsLiked(nextLiked);
         setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
@@ -189,6 +195,8 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             navigate({ to: "/auth" });
             return;
         }
+        if (!requireVerifiedEmail("lưu bài viết")) return;
+
         const nextBookmarked = !bookmarked;
         toggleBookmark(post.id);
         bookmarkMutation.mutate(nextBookmarked);
@@ -238,17 +246,20 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!requireVerifiedEmail("xóa bài viết")) return;
         onDelete?.(post.id);
         setShowActionMenu(false);
     };
 
     const handleEdit = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!requireVerifiedEmail("chỉnh sửa bài viết")) return;
         setShowActionMenu(false);
         setShowEditModal(true);
     };
 
     const handleSaveEdit = (data: Partial<PostData>) => {
+        if (!requireVerifiedEmail("chỉnh sửa bài viết")) return;
         onEdit?.(post.id, data);
     };
 
@@ -287,12 +298,21 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                         <div className="flex flex-row items-center gap-1.5 flex-wrap">
                             <span
                                 onClick={handleAuthorClick}
-                                className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${rank?.textColor || "text-text"}`}
+                                className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${
+                                    (post.author.toLowerCase().includes("admin") || post.author.toLowerCase().includes("quản trị"))
+                                        ? "text-rose-500 font-extrabold"
+                                        : rank?.textColor || "text-text"
+                                }`}
                             >
                                 {post.author}
                             </span>
 
-                            {rank && (
+                            {(post.author.toLowerCase().includes("admin") || post.author.toLowerCase().includes("quản trị")) ? (
+                                <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-400/50">
+                                    <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
+                                    <span>ADMIN</span>
+                                </span>
+                            ) : rank && (
                                 <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${rank.classes}`}>
                                     {getRankLabel(rank, language)}
                                 </span>
@@ -383,7 +403,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                     >
                         <div className="px-3 py-1.5 bg-black/80 rounded text-white text-[11px] font-bold flex items-center gap-2">
                             <FontAwesomeIcon icon={faEyeSlash} />
-                            <span>CLICK TO VIEW SPOILER</span>
+                            <span>{t('post.clickToViewSpoiler')}</span>
                         </div>
                     </div>
                 )}
@@ -396,9 +416,29 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                             {post.title}
                         </h2>
                     )}
-                    <p className="text-xs sm:text-sm text-text-muted leading-relaxed whitespace-pre-line font-normal">
-                        {post.content}
-                    </p>
+                    {(() => {
+                        const content = post.content || "";
+                        const MAX_LENGTH = 250;
+                        const isLong = content.length > MAX_LENGTH;
+                        const displayContent = (isLong && !isContentExpanded)
+                            ? content.slice(0, MAX_LENGTH) + "..."
+                            : content;
+
+                        return (
+                            <div className="text-xs sm:text-sm text-text-muted leading-relaxed whitespace-pre-line font-normal break-words">
+                                <span>{displayContent}</span>
+                                {isLong && !isContentExpanded && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setIsContentExpanded(true); }}
+                                        className="inline font-bold text-text hover:underline cursor-pointer ml-1"
+                                    >
+                                        {t('common.viewMore')}
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                     {post.tags && post.tags.length > 0 && (
                         <div className="flex flex-row gap-1.5 flex-wrap pt-2">
@@ -514,7 +554,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                             ? "text-primary font-bold"
                             : "text-text-faint hover:text-text"
                     }`}
-                    title={bookmarked ? "Đã lưu" : "Lưu bài viết"}
+                    title={bookmarked ? t('post.saved') : t('post.save')}
                 >
                     <FontAwesomeIcon icon={bookmarked ? faBookmarkSolid : faBookmarkOutline} className="text-xs" />
                 </button>

@@ -5,6 +5,7 @@ import {
     faArrowRight
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import type { NewsItem } from "../types";
 
 interface EditorialNewsSectionProps {
@@ -12,6 +13,7 @@ interface EditorialNewsSectionProps {
 }
 
 export const EditorialNewsSection = ({ items }: EditorialNewsSectionProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     if (!items.length) return null;
 
@@ -24,13 +26,13 @@ export const EditorialNewsSection = ({ items }: EditorialNewsSectionProps) => {
             <div className="flex flex-col gap-1 pb-2 border-b border-divider-primary">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm sm:text-base font-black tracking-wider text-text uppercase flex items-center gap-2">
-                        <span>NEWS & FEATURED</span>
+                        <span>{t('explore.newsAndFeatured', { defaultValue: 'NEWS & FEATURED' })}</span>
                         <span className="text-primary text-xs font-normal">/</span>
-                        <span className="text-xs font-bold text-rose-500 uppercase tracking-normal">VIETNAMESE INDIE SPOTLIGHT</span>
+                        <span className="text-xs font-bold text-rose-500 uppercase tracking-normal">{t('explore.vietnameseIndieSpotlight', { defaultValue: 'VIETNAMESE INDIE SPOTLIGHT' })}</span>
                     </h2>
                 </div>
                 <p className="text-xs text-text-muted">
-                    Discover games and studio highlights developed by Vietnamese creators
+                    {t('explore.newsSubtitle', { defaultValue: 'Discover games and studio highlights developed by Vietnamese creators' })}
                 </p>
             </div>
 
@@ -76,7 +78,7 @@ export const EditorialNewsSection = ({ items }: EditorialNewsSectionProps) => {
 
                             <div className="flex items-center gap-3 pt-1">
                                 <span className="text-xs font-bold text-primary flex items-center gap-1.5 group-hover:underline">
-                                    <span>Read spotlight & discuss</span>
+                                    <span>{t('explore.readSpotlight', { defaultValue: 'Read spotlight & discuss' })}</span>
                                     <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                                 </span>
                             </div>

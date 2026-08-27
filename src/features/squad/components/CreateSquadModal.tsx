@@ -11,6 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useSquadStore } from "../store/useSquadStore";
+import { useAuthStore } from "@/features/auth";
 import { GAME_OPTIONS, QUICK_TAGS, VOICE_OPTIONS } from "../constants";
 import { type SquadVoiceType } from "../types";
 
@@ -56,6 +57,7 @@ export const CreateSquadModal = ({ isOpen, onClose }: CreateSquadModalProps) => 
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!useAuthStore.getState().requireVerifiedEmail("tạo phòng đội nhóm")) return;
         const finalGame = game === "Khác..." ? customGame || "Gaming" : game;
 
         if (!name.trim() || !description.trim()) {

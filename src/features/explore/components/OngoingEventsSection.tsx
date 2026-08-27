@@ -4,6 +4,7 @@ import {
     faTowerBroadcast
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import type { EventItem } from "../types";
 
 interface OngoingEventsSectionProps {
@@ -11,6 +12,7 @@ interface OngoingEventsSectionProps {
 }
 
 export const OngoingEventsSection = ({ events }: OngoingEventsSectionProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     if (!events.length) return null;
 
@@ -24,11 +26,11 @@ export const OngoingEventsSection = ({ events }: OngoingEventsSectionProps) => {
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm sm:text-base font-black tracking-wider text-text uppercase flex items-center gap-2">
                         <FontAwesomeIcon icon={faCalendarDay} className="text-primary text-xs" />
-                        <span>ONGOING EVENTS</span>
+                        <span>{t('explore.ongoingEventsTitle', { defaultValue: 'ONGOING EVENTS' })}</span>
                     </h2>
                 </div>
                 <p className="text-xs text-text-muted">
-                    Tournaments, live streams, and community festivals happening now
+                    {t('explore.ongoingEventsSubtitle', { defaultValue: 'Tournaments, live streams, and community festivals happening now' })}
                 </p>
             </div>
 

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
 import { adminApi } from "../api/adminApi";
@@ -15,6 +16,7 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
 
     const handleSubmit = async () => {
         if (!selectedReason) return;
+        if (!useAuthStore.getState().requireVerifiedEmail("gửi báo cáo vi phạm")) return;
         await adminApi.createReport({
             targetType: "post",
             targetId: String(postId),

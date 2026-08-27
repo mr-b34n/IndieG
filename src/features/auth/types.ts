@@ -17,6 +17,8 @@ export interface AuthState {
     loading: boolean;
     mockLogin: boolean;
     customAvatar: string | null;
+    isVerifyModalOpen: boolean;
+    verifyModalMessage: string | null;
     setCustomAvatar: (avatar: string | null) => void;
     initializeAuth: () => void;
     login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => void;
@@ -27,6 +29,10 @@ export interface AuthState {
     forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
     resetPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+    openVerifyModal: (customMessage?: string) => void;
+    closeVerifyModal: () => void;
+    requireVerifiedEmail: (actionName?: string, onSuccess?: () => void) => boolean;
+    toggleVerifyEmailStatus: () => void;
 }
 
 export interface ValidationRule {

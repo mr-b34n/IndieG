@@ -188,7 +188,6 @@ export const SearchResultsPage = () => {
         count: number;
     }[] = [
         { key: "all", label: t("search.tabAll"), icon: faFilter, count: searchData.pagination.total },
-        { key: "games", label: t("search.tabGames"), icon: faGamepad, count: searchData.meta.totalGames },
         { key: "communities", label: t("search.tabCommunities"), icon: faUsers, count: searchData.meta.totalCommunities },
         { key: "posts", label: t("search.tabPosts"), icon: faFileLines, count: searchData.meta.totalPosts },
         { key: "users", label: t("search.tabUsers"), icon: faUser, count: searchData.meta.totalUsers },

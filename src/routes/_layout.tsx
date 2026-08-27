@@ -8,6 +8,9 @@ import { useSidebarStore } from '@/shared/store/useSidebarStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useTranslation } from '@/shared/hooks/useTranslate'
+import { UnverifiedBanner } from '@/features/auth'
+
+const scrollPositions = new Map<string, number>()
 
 export const Route = createFileRoute('/_layout')({
     component: MainLayout,
@@ -26,10 +29,54 @@ function MainLayout() {
     const closeLeft = useSidebarStore((state) => state.closeLeft)
     const closeRight = useSidebarStore((state) => state.closeRight)
 
-    // 3. Mỗi khi chuyển trang (pathname thay đổi), cuộn container về top và đóng sidebar
+    const pathnameRef = useRef(pathname)
+
+    // 3. Mỗi khi chuyển trang (pathname thay đổi), cuộn container về top và đóng sidebar, hoặc restore scroll
+    useEffect(() => {
+        pathnameRef.current = pathname;
+        const currentKey = window.history.state?.key || pathname;
+        const handleScroll = () => {
+            if (scrollContainerRef.current && pathnameRef.current === pathname) {
+                // Dùng state key của history (nếu có) để phân biệt các lần push giống nhau
+                // Capture the key to avoid saving to the NEW route if a scroll event fires during unmount
+                scrollPositions.set(currentKey, scrollContainerRef.current.scrollTop);
+            }
+        };
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll, { passive: true });
+        }
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [pathname]);
+
     useEffect(() => {
         if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = 0
+            const key = window.history.state?.key || pathname;
+            const savedScroll = scrollPositions.get(key);
+            
+            // Khôi phục scroll hoặc cuộn lên đầu
+            if (savedScroll !== undefined) {
+                // DOM có thể chưa render xong (ví dụ chưa render xong danh sách post)
+                // Nên ta dùng requestAnimationFrame để thử cuộn lại trong vài frame
+                let attempts = 0;
+                const tryRestore = () => {
+                    if (!scrollContainerRef.current) return;
+                    scrollContainerRef.current.scrollTop = savedScroll;
+                    
+                    // Nếu chưa cuộn tới được đích (do DOM bị ngắn) và chưa quá 15 frame (khoảng 250ms)
+                    if (scrollContainerRef.current.scrollTop < savedScroll && attempts < 15) {
+                        attempts++;
+                        requestAnimationFrame(tryRestore);
+                    }
+                };
+                requestAnimationFrame(tryRestore);
+            } else {
+                scrollContainerRef.current.scrollTop = 0;
+            }
         }
         closeLeft()
         closeRight()
@@ -51,6 +98,7 @@ function MainLayout() {
             </div>
 
             <Header />
+            <UnverifiedBanner />
 
             {/* Mobile Left Sidebar */}
             {!hideSidebars && isLeftOpen && (

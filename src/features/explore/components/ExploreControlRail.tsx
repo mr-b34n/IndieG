@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import {
     faArrowDownWideShort,
     faChevronDown,
@@ -14,26 +15,28 @@ interface ExploreControlRailProps {
     onSortChange: (sort: ExploreSortOption) => void;
 }
 
-const CONTENT_TABS: { id: ExploreContentType; label: string }[] = [
-    { id: "all", label: "ALL" },
-    { id: "news", label: "NEWS" },
-    { id: "events", label: "EVENTS" },
-    { id: "viral", label: "VIRAL" },
-    { id: "media", label: "MEDIA" },
-];
-
-const SORT_OPTIONS: { id: ExploreSortOption; label: string }[] = [
-    { id: "latest", label: "Latest" },
-    { id: "trending", label: "Trending" },
-    { id: "top", label: "Top Rated" },
-];
-
 export const ExploreControlRail = ({
     activeType,
     onSelectType,
     sortOrder,
     onSortChange
 }: ExploreControlRailProps) => {
+    const { t } = useTranslation();
+    
+    const CONTENT_TABS: { id: ExploreContentType; label: string }[] = [
+        { id: "all", label: t('explore.tabs.all', { defaultValue: 'ALL' }) },
+        { id: "news", label: t('explore.tabs.news', { defaultValue: 'NEWS' }) },
+        { id: "events", label: t('explore.tabs.events', { defaultValue: 'EVENTS' }) },
+        { id: "viral", label: t('explore.tabs.viral', { defaultValue: 'VIRAL' }) },
+        { id: "media", label: t('explore.tabs.media', { defaultValue: 'MEDIA' }) },
+    ];
+
+    const SORT_OPTIONS: { id: ExploreSortOption; label: string }[] = [
+        { id: "latest", label: t('explore.sort.latest', { defaultValue: 'Latest' }) },
+        { id: "trending", label: t('explore.sort.trending', { defaultValue: 'Trending' }) },
+        { id: "top", label: t('explore.sort.top', { defaultValue: 'Top Rated' }) },
+    ];
+
     const [isSortOpen, setIsSortOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +57,7 @@ export const ExploreControlRail = ({
             {/* Top row: Section Label + Sort Selector */}
             <div className="flex items-center justify-between gap-4">
                 <span className="text-[11px] font-black uppercase tracking-wider text-text-faint">
-                    DISCOVER
+                    {t('explore.discover', { defaultValue: 'DISCOVER' })}
                 </span>
 
                 {/* Minimalist Sort Dropdown */}

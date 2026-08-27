@@ -9,7 +9,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useGameStore } from '@/features/game';
+import { useAuthStore } from '@/features/auth';
 import { INITIAL_GAMES } from '@/features/game/constants';
+import { useTranslation } from '@/shared/hooks/useTranslate';
 
 export const Route = createFileRoute('/_layout/settings/')({
     component: SettingsPage,
@@ -37,9 +39,12 @@ interface BlockedUser {
 
 export function SettingsPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
+    const searchParams = new URLSearchParams(window.location.search);
+    const initialTab = (searchParams.get("tab") as "general" | "quickAccess" | "privacy" | "notifications" | "account" | "blocked" | "feedback" | "danger") || "general";
     const [activeTab, setActiveTab] = useState<
         "general" | "quickAccess" | "privacy" | "notifications" | "account" | "blocked" | "feedback" | "danger"
-    >("general");
+    >(initialTab);
 
     const theme = useThemeStore((state) => state.theme);
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
@@ -69,7 +74,9 @@ export function SettingsPage() {
     });
 
     // 4. Account & Security
-    const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const authStore = useAuthStore();
+    const isEmailVerified = authStore.user?.isVerified || false;
+    const [emailPendingVerify, setEmailPendingVerify] = useState(false);
     const [currentEmail, setCurrentEmail] = useState("user.indieg@gmail.com");
     const [newEmail, setNewEmail] = useState("");
     const [emailPasswordConfirm, setEmailPasswordConfirm] = useState("");
@@ -179,25 +186,25 @@ export function SettingsPage() {
         setChangePwdSuccess(null);
 
         if (!changePwdState.currentPassword) {
-            setChangePwdError("Vui lòng nhập mật khẩu hiện tại!");
+            setChangePwdError(t('settings.account.pwdRequireCurrent', { defaultValue: 'Vui lòng nhập mật khẩu hiện tại!' }));
             return;
         }
         if (changePwdState.newPassword.length < 8) {
-            setChangePwdError("Mật khẩu mới phải có ít nhất 8 ký tự!");
+            setChangePwdError(t('settings.account.pwdMinLength', { defaultValue: 'Mật khẩu mới phải có ít nhất 8 ký tự!' }));
             return;
         }
         if (changePwdState.newPassword !== changePwdState.confirmPassword) {
-            setChangePwdError("Mật khẩu xác nhận không trùng khớp!");
+            setChangePwdError(t('settings.account.pwdMatchError', { defaultValue: 'Mật khẩu xác nhận không trùng khớp!' }));
             return;
         }
 
         setChangePwdLoading(true);
         try {
             await new Promise((r) => setTimeout(r, 600));
-            setChangePwdSuccess("Đổi mật khẩu thành công!");
+            setChangePwdSuccess(t('settings.account.pwdSuccess', { defaultValue: 'Đổi mật khẩu thành công!' }));
             setChangePwdState({ currentPassword: "", newPassword: "", confirmPassword: "" });
         } catch {
-            setChangePwdError("Không thể cập nhật mật khẩu. Vui lòng thử lại.");
+            setChangePwdError(t('settings.account.pwdError', { defaultValue: 'Không thể cập nhật mật khẩu. Vui lòng thử lại.' }));
         } finally {
             setChangePwdLoading(false);
         }
@@ -206,25 +213,35 @@ export function SettingsPage() {
     const handleChangeEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newEmail.includes("@")) {
-            setEmailSuccessMsg("Vui lòng nhập địa chỉ email hợp lệ!");
+            setEmailSuccessMsg(t('settings.account.invalidEmailMsg', { defaultValue: 'Vui lòng nhập địa chỉ email hợp lệ!' }));
             return;
         }
         if (!emailPasswordConfirm) {
-            setEmailSuccessMsg("Vui lòng nhập mật khẩu hiện tại để xác nhận đổi email!");
+            setEmailSuccessMsg(t('settings.account.requireCurrentPasswordMsg', { defaultValue: 'Vui lòng nhập mật khẩu hiện tại để xác nhận đổi email!' }));
             return;
         }
         setCurrentEmail(newEmail);
-        setIsEmailVerified(false);
+        // Only toggle if currently verified
+        if (authStore.user?.isVerified) {
+            authStore.toggleVerifyEmailStatus();
+        }
         setNewEmail("");
         setEmailPasswordConfirm("");
-        setEmailSuccessMsg("Đã cập nhật email thành công! Vui lòng kiểm tra hòm thư để xác thực.");
+        setEmailSuccessMsg(t('settings.account.updateEmailSuccessMsg', { defaultValue: 'Đã cập nhật email thành công! Vui lòng kiểm tra hòm thư để xác thực.' }));
         setTimeout(() => setEmailSuccessMsg(null), 4000);
     };
 
     const handleSendVerificationEmail = () => {
-        setIsEmailVerified(true);
-        setEmailSuccessMsg(`Đã gửi email xác thực đến ${currentEmail}. Email đã được xác minh thành công!`);
-        setTimeout(() => setEmailSuccessMsg(null), 4000);
+        setEmailPendingVerify(true);
+        setEmailSuccessMsg(null);
+    };
+
+    const handleConfirmVerification = () => {
+        if (!authStore.user?.isVerified) {
+            authStore.toggleVerifyEmailStatus();
+        }
+        setEmailPendingVerify(false);
+        setEmailSuccessMsg(null);
     };
 
     const handleRevokeSession = (sessionId: string) => {
@@ -256,32 +273,32 @@ export function SettingsPage() {
     const handleConfirmDangerAction = () => {
         if (dangerModal.type === "deactivate") {
             if (dangerModal.confirmText.trim().toUpperCase() !== "TAM NGUNG") {
-                setDangerAlertMsg('Vui lòng gõ chính xác cụm từ "TAM NGUNG"!');
+                setDangerAlertMsg(t('settings.danger.deactivateMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "TAM NGUNG"!' }));
                 return;
             }
-            alert("Tài khoản của bạn đã được tạm ngưng thành công.");
+            alert(t('settings.danger.deactivateSuccessAlert', { defaultValue: 'Tài khoản của bạn đã được tạm ngưng thành công.' }));
             setDangerModal({ open: false, type: null, confirmText: "" });
             setDangerAlertMsg(null);
         } else if (dangerModal.type === "delete") {
             if (dangerModal.confirmText.trim().toUpperCase() !== "XOA TAI KHOAN") {
-                setDangerAlertMsg('Vui lòng gõ chính xác cụm từ "XOA TAI KHOAN"!');
+                setDangerAlertMsg(t('settings.danger.deleteMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "XOA TAI KHOAN"!' }));
                 return;
             }
-            alert("Tài khoản của bạn đã được xóa vĩnh viễn.");
+            alert(t('settings.danger.deleteSuccessAlert', { defaultValue: 'Tài khoản của bạn đã được xóa vĩnh viễn.' }));
             setDangerModal({ open: false, type: null, confirmText: "" });
             setDangerAlertMsg(null);
         }
     };
 
     const navTabs = [
-        { id: "general", label: "Giao diện & Ngôn ngữ", icon: faGlobe, desc: "Chủ đề, ngôn ngữ hệ thống" },
-        { id: "quickAccess", label: "Game yêu thích", icon: faGamepad, desc: "Lối tắt menu chính" },
-        { id: "privacy", label: "Quyền riêng tư", icon: faEye, desc: "Chế độ hiển thị cá nhân" },
-        { id: "notifications", label: "Thông báo", icon: faBell, desc: "Tương tác, nhắc tên" },
-        { id: "account", label: "Tài khoản & Bảo mật", icon: faShieldHalved, desc: "Mật khẩu, Email, Session" },
-        { id: "blocked", label: "Người dùng đã chặn", icon: faBan, desc: "Quản lý danh sách chặn" },
-        { id: "feedback", label: "Báo lỗi & Đóng góp", icon: faBug, desc: "Gửi ý kiến phản hồi" },
-        { id: "danger", label: "Vùng nguy hiểm", icon: faExclamationTriangle, desc: "Khóa hoặc xóa tài khoản", isDanger: true },
+        { id: "general", label: t('settings.tabs.general', { defaultValue: "Giao diện & Ngôn ngữ" }), icon: faGlobe, desc: t('settings.tabs.generalDesc', { defaultValue: "Chủ đề, ngôn ngữ hệ thống" }) },
+        { id: "quickAccess", label: t('settings.tabs.quickAccess', { defaultValue: "Game yêu thích" }), icon: faGamepad, desc: t('settings.tabs.quickAccessDesc', { defaultValue: "Lối tắt menu chính" }) },
+        { id: "privacy", label: t('settings.tabs.privacy', { defaultValue: "Quyền riêng tư" }), icon: faEye, desc: t('settings.tabs.privacyDesc', { defaultValue: "Chế độ hiển thị cá nhân" }) },
+        { id: "notifications", label: t('settings.tabs.notifications', { defaultValue: "Thông báo" }), icon: faBell, desc: t('settings.tabs.notificationsDesc', { defaultValue: "Tương tác, nhắc tên" }) },
+        { id: "account", label: t('settings.tabs.account', { defaultValue: "Tài khoản & Bảo mật" }), icon: faShieldHalved, desc: t('settings.tabs.accountDesc', { defaultValue: "Mật khẩu, Email, Session" }) },
+        { id: "blocked", label: t('settings.tabs.blocked', { defaultValue: "Người dùng đã chặn" }), icon: faBan, desc: t('settings.tabs.blockedDesc', { defaultValue: "Quản lý danh sách chặn" }) },
+        { id: "feedback", label: t('settings.tabs.feedback', { defaultValue: "Báo lỗi & Đóng góp" }), icon: faBug, desc: t('settings.tabs.feedbackDesc', { defaultValue: "Gửi ý kiến phản hồi" }) },
+        { id: "danger", label: t('settings.tabs.danger', { defaultValue: "Vùng nguy hiểm" }), icon: faExclamationTriangle, desc: t('settings.tabs.dangerDesc', { defaultValue: "Khóa hoặc xóa tài khoản" }), isDanger: true },
     ];
 
     return (
@@ -292,24 +309,24 @@ export function SettingsPage() {
                     <button 
                         onClick={() => navigate({ to: "/" })}
                         className="w-9 h-9 rounded-md bg-surface-hover/80 border border-border/70 hover:border-primary/60 text-text hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                        title="Quay lại Trang chủ"
+                        title={t('common.backToHome', { defaultValue: 'Quay lại Trang chủ' })}
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary border border-primary/20">
-                                User Preferences
+                                {t('settings.headerBadge', { defaultValue: 'User Preferences' })}
                             </span>
                         </div>
                         <h1 className="text-xl sm:text-2xl font-bold text-text mt-0.5 tracking-tight">
-                            Cài đặt hệ thống
+                            {t('settings.headerTitle', { defaultValue: 'Cài đặt hệ thống' })}
                         </h1>
                     </div>
                 </div>
                 <div className="text-xs text-text-muted flex items-center gap-2 bg-surface-hover/40 px-3 py-1.5 rounded-md border border-border/50 self-start sm:self-auto">
                     <FontAwesomeIcon icon={faSliders} className="text-primary" />
-                    <span>Tuỳ chỉnh tài khoản & cá nhân hóa</span>
+                    <span>{t('settings.headerSub', { defaultValue: 'Tuỳ chỉnh tài khoản & cá nhân hóa' })}</span>
                 </div>
             </div>
 
@@ -319,7 +336,7 @@ export function SettingsPage() {
                 {/* Left Navigation Deck */}
                 <div className="w-full lg:w-72 shrink-0 bg-surface border border-border/80 rounded-lg p-2 space-y-1">
                     <div className="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-text-muted/80 border-b border-border/40 mb-1">
-                        Danh mục cài đặt
+                        {t('settings.categories', { defaultValue: 'Danh mục cài đặt' })}
                     </div>
 
                     <div className="space-y-0.5">
@@ -369,53 +386,43 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGlobe} className="text-primary text-sm" />
-                                    <span>Giao diện & Ngôn ngữ</span>
+                                    <span>{t('settings.general.title', { defaultValue: 'Giao diện & Ngôn ngữ' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Tùy chỉnh chủ đề hiển thị và ngôn ngữ giao diện</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.general.sub', { defaultValue: 'Tùy chỉnh chủ đề hiển thị và ngôn ngữ giao diện' })}</p>
                             </div>
 
                             <div className="space-y-4">
-                                {/* Theme */}
-                                <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 space-y-3">
-                                    <div className="text-xs font-bold text-text">Chế độ giao diện (Appearance Mode)</div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={toggleTheme}
-                                            className={`p-3 rounded-md border text-left cursor-pointer transition-colors flex items-center justify-between ${
-                                                theme === 'dark' 
-                                                    ? "border-primary bg-primary/10 text-text font-bold" 
-                                                    : "border-border/60 bg-surface hover:bg-surface-hover text-text-muted"
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <FontAwesomeIcon icon={faMoon} className="text-primary text-sm" />
-                                                <span className="text-xs">Chế độ Tối (Dark)</span>
-                                            </div>
-                                            {theme === 'dark' && <FontAwesomeIcon icon={faCheck} className="text-primary text-xs" />}
-                                        </button>
-
-                                        <button
-                                            onClick={toggleTheme}
-                                            className={`p-3 rounded-md border text-left cursor-pointer transition-colors flex items-center justify-between ${
-                                                theme === 'light' 
-                                                    ? "border-primary bg-primary/10 text-text font-bold" 
-                                                    : "border-border/60 bg-surface hover:bg-surface-hover text-text-muted"
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <FontAwesomeIcon icon={faSun} className="text-amber-500 text-sm" />
-                                                <span className="text-xs">Chế độ Sáng (Light)</span>
-                                            </div>
-                                            {theme === 'light' && <FontAwesomeIcon icon={faCheck} className="text-primary text-xs" />}
-                                        </button>
+                                {/* Theme Toggle */}
+                                <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 flex items-center justify-between gap-4">
+                                    <div>
+                                        <div className="text-xs font-bold text-text">
+                                            {t('settings.general.appearance', { defaultValue: 'Giao diện' })}
+                                        </div>
+                                        <div className="text-[11px] text-text-muted mt-0.5">
+                                            {theme === 'dark'
+                                                ? t('settings.general.darkModeDesc', { defaultValue: 'Sử dụng nền tối để bảo vệ mắt' })
+                                                : t('settings.general.lightModeDesc', { defaultValue: 'Sử dụng giao diện nền sáng truyền thống' })}
+                                        </div>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={toggleTheme}
+                                        className="px-3.5 py-1.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-bold cursor-pointer flex items-center gap-2 shrink-0"
+                                    >
+                                        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} className={theme === 'dark' ? 'text-primary' : 'text-amber-500'} />
+                                        <span>
+                                            {theme === 'dark'
+                                                ? t('settings.general.darkMode', { defaultValue: 'Chế độ tối (Dark)' })
+                                                : t('settings.general.lightMode', { defaultValue: 'Chế độ sáng (Light)' })}
+                                        </span>
+                                    </button>
                                 </div>
 
                                 <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 flex items-center justify-between gap-4">
                                     <div>
-                                        <div className="text-xs font-bold text-text">Ngôn ngữ hiển thị (Language)</div>
+                                        <div className="text-xs font-bold text-text">{t('settings.general.languageLabel', { defaultValue: 'Ngôn ngữ hiển thị (Language)' })}</div>
                                         <div className="text-[11px] text-text-muted mt-0.5">
-                                            Ngôn ngữ hiện tại: {language === 'vi' ? 'Tiếng Việt' : 'English'}
+                                            {t('settings.general.languageCurrent', { defaultValue: 'Ngôn ngữ hiện tại' })}: {language === 'vi' ? 'Tiếng Việt' : 'English'}
                                         </div>
                                     </div>
                                     <button
@@ -423,7 +430,7 @@ export function SettingsPage() {
                                         className="px-3 py-1.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-bold cursor-pointer flex items-center gap-2"
                                     >
                                         <FontAwesomeIcon icon={faLanguage} />
-                                        <span>Đổi ({language === 'vi' ? 'EN' : 'VI'})</span>
+                                        <span>{t('settings.general.switchLangBtn', { defaultValue: 'Đổi' })} ({language === 'vi' ? 'EN' : 'VI'})</span>
                                     </button>
                                 </div>
                             </div>
@@ -436,15 +443,15 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGamepad} className="text-primary text-sm" />
-                                    <span>Lối tắt Game yêu thích (Quick Access)</span>
+                                    <span>{t('settings.quickAccess.title', { defaultValue: 'Lối tắt Game yêu thích (Quick Access)' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Ghim tối đa 4 tựa game lên menu điều hướng nhanh</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.quickAccess.sub', { defaultValue: 'Ghim tối đa 4 tựa game lên menu điều hướng nhanh' })}</p>
                             </div>
 
                             {saveQuickAccessSuccess && (
                                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-md text-xs font-bold flex items-center gap-2">
                                     <FontAwesomeIcon icon={faCheckCircle} />
-                                    <span>Đã cập nhật lối tắt thành công!</span>
+                                    <span>{t('settings.quickAccess.saveSuccess', { defaultValue: 'Đã cập nhật lối tắt thành công!' })}</span>
                                 </div>
                             )}
 
@@ -452,8 +459,8 @@ export function SettingsPage() {
                             {tempSelectedSlugs.length > 0 && (
                                 <div className="p-3.5 rounded-md border border-primary/30 bg-primary/5 space-y-2.5">
                                     <div className="flex items-center justify-between text-xs font-bold text-primary">
-                                        <span>Danh sách đã ghim ({tempSelectedSlugs.length}/4)</span>
-                                        <span className="text-[10px] text-text-muted">Đổi thứ tự bằng nút mũi tên</span>
+                                        <span>{t('settings.quickAccess.pinnedList', { defaultValue: 'Danh sách đã ghim' })} ({tempSelectedSlugs.length}/4)</span>
+                                        <span className="text-[10px] text-text-muted">{t('settings.quickAccess.reorderHint', { defaultValue: 'Đổi thứ tự bằng nút mũi tên' })}</span>
                                     </div>
 
                                     <div className="divide-y divide-border/50 border border-border/60 bg-surface rounded-md overflow-hidden">
@@ -489,7 +496,7 @@ export function SettingsPage() {
                                                             onClick={() => setTempSelectedSlugs(tempSelectedSlugs.filter((s) => s !== slug))}
                                                             className="px-2 py-0.5 rounded border border-rose-500/40 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold ml-1"
                                                         >
-                                                            Gỡ
+                                                            {t('settings.quickAccess.remove', { defaultValue: 'Gỡ' })}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -501,7 +508,7 @@ export function SettingsPage() {
 
                             {/* Game List */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-muted block">Chọn game để ghim:</label>
+                                <label className="text-xs font-bold text-text-muted block">{t('settings.quickAccess.selectLabel', { defaultValue: 'Chọn game để ghim:' })}</label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {INITIAL_GAMES.map((game) => {
                                         const isSelected = tempSelectedSlugs.includes(game.slug);
@@ -537,12 +544,12 @@ export function SettingsPage() {
                             </div>
 
                             <div className="flex items-center justify-between pt-3 border-t border-border/60">
-                                <span className="text-xs text-text-muted">Đã chọn: <strong className="text-primary">{tempSelectedSlugs.length}/4</strong></span>
+                                <span className="text-xs text-text-muted">{t('settings.quickAccess.selectedCount', { defaultValue: 'Đã chọn:' })} <strong className="text-primary">{tempSelectedSlugs.length}/4</strong></span>
                                 <button
                                     onClick={handleSaveQuickAccess}
                                     className="px-5 py-2 rounded-md bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors cursor-pointer"
                                 >
-                                    Lưu cài đặt
+                                    {t('settings.quickAccess.saveBtn', { defaultValue: 'Lưu cài đặt' })}
                                 </button>
                             </div>
                         </div>
@@ -554,29 +561,29 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faEye} className="text-primary text-sm" />
-                                    <span>Quyền riêng tư (Privacy)</span>
+                                    <span>{t('settings.privacy.title', { defaultValue: 'Quyền riêng tư (Privacy)' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Kiểm soát quyền xem hồ sơ và trạng thái cá nhân</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.privacy.sub', { defaultValue: 'Kiểm soát quyền xem hồ sơ và trạng thái cá nhân' })}</p>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="p-3.5 rounded-md bg-surface border border-border/70 space-y-1.5">
-                                    <label className="text-xs font-bold text-text block">Quyền xem Hồ sơ cá nhân</label>
+                                    <label className="text-xs font-bold text-text block">{t('settings.privacy.profileVisibility', { defaultValue: 'Quyền xem Hồ sơ cá nhân' })}</label>
                                     <select
                                         value={privacy.profileVisibility}
                                         onChange={(e) => setPrivacy({ ...privacy, profileVisibility: e.target.value as "public" | "friends" | "private" })}
                                         className="w-full bg-surface-hover/50 border border-border/60 text-text rounded-md p-2 text-xs font-bold focus:outline-none focus:border-primary"
                                     >
-                                        <option value="public">Công khai (Tất cả mọi người)</option>
-                                        <option value="friends">Chỉ bạn bè</option>
-                                        <option value="private">Riêng tư (Chỉ mình tôi)</option>
+                                        <option value="public">{t('settings.privacy.optionPublic', { defaultValue: 'Công khai (Tất cả mọi người)' })}</option>
+                                        <option value="friends">{t('settings.privacy.optionFriends', { defaultValue: 'Chỉ bạn bè' })}</option>
+                                        <option value="private">{t('settings.privacy.optionPrivate', { defaultValue: 'Riêng tư (Chỉ mình tôi)' })}</option>
                                     </select>
                                 </div>
 
                                 <div className="p-3.5 rounded-md bg-surface border border-border/70 flex items-center justify-between">
                                     <div>
-                                        <div className="text-xs font-bold text-text">Trạng thái trực tuyến</div>
-                                        <div className="text-[11px] text-text-muted">Hiển thị khi bạn đang online</div>
+                                        <div className="text-xs font-bold text-text">{t('settings.privacy.onlineStatus', { defaultValue: 'Trạng thái trực tuyến' })}</div>
+                                        <div className="text-[11px] text-text-muted">{t('settings.privacy.onlineStatusDesc', { defaultValue: 'Hiển thị khi bạn đang online' })}</div>
                                     </div>
                                     <button
                                         onClick={() => setPrivacy({ ...privacy, onlineStatus: !privacy.onlineStatus })}
@@ -586,20 +593,20 @@ export function SettingsPage() {
                                                 : "border-border/60 bg-surface-hover text-text-muted"
                                         }`}
                                     >
-                                        {privacy.onlineStatus ? "Bật" : "Tắt"}
+                                        {privacy.onlineStatus ? t('settings.privacy.on', { defaultValue: 'Bật' }) : t('settings.privacy.off', { defaultValue: 'Tắt' })}
                                     </button>
                                 </div>
 
                                 <div className="p-3.5 rounded-md bg-surface border border-border/70 space-y-1.5">
-                                    <label className="text-xs font-bold text-text block">Hiển thị Tủ game & Thành tích</label>
+                                    <label className="text-xs font-bold text-text block">{t('settings.privacy.gameLibraryVisibility', { defaultValue: 'Hiển thị Tủ game & Thành tích' })}</label>
                                     <select
                                         value={privacy.gameLibraryVisibility}
                                         onChange={(e) => setPrivacy({ ...privacy, gameLibraryVisibility: e.target.value as "public" | "friends" | "private" })}
                                         className="w-full bg-surface-hover/50 border border-border/60 text-text rounded-md p-2 text-xs font-bold focus:outline-none focus:border-primary"
                                     >
-                                        <option value="public">Công khai</option>
-                                        <option value="friends">Chỉ bạn bè</option>
-                                        <option value="private">Riêng tư</option>
+                                        <option value="public">{t('settings.privacy.optionPublic', { defaultValue: 'Công khai' })}</option>
+                                        <option value="friends">{t('settings.privacy.optionFriends', { defaultValue: 'Chỉ bạn bè' })}</option>
+                                        <option value="private">{t('settings.privacy.optionPrivate', { defaultValue: 'Riêng tư' })}</option>
                                     </select>
                                 </div>
                             </div>
@@ -612,18 +619,18 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBell} className="text-primary text-sm" />
-                                    <span>Cài đặt Thông báo</span>
+                                    <span>{t('settings.notifications.title', { defaultValue: 'Cài đặt Thông báo' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Tùy chọn tương tác muốn nhận thông báo</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.notifications.sub', { defaultValue: 'Tùy chọn tương tác muốn nhận thông báo' })}</p>
                             </div>
 
                             <div className="space-y-2">
                                 {[
-                                    { key: "comments", label: "Bình luận mới trong bài viết" },
-                                    { key: "replies", label: "Phản hồi bình luận của bạn" },
-                                    { key: "likes", label: "Lượt thích bài viết & bình luận" },
-                                    { key: "mentions", label: "Thẻ nhắc tên (@Mentions)" },
-                                    { key: "communityActivity", label: "Hoạt động từ Cộng đồng" },
+                                    { key: "comments", label: t('settings.notifications.comments', { defaultValue: 'Bình luận mới trong bài viết' }) },
+                                    { key: "replies", label: t('settings.notifications.replies', { defaultValue: 'Phản hồi bình luận của bạn' }) },
+                                    { key: "likes", label: t('settings.notifications.likes', { defaultValue: 'Lượt thích bài viết & bình luận' }) },
+                                    { key: "mentions", label: t('settings.notifications.mentions', { defaultValue: 'Thẻ nhắc tên (@Mentions)' }) },
+                                    { key: "communityActivity", label: t('settings.notifications.communityActivity', { defaultValue: 'Hoạt động từ Cộng đồng' }) },
                                 ].map((item) => {
                                     const isChecked = notifications[item.key as keyof typeof notifications];
                                     return (
@@ -653,9 +660,9 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faShieldHalved} className="text-primary text-sm" />
-                                    <span>Tài khoản & Bảo mật</span>
+                                    <span>{t('settings.account.title', { defaultValue: 'Tài khoản & Bảo mật' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Quản lý Email, mật khẩu và phiên làm việc</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.account.sub', { defaultValue: 'Quản lý Email, mật khẩu và phiên làm việc' })}</p>
                             </div>
 
                             {emailSuccessMsg && (
@@ -668,9 +675,23 @@ export function SettingsPage() {
                             {/* Email Card */}
                             <div className="p-4 rounded-md bg-surface border border-border/70 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold uppercase text-text-muted">Email tài khoản</span>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isEmailVerified ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30" : "bg-amber-500/10 text-amber-500 border border-amber-500/30"}`}>
-                                        {isEmailVerified ? "Đã xác minh" : "Chưa xác minh"}
+                                    <span className="text-xs font-bold uppercase text-text-muted">
+                                        {t('authenticate.email', { defaultValue: 'Email tài khoản' })}
+                                    </span>
+                                    <span
+                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                            isEmailVerified
+                                                ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30"
+                                                : emailPendingVerify
+                                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/30"
+                                                : "bg-rose-500/10 text-rose-500 border border-rose-500/30"
+                                        }`}
+                                    >
+                                        {isEmailVerified
+                                            ? t('settings.account.verified', { defaultValue: 'Đã xác minh' })
+                                            : emailPendingVerify
+                                            ? t('settings.account.pendingVerify', { defaultValue: 'Đang chờ xác nhận' })
+                                            : t('settings.account.unverified', { defaultValue: 'Chưa xác minh' })}
                                     </span>
                                 </div>
 
@@ -679,42 +700,71 @@ export function SettingsPage() {
                                 </div>
 
                                 {!isEmailVerified && (
-                                    <button
-                                        onClick={handleSendVerificationEmail}
-                                        className="w-full py-1.5 rounded border border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors font-bold text-xs cursor-pointer"
-                                    >
-                                        Gửi email xác thực
-                                    </button>
+                                    <div className="space-y-2 pt-1">
+                                        {emailPendingVerify ? (
+                                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs space-y-2.5">
+                                                <p className="text-amber-200 font-medium leading-relaxed">
+                                                    {t('settings.account.pendingVerifyNotice', {
+                                                        defaultValue: 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư của bạn để hoàn tất.'
+                                                    })}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleConfirmVerification}
+                                                        className="px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
+                                                    >
+                                                        {t('settings.account.confirmVerifiedBtn', { defaultValue: 'Tôi đã xác minh' })}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSendVerificationEmail}
+                                                        className="px-3 py-1.5 rounded border border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500 hover:text-slate-950 font-bold text-xs cursor-pointer transition-colors"
+                                                    >
+                                                        {t('settings.account.resendVerificationEmail', { defaultValue: 'Gửi lại email' })}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleSendVerificationEmail}
+                                                className="w-full py-2 rounded border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors font-bold text-xs cursor-pointer"
+                                            >
+                                                {t('settings.account.sendVerificationEmail', { defaultValue: 'Gửi email xác thực' })}
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
 
                                 <form onSubmit={handleChangeEmailSubmit} className="space-y-2 pt-2 border-t border-border/50">
-                                    <div className="text-xs font-bold text-text-muted">Đổi Email:</div>
+                                    <div className="text-xs font-bold text-text-muted">{t('settings.account.changeEmailTitle', { defaultValue: 'Đổi Email:' })}</div>
                                     <input
                                         type="email"
                                         value={newEmail}
                                         onChange={(e) => setNewEmail(e.target.value)}
-                                        placeholder="Email mới..."
+                                        placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'Email mới...' })}
                                         className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={emailPasswordConfirm}
                                         onChange={(e) => setEmailPasswordConfirm(e.target.value)}
-                                        placeholder="Mật khẩu hiện tại..."
+                                        placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
                                         className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <button
                                         type="submit"
                                         className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors"
                                     >
-                                        Cập nhật Email
+                                        {t('settings.account.updateEmailBtn', { defaultValue: 'Cập nhật Email' })}
                                     </button>
                                 </form>
                             </div>
 
                             {/* Password Card */}
                             <form onSubmit={handleChangePasswordSubmit} className="p-4 rounded-md bg-surface border border-border/70 space-y-3">
-                                <div className="text-xs font-bold uppercase text-text-muted">Đổi mật khẩu</div>
+                                <div className="text-xs font-bold uppercase text-text-muted">{t('settings.account.changePasswordTitle', { defaultValue: 'Đổi mật khẩu' })}</div>
 
                                 {changePwdError && (
                                     <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold">
@@ -733,21 +783,21 @@ export function SettingsPage() {
                                         type="password"
                                         value={changePwdState.currentPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, currentPassword: e.target.value })}
-                                        placeholder="Mật khẩu hiện tại..."
+                                        placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
                                         className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={changePwdState.newPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, newPassword: e.target.value })}
-                                        placeholder="Mật khẩu mới (≥8 ký tự)..."
+                                        placeholder={t('settings.account.newPasswordPlaceholder', { defaultValue: 'Mật khẩu mới (≥8 ký tự)...' })}
                                         className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={changePwdState.confirmPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, confirmPassword: e.target.value })}
-                                        placeholder="Xác nhận mật khẩu mới..."
+                                        placeholder={t('settings.account.confirmPasswordPlaceholder', { defaultValue: 'Xác nhận mật khẩu mới...' })}
                                         className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                 </div>
@@ -757,19 +807,19 @@ export function SettingsPage() {
                                     disabled={changePwdLoading}
                                     className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50"
                                 >
-                                    {changePwdLoading ? "Đang xử lý..." : "Cập nhật Mật khẩu"}
+                                    {changePwdLoading ? t('settings.account.pwdProcessing', { defaultValue: 'Đang xử lý...' }) : t('settings.account.updatePasswordBtn', { defaultValue: 'Cập nhật Mật khẩu' })}
                                 </button>
                             </form>
 
                             {/* Active Sessions */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-text-muted">Phiên làm việc ({activeSessions.length}):</span>
+                                    <span className="font-bold text-text-muted">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({activeSessions.length}):</span>
                                     <button
                                         onClick={handleLogoutAllOtherSessions}
                                         className="px-2 py-0.5 rounded border border-rose-500/40 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold"
                                     >
-                                        Đăng xuất thiết bị khác
+                                        {t('settings.account.logoutOtherDevices', { defaultValue: 'Đăng xuất thiết bị khác' })}
                                     </button>
                                 </div>
 
@@ -782,7 +832,7 @@ export function SettingsPage() {
                                                     <div className="font-bold text-text flex items-center gap-1.5 truncate">
                                                         <span>{s.device} ({s.browser})</span>
                                                         {s.isCurrent && (
-                                                            <span className="bg-emerald-500 text-white text-[8px] px-1 rounded font-extrabold uppercase">Hiện tại</span>
+                                                            <span className="bg-emerald-500 text-white text-[8px] px-1 rounded font-extrabold uppercase">{t('settings.account.currentBadge', { defaultValue: 'Hiện tại' })}</span>
                                                         )}
                                                     </div>
                                                     <div className="text-[10px] text-text-muted truncate">
@@ -796,7 +846,7 @@ export function SettingsPage() {
                                                     onClick={() => handleRevokeSession(s.id)}
                                                     className="px-2 py-1 rounded border border-border/60 hover:border-rose-500 hover:text-rose-500 text-text-muted transition-colors cursor-pointer text-[10px] shrink-0"
                                                 >
-                                                    Đăng xuất
+                                                    {t('settings.account.logoutBtn', { defaultValue: 'Đăng xuất' })}
                                                 </button>
                                             )}
                                         </div>
@@ -812,14 +862,14 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBan} className="text-primary text-sm" />
-                                    <span>Danh sách đã chặn</span>
+                                    <span>{t('settings.blocked.title', { defaultValue: 'Danh sách đã chặn' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Quản lý người dùng bị chặn tương tác</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.blocked.sub', { defaultValue: 'Quản lý người dùng bị chặn tương tác' })}</p>
                             </div>
 
                             {blockedUsers.length === 0 ? (
                                 <div className="p-6 text-center border border-dashed border-border/60 rounded-md text-text-muted text-xs">
-                                    Bạn chưa chặn người dùng nào.
+                                    {t('settings.blocked.empty', { defaultValue: 'Bạn chưa chặn người dùng nào.' })}
                                 </div>
                             ) : (
                                 <div className="divide-y divide-border/40 border border-border/60 bg-surface rounded-md overflow-hidden">
@@ -829,7 +879,7 @@ export function SettingsPage() {
                                                 <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded object-cover border border-border/40 shrink-0" />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-xs text-text truncate">{u.name} (@{u.username})</div>
-                                                    <div className="text-[10px] text-text-muted truncate">Lý do: {u.reason}</div>
+                                                    <div className="text-[10px] text-text-muted truncate">{t('settings.blocked.reasonLabel', { defaultValue: 'Lý do:' })} {u.reason}</div>
                                                 </div>
                                             </div>
 
@@ -837,7 +887,7 @@ export function SettingsPage() {
                                                 onClick={() => handleUnblockUser(u.id)}
                                                 className="px-2.5 py-1 rounded border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors cursor-pointer font-bold text-xs shrink-0"
                                             >
-                                                Bỏ chặn
+                                                {t('settings.blocked.unblock', { defaultValue: 'Bỏ chặn' })}
                                             </button>
                                         </div>
                                     ))}
@@ -852,21 +902,21 @@ export function SettingsPage() {
                             <div className="border-b border-border/60 pb-3">
                                 <h2 className="text-lg font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBug} className="text-primary text-sm" />
-                                    <span>Gửi Báo lỗi & Đóng góp</span>
+                                    <span>{t('settings.feedback.title', { defaultValue: 'Gửi Báo lỗi & Đóng góp' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Gửi phản hồi trực tiếp đến Ban Quản Trị</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.feedback.sub', { defaultValue: 'Gửi phản hồi trực tiếp đến Ban Quản Trị' })}</p>
                             </div>
 
                             {isFeedbackSuccess && (
                                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-md text-xs font-bold flex items-center gap-2">
                                     <FontAwesomeIcon icon={faCheckCircle} />
-                                    <span>Cảm ơn bạn! Phản hồi đã được gửi thành công.</span>
+                                    <span>{t('settings.feedback.successMsg', { defaultValue: 'Cảm ơn bạn! Phản hồi đã được gửi thành công.' })}</span>
                                 </div>
                             )}
 
                             <form onSubmit={handleSubmitFeedback} className="space-y-3">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-text block">Loại phản hồi:</label>
+                                    <label className="text-xs font-bold text-text block">{t('settings.feedback.typeLabel', { defaultValue: 'Loại phản hồi:' })}</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         <button
                                             type="button"
@@ -877,7 +927,7 @@ export function SettingsPage() {
                                                     : "bg-surface border-border/60 text-text-muted"
                                             }`}
                                         >
-                                            <FontAwesomeIcon icon={faBug} className="mr-1.5" /> Báo lỗi kỹ thuật
+                                            <FontAwesomeIcon icon={faBug} className="mr-1.5" /> {t('settings.feedback.bugOption', { defaultValue: 'Báo lỗi kỹ thuật' })}
                                         </button>
                                         <button
                                             type="button"
@@ -888,31 +938,31 @@ export function SettingsPage() {
                                                     : "bg-surface border-border/60 text-text-muted"
                                             }`}
                                         >
-                                            <FontAwesomeIcon icon={faLightbulb} className="mr-1.5" /> Đóng góp ý tưởng
+                                            <FontAwesomeIcon icon={faLightbulb} className="mr-1.5" /> {t('settings.feedback.ideaOption', { defaultValue: 'Đóng góp ý tưởng' })}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-text block">Tiêu đề:</label>
+                                    <label className="text-xs font-bold text-text block">{t('settings.feedback.titleLabel', { defaultValue: 'Tiêu đề:' })}</label>
                                     <input
                                         type="text"
                                         required
                                         value={feedbackTitle}
                                         onChange={(e) => setFeedbackTitle(e.target.value)}
-                                        placeholder="Tiêu đề ngắn gọn..."
+                                        placeholder={t('settings.feedback.titlePlaceholder', { defaultValue: 'Tiêu đề ngắn gọn...' })}
                                         className="w-full bg-surface border border-border/60 rounded-md p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-text block">Nội dung chi tiết:</label>
+                                    <label className="text-xs font-bold text-text block">{t('settings.feedback.contentLabel', { defaultValue: 'Nội dung chi tiết:' })}</label>
                                     <textarea
                                         rows={4}
                                         required
                                         value={feedbackDescription}
                                         onChange={(e) => setFeedbackDescription(e.target.value)}
-                                        placeholder="Mô tả nội dung..."
+                                        placeholder={t('settings.feedback.contentPlaceholder', { defaultValue: 'Mô tả nội dung...' })}
                                         className="w-full bg-surface border border-border/60 rounded-md p-2 text-xs text-text focus:outline-none focus:border-primary resize-y"
                                     />
                                 </div>
@@ -922,7 +972,7 @@ export function SettingsPage() {
                                     disabled={isSubmittingFeedback}
                                     className="w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50"
                                 >
-                                    {isSubmittingFeedback ? "Đang gửi..." : "Gửi phản hồi"}
+                                    {isSubmittingFeedback ? t('settings.feedback.submitting', { defaultValue: 'Đang gửi...' }) : t('settings.feedback.submitBtn', { defaultValue: 'Gửi phản hồi' })}
                                 </button>
                             </form>
                         </div>
@@ -934,9 +984,9 @@ export function SettingsPage() {
                             <div className="border-b border-rose-500/30 pb-3">
                                 <h2 className="text-lg font-bold text-rose-500 flex items-center gap-2">
                                     <FontAwesomeIcon icon={faExclamationTriangle} />
-                                    <span>Vùng nguy hiểm (Danger Zone)</span>
+                                    <span>{t('settings.danger.title', { defaultValue: 'Vùng nguy hiểm (Danger Zone)' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">Thao tác ảnh hưởng trực tiếp đến trạng thái tài khoản</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('settings.danger.sub', { defaultValue: 'Thao tác ảnh hưởng trực tiếp đến trạng thái tài khoản' })}</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -944,16 +994,16 @@ export function SettingsPage() {
                                 <div className="p-4 rounded-md bg-surface border border-rose-500/30 space-y-2">
                                     <div className="font-bold text-xs text-text flex items-center gap-2">
                                         <FontAwesomeIcon icon={faUserClock} className="text-amber-500" />
-                                        <span>Tạm ngưng tài khoản</span>
+                                        <span>{t('settings.danger.deactivateTitle', { defaultValue: 'Tạm ngưng tài khoản' })}</span>
                                     </div>
                                     <p className="text-[11px] text-text-muted">
-                                        Ẩn tài khoản tạm thời. Kích hoạt lại bằng cách đăng nhập lại.
+                                        {t('settings.danger.deactivateDesc', { defaultValue: 'Ẩn tài khoản tạm thời. Kích hoạt lại bằng cách đăng nhập lại.' })}
                                     </p>
                                     <button
                                         onClick={() => setDangerModal({ open: true, type: "deactivate", confirmText: "" })}
                                         className="w-full py-2 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors font-bold text-xs cursor-pointer"
                                     >
-                                        Tạm ngưng
+                                        {t('settings.danger.deactivateBtn', { defaultValue: 'Tạm ngưng' })}
                                     </button>
                                 </div>
 
@@ -961,16 +1011,16 @@ export function SettingsPage() {
                                 <div className="p-4 rounded-md bg-surface border border-rose-500/40 space-y-2">
                                     <div className="font-bold text-xs text-rose-500 flex items-center gap-2">
                                         <FontAwesomeIcon icon={faBan} />
-                                        <span>Xóa tài khoản vĩnh viễn</span>
+                                        <span>{t('settings.danger.deleteTitle', { defaultValue: 'Xóa tài khoản vĩnh viễn' })}</span>
                                     </div>
                                     <p className="text-[11px] text-text-muted">
-                                        Xóa toàn bộ dữ liệu cá nhân vĩnh viễn không thể khôi phục.
+                                        {t('settings.danger.deleteDesc', { defaultValue: 'Xóa toàn bộ dữ liệu cá nhân vĩnh viễn không thể khôi phục.' })}
                                     </p>
                                     <button
                                         onClick={() => setDangerModal({ open: true, type: "delete", confirmText: "" })}
                                         className="w-full py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white transition-colors font-bold text-xs cursor-pointer"
                                     >
-                                        Xóa tài khoản
+                                        {t('settings.danger.deleteBtn', { defaultValue: 'Xóa tài khoản' })}
                                     </button>
                                 </div>
                             </div>
@@ -986,7 +1036,9 @@ export function SettingsPage() {
                         <div className="flex items-center justify-between border-b border-border/60 pb-2">
                             <span className="font-bold text-rose-500 text-xs uppercase flex items-center gap-2">
                                 <FontAwesomeIcon icon={faExclamationTriangle} />
-                                {dangerModal.type === "deactivate" ? "Xác nhận Tạm ngưng" : "Xác nhận Xóa tài khoản"}
+                                {dangerModal.type === "deactivate"
+                                    ? t('settings.danger.deactivateModalTitle', { defaultValue: 'Xác nhận Tạm ngưng' })
+                                    : t('settings.danger.deleteModalTitle', { defaultValue: 'Xác nhận Xóa tài khoản' })}
                             </span>
                             <button
                                 onClick={() => setDangerModal({ open: false, type: null, confirmText: "" })}
@@ -1004,8 +1056,8 @@ export function SettingsPage() {
 
                         <p className="text-xs text-text">
                             {dangerModal.type === "deactivate"
-                                ? 'Nhập "TAM NGUNG" để xác nhận tạm ngưng:'
-                                : 'Thao tác không thể khôi phục. Nhập "XOA TAI KHOAN" để xác nhận:'}
+                                ? t('settings.danger.deactivatePrompt', { defaultValue: 'Nhập "TAM NGUNG" để xác nhận tạm ngưng:' })
+                                : t('settings.danger.deletePrompt', { defaultValue: 'Thao tác không thể khôi phục. Nhập "XOA TAI KHOAN" để xác nhận:' })}
                         </p>
 
                         <input
@@ -1021,13 +1073,13 @@ export function SettingsPage() {
                                 onClick={() => setDangerModal({ open: false, type: null, confirmText: "" })}
                                 className="px-3 py-1.5 rounded border border-border/60 bg-surface hover:bg-surface-hover text-xs font-bold cursor-pointer"
                             >
-                                Hủy
+                                {t('common.cancel', { defaultValue: 'Hủy' })}
                             </button>
                             <button
                                 onClick={handleConfirmDangerAction}
                                 className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
                             >
-                                Xác nhận
+                                {t('common.submit', { defaultValue: 'Gửi' })}
                             </button>
                         </div>
                     </div>

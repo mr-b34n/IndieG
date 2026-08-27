@@ -129,7 +129,7 @@ export const VietnamGamesBanner = () => {
                         <h2 className="text-base sm:text-lg font-black text-text tracking-tight flex items-center gap-2">
                             <span>{t('explore.vietnamGames.title')}</span>
                             <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase tracking-wider">
-                                HOT INDIE VIỆT
+                                {t('explore.vietnamGames.hotBadge', { defaultValue: 'HOT INDIE VIỆT' })}
                             </span>
                         </h2>
                         <p className="text-xs text-text-muted font-medium">
@@ -176,7 +176,7 @@ export const VietnamGamesBanner = () => {
                     type="button"
                     onClick={handlePrev}
                     className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 cursor-pointer shadow-lg hover:scale-110"
-                    title="Trước"
+                    title={t('common.prev', { defaultValue: 'Trước' })}
                 >
                     <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
                 </button>
@@ -185,7 +185,7 @@ export const VietnamGamesBanner = () => {
                     type="button"
                     onClick={handleNext}
                     className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all opacity-80 group-hover:opacity-100 cursor-pointer shadow-lg hover:scale-110"
-                    title="Tiếp theo"
+                    title={t('common.next', { defaultValue: 'Tiếp theo' })}
                 >
                     <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
                 </button>

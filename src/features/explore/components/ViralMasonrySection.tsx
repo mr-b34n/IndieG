@@ -10,30 +10,32 @@ import {
     faFaceLaughSquint
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import type { ViralMediaTile } from "../types";
 
 interface ViralMasonrySectionProps {
     tiles: ViralMediaTile[];
 }
 
-const getContentTypeMeta = (type: ViralMediaTile["contentType"]) => {
+const getContentTypeMeta = (type: ViralMediaTile["contentType"], t: (key: string, options?: { defaultValue?: string; [key: string]: unknown }) => string) => {
     switch (type) {
         case "DISCUSSION":
-            return { label: "DISCUSSION", icon: faMessage, color: "text-blue-400" };
+            return { label: t('explore.contentTypes.discussion', { defaultValue: 'DISCUSSION' }), icon: faMessage, color: "text-blue-400" };
         case "VIDEO":
-            return { label: "VIDEO", icon: faPlay, color: "text-purple-400" };
+            return { label: t('explore.contentTypes.video', { defaultValue: 'VIDEO' }), icon: faPlay, color: "text-purple-400" };
         case "SCREENSHOT":
-            return { label: "SCREENSHOT", icon: faImage, color: "text-emerald-400" };
+            return { label: t('explore.contentTypes.screenshot', { defaultValue: 'SCREENSHOT' }), icon: faImage, color: "text-emerald-400" };
         case "NEWS":
-            return { label: "NEWS", icon: faNewspaper, color: "text-amber-400" };
+            return { label: t('explore.contentTypes.news', { defaultValue: 'NEWS' }), icon: faNewspaper, color: "text-amber-400" };
         case "MEME":
-            return { label: "MEME", icon: faFaceLaughSquint, color: "text-rose-400" };
+            return { label: t('explore.contentTypes.meme', { defaultValue: 'MEME' }), icon: faFaceLaughSquint, color: "text-rose-400" };
         default:
-            return { label: "POST", icon: faMessage, color: "text-text-muted" };
+            return { label: t('explore.contentTypes.post', { defaultValue: 'POST' }), icon: faMessage, color: "text-text-muted" };
     }
 };
 
 export const ViralMasonrySection = ({ tiles }: ViralMasonrySectionProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     if (!tiles.length) return null;
 
@@ -44,18 +46,18 @@ export const ViralMasonrySection = ({ tiles }: ViralMasonrySectionProps) => {
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm sm:text-base font-black tracking-wider text-text uppercase flex items-center gap-2">
                         <FontAwesomeIcon icon={faFire} className="text-orange-500 text-xs" />
-                        <span>VIRAL NOW</span>
+                        <span>{t('explore.viralNow', { defaultValue: 'VIRAL NOW' })}</span>
                     </h2>
                 </div>
                 <p className="text-xs text-text-muted">
-                    What's capturing the community's attention right now
+                    {t('explore.viralSubtitle', { defaultValue: "What's capturing the community's attention right now" })}
                 </p>
             </div>
 
             {/* Asymmetric Masonry Grid of Media Tiles (4-6px radius, no box wrapping) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[220px]">
                 {tiles.map((tile) => {
-                    const meta = getContentTypeMeta(tile.contentType);
+                    const meta = getContentTypeMeta(tile.contentType, t);
 
                     return (
                         <div

@@ -142,17 +142,56 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    verifyEmail: async (code: string) => {
+    isVerifyModalOpen: false,
+    verifyModalMessage: null,
+
+    openVerifyModal: (customMessage?: string) => {
+        set({ isVerifyModalOpen: true, verifyModalMessage: customMessage || null });
+    },
+
+    closeVerifyModal: () => {
+        set({ isVerifyModalOpen: false, verifyModalMessage: null });
+    },
+
+    requireVerifiedEmail: (actionName?: string, onSuccess?: () => void) => {
+        const { user } = get();
+        if (!user) {
+            get().openVerifyModal("Vui lòng đăng nhập để thực hiện thao tác này.");
+            return false;
+        }
+        if (user.isVerified === false || !user.isVerified) {
+            const msg = actionName 
+                ? `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để ${actionName}.` 
+                : `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để thực hiện thao tác này.`;
+            get().openVerifyModal(msg);
+            return false;
+        }
+        if (onSuccess) {
+            onSuccess();
+        }
+        return true;
+    },
+
+    toggleVerifyEmailStatus: () => {
+        const { user } = get();
+        if (user) {
+            const updatedUser = { ...user, isVerified: !user.isVerified };
+            get().login(updatedUser, get().accessToken || undefined, get().refreshToken || undefined);
+        }
+    },
+
+    verifyEmail: async (codeOrToken: string) => {
         await new Promise((r) => setTimeout(r, 600));
-        if (code === "123456" || code.trim().length === 6) {
+        if (codeOrToken && codeOrToken.trim().length > 0) {
             const { user } = get();
             if (user) {
                 const updatedUser = { ...user, isVerified: true };
                 get().login(updatedUser, get().accessToken || undefined, get().refreshToken || undefined);
             }
+            set({ isVerifyModalOpen: false, verifyModalMessage: null });
             return { success: true };
         }
-        return { success: false, error: "Mã xác thực không đúng hoặc đã hết hạn (Mã thử nghiệm: 123456)." };
+        return { success: false, error: "Mã/Token xác thực không hợp lệ hoặc đã hết hạn." };
     },
 
     forgotPassword: async (email: string) => {

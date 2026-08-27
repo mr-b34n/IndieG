@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowTrendUp, faFire } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import type { TrendingTag } from "../types";
 
 interface TrendingTagsSectionProps {
@@ -8,6 +9,7 @@ interface TrendingTagsSectionProps {
 }
 
 export const TrendingTagsSection = ({ tags, onSelectTag }: TrendingTagsSectionProps) => {
+    const { t } = useTranslation();
     if (!tags.length) return null;
 
     return (
@@ -16,7 +18,7 @@ export const TrendingTagsSection = ({ tags, onSelectTag }: TrendingTagsSectionPr
             <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faArrowTrendUp} className="text-primary text-xs" />
                 <span className="text-[11px] font-black uppercase tracking-wider text-text-faint">
-                    TRENDING TOPICS & HASHTAGS
+                    {t('explore.trendingTopics', { defaultValue: 'TRENDING TOPICS & HASHTAGS' })}
                 </span>
             </div>
 

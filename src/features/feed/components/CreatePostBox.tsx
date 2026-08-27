@@ -10,9 +10,13 @@ import {
     faUsers,
     faEyeSlash,
     faPaperclip,
-    faXmark
+    faXmark,
+    faLock,
+    faTriangleExclamation,
+    faShieldHalved
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 import { createAttachmentFromFile, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
@@ -321,7 +325,9 @@ export const CreatePostBox = ({
     initialContent = "",
 }: CreatePostBoxProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
+    const openVerifyModal = useAuthStore((s) => s.openVerifyModal);
     const avatarUrl = user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
 
     const { communities } = useCommunitiesStore();
@@ -454,7 +460,11 @@ export const CreatePostBox = ({
     const hasValidContent = content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0;
     const canPost = communityId !== null && communityId !== undefined && hasValidContent && !isPosting;
 
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
     const handlePost = async () => {
+        if (!requireVerifiedEmail("đăng bài viết")) return;
+
         setSubmitAttempted(true);
 
         if (!communityId) {
@@ -519,6 +529,58 @@ export const CreatePostBox = ({
         setSubmitAttempted(false);
         setExpanded(false);
     };
+
+    if (!user) {
+        return (
+            <div id="create-post" className="w-full my-1 p-4 rounded-xl bg-surface border border-border/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">
+                        <FontAwesomeIcon icon={faLock} />
+                    </div>
+                    <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-text">{t('feed.loginToCreatePost') || "Đăng nhập để tạo bài viết mới"}</h4>
+                        <p className="text-xs text-text-muted mt-0.5">{t('feed.loginToCreatePostDesc') || "Tham gia thảo luận cùng cộng đồng IndieG và chia sẻ khoảnh khắc chơi game của bạn."}</p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/auth" })}
+                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
+                >
+                    {t('authenticate.login') || "Đăng Nhập"} / {t('authenticate.register') || "Đăng Ký"}
+                </button>
+            </div>
+        );
+    }
+
+    if (user.isVerified === false) {
+        return (
+            <div id="create-post" className="w-full my-1 p-4 rounded-xl bg-surface border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 font-bold">
+                        <FontAwesomeIcon icon={faTriangleExclamation} />
+                    </div>
+                    <div>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-500 flex items-center gap-1.5 justify-center sm:justify-start">
+                            <span>{t('feed.unverifiedEmailTitle') || "Tài khoản chưa xác thực Email"}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">{t('feed.limitedBadge') || "LIMITED"}</span>
+                        </h4>
+                        <p className="text-xs text-text-muted mt-0.5">
+                            {t('feed.unverifiedEmailDesc', { email: user.email }) || `Kích hoạt email ${user.email} để mở khóa tính năng tạo bài viết, bình luận và tạo đội nhóm.`}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => openVerifyModal(t('feed.verifyOtpPostPrompt') || "Vui lòng nhập mã OTP để kích hoạt đầy đủ quyền tạo bài viết.")}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition-all shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5"
+                >
+                    <FontAwesomeIcon icon={faShieldHalved} />
+                    <span>{t('feed.verifyNow') || "Xác Thực Ngay"}</span>
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div
@@ -704,7 +766,7 @@ export const CreatePostBox = ({
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
-                                <span>Media</span>
+                                <span>{t('feed.mediaButton') || "Media"}</span>
                             </button>
                             <button
                                 type="button"
@@ -712,7 +774,7 @@ export const CreatePostBox = ({
                                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faPaperclip} className="text-primary text-xs" />
-                                <span>Attachment</span>
+                                <span>{t('feed.addAttachments') || "Attachment"}</span>
                             </button>
                         </div>
 
@@ -732,7 +794,7 @@ export const CreatePostBox = ({
                                 onClick={handleCancel}
                                 className="px-3 py-1.5 rounded-[6px] text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-hover/60 transition-colors cursor-pointer"
                             >
-                                Cancel
+                                {t('common.cancel') || "Cancel"}
                             </button>
 
                             <button
@@ -745,7 +807,7 @@ export const CreatePostBox = ({
                                         : "bg-primary text-white opacity-40 cursor-not-allowed"
                                 }`}
                             >
-                                <span>{isPosting ? t('common.loading') : "Post"}</span>
+                                <span>{isPosting ? t('common.loading') : (t('feed.postButton') || "Post")}</span>
                             </button>
                         </div>
                     </div>

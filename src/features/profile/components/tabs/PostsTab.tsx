@@ -14,12 +14,12 @@ export const PostsTab = ({ posts, t }: PostsTabProps) => (
         {posts.length > 0 ? (
             posts.map((post) => <Post key={post.id} post={post} />)
         ) : (
-            <div className="bg-surface-hover/20 border border-border/20 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3 shadow-sm">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl">
+            <div className="bg-[#0D1220] rounded-[14px] p-12 text-center flex flex-col items-center justify-center gap-3 shadow-md">
+                <div className="w-16 h-16 rounded-full bg-[#1597FF]/10 flex items-center justify-center text-[#1597FF] text-2xl">
                     <FontAwesomeIcon icon={faCommentDots} />
                 </div>
-                <h4 className="text-lg font-bold text-text">{t("profile.emptyPosts")}</h4>
-                <p className="text-sm text-text-faint max-w-md">{t("profile.createFirstPost")}</p>
+                <h4 className="text-lg font-bold text-[#F2F5FA]">{t("profile.emptyPosts")}</h4>
+                <p className="text-sm text-[#8D97AA] max-w-md">{t("profile.createFirstPost")}</p>
             </div>
         )}
     </div>

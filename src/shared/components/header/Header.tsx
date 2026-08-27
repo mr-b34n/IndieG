@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useSidebarStore } from "../../store/useSidebarStore";
 import { useNotificationStore, NotificationDropdown, useNotificationPolling } from '@/features/notification';
@@ -11,25 +11,29 @@ import {
     faSignOutAlt,
     faBars,
     faGamepad,
-    faHouse
+    faHouse,
+    faUserShield,
+    faUserCheck,
+    faUserXmark,
+    faChevronDown,
+    faGear,
+    faUser,
 } from "@fortawesome/free-solid-svg-icons";
-import { useAuthStore } from '@/features/auth';
-
-const floatCard = `
-    bg-surface/90 backdrop-blur-md
-    border border-border
-    shadow-[0_4px_16px_rgba(0,0,0,0.07)]
-    dark:shadow-[0_4px_20px_rgba(0,0,0,0.35)]
-    transition-all duration-200 ease-out
-`;
+import { useAuthStore, TEST_ACCOUNTS } from '@/features/auth';
 
 export const Header = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
-    const toggleMockLogin = useAuthStore((state) => state.toggleMockLogin);
+    const customAvatar = useAuthStore((state) => state.customAvatar);
+    const login = useAuthStore((state) => state.login);
+    const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
+
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showDevAccounts, setShowDevAccounts] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
 
     const toggleLeft = useSidebarStore((state) => state.toggleLeft);
     const toggleRight = useSidebarStore((state) => state.toggleRight);
@@ -47,60 +51,81 @@ export const Header = () => {
 
     useNotificationPolling(15000);
 
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const avatarUrl =
+        customAvatar ??
+        user?.user_metadata?.avatar_url ??
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
+
     return (
-        <header className="w-full sticky top-0 z-[60] flex flex-wrap md:flex-nowrap items-center justify-between gap-3 px-2 sm:px-4 py-2 sm:py-3 bg-bg/80 backdrop-blur-lg border-b border-border/50">
+        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-[#090A0B] border-b border-[#1C1F22] select-none">
 
             {/* LEFT: Logo & Mobile Toggle */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
                 {!hideSidebars && (
                     <button
+                        type="button"
                         onClick={toggleLeft}
                         title={t('common.menu')}
-                        className={`lg:hidden shrink-0 ${floatCard} w-9 h-9 rounded-xl sm:rounded-2xl flex items-center justify-center text-primary hover:bg-primary-soft transition-colors cursor-pointer`}
+                        className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] transition-colors cursor-pointer"
                     >
-                        <FontAwesomeIcon icon={faBars} className="text-sm sm:text-base" />
+                        <FontAwesomeIcon icon={faBars} className="text-base" />
                     </button>
                 )}
+
+                {/* Flat Borderless Logo */}
                 <div
-                    className={`shrink-0 ${floatCard} rounded-xl sm:rounded-2xl px-4 sm:px-5 py-1.5 sm:py-2
-                        cursor-pointer hover:-translate-y-0.5
-                        hover:shadow-[0_6px_24px_rgba(124,77,255,0.18)]`}
+                    className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-90 py-1"
                     onClick={() => navigate({ to: '/' })}
                 >
-                    <p className="text-xl sm:text-2xl font-black tracking-tight text-primary select-none">
+                    <span className="text-[22px] sm:text-[24px] font-bold tracking-tight text-[#1688E8]">
                         IndieG
-                    </p>
+                    </span>
                 </div>
             </div>
 
-            {/* CENTER: Search Bar */}
-            <div className="w-full md:w-auto flex-1 max-w-xl mx-auto flex justify-center">
-                <div className="w-full max-w-sm md:max-w-full">
-                    <Search />
-                </div>
+            {/* CENTER: Compact Flat Search Bar */}
+            <div className="flex-1 max-w-[420px] mx-auto hidden sm:flex justify-center">
+                <Search />
             </div>
 
             {/* RIGHT: Actions */}
-            <div className={`shrink-0 ${floatCard} rounded-full px-2 sm:px-3 py-1.5 sm:py-2
-                flex flex-row items-center gap-1.5`}>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Search icon trigger on tiny screens */}
+                <div className="sm:hidden w-full max-w-[180px]">
+                    <Search />
+                </div>
+
                 {!hideSidebars && (
                     <button
+                        type="button"
                         onClick={toggleRight}
                         title={t('common.openExplore')}
-                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full
-                            text-primary bg-primary/10 hover:bg-primary/20
+                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg
+                            text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
                             transition-colors duration-150 cursor-pointer shrink-0"
                     >
-                        <FontAwesomeIcon icon={faGamepad} className="text-xs sm:text-sm" />
+                        <FontAwesomeIcon icon={faGamepad} className="text-sm" />
                     </button>
                 )}
 
                 {hideSidebars && (
                     <button
+                        type="button"
                         onClick={() => navigate({ to: '/' })}
                         title={t('common.home')}
-                        className="w-9 h-9 flex items-center justify-center rounded-full
-                            text-text-muted hover:bg-primary-soft hover:text-primary
+                        className="w-9 h-9 flex items-center justify-center rounded-lg
+                            text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
                             transition-colors duration-150 cursor-pointer shrink-0"
                     >
                         <FontAwesomeIcon icon={faHouse} className="text-sm" />
@@ -110,16 +135,16 @@ export const Header = () => {
                 {isLoggedIn && (
                     <div className="relative shrink-0">
                         <button
+                            type="button"
                             onClick={() => setShowNotifications(!showNotifications)}
                             title={t('notification.title')}
-                            className="relative w-9 h-9 flex items-center justify-center rounded-full
-                                text-text-muted
-                                hover:bg-primary-soft hover:text-primary
+                            className="relative w-9 h-9 flex items-center justify-center rounded-lg
+                                text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
                                 transition-colors duration-150 cursor-pointer"
                         >
                             <FontAwesomeIcon icon={faBell} className="text-sm" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-like ring-2 ring-surface" />
+                                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ef4444]" />
                             )}
                         </button>
                         {showNotifications && (
@@ -128,34 +153,184 @@ export const Header = () => {
                     </div>
                 )}
 
-                <div className="relative group/dev hidden sm:block shrink-0">
+                {/* User Menu Trigger */}
+                <div ref={menuRef} className="relative shrink-0">
                     <button
-                        onClick={toggleMockLogin}
-                        title={isLoggedIn ? "[DEV] Mock Logout" : "[DEV] Mock Login"}
-                        className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors duration-150 cursor-pointer
-                            ${isLoggedIn
-                                ? "text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
-                                : "text-text-muted hover:bg-amber-500/20 hover:text-amber-500"
-                            }`}
+                        type="button"
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#14171A] text-[#E8E9EA] transition-colors cursor-pointer"
                     >
-                        <FontAwesomeIcon icon={isLoggedIn ? faSignOutAlt : faUserCircle} />
+                        {user ? (
+                            <img
+                                src={avatarUrl}
+                                alt="Avatar"
+                                className="w-7 h-7 rounded-full object-cover ring-1 ring-[#1C1F22]"
+                            />
+                        ) : (
+                            <div className="w-7 h-7 rounded-full bg-[#14171A] text-[#8B9097] flex items-center justify-center">
+                                <FontAwesomeIcon icon={faUser} className="text-xs" />
+                            </div>
+                        )}
+                        <span className="text-xs font-semibold max-w-[90px] truncate hidden md:inline">
+                            {user ? user.username : t('authenticate.login')}
+                        </span>
+                        <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-[#8B9097] opacity-70" />
                     </button>
-                    <span className="pointer-events-none absolute -top-1 -right-1 text-[9px] font-black text-amber-500 bg-amber-500/15 px-0.5 rounded">
-                        DEV
-                    </span>
-                </div>
 
-                {!isLoggedIn && (
-                    <button
-                        onClick={() => navigate({ to: "/auth" })}
-                        className="h-9 px-4 sm:px-5 ml-1 flex items-center justify-center rounded-full
-                            bg-primary text-white font-semibold text-xs sm:text-sm
-                            hover:bg-primary-hover shadow-sm transition-colors duration-150 cursor-pointer shrink-0"
-                    >
-                        {t('authenticate.login')}
-                    </button>
-                )}
+                    {/* User Dropdown Menu */}
+                    {showUserMenu && (
+                        <div className="absolute right-0 mt-2 w-64 bg-[#0B0D0F] border border-[#1C1F22] rounded-xl shadow-2xl p-2 z-[100] text-xs space-y-1 animate-fade-in">
+                            {user && (
+                                <div className="px-3 py-2.5 border-b border-[#1C1F22] flex items-center gap-2.5">
+                                    <img
+                                        src={avatarUrl}
+                                        alt="Avatar"
+                                        className="w-8 h-8 rounded-full object-cover ring-1 ring-[#1C1F22] shrink-0"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-bold text-xs text-[#E8E9EA] truncate">{user.username}</p>
+                                        <p className="text-[10px] text-[#5F646B] truncate font-mono">{user.email || 'user@indieg.com'}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Core Menu Links */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowUserMenu(false);
+                                    navigate({ to: "/profile/$userId", params: { userId: "me" } });
+                                }}
+                                className="w-full px-3 py-2 rounded-lg text-left text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] font-medium flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faUserCircle} className="text-xs w-4" />
+                                <span>Trang cá nhân</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowUserMenu(false);
+                                    navigate({ to: "/settings" });
+                                }}
+                                className="w-full px-3 py-2 rounded-lg text-left text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] font-medium flex items-center gap-2.5 transition-colors cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faGear} className="text-xs w-4" />
+                                <span>{t('common.settings')}</span>
+                            </button>
+
+                            {user?.role === "admin" && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowUserMenu(false);
+                                        navigate({ to: "/admin" });
+                                    }}
+                                    className="w-full px-3 py-2 rounded-lg text-left text-amber-400 hover:bg-amber-500/10 font-medium flex items-center gap-2.5 transition-colors cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faUserShield} className="text-xs w-4" />
+                                    <span>Quản trị hệ thống</span>
+                                </button>
+                            )}
+
+                            {/* Dev Account Switcher (Moved cleanly inside dropdown menu) */}
+                            <div className="pt-1 border-t border-[#1C1F22]">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDevAccounts(!showDevAccounts)}
+                                    className="w-full px-3 py-1.5 rounded-lg text-left text-[11px] font-bold text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] flex items-center justify-between cursor-pointer transition-colors"
+                                >
+                                    <span className="flex items-center gap-1.5">
+                                        <FontAwesomeIcon icon={faUserCheck} className="text-xs text-[#1688E8]" />
+                                        <span>Chuyển tài khoản Test</span>
+                                    </span>
+                                    <FontAwesomeIcon
+                                        icon={faChevronDown}
+                                        className={`text-[9px] transition-transform ${showDevAccounts ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+
+                                {showDevAccounts && (
+                                    <div className="mt-1 space-y-1 pl-1 pr-1 bg-[#090A0B] p-1.5 rounded-lg border border-[#1C1F22]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                login(TEST_ACCOUNTS.admin);
+                                                setShowUserMenu(false);
+                                            }}
+                                            className={`w-full p-1.5 rounded text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                                                user?.id === TEST_ACCOUNTS.admin.id ? "bg-rose-500/20 text-rose-400 font-bold" : "text-[#8B9097] hover:text-[#E8E9EA]"
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={faUserShield} className="text-[10px] text-rose-400" />
+                                            <span className="text-[11px] truncate">1. Admin (Quản trị)</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                login(TEST_ACCOUNTS.verifiedUser);
+                                                setShowUserMenu(false);
+                                            }}
+                                            className={`w-full p-1.5 rounded text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                                                user?.id === TEST_ACCOUNTS.verifiedUser.id ? "bg-emerald-500/20 text-emerald-400 font-bold" : "text-[#8B9097] hover:text-[#E8E9EA]"
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={faUserCheck} className="text-[10px] text-emerald-400" />
+                                            <span className="text-[11px] truncate">2. User Bình thường</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                login(TEST_ACCOUNTS.unverifiedUser);
+                                                setShowUserMenu(false);
+                                            }}
+                                            className={`w-full p-1.5 rounded text-left flex items-center gap-2 transition-colors cursor-pointer ${
+                                                user?.id === TEST_ACCOUNTS.unverifiedUser.id ? "bg-amber-500/20 text-amber-400 font-bold" : "text-[#8B9097] hover:text-[#E8E9EA]"
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={faUserXmark} className="text-[10px] text-amber-400" />
+                                            <span className="text-[11px] truncate">3. User Chưa Verify</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Logout / Login button */}
+                            {user ? (
+                                <div className="pt-1 border-t border-[#1C1F22]">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            logout();
+                                            setShowUserMenu(false);
+                                        }}
+                                        className="w-full px-3 py-2 rounded-lg text-left text-rose-400 hover:bg-rose-500/10 font-bold flex items-center gap-2 cursor-pointer transition-colors"
+                                    >
+                                        <FontAwesomeIcon icon={faSignOutAlt} className="text-xs" />
+                                        <span>Đăng xuất</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="pt-1 border-t border-[#1C1F22]">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowUserMenu(false);
+                                            navigate({ to: "/auth" });
+                                        }}
+                                        className="w-full px-3 py-2 rounded-lg text-left text-[#1688E8] hover:bg-[#1688E8]/10 font-bold flex items-center gap-2 cursor-pointer transition-colors"
+                                    >
+                                        <FontAwesomeIcon icon={faUserCircle} className="text-xs" />
+                                        <span>Đăng nhập</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
-    )
-}
+    );
+};

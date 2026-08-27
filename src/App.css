@@ -110,132 +110,114 @@
 }
 
 @theme {
-    /* Brand: Electric Blue (#1687FF) - IndieG Primary */
+    /* Brand: Electric Blue (#1688E8) - IndieG Primary */
     --color-brand-50: #eef7ff;
     --color-brand-100: #d8ecff;
     --color-brand-200: #b9dfff;
     --color-brand-300: #88cbff;
     --color-brand-400: #4fb0ff;
-    --color-brand-500: #1687ff;
-    --color-brand-600: #006ce6;
-    --color-brand-700: #0053b8;
+    --color-brand-500: #1688e8;
+    --color-brand-600: #0076db;
+    --color-brand-700: #005fb8;
     --color-brand-800: #004494;
     --color-brand-900: #063979;
 
-    /* Accent & Semantics */
-    --color-accent-400: #f05a7e;
-    --color-accent-500: #f45b78;
+    /* Semantics: Strictly purposeful */
+    --color-accent-400: #f87171;
+    --color-accent-500: #ef4444; /* Red - destructive / danger */
 
-    --color-success-400: #20c997;
-    --color-success-500: #12b886;
+    --color-success-400: #34d399;
+    --color-success-500: #16c784; /* Green - online / success */
 
-    --color-gold-400: #f5b83d;
-    --color-gold-500: #e5a420;
+    --color-gold-400: #fbbf24;
+    --color-gold-500: #f59e0b; /* Orange - trending / attention */
 
-    --color-purple-400: #9b8afb;
-    --color-purple-500: #8572f9;
+    --color-purple-400: #a78bfa;
+    --color-purple-500: #8b5cf6; /* Purple - community / special role */
 
     --color-cyan-400: #22d3ee;
     --color-cyan-500: #06b6d4;
 
-    /* Neutral & Surfaces */
-    --color-neutral-0: #ffffff;
-    --color-neutral-50: #f4f6fb;
-    --color-neutral-100: #e8ecf5;
-    --color-neutral-200: #d1d7e8;
-    --color-neutral-300: #9299b2;
-    --color-neutral-400: #626a83;
-    --color-neutral-500: #454c62;
-    --color-neutral-600: #2a3550;
-    --color-neutral-700: #20263a;
-    --color-neutral-800: #141a2b;
-    --color-neutral-900: #101421;
-    --color-neutral-950: #070910;
+    /* Continuous Shell Neutral & Surfaces */
+    --color-bg: #08090A;
+    --color-surface: #0B0D0F;
+    --color-surface-hover: #14171A;
+    --color-surface-inner: #121518;
+    --color-surface-active: #181C20;
+    --color-border: #1C1F22;
+    --color-border-subtle: #16181B;
+    --color-border-strong: #282C31;
+    --color-divider-primary: #1C1F22;
+    --color-divider-secondary: #16181B;
 
-    --color-bg: var(--color-neutral-50);
-    --color-surface: var(--color-neutral-0);
-    --color-surface-hover: var(--color-neutral-100);
-    --color-surface-inner: #f0f4fa;
-    --color-surface-active: #dbe2f0;
-    --color-border: #e2e8f0;
-    --color-border-subtle: #cbd5e1;
-    --color-border-strong: #94a3b8;
-    --color-divider-primary: #d1d7e8;
-    --color-divider-secondary: #eef2f6;
+    --color-text: #E8E9EA;
+    --color-text-muted: #8B9097;
+    --color-text-faint: #5F646B;
 
-    --color-text: #1e293b;
-    --color-text-muted: #64748b;
-    --color-text-faint: #94a3b8;
+    --color-primary: #1688E8;
+    --color-primary-hover: #329af0;
+    --color-primary-soft: #0e2740;
 
-    --color-primary: #1687ff;
-    --color-primary-hover: #3698ff;
-    --color-primary-soft: rgba(22, 135, 255, 0.12);
-
-    --color-like: var(--color-accent-500);
-    --color-like-soft: #ffeef1;
+    --color-like: #ef4444;
+    --color-like-soft: rgba(239, 68, 68, 0.15);
 }
 
-.dark {
-    --color-bg: #070910;
-    --color-surface: #101421;
-    --color-surface-hover: #141a2b;
-    --color-surface-inner: #181d2f;
-    --color-surface-active: #1d253d;
+.dark, :root {
+    --color-bg: #08090A;
+    --color-surface: #0B0D0F;
+    --color-surface-hover: #14171A;
+    --color-surface-inner: #121518;
+    --color-surface-active: #181C20;
 
-    --color-border: #20263a;
-    --color-border-hover: #2a3550;
-    --color-border-active: #1687ff;
-    --color-divider-primary: #252B38;
-    --color-divider-secondary: #1B2028;
+    --color-border: #1C1F22;
+    --color-border-hover: #282C31;
+    --color-border-active: #1688E8;
+    --color-divider-primary: #1C1F22;
+    --color-divider-secondary: #16181B;
 
-    --color-text: #E7E9EF;
-    --color-text-muted: #8F96A8;
-    --color-text-faint: #687080;
-    --color-text-disabled: #454c62;
+    --color-text: #E8E9EA;
+    --color-text-muted: #8B9097;
+    --color-text-faint: #5F646B;
+    --color-text-disabled: #3d424a;
 
-    --color-primary: #1687ff;
-    --color-primary-hover: #3698ff;
-    --color-primary-soft: #0d2342;
-    --color-primary-glow: rgba(22, 135, 255, 0.18);
+    --color-primary: #1688E8;
+    --color-primary-hover: #329af0;
+    --color-primary-soft: #0e2740;
+    --color-primary-glow: rgba(22, 136, 232, 0.12);
 
-    --color-like: #f05a7e;
-    --color-like-soft: rgba(240, 90, 126, 0.16);
+    --color-like: #ef4444;
+    --color-like-soft: rgba(239, 68, 68, 0.15);
 
-    background: 
-        radial-gradient(
-            circle at 15% 10%,
-            rgba(20, 100, 255, 0.07),
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at 85% 70%,
-            rgba(120, 50, 255, 0.045),
-            transparent 35%
-        ),
-        #070910;
+    background: #08090A;
+}
+
+body {
+    background-color: #08090A;
+    color: #E8E9EA;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .dark .bg-surface,
 .dark .bg-surface\/95,
 .dark .bg-surface\/90,
 .dark .bg-surface\/80 {
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
 }
 
 /* IndieG Signature XP & Action Gradient */
 .bg-indieg-gradient {
-    background: linear-gradient(90deg, #1687ff, #22d3ee);
+    background: linear-gradient(90deg, #1597ff, #35a8ff);
 }
 
 .text-indieg-gradient {
-    background: linear-gradient(90deg, #1687ff, #22d3ee);
+    background: linear-gradient(90deg, #1597ff, #35a8ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .border-active-glow {
-    border-color: #1687ff !important;
-    box-shadow: 0 0 0 1px rgba(22, 135, 255, 0.18);
+    border-color: #1597ff !important;
+    box-shadow: 0 0 0 1px rgba(21, 151, 255, 0.2);
 }
 
 /* Enhancements for primary blue buttons to guarantee crisp, non-glary white text */

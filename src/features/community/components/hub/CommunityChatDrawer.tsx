@@ -5,6 +5,7 @@ import {
     faXmark,
     faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuthStore } from "@/features/auth";
 
 interface ChatMessage {
     id: string;
@@ -33,11 +34,14 @@ export const CommunityChatDrawer = ({
     ]);
     const [input, setInput] = useState("");
 
+    const user = useAuthStore((state) => state.user);
+
     if (!isOpen) return null;
 
     const handleSend = (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
+        if (!useAuthStore.getState().requireVerifiedEmail("gửi tin nhắn chat")) return;
 
         const newMsg: ChatMessage = {
             id: `cm-${Date.now()}`,
@@ -83,21 +87,34 @@ export const CommunityChatDrawer = ({
             </div>
 
             {/* Input Form */}
-            <form onSubmit={handleSend} className="p-2 border-t border-divider-primary flex items-center gap-2 bg-surface-inner">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={isVi ? "Nhập tin nhắn..." : "Type a message..."}
-                    className="flex-1 bg-surface border border-divider-primary rounded-[4px] px-2.5 py-1.5 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
-                />
-                <button
-                    type="submit"
-                    className="px-3 py-1.5 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors cursor-pointer"
-                >
-                    <FontAwesomeIcon icon={faPaperPlane} className="text-[10px]" />
-                </button>
-            </form>
+            {user && user.isVerified === false ? (
+                <div className="p-2.5 border-t border-divider-primary bg-amber-500/10 text-[11px] flex items-center justify-between gap-2">
+                    <span className="text-amber-500 font-bold truncate">🔒 Cần xác nhận email để chat</span>
+                    <button
+                        type="button"
+                        onClick={() => useAuthStore.getState().openVerifyModal("Xác nhận email để gửi tin nhắn chat.")}
+                        className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shrink-0 cursor-pointer text-[10px] shadow-xs"
+                    >
+                        Xác thực
+                    </button>
+                </div>
+            ) : (
+                <form onSubmit={handleSend} className="p-2 border-t border-divider-primary flex items-center gap-2 bg-surface-inner">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={isVi ? "Nhập tin nhắn..." : "Type a message..."}
+                        className="flex-1 bg-surface border border-divider-primary rounded-[4px] px-2.5 py-1.5 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
+                    />
+                    <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded-[4px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                        <FontAwesomeIcon icon={faPaperPlane} className="text-[10px]" />
+                    </button>
+                </form>
+            )}
         </div>
     );
 };

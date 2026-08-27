@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -40,6 +40,7 @@ interface CommentItemProps {
     isLoggedIn: boolean;
     isCommentsAllowed?: boolean;
     sortBy?: "top" | "newest";
+    depth?: number;
     onAddReply: (parentId: string | number, text: string, image?: string) => void;
     onDeleteComment?: (commentId: string | number) => void;
     onEditComment?: (commentId: string | number, newContent: string) => void;
@@ -145,7 +146,22 @@ const CommentImagePreview = ({ url, onRemove }: { url: string; onRemove: () => v
 
 const renderCommentContent = (text: string) => {
     if (!text) return null;
-    return <span>{text}</span>;
+    const parts = text.split(/(@[a-zA-Z0-9_\u00C0-\u024F\u1E00-\u1EFF]+)/g);
+    if (parts.length === 1) return <span>{text}</span>;
+    return (
+        <span>
+            {parts.map((part, i) => {
+                if (part.startsWith("@")) {
+                    return (
+                        <span key={i} className="text-[#1688E8] font-semibold hover:underline cursor-pointer mr-1">
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            })}
+        </span>
+    );
 };
 
 const sortComments = (list: CommentData[], sort: "top" | "newest" = "top"): CommentData[] => {
@@ -171,6 +187,7 @@ const CommentItem = ({
     isLoggedIn,
     isCommentsAllowed = true,
     sortBy = "top",
+    depth = 0,
     onAddReply,
     onDeleteComment,
     onEditComment,
@@ -181,6 +198,7 @@ const CommentItem = ({
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
     const [showSubEmoji, setShowSubEmoji] = useState(false);
+    const [showAllReplies, setShowAllReplies] = useState(false);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
@@ -196,11 +214,14 @@ const CommentItem = ({
     const currentAuthor = getCurrentAuthor();
     const isAuthor = comment.author === currentAuthor || comment.author === "You";
 
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
     const toggleLike = () => {
         if (!isLoggedIn) {
             navigate({ to: "/auth" });
             return;
         }
+        if (!requireVerifiedEmail("thích bình luận")) return;
         setLiked((prev) => !prev);
         setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
     };
@@ -210,7 +231,14 @@ const CommentItem = ({
             navigate({ to: "/auth" });
             return;
         }
-        setIsReplying((prev) => !prev);
+        if (!requireVerifiedEmail("trả lời bình luận")) return;
+        setIsReplying((prev) => {
+            const next = !prev;
+            if (next && depth >= 2 && !replyText.trim()) {
+                setReplyText(`@${comment.author} `);
+            }
+            return next;
+        });
     };
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -220,12 +248,14 @@ const CommentItem = ({
     };
 
     const handleSubmitSubReply = async () => {
+        if (!requireVerifiedEmail("gửi bình luận")) return;
         if (!replyText.trim() && !replyImage.previewUrl) return;
         const imageDataUrl = await replyImage.toDataUrl();
         onAddReply(comment.id, replyText.trim(), imageDataUrl);
         setReplyText("");
         replyImage.clear();
         setIsReplying(false);
+        setShowAllReplies(true);
         if (replyTextareaRef.current) replyTextareaRef.current.style.height = "auto";
     };
 
@@ -260,26 +290,39 @@ const CommentItem = ({
         setShowMenu(false);
     };
 
+    const avatarSize = depth === 0 ? "w-9 h-9" : "w-7 h-7";
+
     return (
         <div className={`flex flex-col w-full animate-fade-in group ${showMenu ? "relative z-[100]" : "relative has-[.menu-dropdown]:z-[100]"}`}>
-            <div className="flex flex-row items-start gap-3 w-full">
+            <div className="flex flex-row items-start gap-2.5 sm:gap-3 w-full">
                 <img
                     src={comment.authorAvatar}
                     alt={comment.author}
-                    className="w-9 h-9 rounded-full object-cover shrink-0"
+                    className={`${avatarSize} rounded-full object-cover shrink-0 mt-0.5`}
                 />
 
                 <div className="flex flex-col flex-1 gap-1 min-w-0">
                     <div className="flex flex-col">
                         <div className="flex flex-row items-center justify-between gap-2">
                             <div className="flex flex-row items-center gap-2 flex-wrap">
-                                <p className={`font-bold text-[14px] hover:underline cursor-pointer ${getUserRankConfig(comment.author).textColor}`}>
+                                <p className={`font-bold text-[14px] hover:underline cursor-pointer ${
+                                    (comment.author.toLowerCase().includes("admin") || comment.author.toLowerCase().includes("quản trị"))
+                                        ? "text-rose-500 font-extrabold"
+                                        : getUserRankConfig(comment.author).textColor
+                                }`}>
                                     {comment.author}
                                 </p>
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.author).classes}`}>
-                                    <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
-                                    {getRankLabel(getUserRankConfig(comment.author))}
-                                </span>
+                                {(comment.author.toLowerCase().includes("admin") || comment.author.toLowerCase().includes("quản trị")) ? (
+                                    <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-400/50">
+                                        <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
+                                        <span>ADMIN</span>
+                                    </span>
+                                ) : (
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.author).classes}`}>
+                                        <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
+                                        {getRankLabel(getUserRankConfig(comment.author))}
+                                    </span>
+                                )}
                                 <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 
@@ -520,23 +563,78 @@ const CommentItem = ({
             </div>
 
             {/* Nested Replies */}
-            {comment.replies && comment.replies.length > 0 && (
-                <div className="ml-4 pl-4 border-l-2 border-border/40 flex flex-col gap-4 mt-3">
-                    {sortComments(comment.replies, sortBy).map((subCmt) => (
-                        <CommentItem
-                            key={subCmt.id}
-                            comment={subCmt}
-                            isLoggedIn={isLoggedIn}
-                            isCommentsAllowed={isCommentsAllowed}
-                            sortBy={sortBy}
-                            onAddReply={onAddReply}
-                            onDeleteComment={onDeleteComment}
-                            onEditComment={onEditComment}
-                            onTogglePinComment={onTogglePinComment}
-                        />
-                    ))}
-                </div>
-            )}
+            {depth < 2 && comment.replies && comment.replies.length > 0 && (() => {
+                let allReplies = sortComments(comment.replies, sortBy);
+                
+                if (depth === 1) {
+                    const flatten = (replies: CommentData[]): CommentData[] => {
+                        let res: CommentData[] = [];
+                        for (const r of replies) {
+                            res.push(r);
+                            if (r.replies && r.replies.length > 0) {
+                                res = res.concat(flatten(r.replies));
+                            }
+                        }
+                        return res;
+                    };
+                    allReplies = sortComments(flatten(comment.replies), sortBy);
+                }
+
+                const visibleReplies = showAllReplies ? allReplies : allReplies.slice(0, 1);
+                const hasMore = allReplies.length > 1;
+                const hiddenCount = allReplies.length - 1;
+                
+                // Align replies with the content block of the parent comment. Max 3 visual depths (0, 1, 2).
+                const indentClass = depth === 0 ? "pl-[46px] sm:pl-[48px]" : "pl-[38px] sm:pl-[40px]";
+
+                return (
+                    <div className={`mt-2.5 flex flex-col gap-2.5 ${indentClass}`}>
+                        {visibleReplies.map((subCmt) => (
+                            <CommentItem
+                                key={subCmt.id}
+                                comment={subCmt}
+                                depth={depth + 1}
+                                isLoggedIn={isLoggedIn}
+                                isCommentsAllowed={isCommentsAllowed}
+                                sortBy={sortBy}
+                                onAddReply={onAddReply}
+                                onDeleteComment={onDeleteComment}
+                                onEditComment={onEditComment}
+                                onTogglePinComment={onTogglePinComment}
+                            />
+                        ))}
+
+                        {hasMore && (
+                            <div className="pt-0.5">
+                                {!showAllReplies ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllReplies(true)}
+                                        className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-colors py-1 pl-1 cursor-pointer group/expand"
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={faReply}
+                                            className="rotate-180 text-[10px] text-text-faint group-hover/expand:text-primary transition-transform"
+                                        />
+                                        <span>
+                                            {t('comment.viewMoreReplies', { count: hiddenCount })}
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllReplies(false)}
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-text-faint hover:text-text-muted transition-colors py-1 pl-1 cursor-pointer"
+                                    >
+                                        <FontAwesomeIcon icon={faChevronUp} className="text-[10px]" />
+                                        <span>{t('comment.hideReplies')}</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {showReportModal && (
                 <ReportModal
@@ -560,6 +658,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const mainImage = useCommentImageAttachment();
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
+    const openVerifyModal = useAuthStore((state) => state.openVerifyModal);
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
 
@@ -580,7 +679,45 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     content: "Cảm ơn bạn! Mình dùng TailwindCSS kết hợp custom config thôi nhé.",
                     timeAgo: "1 giờ trước",
                     likes: 3,
+                    replies: [
+                        {
+                            id: "1-1-1",
+                            author: "ShadowSniper",
+                            authorAvatar: avatarUser,
+                            content: "Config này có hỗ trợ dark theme monochrome mới không bạn?",
+                            timeAgo: "45 phút trước",
+                            likes: 2,
+                            replies: [
+                                {
+                                    id: "1-1-1-1",
+                                    author: "DevCreator",
+                                    authorAvatar: avatarUser,
+                                    content: "@ShadowSniper Có nha, chuyển sang đen sâu #0B0C0E và xám phân cấp cực kỳ mượt mà!",
+                                    timeAgo: "20 phút trước",
+                                    likes: 1,
+                                    replies: [
+                                        {
+                                            id: "1-1-1-1-1",
+                                            author: "TacticalGamer",
+                                            authorAvatar: avatarUser,
+                                            content: "@DevCreator Tuyệt vời, cmt cấp 3 trở đi đều thẳng hàng ngay ngắn!",
+                                            timeAgo: "10 phút trước",
+                                            likes: 1,
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
                 },
+                {
+                    id: "1-2",
+                    author: "ViperMain",
+                    authorAvatar: avatarUser,
+                    content: "Bổ sung thêm preset cho FPS 144Hz nữa là hoàn hảo!",
+                    timeAgo: "50 phút trước",
+                    likes: 1,
+                }
             ],
         },
         {
@@ -632,7 +769,10 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     };
 
     
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
     const handleMainReplySubmit = async () => {
+        if (!requireVerifiedEmail("gửi bình luận")) return;
         if (!commentText.trim() && !mainImage.previewUrl) return;
         const textContent = commentText.trim();
         const imageDataUrl = await mainImage.toDataUrl();
@@ -769,6 +909,29 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                         </div>
                         <p className="font-bold text-text mb-1">{t('comment.disabledTitle')}</p>
                         <p className="text-sm text-text-muted text-center">{t('comment.disabledDesc')}</p>
+                    </div>
+                ) : user && user.isVerified === false ? (
+                    <div className="w-full flex flex-col sm:flex-row items-center justify-between p-4 bg-surface-hover/60 rounded-xl border border-amber-500/30 gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 font-bold">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                            </div>
+                            <div>
+                                <p className="font-bold text-xs text-amber-500 flex items-center gap-1.5">
+                                    <span>{t('feed.unverifiedEmailTitle') || "Tài khoản chưa xác thực Email"}</span>
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">{t('feed.limitedBadge') || "LOCKED"}</span>
+                                </p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('comment.verifyEmailDesc', { email: user.email }) || `Xác thực email (${user.email}) để gửi bình luận bài viết này.`}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => openVerifyModal(t('comment.verifyOtpPrompt') || "Vui lòng nhập mã OTP để bình luận bài viết.")}
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5"
+                        >
+                            <FontAwesomeIcon icon={faShieldHalved} />
+                            <span>{t('feed.verifyNow') || "Xác Thực Ngay"}</span>
+                        </button>
                     </div>
                 ) : isLoggedIn ? (
                     <>

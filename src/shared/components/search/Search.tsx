@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faMagnifyingGlass,
     faXmark,
-    faGamepad,
     faUsers,
     faFileLines,
     faArrowRight,
@@ -113,29 +112,26 @@ export const Search = () => {
     };
 
     return (
-        <div ref={containerRef} className="relative w-full max-w-full md:max-w-md">
+        <div ref={containerRef} className="relative w-full max-w-full">
             {/* Search Input Bar */}
             <div
                 className={`
-                flex flex-row items-center gap-2.5 px-4 py-2 sm:py-2.5
-                w-full
-                bg-surface hover:bg-surface-hover backdrop-blur-md
-                border-2 rounded-full
-                shadow-[0_2px_12px_rgba(0,0,0,0.06)]
-                dark:shadow-[0_2px_14px_rgba(0,0,0,0.28)]
-                transition-all duration-200 cursor-text
+                flex flex-row items-center gap-2.5 px-3.5 h-[38px]
+                w-full bg-[#111315] hover:bg-[#15181C]
+                border rounded-lg text-xs sm:text-sm
+                transition-all duration-150 cursor-text
                 ${
                     focused
-                        ? "border-primary bg-surface shadow-[0_4px_20px_rgba(124,77,255,0.18)]"
-                        : "border-border/60 hover:border-primary/40 dark:hover:border-primary/40"
+                        ? "border-[#1688E8] bg-[#111315]"
+                        : "border-[#202328] hover:border-[#2d3138]"
                 }
             `}
                 onClick={() => inputRef.current?.focus()}
             >
                 <FontAwesomeIcon
                     icon={faMagnifyingGlass}
-                    className={`text-sm shrink-0 transition-colors duration-150 ${
-                        focused ? "text-primary" : "text-text-faint"
+                    className={`text-xs shrink-0 transition-colors duration-150 ${
+                        focused ? "text-[#1688E8]" : "text-[#5F646B]"
                     }`}
                 />
 
@@ -150,12 +146,12 @@ export const Search = () => {
                         setTimeout(() => setFocused(false), 200);
                     }}
                     onKeyDown={handleKeyDown}
-                    placeholder={t("search.placeholder")}
-                    className="w-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint"
+                    placeholder={t("search.placeholder", { defaultValue: "Tìm kiếm game, cộng đồng, bài viết..." })}
+                    className="w-full focus:outline-none bg-transparent text-xs sm:text-sm text-[#E8E9EA] placeholder:text-[#5F646B]"
                 />
 
                 {!focused && !value && (
-                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded-md text-[10px] font-medium text-text-faint border border-border bg-surface-hover">
+                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-[#5F646B] border border-[#202328] bg-[#14171A]">
                         /
                     </kbd>
                 )}
@@ -167,7 +163,7 @@ export const Search = () => {
                             setValue("");
                             inputRef.current?.focus();
                         }}
-                        className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-text-faint hover:text-text hover:bg-surface-hover transition-colors text-xs cursor-pointer"
+                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#5F646B] hover:text-[#E8E9EA] transition-colors text-xs cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faXmark} />
                     </button>
@@ -179,10 +175,9 @@ export const Search = () => {
                 <div
                     onMouseDown={(e) => e.preventDefault()}
                     className="
-                        absolute top-full left-0 mt-2 w-full z-40
-                        bg-surface/95 backdrop-blur-md
-                        border border-border
-                        rounded-2xl overflow-hidden
+                        absolute top-full left-0 mt-1.5 w-full z-40
+                        bg-[#0B0D0F] border border-[#1C1F22]
+                        rounded-xl overflow-hidden
                         shadow-2xl max-h-[75vh] overflow-y-auto animate-scale-up
                     "
                 >
@@ -195,41 +190,6 @@ export const Search = () => {
                                 </div>
                             ) : (
                                 <>
-                                    {/* Games preview */}
-                                    {(searchResults.games || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faGamepad} className="text-primary" />
-                                                <span>Tựa game ({(searchResults.games || []).length})</span>
-                                            </p>
-                                            {searchResults.games.slice(0, 3).map((game) => (
-                                                <button
-                                                    key={game.id}
-                                                    onClick={() => {
-                                                        saveRecentSearch(game.name);
-                                                        setFocused(false);
-                                                        navigate({ to: `/game/${game.slug}` });
-                                                    }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
-                                                >
-                                                    <img
-                                                        src={game.bannerUrl || game.logoUrl}
-                                                        alt={game.name}
-                                                        className="w-8 h-10 rounded-lg object-cover shrink-0"
-                                                    />
-                                                    <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-text truncate">
-                                                            {game.name}
-                                                        </span>
-                                                        <span className="text-[10px] text-text-muted">
-                                                            {Array.isArray(game.genre) ? game.genre.join(", ") : (game.genre || "")} • ★ {game.ratingScore ?? 5}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
                                     {/* Communities preview */}
                                     {(searchResults.communities || []).length > 0 && (
                                         <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
