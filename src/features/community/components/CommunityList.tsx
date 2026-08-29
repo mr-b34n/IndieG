@@ -29,6 +29,7 @@ export const CommunityList = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const isAdmin = user?.role === "admin";
+    const canCreateCommunity = isAdmin;
 
     // 1. TanStack Query for communities
     const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery();

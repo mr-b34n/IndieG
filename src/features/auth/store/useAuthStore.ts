@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             if (savedToken) {
                 let userObj: AuthUser | null = savedUser ? JSON.parse(savedUser) : null;
+                let activeToken: string | null = savedToken;
 
                 // Attempt to fetch fresh profile from backend /profiles/me
                 try {
@@ -53,14 +54,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         };
                         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userObj));
                     }
-                } catch {
-                    // Backend might be offline or using local cached session
+                } catch (err: unknown) {
+                    const status = (err as { status?: number })?.status;
+                    if (status === 401) {
+                        // Stale or expired token in localStorage - clear session
+                        localStorage.removeItem(ACCESS_TOKEN_KEY);
+                        localStorage.removeItem(REFRESH_TOKEN_KEY);
+                        localStorage.removeItem(AUTH_USER_KEY);
+                        localStorage.removeItem("access_token");
+                        userObj = null;
+                        activeToken = null;
+                    }
+                    // If offline or local mock, retain userObj if valid
                 }
 
                 set({
                     user: userObj,
-                    accessToken: savedToken,
-                    refreshToken: savedRefreshToken || null,
+                    accessToken: activeToken,
+                    refreshToken: activeToken ? (savedRefreshToken || null) : null,
                     mockLogin: false,
                     loading: false,
                 });
