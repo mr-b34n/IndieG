@@ -25,6 +25,22 @@ import {
 export * from "./client";
 export * from "./types";
 
+/** Helper to sanitize and clamp limit/page parameters based on OpenAPI schema constraints */
+function sanitizePaginationParams<T extends { page?: number; limit?: number }>(
+    params?: T,
+    maxLimit = 50
+): T | undefined {
+    if (!params) return undefined;
+    const sanitized = { ...params };
+    if (sanitized.limit !== undefined) {
+        sanitized.limit = Math.max(1, Math.min(sanitized.limit, maxLimit));
+    }
+    if (sanitized.page !== undefined) {
+        sanitized.page = Math.max(1, sanitized.page);
+    }
+    return sanitized;
+}
+
 /**
  * 1. Authentication Services (/auth/*)
  */
@@ -112,11 +128,11 @@ export const usersApi = {
  * 3. Profile Services (/profiles/*)
  */
 export const profilesApi = {
-    /** Get all profiles with pagination - GET /profiles?page=...&limit=... */
+    /** Get all profiles with optional pagination - GET /profiles?page=...&limit=... (max limit 75) */
     getAll: (params?: { page?: number; limit?: number }) =>
         apiRequest<UserProfileDto[] | { items: UserProfileDto[]; total?: number }>("/profiles", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 75),
         }),
 
     /** Get current user's profile - GET /profiles/me */
@@ -157,21 +173,29 @@ export const profilesApi = {
  * 4. Community Services (/communities/*)
  */
 export const communitiesApi = {
-    /** Get all communities - GET /communities?page=...&limit=... */
+    /** Get all communities - GET /communities?page=...&limit=... (max limit 50) */
     getAll: (params?: { page?: number; limit?: number }) =>
         apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>("/communities", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 50),
         }),
 
-    /** Create a new community - POST /communities */
+    /** Create a new community - POST /communities (supports query parameters per OpenAPI and body) */
     create: (data: CreateCommunityDto) =>
         apiRequest<CommunityDto>("/communities", {
             method: "POST",
+            params: {
+                name: data.name,
+                logo: data.logo,
+                backdrop: data.backdrop,
+                category: data.category,
+                description: data.description,
+                tags: data.tags,
+            },
             body: data,
         }),
 
-    /** Search communities - GET /communities/search */
+    /** Search communities - GET /communities/search (max limit 50) */
     search: (params?: {
         page?: number;
         limit?: number;
@@ -183,7 +207,7 @@ export const communitiesApi = {
             "/communities/search",
             {
                 method: "GET",
-                params,
+                params: sanitizePaginationParams(params, 50),
             }
         ),
 
@@ -193,10 +217,19 @@ export const communitiesApi = {
             method: "GET",
         }),
 
-    /** Update community - PATCH /communities/{id} */
+    /** Update community - PATCH /communities/{id} (supports query params per OpenAPI and body) */
     update: (id: string, data: UpdateCommunityDto) =>
         apiRequest<CommunityDto>(`/communities/${id}`, {
             method: "PATCH",
+            params: {
+                name: data.name,
+                logo: data.logo,
+                backdrop: data.backdrop,
+                category: data.category,
+                description: data.description,
+                tags: data.tags,
+                featured: data.featured,
+            },
             body: data,
         }),
 
@@ -211,7 +244,7 @@ export const communitiesApi = {
  * 5. Post Services (/posts/*)
  */
 export const postsApi = {
-    /** Get all posts - GET /posts */
+    /** Get all posts - GET /posts (max limit 50) */
     getAll: (params?: {
         authorId?: string;
         communityId?: string;
@@ -223,7 +256,7 @@ export const postsApi = {
     }) =>
         apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 50),
         }),
 
     /** Create a post - POST /posts */
@@ -257,11 +290,11 @@ export const postsApi = {
  * 6. Comment Services (/comments/*)
  */
 export const commentsApi = {
-    /** Get root comments for a post - GET /comments?postId=... */
+    /** Get root comments for a post - GET /comments?postId=... (max limit 50) */
     getRootComments: (params: { postId: string; page?: number; limit?: number }) =>
         apiRequest<CommentEntity[] | { items: CommentEntity[]; total?: number }>("/comments", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 50),
         }),
 
     /** Create a comment - POST /comments */
@@ -290,11 +323,12 @@ export const commentsApi = {
             method: "DELETE",
         }),
 
-    /** Get replies - GET /comments/reply-comments */
+    /** Get replies - GET /comments/reply-comments (max limit 5) */
     getReplyComments: (params: { parentId: string; cursor?: string; limit?: number }) =>
         apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 5),
+            body: params,
         }),
 };
 
@@ -302,7 +336,7 @@ export const commentsApi = {
  * 7. Report Services (/reports/*)
  */
 export const reportsApi = {
-    /** Get all reports - GET /reports */
+    /** Get all reports - GET /reports (max limit 50) */
     getAll: (params?: {
         postId?: string;
         reporterId?: string;
@@ -312,7 +346,7 @@ export const reportsApi = {
     }) =>
         apiRequest<ReportDto[] | { items: ReportDto[]; total?: number }>("/reports", {
             method: "GET",
-            params,
+            params: sanitizePaginationParams(params, 50),
         }),
 
     /** Create a report - POST /reports */
@@ -341,3 +375,4 @@ export const reportsApi = {
             method: "DELETE",
         }),
 };
+

@@ -92,7 +92,7 @@ export function useCreateCommunityMutation() {
 }
 
 // Hooks for Comments
-export function useCommentsQuery(postId: string, page = 1, limit = 20) {
+export function useCommentsQuery(postId: string, page?: number, limit?: number) {
     return useQuery({
         queryKey: QUERY_KEYS.comments(postId),
         queryFn: () => commentsApi.getRootComments({ postId, page, limit }),

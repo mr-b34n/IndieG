@@ -372,6 +372,7 @@ export const CreatePostBox = ({
             // eslint-disable-next-line react-hooks/set-state-in-effect
             if (draft.title) setTitle(draft.title);
             if (draft.content) setContent(draft.content);
+            if (draft.attachments && draft.attachments.length > 0) setAttachments(draft.attachments);
             if (draft.communityId && !defaultCommunityId) setCommunityId(draft.communityId);
             if (draft.isSpoiler !== undefined) setIsSpoiler(draft.isSpoiler);
             hasLoadedDraft.current = true;

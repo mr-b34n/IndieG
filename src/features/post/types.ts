@@ -1,4 +1,5 @@
 import { type UserRank } from "./helpers/userRanks";
+import { type EditableAttachment } from "./helpers/postAttachments";
 
 export interface PostFileAttachment {
     id: string;
@@ -33,6 +34,7 @@ export interface PostDraft {
     id: string;
     title: string;
     content: string;
+    attachments?: EditableAttachment[];
     privacy: "public" | "friends" | "private";
     allowComments: boolean;
     pinned: boolean;

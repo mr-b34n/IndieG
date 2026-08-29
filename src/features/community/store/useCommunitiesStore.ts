@@ -26,7 +26,7 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     fetchCommunities: async () => {
         set({ isLoading: true, error: null });
         try {
-            const res = await communitiesApi.getAll({ page: 1, limit: 100 });
+            const res = await communitiesApi.getAll();
             const list = extractCommunityList(res);
             
             if (Array.isArray(list)) {
