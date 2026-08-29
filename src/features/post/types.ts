@@ -9,27 +9,42 @@ export interface PostFileAttachment {
     mimeType: string;
 }
 
+export interface PostAuthorInfo {
+    id?: string;
+    name?: string;
+    username?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    rank?: UserRank;
+}
+
 export interface PostData {
     id: string | number;
-    author: string;
-    authorAvatar: string;
+    author: string | PostAuthorInfo;
+    authorAvatar?: string;
     authorRank?: UserRank;
     gameTag?: string;
     communityId?: string | number | null;
-    timeAgo: string;
+    communityName?: string;
+    timeAgo?: string;
+    timestamp?: string | number;
     title: string;
     content: string;
     images?: string[];
     files?: PostFileAttachment[];
-    tags: string[];
+    tags?: string[];
+    hashtags?: string[];
     likes: number;
-    comments: number;
+    comments?: number;
+    commentsCount?: number;
     tab?: "foryou" | "following" | "hot";
     privacy: "public" | "friends" | "private";
     pinned?: boolean;
     allowComments?: boolean;
     isSpoiler?: boolean;
 }
+
+export type Post = PostData;
 
 export interface PostDraft {
     id: string;

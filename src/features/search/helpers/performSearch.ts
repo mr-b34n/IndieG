@@ -98,12 +98,14 @@ export function performSearchAPI(
     // 3. Target: Posts
     const matchedPosts = safePosts.filter((post) => {
         if (!post) return false;
+        const authorName = typeof post.author === "string" ? post.author : (post.author?.name || post.author?.username || "");
         const titleMatch = post.title?.toLowerCase().includes(q) ?? false;
         const contentMatch = post.content?.toLowerCase().includes(q) ?? false;
-        const authorMatch = post.author?.name?.toLowerCase().includes(q) ?? false;
+        const authorMatch = authorName.toLowerCase().includes(q);
         const hashtagMatch = post.hashtags?.some((h) => h?.toLowerCase().includes(q)) ?? false;
+        const tagMatch = post.tags?.some((t) => t?.toLowerCase().includes(q)) ?? false;
         const communityMatch = post.communityName?.toLowerCase().includes(q) ?? false;
-        return titleMatch || contentMatch || authorMatch || hashtagMatch || communityMatch;
+        return titleMatch || contentMatch || authorMatch || hashtagMatch || tagMatch || communityMatch;
     });
 
     // 4. Target: Users

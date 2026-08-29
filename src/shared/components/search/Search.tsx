@@ -281,7 +281,7 @@ export const Search = () => {
                                                         {post.title || post.content}
                                                     </span>
                                                     <span className="text-[10px] text-[#979BA2]">
-                                                        Đăng bởi {post.author.name} {post.communityName ? `trong ${post.communityName}` : ""}
+                                                        Đăng bởi {typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || "Vô danh") : (post.author || "Vô danh")} {post.communityName ? `trong ${post.communityName}` : ""}
                                                     </span>
                                                 </button>
                                             ))}

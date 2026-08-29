@@ -623,25 +623,30 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="flex flex-col">
-                                {resPosts.slice(0, activeTab === "all" ? 3 : undefined).map((post, idx, arr) => (
-                                    <div
-                                        key={post.id}
-                                        onClick={() => navigate({ to: "/post/$postId", params: { postId: String(post.id) } })}
-                                        className={`group flex flex-col py-3 px-2 hover:bg-[#121416]/50 transition-all cursor-pointer ${
-                                            idx !== arr.length - 1 ? "border-b border-[#1A1C1F]" : ""
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2.5">
-                                                <img
-                                                    src={post.author.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"}
-                                                    alt={post.author.name}
-                                                    className="w-7 h-7 rounded-full object-cover"
-                                                />
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors">
-                                                        {post.author.name}
-                                                    </span>
+                                {resPosts.slice(0, activeTab === "all" ? 3 : undefined).map((post, idx, arr) => {
+                                    const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
+                                    const authorName = authorObj ? (authorObj.name || authorObj.username || "Vô danh") : (typeof post.author === "string" ? post.author : "Vô danh");
+                                    const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl) : post.authorAvatar;
+
+                                    return (
+                                        <div
+                                            key={post.id}
+                                            onClick={() => navigate({ to: "/post/$postId", params: { postId: String(post.id) } })}
+                                            className={`group flex flex-col py-3 px-2 hover:bg-[#121416]/50 transition-all cursor-pointer ${
+                                                idx !== arr.length - 1 ? "border-b border-[#1A1C1F]" : ""
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2.5">
+                                                    <img
+                                                        src={authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"}
+                                                        alt={authorName}
+                                                        className="w-7 h-7 rounded-full object-cover"
+                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors">
+                                                            {authorName}
+                                                        </span>
                                                     {post.communityName && (
                                                         <>
                                                             <span className="text-[#656A72] text-[10px]">·</span>
@@ -686,7 +691,8 @@ export const SearchResultsPage = () => {
                                             )}
                                         </div>
                                     </div>
-                                ))}
+                                );
+                            })}
                             </div>
 
                             {/* View All posts link (Rule: Only if count > 3 in all mode) */}

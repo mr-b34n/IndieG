@@ -85,10 +85,10 @@ export function useCreatePostMutation() {
 export function useUpdatePostMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: UpdatePostDto }) =>
+        mutationFn: ({ id, data }: { id: string | number; data: UpdatePostDto }) =>
             postsApi.updatePost(id, data),
         onSuccess: (_data, { id }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postById(id) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postById(String(id)) });
             void queryClient.invalidateQueries({ queryKey: ["posts"] });
         },
     });
@@ -97,9 +97,9 @@ export function useUpdatePostMutation() {
 export function useDeletePostMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: string) => postsApi.deletePost(id),
+        mutationFn: (id: string | number) => postsApi.deletePost(id),
         onSuccess: (_data, id) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postById(id) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postById(String(id)) });
             void queryClient.invalidateQueries({ queryKey: ["posts"] });
         },
     });

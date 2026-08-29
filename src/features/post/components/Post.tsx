@@ -50,7 +50,7 @@ export interface PostProps {
         id: string | number,
         data: Partial<PostData>
     ) => void;
-    onUnfollowAuthor?: ((author?: string) => void) | (() => void);
+    onUnfollowAuthor?: (author: string) => void;
     isDetailView?: boolean;
 }
 
@@ -207,6 +207,9 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const postUrl = `${window.location.origin}/post/${post.id}`;
 
+    const authorName = typeof post.author === "string" ? post.author : (post.author?.name || post.author?.username || "Thành viên");
+    const authorAvatar = typeof post.author === "object" && post.author !== null ? (post.author.avatar || post.author.avatarUrl || post.authorAvatar) : post.authorAvatar;
+
     const handleNavigate = () => {
         if (isDetailView) return;
         navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
@@ -214,8 +217,8 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const isMe = post.author === getCurrentAuthor();
-        navigate({ to: "/profile/$userId", params: { userId: isMe ? "me" : `@${post.author.toLowerCase().replace(/\s+/g, "_")}` } });
+        const isMe = authorName === getCurrentAuthor();
+        navigate({ to: "/profile/$userId", params: { userId: isMe ? "me" : `@${authorName.toLowerCase().replace(/\s+/g, "_")}` } });
     };
 
     const handleCopyLink = async (e: React.MouseEvent) => {
@@ -267,7 +270,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     };
 
     const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
-    const rank = post.authorRank ? (RANK_CONFIG[post.authorRank] || getUserRankConfig(post.author)) : getUserRankConfig(post.author);
+    const rank = post.authorRank ? (RANK_CONFIG[post.authorRank] || getUserRankConfig(authorName)) : getUserRankConfig(authorName);
 
     return (
         <article
@@ -283,8 +286,8 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 <div className="flex flex-row items-center gap-2.5 min-w-0">
                     <div className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity" onClick={handleAuthorClick}>
                         <img
-                            src={post.authorAvatar}
-                            alt={post.author}
+                            src={authorAvatar}
+                            alt={authorName}
                             className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
                         />
                         {rank && (
@@ -302,15 +305,15 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                             <span
                                 onClick={handleAuthorClick}
                                 className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${
-                                    (post.author.toLowerCase().includes("admin") || post.author.toLowerCase().includes("quản trị"))
+                                    (authorName.toLowerCase().includes("admin") || authorName.toLowerCase().includes("quản trị"))
                                         ? "text-rose-500 font-extrabold"
                                         : rank?.textColor || "text-text"
                                 }`}
                             >
-                                {post.author}
+                                {authorName}
                             </span>
 
-                            {(post.author.toLowerCase().includes("admin") || post.author.toLowerCase().includes("quản trị")) ? (
+                            {(authorName.toLowerCase().includes("admin") || authorName.toLowerCase().includes("quản trị")) ? (
                                 <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-400/50">
                                     <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
                                     <span>ADMIN</span>
@@ -574,7 +577,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             {showReportModal && (
                 <ReportModal
                     postId={post.id}
-                    author={post.author}
+                    author={authorName}
                     onClose={() => setShowReportModal(false)}
                 />
             )}

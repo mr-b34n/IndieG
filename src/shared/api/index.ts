@@ -267,20 +267,20 @@ export const postsApi = {
         }),
 
     /** Get post by ID - GET /posts/{id} */
-    getPostById: (id: string) =>
+    getPostById: (id: string | number) =>
         apiRequest<PostDto>(`/posts/${id}`, {
             method: "GET",
         }),
 
     /** Update post - PATCH /posts/{id} */
-    updatePost: (id: string, data: UpdatePostDto) =>
+    updatePost: (id: string | number, data: UpdatePostDto) =>
         apiRequest<PostDto>(`/posts/${id}`, {
             method: "PATCH",
             body: data,
         }),
 
     /** Delete post - DELETE /posts/{id} */
-    deletePost: (id: string) =>
+    deletePost: (id: string | number) =>
         apiRequest<{ message?: string }>(`/posts/${id}`, {
             method: "DELETE",
         }),
