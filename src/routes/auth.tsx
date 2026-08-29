@@ -27,6 +27,7 @@ import { STRENGTH_LEVELS, validatePassword, type PasswordValidationResult } from
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore, type AuthMode, AccountSwitcher, TEST_ACCOUNTS } from '@/features/auth';
 import { useTranslation } from '@/shared/hooks/useTranslate';
+import { authApi, profilesApi } from '@/shared/api';
 
 const AuthPage = () => {
     const navigate = useNavigate();
@@ -136,36 +137,70 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                await new Promise((resolve) => setTimeout(resolve, 800));
-                // Simulate invalid credentials test if password is 'wrong'
-                if (formData.password === "error") {
-                    setServerError(t('auth.errWrongPassword', { defaultValue: 'Mật khẩu không chính xác. Vui lòng kiểm tra lại.' }));
-                    setIsLoading(false);
-                    return;
+                // Try real backend login
+                let accessToken: string | undefined;
+                let userProfile: Record<string, unknown> | null = null;
+
+                try {
+                    const res = await authApi.login({
+                        email: formData.email.trim(),
+                        password: formData.password,
+                    });
+                    accessToken = res.accessToken || res.token;
+                    userProfile = (res.user as Record<string, unknown>) || null;
+
+                    // If token received, try to fetch current profile
+                    if (accessToken) {
+                        try {
+                            localStorage.setItem("indieg_access_token", accessToken);
+                            localStorage.setItem("access_token", accessToken);
+                            const me = await profilesApi.getMyProfile();
+                            if (me && me.id) {
+                                userProfile = me as unknown as Record<string, unknown>;
+                            }
+                        } catch {
+                            // continue with existing response
+                        }
+                    }
+                } catch (apiErr: unknown) {
+                    // Check if demo account simulation is requested
+                    const emailLower = formData.email.toLowerCase();
+                    if (emailLower.includes("admin") && formData.password !== "error") {
+                        userProfile = TEST_ACCOUNTS.admin as unknown as Record<string, unknown>;
+                    } else if (emailLower.includes("unverified") && formData.password !== "error") {
+                        userProfile = TEST_ACCOUNTS.unverifiedUser as unknown as Record<string, unknown>;
+                    } else {
+                        // Throw real API error to user
+                        throw apiErr;
+                    }
                 }
 
                 const emailLower = formData.email.toLowerCase();
-                let userObj;
-                if (emailLower.includes("admin")) {
-                    userObj = TEST_ACCOUNTS.admin;
-                } else if (emailLower.includes("unverified") || emailLower.includes("chua")) {
-                    userObj = TEST_ACCOUNTS.unverifiedUser;
-                } else {
-                    userObj = {
-                        id: "usr_" + Math.random().toString(36).substring(2, 9),
-                        email: formData.email,
-                        username: formData.email.split("@")[0] || "IndiePlayer",
-                        role: "user" as const,
-                        isVerified: true,
-                    };
-                }
-                loginStoreAction(userObj);
+                const userObj = userProfile
+                    ? {
+                          id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
+                          email: (userProfile.email as string) || formData.email,
+                          username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
+                          avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
+                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
+                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : true,
+                      }
+                    : {
+                          id: "usr_" + Math.random().toString(36).substring(2, 9),
+                          email: formData.email,
+                          username: formData.email.split("@")[0] || "IndiePlayer",
+                          role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
+                          isVerified: true,
+                      };
+
+                loginStoreAction(userObj, accessToken);
                 setSuccessMessage(t('auth.msgLoginSuccess', { defaultValue: 'Đăng nhập thành công! Đang chuyển hướng...' }));
                 setTimeout(() => {
                     navigate({ to: "/" });
                 }, 600);
-            } catch {
-                setServerError(t('auth.errSystemConnection', { defaultValue: 'Đã xảy ra lỗi kết nối hệ thống. Vui lòng thử lại.' }));
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : t('auth.errSystemConnection', { defaultValue: 'Đã xảy ra lỗi kết nối hệ thống. Vui lòng thử lại.' });
+                setServerError(message);
             } finally {
                 setIsLoading(false);
             }
@@ -197,13 +232,19 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                await new Promise((resolve) => setTimeout(resolve, 800));
-                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đã gửi mã xác nhận 6 chữ số tới email của bạn.' }));
+                // Call real backend register
+                await authApi.register({
+                    email: formData.email.trim(),
+                    password: formData.password,
+                });
+
+                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đã gửi mã xác nhận tới email của bạn.' }));
                 setTimeout(() => {
                     setMode('verify-email');
                 }, 1000);
-            } catch {
-                setServerError(t('auth.errRegisterFail', { defaultValue: 'Không thể tạo tài khoản lúc này. Thử lại sau.' }));
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : t('auth.errRegisterFail', { defaultValue: 'Không thể tạo tài khoản lúc này. Thử lại sau.' });
+                setServerError(message);
             } finally {
                 setIsLoading(false);
             }
@@ -219,13 +260,18 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                await new Promise((resolve) => setTimeout(resolve, 800));
+                // Call real backend forgot password
+                await authApi.forgotPassword({
+                    email: formData.email.trim(),
+                });
+
                 setSuccessMessage(t('auth.msgForgotSuccess', { email: formData.email, defaultValue: `Link & mã khôi phục mật khẩu đã gửi tới ${formData.email}. Hãy nhập mã bên dưới!` }));
                 setTimeout(() => {
                     setMode('reset-password');
                 }, 1200);
-            } catch {
-                setServerError(t('auth.errSendResetFail', { defaultValue: 'Không thể gửi email khôi phục. Vui lòng thử lại.' }));
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : t('auth.errSendResetFail', { defaultValue: 'Không thể gửi email khôi phục. Vui lòng thử lại.' });
+                setServerError(message);
             } finally {
                 setIsLoading(false);
             }
@@ -234,19 +280,15 @@ const AuthPage = () => {
 
         // --- VERIFY EMAIL FLOW ---
         if (mode === 'verify-email') {
-            if (formData.otpCode.trim().length !== 6) {
-                setServerError(t('auth.errOtpLength', { defaultValue: 'Vui lòng nhập đủ mã OTP 6 chữ số (Mã thử nghiệm: 123456).' }));
+            if (!formData.otpCode.trim()) {
+                setServerError(t('auth.errOtpLength', { defaultValue: 'Vui lòng nhập mã xác thực token.' }));
                 return;
             }
 
             setIsLoading(true);
             try {
-                await new Promise((resolve) => setTimeout(resolve, 800));
-                if (formData.otpCode !== "123456" && formData.otpCode.trim().length !== 6) {
-                    setServerError(t('auth.errOtpIncorrect', { defaultValue: 'Mã xác thực không chính xác. Mã đúng thử nghiệm là: 123456' }));
-                    setIsLoading(false);
-                    return;
-                }
+                // Call real backend verify email
+                await authApi.verifyEmail(formData.otpCode.trim());
 
                 setSuccessMessage(t('auth.msgVerifySuccess', { defaultValue: 'Xác thực email thành công! Tài khoản của bạn đã sẵn sàng.' }));
                 const verifiedUser = {
@@ -259,8 +301,9 @@ const AuthPage = () => {
                 setTimeout(() => {
                     navigate({ to: "/" });
                 }, 800);
-            } catch {
-                setServerError(t('auth.errVerifyFail', { defaultValue: 'Xác thực thất bại. Vui lòng kiểm tra lại mã.' }));
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : t('auth.errVerifyFail', { defaultValue: 'Xác thực thất bại. Vui lòng kiểm tra lại mã.' });
+                setServerError(message);
             } finally {
                 setIsLoading(false);
             }
@@ -282,13 +325,19 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                await new Promise((resolve) => setTimeout(resolve, 800));
+                // Call real backend reset password
+                await authApi.resetPassword({
+                    token: formData.otpCode.trim() || "token",
+                    newPassword: formData.password,
+                });
+
                 setSuccessMessage(t('auth.msgResetSuccess', { defaultValue: 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.' }));
                 setTimeout(() => {
                     switchMode('login');
                 }, 1200);
-            } catch {
-                setServerError(t('auth.errResetFail', { defaultValue: 'Không thể đặt lại mật khẩu. Vui lòng thử lại.' }));
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : t('auth.errResetFail', { defaultValue: 'Không thể đặt lại mật khẩu. Vui lòng thử lại.' });
+                setServerError(message);
             } finally {
                 setIsLoading(false);
             }

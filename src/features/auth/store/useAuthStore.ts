@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { type AuthState, type AuthUser } from "../types";
+import { authApi, profilesApi, usersApi } from "@/shared/api";
 
 export * from "../types";
 
@@ -26,18 +27,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ customAvatar: avatar });
     },
 
-    initializeAuth: () => {
+    initializeAuth: async () => {
         if (typeof window === "undefined") return;
 
         try {
-            const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+            const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
             const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
             const savedUser = localStorage.getItem(AUTH_USER_KEY);
 
-            if (savedUser && savedToken) {
-                const parsedUser: AuthUser = JSON.parse(savedUser);
+            if (savedToken) {
+                let userObj: AuthUser | null = savedUser ? JSON.parse(savedUser) : null;
+
+                // Attempt to fetch fresh profile from backend /profiles/me
+                try {
+                    const profile = await profilesApi.getMyProfile();
+                    if (profile && profile.id) {
+                        userObj = {
+                            id: profile.id,
+                            email: userObj?.email || `${profile.username || "user"}@indieg.com`,
+                            username: profile.username || userObj?.username || "Gamer",
+                            avatar_url: profile.avatarUrl || userObj?.avatar_url,
+                            role: (userObj?.role as 'admin' | 'moderator' | 'user') || (profile.username?.toLowerCase().includes("admin") ? "admin" : "user"),
+                            isVerified: true,
+                            createdAt: profile.createdAt,
+                        };
+                        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userObj));
+                    }
+                } catch {
+                    // Backend might be offline or using local cached session
+                }
+
                 set({
-                    user: parsedUser,
+                    user: userObj,
                     accessToken: savedToken,
                     refreshToken: savedRefreshToken || null,
                     mockLogin: false,
@@ -52,28 +73,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => {
-        const token = accessToken || "access_token_" + Math.random().toString(36).substring(2);
-        const refToken = refreshToken || "refresh_token_" + Math.random().toString(36).substring(2);
+        const token = accessToken || "token_" + Math.random().toString(36).substring(2);
+        const refToken = refreshToken || "ref_" + Math.random().toString(36).substring(2);
 
         if (typeof window !== "undefined") {
             localStorage.setItem(ACCESS_TOKEN_KEY, token);
-            localStorage.setItem(REFRESH_TOKEN_KEY, refToken);
+            localStorage.setItem("access_token", token);
+            if (refreshToken) {
+                localStorage.setItem(REFRESH_TOKEN_KEY, refToken);
+            }
             localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData));
-            localStorage.setItem("indieg_mock_login", "true");
         }
 
         set({
             user: userData,
             accessToken: token,
             refreshToken: refToken,
-            mockLogin: true,
+            mockLogin: !accessToken,
             loading: false,
         });
     },
 
     logout: () => {
+        void authApi.logout().catch(() => {});
+
         if (typeof window !== "undefined") {
             localStorage.removeItem(ACCESS_TOKEN_KEY);
+            localStorage.removeItem("access_token");
             localStorage.removeItem(REFRESH_TOKEN_KEY);
             localStorage.removeItem(AUTH_USER_KEY);
             localStorage.removeItem("indieg_mock_login");
@@ -89,23 +115,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     refreshTokens: async () => {
-        const { refreshToken } = get();
-        if (!refreshToken) return false;
-
-        const newAccessToken = "refreshed_access_token_" + Date.now();
-        const newRefreshToken = "refreshed_refresh_token_" + Date.now();
-
-        if (typeof window !== "undefined") {
-            localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-            localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+        try {
+            const res = await authApi.refresh();
+            if (res && (res.accessToken || res.token)) {
+                const newToken = res.accessToken || res.token || "";
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
+                    localStorage.setItem("access_token", newToken);
+                }
+                set({ accessToken: newToken });
+                return true;
+            }
+        } catch {
+            // Refresh failed
         }
-
-        set({
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-        });
-
-        return true;
+        return false;
     },
 
     toggleMockLogin: () => {
@@ -117,7 +141,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 username: "IndieGamer",
                 avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                 isVerified: true,
-                role: 'admin',
+                role: "admin",
             };
             get().login(demoUser);
         } else {
@@ -143,8 +167,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             return false;
         }
         if (user.isVerified === false || !user.isVerified) {
-            const msg = actionName 
-                ? `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để ${actionName}.` 
+            const msg = actionName
+                ? `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để ${actionName}.`
                 : `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để thực hiện thao tác này.`;
             get().openVerifyModal(msg);
             return false;
@@ -163,9 +187,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    verifyEmail: async (codeOrToken: string) => {
-        await new Promise((r) => setTimeout(r, 600));
-        if (codeOrToken && codeOrToken.trim().length > 0) {
+    verifyEmail: async (token: string) => {
+        try {
+            await authApi.verifyEmail(token);
             const { user } = get();
             if (user) {
                 const updatedUser = { ...user, isVerified: true };
@@ -173,34 +197,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
             set({ isVerifyModalOpen: false, verifyModalMessage: null });
             return { success: true };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Xác thực email thất bại.";
+            return { success: false, error: message };
         }
-        return { success: false, error: "Mã/Token xác thực không hợp lệ hoặc đã hết hạn." };
     },
 
     forgotPassword: async (email: string) => {
-        await new Promise((r) => setTimeout(r, 600));
-        if (!email.includes("@")) {
-            return { success: false, error: "Địa chỉ email không hợp lệ." };
+        try {
+            await authApi.forgotPassword({ email });
+            return { success: true };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Không thể gửi yêu cầu đặt lại mật khẩu.";
+            return { success: false, error: message };
         }
-        return { success: true };
     },
 
     resetPassword: async (password: string) => {
-        await new Promise((r) => setTimeout(r, 600));
-        if (password.length < 8) {
-            return { success: false, error: "Mật khẩu phải chứa ít nhất 8 ký tự." };
+        try {
+            // Note: in OpenAPI spec resetPassword requires token & newPassword
+            const token = new URLSearchParams(window.location.search).get("token") || "reset-token";
+            await authApi.resetPassword({ token, newPassword: password });
+            return { success: true };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Không thể đặt lại mật khẩu.";
+            return { success: false, error: message };
         }
-        return { success: true };
     },
 
     changePassword: async (currentPassword: string, newPassword: string) => {
-        await new Promise((r) => setTimeout(r, 600));
-        if (!currentPassword) {
-            return { success: false, error: "Vui lòng nhập mật khẩu hiện tại." };
+        try {
+            await usersApi.changePassword({ oldPassword: currentPassword, newPassword });
+            return { success: true };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Không thể đổi mật khẩu.";
+            return { success: false, error: message };
         }
-        if (newPassword.length < 8) {
-            return { success: false, error: "Mật khẩu mới phải có ít nhất 8 ký tự." };
-        }
-        return { success: true };
     },
 }));

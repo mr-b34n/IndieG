@@ -1,148 +1,358 @@
 import { apiRequest } from "./client";
+import {
+    type AuthRegisterDto,
+    type AuthLoginDto,
+    type AuthForgotPasswordDto,
+    type AuthResetPasswordDto,
+    type AuthResendVerificationDto,
+    type AuthLoginResponse,
+    type UserProfileDto,
+    type UpdateProfileDto,
+    type UserSessionDto,
+    type ChangePasswordDto,
+    type CommunityDto,
+    type CreateCommunityDto,
+    type UpdateCommunityDto,
+    type PostDto,
+    type CreatePostDto,
+    type UpdatePostDto,
+    type CommentEntity,
+    type CreateCommentDto,
+    type ReportDto,
+    type CreateReportDto,
+} from "./types";
 
+export * from "./client";
+export * from "./types";
+
+/**
+ * 1. Authentication Services (/auth/*)
+ */
 export const authApi = {
-    register: (data: { email: string; password: string }) =>
-        apiRequest("/auth/register", { method: "POST", body: JSON.stringify(data) }),
-    
+    /** Register a new account - POST /auth/register */
+    register: (data: AuthRegisterDto) =>
+        apiRequest<{ message?: string }>("/auth/register", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Verify email by token - GET /auth/verify-email?token=... */
     verifyEmail: (token: string) =>
-        apiRequest(`/auth/verify-email?token=${encodeURIComponent(token)}`, { method: "GET" }),
-    
-    login: (data: { email: string; password: string }) =>
-        apiRequest("/auth/login", { method: "POST", body: JSON.stringify(data) }),
-    
-    forgotPassword: (data: { email: string }) =>
-        apiRequest("/auth/forgot-password", { method: "POST", body: JSON.stringify(data) }),
-    
-    resetPassword: (data: { token: string; newPassword: string }) =>
-        apiRequest("/auth/reset-password", { method: "POST", body: JSON.stringify(data) }),
-    
+        apiRequest<{ message?: string; success?: boolean }>("/auth/verify-email", {
+            method: "GET",
+            params: { token },
+        }),
+
+    /** Log in and receive access token - POST /auth/login */
+    login: (data: AuthLoginDto) =>
+        apiRequest<AuthLoginResponse>("/auth/login", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Request a password reset email - POST /auth/forgot-password */
+    forgotPassword: (data: AuthForgotPasswordDto) =>
+        apiRequest<{ message?: string }>("/auth/forgot-password", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Reset password with recovery token - POST /auth/reset-password */
+    resetPassword: (data: AuthResetPasswordDto) =>
+        apiRequest<{ message?: string }>("/auth/reset-password", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Refresh access token using refresh cookie - POST /auth/refresh */
     refresh: () =>
-        apiRequest("/auth/refresh", { method: "POST" }),
-    
-    resendVerification: (data: { email: string }) =>
-        apiRequest("/auth/resend-verification", { method: "POST", body: JSON.stringify(data) }),
-    
+        apiRequest<{ accessToken?: string; token?: string }>("/auth/refresh", {
+            method: "POST",
+        }),
+
+    /** Resend verification email - POST /auth/resend-verification */
+    resendVerification: (data: AuthResendVerificationDto) =>
+        apiRequest<{ message?: string }>("/auth/resend-verification", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Log out and revoke sessions - POST /auth/logout */
     logout: () =>
-        apiRequest("/auth/logout", { method: "POST" }),
+        apiRequest<{ message?: string }>("/auth/logout", {
+            method: "POST",
+        }),
 };
 
+/**
+ * 2. User & Session Services (/users/*)
+ */
 export const usersApi = {
+    /** Get all users - GET /users */
     getAll: () =>
-        apiRequest("/users", { method: "GET" }),
-    
-    changePassword: (data: { oldPassword: string; newPassword: string }) =>
-        apiRequest("/users/change-password", { method: "PATCH", body: JSON.stringify(data) }),
-    
+        apiRequest<UserProfileDto[]>("/users", {
+            method: "GET",
+        }),
+
+    /** Change account password - PATCH /users/change-password */
+    changePassword: (data: ChangePasswordDto) =>
+        apiRequest<{ message?: string }>("/users/change-password", {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Get active sessions - GET /users/sessions */
     getSessions: () =>
-        apiRequest("/users/sessions", { method: "GET" }),
+        apiRequest<UserSessionDto[]>("/users/sessions", {
+            method: "GET",
+        }),
 };
 
+/**
+ * 3. Profile Services (/profiles/*)
+ */
 export const profilesApi = {
-    getAll: (params?: { page?: number; limit?: number }) => {
-        const query = params ? new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString() : "";
-        return apiRequest(`/profiles${query ? `?${query}` : ""}`, { method: "GET" });
-    },
+    /** Get all profiles with pagination - GET /profiles?page=...&limit=... */
+    getAll: (params?: { page?: number; limit?: number }) =>
+        apiRequest<UserProfileDto[] | { items: UserProfileDto[]; total?: number }>("/profiles", {
+            method: "GET",
+            params,
+        }),
 
+    /** Get current user's profile - GET /profiles/me */
     getMyProfile: () =>
-        apiRequest("/profiles/me", { method: "GET" }),
+        apiRequest<UserProfileDto>("/profiles/me", {
+            method: "GET",
+        }),
 
-    updateMyProfile: (data: { username?: string; name?: string; bio?: string; avatarUrl?: string; coverUrl?: string }) =>
-        apiRequest("/profiles/me", { method: "PATCH", body: JSON.stringify(data) }),
+    /** Update current user's profile - PATCH /profiles/me */
+    updateMyProfile: (data: UpdateProfileDto) =>
+        apiRequest<UserProfileDto>("/profiles/me", {
+            method: "PATCH",
+            body: data,
+        }),
 
-    getUserByUsername: (username: string) =>
-        apiRequest(`/profiles/@${encodeURIComponent(username)}`, { method: "GET" }),
+    /** Get user profile by username - GET /profiles/@{username} */
+    getUserByUsername: (username: string) => {
+        const cleanName = username.replace(/^@/, "");
+        return apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
+            method: "GET",
+        });
+    },
 
+    /** Toggle archived status - PATCH /profiles/archived */
     toggleArchived: () =>
-        apiRequest("/profiles/archived", { method: "PATCH" }),
+        apiRequest<{ message?: string; archived?: boolean }>("/profiles/archived", {
+            method: "PATCH",
+        }),
 
+    /** Delete user by ID - DELETE /profiles/{id} */
     deleteUser: (id: string) =>
-        apiRequest(`/profiles/${id}`, { method: "DELETE" }),
+        apiRequest<{ message?: string }>(`/profiles/${id}`, {
+            method: "DELETE",
+        }),
 };
 
+/**
+ * 4. Community Services (/communities/*)
+ */
 export const communitiesApi = {
-    getAll: (params?: { page?: number; limit?: number }) => {
-        const query = params ? new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString() : "";
-        return apiRequest(`/communities${query ? `?${query}` : ""}`, { method: "GET" });
-    },
+    /** Get all communities - GET /communities?page=...&limit=... */
+    getAll: (params?: { page?: number; limit?: number }) =>
+        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>("/communities", {
+            method: "GET",
+            params,
+        }),
 
-    create: (params: { name: string; logo?: string; backdrop?: string; category?: string; description?: string; tags?: string[] }) => {
-        const query = new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString();
-        return apiRequest(`/communities?${query}`, { method: "POST" });
-    },
+    /** Create a new community - POST /communities */
+    create: (params: CreateCommunityDto) =>
+        apiRequest<CommunityDto>("/communities", {
+            method: "POST",
+            params: {
+                name: params.name,
+                logo: params.logo,
+                backdrop: params.backdrop,
+                category: params.category,
+                description: params.description,
+                tags: params.tags,
+            },
+        }),
 
-    search: (params?: { page?: number; limit?: number; search?: string; category?: string; featured?: boolean }) => {
-        const query = params ? new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString() : "";
-        return apiRequest(`/communities/search${query ? `?${query}` : ""}`, { method: "GET" });
-    },
+    /** Search communities - GET /communities/search */
+    search: (params?: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        category?: string;
+        featured?: boolean;
+    }) =>
+        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>(
+            "/communities/search",
+            {
+                method: "GET",
+                params,
+            }
+        ),
 
+    /** Get community by ID - GET /communities/{id} */
     getById: (id: string) =>
-        apiRequest(`/communities/${id}`, { method: "GET" }),
+        apiRequest<CommunityDto>(`/communities/${id}`, {
+            method: "GET",
+        }),
 
-    update: (id: string, params: { name?: string; logo?: string; backdrop?: string; category?: string; description?: string; tags?: string[]; featured?: boolean }) => {
-        const query = new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString();
-        return apiRequest(`/communities/${id}?${query}`, { method: "PATCH" });
-    },
+    /** Update community - PATCH /communities/{id} */
+    update: (id: string, params: UpdateCommunityDto) =>
+        apiRequest<CommunityDto>(`/communities/${id}`, {
+            method: "PATCH",
+            params: {
+                name: params.name,
+                logo: params.logo,
+                backdrop: params.backdrop,
+                category: params.category,
+                description: params.description,
+                tags: params.tags,
+                featured: params.featured,
+            },
+        }),
 
+    /** Delete community - DELETE /communities/{id} */
     delete: (id: string) =>
-        apiRequest(`/communities/${id}`, { method: "DELETE" }),
+        apiRequest<{ message?: string }>(`/communities/${id}`, {
+            method: "DELETE",
+        }),
 };
 
+/**
+ * 5. Post Services (/posts/*)
+ */
 export const postsApi = {
-    getAll: (params?: { authorId?: string; communityId?: string; title?: string; content?: string; tags?: string[]; page?: number; limit?: number }) => {
-        const query = params ? new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString() : "";
-        return apiRequest(`/posts${query ? `?${query}` : ""}`, { method: "GET" });
-    },
+    /** Get all posts - GET /posts */
+    getAll: (params?: {
+        authorId?: string;
+        communityId?: string;
+        title?: string;
+        content?: string;
+        tags?: string[];
+        page?: number;
+        limit?: number;
+    }) =>
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts", {
+            method: "GET",
+            params,
+        }),
 
-    createPost: (data: { communityId: string; title?: string; content: string; images?: string[]; tags?: string[]; gameTag?: string; pinned?: boolean; allowComments?: boolean }) =>
-        apiRequest("/posts", { method: "POST", body: JSON.stringify(data) }),
+    /** Create a post - POST /posts */
+    createPost: (data: CreatePostDto) =>
+        apiRequest<PostDto>("/posts", {
+            method: "POST",
+            body: data,
+        }),
 
+    /** Get post by ID - GET /posts/{id} */
     getPostById: (id: string) =>
-        apiRequest(`/posts/${id}`, { method: "GET" }),
+        apiRequest<PostDto>(`/posts/${id}`, {
+            method: "GET",
+        }),
 
-    updatePost: (id: string, data: { title?: string; content?: string; images?: string[]; tags?: string[]; gameTag?: string; pinned?: boolean; allowComments?: boolean; locked?: boolean }) =>
-        apiRequest(`/posts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    /** Update post - PATCH /posts/{id} */
+    updatePost: (id: string, data: UpdatePostDto) =>
+        apiRequest<PostDto>(`/posts/${id}`, {
+            method: "PATCH",
+            body: data,
+        }),
 
+    /** Delete post - DELETE /posts/{id} */
     deletePost: (id: string) =>
-        apiRequest(`/posts/${id}`, { method: "DELETE" }),
+        apiRequest<{ message?: string }>(`/posts/${id}`, {
+            method: "DELETE",
+        }),
 };
 
+/**
+ * 6. Comment Services (/comments/*)
+ */
 export const commentsApi = {
-    getRootComments: (params: { postId: string; page?: number; limit?: number }) => {
-        const query = new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString();
-        return apiRequest(`/comments?${query}`, { method: "GET" });
-    },
+    /** Get root comments for a post - GET /comments?postId=... */
+    getRootComments: (params: { postId: string; page?: number; limit?: number }) =>
+        apiRequest<CommentEntity[] | { items: CommentEntity[]; total?: number }>("/comments", {
+            method: "GET",
+            params,
+        }),
 
-    create: (data: { postId: string; parentId?: string; content: string }) =>
-        apiRequest("/comments", { method: "POST", body: JSON.stringify(data) }),
+    /** Create a comment - POST /comments */
+    create: (data: CreateCommentDto) =>
+        apiRequest<CommentEntity>("/comments", {
+            method: "POST",
+            body: data,
+        }),
 
+    /** Get comment by ID - GET /comments/{id} */
     getOne: (id: string) =>
-        apiRequest(`/comments/${id}`, { method: "GET" }),
+        apiRequest<CommentEntity>(`/comments/${id}`, {
+            method: "GET",
+        }),
 
+    /** Update comment - PATCH /comments/{id}?content=... */
     update: (id: string, content: string) =>
-        apiRequest(`/comments/${id}?content=${encodeURIComponent(content)}`, { method: "PATCH" }),
+        apiRequest<CommentEntity>(`/comments/${id}`, {
+            method: "PATCH",
+            params: { content },
+        }),
 
+    /** Delete comment - DELETE /comments/{id} */
     delete: (id: string) =>
-        apiRequest(`/comments/${id}`, { method: "DELETE" }),
+        apiRequest<{ message?: string }>(`/comments/${id}`, {
+            method: "DELETE",
+        }),
 
-    getReplyComments: (data: { parentId: string; cursor?: string; limit?: number }) =>
-        apiRequest("/comments/reply-comments", { method: "POST", body: JSON.stringify(data) }),
+    /** Get replies - GET /comments/reply-comments */
+    getReplyComments: (params: { parentId: string; cursor?: string; limit?: number }) =>
+        apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
+            method: "GET",
+            params,
+        }),
 };
 
+/**
+ * 7. Report Services (/reports/*)
+ */
 export const reportsApi = {
-    getAll: (params?: { postId?: string; reporterId?: string; reason?: string; page?: number; limit?: number }) => {
-        const query = params ? new URLSearchParams(params as Record<string, unknown> as Record<string, string>).toString() : "";
-        return apiRequest(`/reports${query ? `?${query}` : ""}`, { method: "GET" });
-    },
+    /** Get all reports - GET /reports */
+    getAll: (params?: {
+        postId?: string;
+        reporterId?: string;
+        reason?: string;
+        page?: number;
+        limit?: number;
+    }) =>
+        apiRequest<ReportDto[] | { items: ReportDto[]; total?: number }>("/reports", {
+            method: "GET",
+            params,
+        }),
 
-    create: (data: { postId: string; reason: string }) =>
-        apiRequest("/reports", { method: "POST", body: JSON.stringify(data) }),
+    /** Create a report - POST /reports */
+    create: (data: CreateReportDto) =>
+        apiRequest<ReportDto>("/reports", {
+            method: "POST",
+            body: data,
+        }),
 
+    /** Get report by ID - GET /reports/{id} */
     getOne: (id: string) =>
-        apiRequest(`/reports/${id}`, { method: "GET" }),
+        apiRequest<ReportDto>(`/reports/${id}`, {
+            method: "GET",
+        }),
 
+    /** Update report reason - PATCH /reports/{id} */
     update: (id: string, reason: string) =>
-        apiRequest(`/reports/${id}`, { method: "PATCH", body: JSON.stringify({ reason }) }),
+        apiRequest<ReportDto>(`/reports/${id}`, {
+            method: "PATCH",
+            body: { reason },
+        }),
 
+    /** Delete report - DELETE /reports/{id} */
     delete: (id: string) =>
-        apiRequest(`/reports/${id}`, { method: "DELETE" }),
+        apiRequest<{ message?: string }>(`/reports/${id}`, {
+            method: "DELETE",
+        }),
 };
