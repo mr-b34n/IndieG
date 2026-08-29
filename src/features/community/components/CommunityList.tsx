@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGamepad } from "@fortawesome/free-solid-svg-icons";
+import { faGamepad, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityTabKey } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -18,6 +18,8 @@ export const CommunityList = () => {
     const canCreateCommunity = isAdmin;
 
     const communities = useCommunitiesStore((state) => state.communities);
+    const isLoading = useCommunitiesStore((state) => state.isLoading);
+    const fetchCommunities = useCommunitiesStore((state) => state.fetchCommunities);
     
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -25,6 +27,10 @@ export const CommunityList = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 6;
+
+    useEffect(() => {
+        void fetchCommunities();
+    }, [fetchCommunities]);
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
@@ -117,7 +123,12 @@ export const CommunityList = () => {
             />
 
             {/* 3. Community Directory 3-Column Grid */}
-            {filtered.length > 0 ? (
+            {isLoading && communities.length === 0 ? (
+                <div className="w-full flex flex-col items-center justify-center gap-3 py-20 px-4 bg-surface border border-divider-primary rounded-[6px] text-text-muted text-sm text-center">
+                    <FontAwesomeIcon icon={faSpinner} className="text-2xl text-primary animate-spin" />
+                    <p className="text-xs font-semibold text-text-muted">Đang tải danh sách cộng đồng...</p>
+                </div>
+            ) : filtered.length > 0 ? (
                 <div className="flex flex-col gap-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {paginatedCommunities.map((community) => (

@@ -165,17 +165,10 @@ export const communitiesApi = {
         }),
 
     /** Create a new community - POST /communities */
-    create: (params: CreateCommunityDto) =>
+    create: (data: CreateCommunityDto) =>
         apiRequest<CommunityDto>("/communities", {
             method: "POST",
-            params: {
-                name: params.name,
-                logo: params.logo,
-                backdrop: params.backdrop,
-                category: params.category,
-                description: params.description,
-                tags: params.tags,
-            },
+            body: data,
         }),
 
     /** Search communities - GET /communities/search */
@@ -186,7 +179,7 @@ export const communitiesApi = {
         category?: string;
         featured?: boolean;
     }) =>
-        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>(
+        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number; data?: CommunityDto[] }>(
             "/communities/search",
             {
                 method: "GET",
@@ -201,18 +194,10 @@ export const communitiesApi = {
         }),
 
     /** Update community - PATCH /communities/{id} */
-    update: (id: string, params: UpdateCommunityDto) =>
+    update: (id: string, data: UpdateCommunityDto) =>
         apiRequest<CommunityDto>(`/communities/${id}`, {
             method: "PATCH",
-            params: {
-                name: params.name,
-                logo: params.logo,
-                backdrop: params.backdrop,
-                category: params.category,
-                description: params.description,
-                tags: params.tags,
-                featured: params.featured,
-            },
+            body: data,
         }),
 
     /** Delete community - DELETE /communities/{id} */

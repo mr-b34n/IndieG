@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useTranslation } from '@/shared/hooks/useTranslate'
 import { UnverifiedBanner } from '@/features/auth'
+import { useCommunitiesStore } from '@/features/community'
 
 const scrollPositions = new Map<string, number>()
 
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/_layout')({
 
 function MainLayout() {
     const { t } = useTranslation()
+    const fetchCommunities = useCommunitiesStore((state) => state.fetchCommunities)
     // 1. Lấy thông tin route hiện tại
     const { pathname } = useLocation()
     
@@ -30,6 +32,10 @@ function MainLayout() {
     const closeRight = useSidebarStore((state) => state.closeRight)
 
     const pathnameRef = useRef(pathname)
+
+    useEffect(() => {
+        void fetchCommunities();
+    }, [fetchCommunities]);
 
     // 3. Mỗi khi chuyển trang (pathname thay đổi), cuộn container về top và đóng sidebar, hoặc restore scroll
     useEffect(() => {

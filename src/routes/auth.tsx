@@ -14,7 +14,6 @@ import {
     faRightToBracket,
     faUserPlus,
     faEnvelope,
-    faUser,
     faKey,
     faExclamationTriangle,
     faPaperPlane,
@@ -209,10 +208,6 @@ const AuthPage = () => {
 
         // --- REGISTER FLOW ---
         if (mode === 'register') {
-            if (!formData.username.trim()) {
-                setServerError(t('auth.errRequireUsername', { defaultValue: 'Vui lòng nhập tên người dùng.' }));
-                return;
-            }
             if (!formData.email.includes("@")) {
                 setServerError(t('auth.errInvalidEmail', { defaultValue: 'Địa chỉ email không hợp lệ.' }));
                 return;
@@ -238,10 +233,57 @@ const AuthPage = () => {
                     password: formData.password,
                 });
 
-                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đã gửi mã xác nhận tới email của bạn.' }));
+                // Auto login immediately after register
+                let accessToken: string | undefined;
+                let userProfile: Record<string, unknown> | null = null;
+
+                try {
+                    const loginRes = await authApi.login({
+                        email: formData.email.trim(),
+                        password: formData.password,
+                    });
+                    accessToken = loginRes.accessToken || loginRes.token;
+                    userProfile = (loginRes.user as Record<string, unknown>) || null;
+
+                    if (accessToken) {
+                        try {
+                            localStorage.setItem("indieg_access_token", accessToken);
+                            localStorage.setItem("access_token", accessToken);
+                            const me = await profilesApi.getMyProfile();
+                            if (me && me.id) {
+                                userProfile = me as unknown as Record<string, unknown>;
+                            }
+                        } catch {
+                            // continue with existing response
+                        }
+                    }
+                } catch {
+                    // Fallback to local session
+                }
+
+                const emailLower = formData.email.toLowerCase();
+                const userObj = userProfile
+                    ? {
+                          id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
+                          email: (userProfile.email as string) || formData.email,
+                          username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
+                          avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
+                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
+                          isVerified: true,
+                      }
+                    : {
+                          id: "usr_" + Math.random().toString(36).substring(2, 9),
+                          email: formData.email,
+                          username: formData.email.split("@")[0] || "IndiePlayer",
+                          role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
+                          isVerified: true,
+                      };
+
+                loginStoreAction(userObj, accessToken);
+                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đang chuyển hướng đến trang chủ...' }));
                 setTimeout(() => {
-                    setMode('verify-email');
-                }, 1000);
+                    navigate({ to: "/" });
+                }, 600);
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : t('auth.errRegisterFail', { defaultValue: 'Không thể tạo tài khoản lúc này. Thử lại sau.' });
                 setServerError(message);
@@ -531,28 +573,6 @@ const AuthPage = () => {
 
                             {/* Main Form */}
                             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                                
-                                {/* Username (Register) */}
-                                {mode === 'register' && (
-                                    <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="username" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                                            <FontAwesomeIcon icon={faUser} className="text-primary text-xs" />
-                                            <span>{t('auth.usernameLabel', { defaultValue: 'Tên người dùng (Username)' })}</span>
-                                        </label>
-                                        <div className="flex items-center w-full rounded-2xl h-11 border border-border bg-bg/60 px-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                            <input
-                                                id="username"
-                                                type="text"
-                                                value={formData.username}
-                                                onChange={handleInputChange}
-                                                placeholder={t('auth.usernamePlaceholder', { defaultValue: 'VD: ProGamer99' })}
-                                                disabled={isLoading}
-                                                className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                )}
 
                                 {/* Email Address (Login, Register, Forgot Password) */}
                                 {(mode === 'login' || mode === 'register' || mode === 'forgot-password') && (

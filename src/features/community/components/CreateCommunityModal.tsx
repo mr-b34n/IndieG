@@ -31,6 +31,7 @@ interface CreateCommunityModalProps {
 export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onClose }) => {
     const navigate = useNavigate();
     const addCommunity = useCommunitiesStore((state) => state.addCommunity);
+    const createCommunity = useCommunitiesStore((state) => state.createCommunity);
     const user = useAuthStore((state) => state.user);
 
     const [name, setName] = useState("");
@@ -55,7 +56,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         return null;
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name.trim()) return;
 
@@ -64,7 +65,6 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         const displayName = user?.user_metadata?.full_name || user?.username || authorUsername;
         const avatar = customAvatar || user?.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${authorUsername}`;
 
-        const newId = `comm_${Date.now()}`;
         const tags = tagsInput
             .split(",")
             .map((t) => t.trim().toLowerCase())
@@ -74,35 +74,50 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
             .map((r) => r.trim())
             .filter(Boolean);
 
-        const newComm: CommunityData = {
-            id: newId,
-            name: name.trim(),
-            logo,
-            backdrop,
-            category,
-            description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
-            members: 1,
-            onlineNow: 1,
-            tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
-            joined: true,
-            featured: false,
-            owner: authorUsername,
-            admins: [authorUsername],
-            rules: rules.length > 0 ? rules : ["Tôn trọng mọi người trong cộng đồng", "Không đả kích hay gây tranh cãi toxic"],
-            memberList: [
-                {
-                    username: authorUsername,
-                    displayName,
-                    avatar,
-                    role: "owner",
-                    joinedAt: "Vừa xong",
-                },
-            ],
-        };
+        let createdCommunity: CommunityData | null = null;
+        if (createCommunity) {
+            createdCommunity = await createCommunity({
+                name: name.trim(),
+                logo,
+                backdrop,
+                category,
+                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
+                tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
+            });
+        }
 
-        addCommunity(newComm);
+        if (!createdCommunity) {
+            const newId = `comm_${Date.now()}`;
+            createdCommunity = {
+                id: newId,
+                name: name.trim(),
+                logo,
+                backdrop,
+                category,
+                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
+                members: 1,
+                onlineNow: 1,
+                tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
+                joined: true,
+                featured: false,
+                owner: authorUsername,
+                admins: [authorUsername],
+                rules: rules.length > 0 ? rules : ["Tôn trọng mọi người trong cộng đồng", "Không đả kích hay gây tranh cãi toxic"],
+                memberList: [
+                    {
+                        username: authorUsername,
+                        displayName,
+                        avatar,
+                        role: "owner",
+                        joinedAt: "Vừa xong",
+                    },
+                ],
+            };
+            addCommunity(createdCommunity);
+        }
+
         onClose();
-        navigate({ to: "/community/$communityId", params: { communityId: newId } });
+        navigate({ to: "/community/$communityId", params: { communityId: String(createdCommunity.id) } });
     };
 
     return (

@@ -33,9 +33,13 @@ export interface CommunityData {
 
 export interface CommunitiesState {
     communities: CommunityData[];
+    isLoading: boolean;
+    error: string | null;
+    fetchCommunities: () => Promise<void>;
     toggleJoin: (id: string | number) => void;
     getCommunityById: (id: string | number) => CommunityData | undefined;
     addCommunity: (community: CommunityData) => void;
+    createCommunity?: (dto: { name: string; category?: string; description?: string; logo?: string; backdrop?: string; tags?: string[] }) => Promise<CommunityData | null>;
     updateCommunity: (id: string | number, data: Partial<CommunityData>) => void;
     deleteCommunity: (id: string | number) => void;
 }
