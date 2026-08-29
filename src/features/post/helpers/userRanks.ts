@@ -155,7 +155,9 @@ const ALL_RANKS_ORDER: UserRank[] = [
     "immortal",
 ];
 
-export const getUserRank = (username?: string): UserRank => {
+export const getUserRank = (usernameInput?: string | { name?: string; username?: string } | null): UserRank => {
+    if (!usernameInput) return "rookie";
+    const username = typeof usernameInput === "string" ? usernameInput : (usernameInput.name || usernameInput.username || "");
     if (!username) return "rookie";
     const cleanName = username.replace(/^@/, "").trim();
     if (KNOWN_USER_RANKS[cleanName]) {
@@ -175,8 +177,8 @@ export const getUserRank = (username?: string): UserRank => {
     return ALL_RANKS_ORDER[idx];
 };
 
-export const getUserRankConfig = (username?: string): UserRankConfig => {
-    const rankKey = getUserRank(username);
+export const getUserRankConfig = (usernameInput?: string | { name?: string; username?: string } | null): UserRankConfig => {
+    const rankKey = getUserRank(usernameInput);
     return RANK_CONFIG[rankKey] || RANK_CONFIG.rookie;
 };
 

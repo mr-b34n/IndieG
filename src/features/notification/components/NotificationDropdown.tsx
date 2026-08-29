@@ -53,8 +53,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         }
         if (item.link) {
             if (item.link.startsWith("/")) {
-                // @ts-expect-error - Dynamic route navigation from notification link
-                navigate({ to: item.link });
+                navigate({ to: item.link as never });
             } else {
                 window.open(item.link, "_blank", "noopener,noreferrer");
             }
@@ -94,7 +93,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                 <div className="flex items-center gap-1">
                     {unreadCount > 0 && (
                         <button
-                            onClick={markAllAsRead}
+                            onClick={() => markAllAsRead()}
                             title={t('notification.markAllRead')}
                             className="p-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                         >

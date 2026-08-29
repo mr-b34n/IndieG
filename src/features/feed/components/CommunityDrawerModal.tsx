@@ -65,7 +65,8 @@ export const CommunityDrawerModal = ({
         const query = searchQuery.trim().toLowerCase();
         if (!query) return joinedCommunities;
         return joinedCommunities.filter((c) =>
-            c.name.toLowerCase().includes(query) || (c.game && c.game.toLowerCase().includes(query))
+            c.name.toLowerCase().includes(query) ||
+            (c.game && (typeof c.game === "string" ? c.game.toLowerCase().includes(query) : c.game.name.toLowerCase().includes(query)))
         );
     }, [joinedCommunities, searchQuery]);
 

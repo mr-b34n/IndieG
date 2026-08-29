@@ -1,4 +1,4 @@
-export type NotificationType = "comment" | "reply" | "like" | "community" | "mention" | "system";
+export type NotificationType = "comment" | "reply" | "like" | "community" | "mention" | "system" | "follow";
 
 export interface NotificationEntity {
     id: string;

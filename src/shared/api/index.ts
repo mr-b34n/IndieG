@@ -124,6 +124,30 @@ export const usersApi = {
         }),
 };
 
+function getLocalFallbackProfile(): UserProfileDto | null {
+    if (typeof window === "undefined") return null;
+    try {
+        const savedUser = localStorage.getItem("indieg_auth_user");
+        if (savedUser) {
+            const user = JSON.parse(savedUser) as { id?: string; username?: string; avatar_url?: string; createdAt?: string };
+            if (user && (user.id || user.username)) {
+                const username = user.username || "Gamer";
+                return {
+                    id: user.id || "me",
+                    username,
+                    name: username,
+                    avatarUrl: user.avatar_url || localStorage.getItem("user_custom_avatar") || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+                    bio: "Game enthusiast & IndieG member",
+                    createdAt: user.createdAt || new Date().toISOString(),
+                };
+            }
+        }
+    } catch {
+        // ignore parse errors
+    }
+    return null;
+}
+
 /**
  * 3. Profile Services (/profiles/*)
  */
@@ -136,10 +160,19 @@ export const profilesApi = {
         }),
 
     /** Get current user's profile - GET /profiles/me */
-    getMyProfile: () =>
-        apiRequest<UserProfileDto>("/profiles/me", {
-            method: "GET",
-        }),
+    getMyProfile: async () => {
+        try {
+            return await apiRequest<UserProfileDto>("/profiles/me", {
+                method: "GET",
+            });
+        } catch (err: unknown) {
+            const fallback = getLocalFallbackProfile();
+            if (fallback) {
+                return fallback;
+            }
+            throw err;
+        }
+    },
 
     /** Update current user's profile - PATCH /profiles/me */
     updateMyProfile: (data: UpdateProfileDto) =>
@@ -149,11 +182,22 @@ export const profilesApi = {
         }),
 
     /** Get user profile by username - GET /profiles/@{username} */
-    getUserByUsername: (username: string) => {
+    getUserByUsername: async (username: string) => {
         const cleanName = username.replace(/^@/, "");
-        return apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
-            method: "GET",
-        });
+        if (cleanName === "me" || cleanName === "demo") {
+            return profilesApi.getMyProfile();
+        }
+        try {
+            return await apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
+                method: "GET",
+            });
+        } catch (err: unknown) {
+            const fallback = getLocalFallbackProfile();
+            if (fallback && (fallback.username.toLowerCase() === cleanName.toLowerCase() || fallback.id === cleanName)) {
+                return fallback;
+            }
+            throw err;
+        }
     },
 
     /** Toggle archived status - PATCH /profiles/archived */

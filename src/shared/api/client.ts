@@ -90,7 +90,10 @@ export async function apiRequest<T = unknown>(
     }
 
     if (token && !headers["Authorization"] && !headers["authorization"]) {
-        headers["Authorization"] = `Bearer ${token}`;
+        // Only attach Authorization header if token is not a local mock token (e.g. token_... or mock_...)
+        if (!token.startsWith("token_") && !token.startsWith("mock_")) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
     }
 
     const queryString = buildQueryString(params);

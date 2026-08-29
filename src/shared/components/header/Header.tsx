@@ -50,7 +50,7 @@ export const Header = () => {
     const displayName = getCurrentAuthor();
     const avatarUrl =
         customAvatar ??
-        user?.user_metadata?.avatar_url ??
+        (user?.user_metadata?.avatar_url as string | undefined) ??
         "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
 
     useEffect(() => {

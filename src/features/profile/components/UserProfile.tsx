@@ -104,10 +104,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [guestbookComments, setGuestbookComments] = useState(INITIAL_GUESTBOOK);
     const [newCommentText, setNewCommentText] = useState("");
 
-    const avatarUrl =
-        isOwnProfile && customAvatar ? customAvatar
-        : isOwnProfile && user?.user_metadata?.avatar_url ? user.user_metadata.avatar_url
-        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`;
+    const avatarUrl: string =
+        (isOwnProfile && customAvatar ? customAvatar
+        : isOwnProfile && typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`) || "";
 
     const handleAddGuestbook = (e: React.FormEvent) => {
         e.preventDefault();

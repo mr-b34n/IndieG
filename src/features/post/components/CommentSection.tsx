@@ -749,14 +749,19 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         ];
 
         if (remoteCommentsData && Array.isArray(remoteCommentsData) && remoteCommentsData.length > 0) {
-            const mappedList: CommentData[] = remoteCommentsData.map((c) => ({
-                id: c.id,
-                author: c.author?.name || c.author?.username || "Thành viên",
-                authorAvatar: c.author?.avatarUrl || avatarUser,
-                content: c.content,
-                timeAgo: formatTimeAgo(c.createdAt),
-                likes: c.likesCount || 0,
-            }));
+            const mappedList: CommentData[] = remoteCommentsData.map((c) => {
+                const authorObj = typeof c.author === "object" && c.author !== null ? c.author : null;
+                const authorName = authorObj ? (authorObj.name || authorObj.username || "Thành viên") : (typeof c.author === "string" ? c.author : "Thành viên");
+                const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatar_url || avatarUser) : avatarUser;
+                return {
+                    id: c.id,
+                    author: authorName,
+                    authorAvatar: authorAvatar,
+                    content: c.content,
+                    timeAgo: formatTimeAgo(c.createdAt),
+                    likes: c.likesCount || 0,
+                };
+            });
             const unique = mappedList.filter((m) => !defaults.some((p) => String(p.id) === String(m.id)));
             return [...defaults, ...unique];
         }

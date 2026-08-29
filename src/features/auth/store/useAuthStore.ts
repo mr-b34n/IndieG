@@ -56,8 +56,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     }
                 } catch (err: unknown) {
                     const status = (err as { status?: number })?.status;
-                    if (status === 401) {
-                        // Stale or expired token in localStorage - clear session
+                    if (status === 401 && activeToken && !activeToken.startsWith("token_") && !activeToken.startsWith("mock_")) {
+                        // Stale or expired token in localStorage - clear session for real backend tokens
                         localStorage.removeItem(ACCESS_TOKEN_KEY);
                         localStorage.removeItem(REFRESH_TOKEN_KEY);
                         localStorage.removeItem(AUTH_USER_KEY);

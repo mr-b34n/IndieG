@@ -92,7 +92,8 @@ export function performSearchAPI(
         const descMatch = c.description?.toLowerCase().includes(q) ?? false;
         const catMatch = c.category?.toLowerCase().includes(q) ?? false;
         const tagMatch = c.tags?.some((t) => t?.toLowerCase().includes(q)) ?? false;
-        return nameMatch || descMatch || catMatch || tagMatch;
+        const gameMatch = typeof c.game === "string" ? c.game.toLowerCase().includes(q) : (c.game?.name?.toLowerCase().includes(q) ?? false);
+        return nameMatch || descMatch || catMatch || tagMatch || gameMatch;
     });
 
     // 3. Target: Posts
@@ -114,7 +115,7 @@ export function performSearchAPI(
         const nameMatch = u.name?.toLowerCase().includes(q) ?? false;
         const userMatch = u.username?.toLowerCase().includes(q) ?? false;
         const bioMatch = u.bio?.toLowerCase().includes(q) ?? false;
-        const gameMatch = u.game?.toLowerCase().includes(q) ?? false;
+        const gameMatch = typeof u.game === "string" ? u.game.toLowerCase().includes(q) : false;
         return nameMatch || userMatch || bioMatch || gameMatch;
     });
 

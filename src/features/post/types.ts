@@ -15,6 +15,7 @@ export interface PostAuthorInfo {
     username?: string;
     avatar?: string;
     avatarUrl?: string;
+    avatar_url?: string;
     rank?: UserRank;
 }
 

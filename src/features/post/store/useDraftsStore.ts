@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { type DraftsState } from "../types";
+import { type DraftsState, type PostDraft } from "../types";
 
 export * from "../types";
 
