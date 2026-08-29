@@ -161,128 +161,16 @@ export function CommunityDetailPage() {
     ];
 
     // Pinned Threads
-    const pinnedThreadsData: PinnedThreadItem[] = [
-        {
-            id: "pin-1",
-            title: `${community.name} Community Rules & Guidelines`,
-            authorHandle: "@ghostrider",
-            date: "May 10",
-            tag: "Rules",
-            repliesCount: 12,
-        },
-        {
-            id: "pin-2",
-            title: `${community.name} 1.0 Update — Everything You Need to Know`,
-            authorHandle: "@tactical_xeno",
-            date: "May 5",
-            tag: "News",
-            repliesCount: 28,
-        },
-        {
-            id: "pin-3",
-            title: `Community Event: Build Your Dream Base in ${community.name}!`,
-            authorHandle: "@mod_team",
-            date: "Apr 28",
-            tag: "Event",
-            repliesCount: 15,
-        },
-    ];
+    const pinnedThreadsData: PinnedThreadItem[] = [];
 
     // Recent Discussions
-    const [recentThreads, setRecentThreads] = useState<DiscussionThread[]>([
-        {
-            id: "th-1",
-            title: "Auto-farming route cho late game — Tối ưu tài nguyên cực đỉnh",
-            category: "guides",
-            categoryLabel: "Guides & Tips",
-            authorName: "User 123",
-            authorHandle: "@user123",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user123",
-            repliesCount: 342,
-            viewsCount: 1420,
-            likesCount: 15,
-            createdAt: "5m ago",
-        },
-        {
-            id: "th-2",
-            title: "Base 3 tầng — Layout tối ưu không gian chăn nuôi & trồng trọt",
-            category: "base",
-            categoryLabel: "Base Building",
-            authorName: "Builder VN",
-            authorHandle: "@builderVN",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=builderVN",
-            repliesCount: 210,
-            viewsCount: 980,
-            likesCount: 8,
-            createdAt: "1h ago",
-        },
-        {
-            id: "th-3",
-            title: "Shark respawn có phải ngẫu nhiên không hay theo mốc thời gian?",
-            category: "gameplay",
-            categoryLabel: "Gameplay Help",
-            authorName: "Newbie Raft",
-            authorHandle: "@newbie_raft",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=newbie_raft",
-            repliesCount: 45,
-            viewsCount: 320,
-            likesCount: 4,
-            createdAt: "2h ago",
-        },
-        {
-            id: "th-4",
-            title: "Sunset view from our 4-player raft base 🌅 Check out this panorama!",
-            category: "showcase",
-            categoryLabel: "Showcase",
-            authorName: "Photo Raft",
-            authorHandle: "@photo_raft",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=photo_raft",
-            repliesCount: 88,
-            viewsCount: 650,
-            likesCount: 23,
-            createdAt: "3h ago",
-        },
-        {
-            id: "th-5",
-            title: "Có nên xây Engine Controls ở tầng trệt không hay đưa lên cao?",
-            category: "general",
-            categoryLabel: "General Discussion",
-            authorName: "Captain Jack",
-            authorHandle: "@captain_jack",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=captainjack",
-            repliesCount: 76,
-            viewsCount: 410,
-            likesCount: 11,
-            createdAt: "5h ago",
-        },
-    ]);
+    const [recentThreads, setRecentThreads] = useState<DiscussionThread[]>([]);
 
     // Contributors
-    const contributorsData: ContributorItem[] = [
-        { id: "c1", name: "Ghost Strider", handle: "@ghoststrider", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ghoststrider", points: 420 },
-        { id: "c2", name: "Tactical Xeno", handle: "@tactical_xeno", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=tactical_xeno", points: 380 },
-        { id: "c3", name: "Ocean Lover", handle: "@ocean_lover", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ocean_lover", points: 300 },
-        { id: "c4", name: "Raft Master", handle: "@raftmaster", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=raftmaster", points: 260 },
-        { id: "c5", name: "Builder VN", handle: "@builderVN", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=builderVN", points: 230 },
-    ];
+    const contributorsData: ContributorItem[] = [];
 
     // Upcoming Events
-    const upcomingEventsData: UpcomingEventTimelineItem[] = [
-        {
-            id: "ev-1",
-            title: `${community.name} Base Building Contest 2025`,
-            dateMonth: "MAY 20",
-            time: "7:00 PM",
-            attendees: 142,
-        },
-        {
-            id: "ev-2",
-            title: "Update 1.1 Q&A Discussion with Mods",
-            dateMonth: "MAY 25",
-            time: "8:00 PM",
-            attendees: 89,
-        },
-    ];
+    const upcomingEventsData: UpcomingEventTimelineItem[] = [];
 
     // Filtered Discussions
     const filteredThreads = useMemo(() => {

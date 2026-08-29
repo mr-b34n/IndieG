@@ -113,17 +113,17 @@ export const Search = () => {
 
     return (
         <div ref={containerRef} className="relative w-full max-w-full">
-            {/* Search Input Bar */}
+            {/* Search Input Bar - Quiet Dark: No default border, surface #151719 */}
             <div
                 className={`
                 flex flex-row items-center gap-2.5 px-3.5 h-[38px]
-                w-full bg-[#111315] hover:bg-[#15181C]
-                border rounded-lg text-xs sm:text-sm
+                w-full bg-[#151719] hover:bg-[#17191C]
+                rounded-xl text-xs sm:text-sm
                 transition-all duration-150 cursor-text
                 ${
                     focused
-                        ? "border-[#1688E8] bg-[#111315]"
-                        : "border-[#202328] hover:border-[#2d3138]"
+                        ? "bg-[#191B1E] text-[#ECEDEF]"
+                        : "text-[#979BA2]"
                 }
             `}
                 onClick={() => inputRef.current?.focus()}
@@ -131,7 +131,7 @@ export const Search = () => {
                 <FontAwesomeIcon
                     icon={faMagnifyingGlass}
                     className={`text-xs shrink-0 transition-colors duration-150 ${
-                        focused ? "text-[#1688E8]" : "text-[#5F646B]"
+                        focused ? "text-[#1688E8]" : "text-[#656A72]"
                     }`}
                 />
 
@@ -147,11 +147,11 @@ export const Search = () => {
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder={t("search.placeholder", { defaultValue: "Tìm kiếm game, cộng đồng, bài viết..." })}
-                    className="w-full focus:outline-none bg-transparent text-xs sm:text-sm text-[#E8E9EA] placeholder:text-[#5F646B]"
+                    className="w-full focus:outline-none bg-transparent text-xs sm:text-sm text-[#ECEDEF] placeholder:text-[#656A72]"
                 />
 
                 {!focused && !value && (
-                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-[#5F646B] border border-[#202328] bg-[#14171A]">
+                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-[#656A72] bg-[#111315]">
                         /
                     </kbd>
                 )}
@@ -163,21 +163,21 @@ export const Search = () => {
                             setValue("");
                             inputRef.current?.focus();
                         }}
-                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#5F646B] hover:text-[#E8E9EA] transition-colors text-xs cursor-pointer"
+                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#656A72] hover:text-[#ECEDEF] transition-colors text-xs cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faXmark} />
                     </button>
                 )}
             </div>
 
-            {/* Dropdown Popover */}
+            {/* Dropdown Popover - Quiet Dark: Surface #111315, borderless or subtle divider */}
             {focused && (
                 <div
                     onMouseDown={(e) => e.preventDefault()}
                     className="
-                        absolute top-full left-0 mt-1.5 w-full z-40
-                        bg-[#0B0D0F] border border-[#1C1F22]
-                        rounded-xl overflow-hidden
+                        absolute top-full left-0 mt-2 w-full z-40
+                        bg-[#111315] border border-[#1A1C1F]
+                        rounded-2xl overflow-hidden
                         shadow-2xl max-h-[75vh] overflow-y-auto animate-scale-up
                     "
                 >
@@ -185,16 +185,16 @@ export const Search = () => {
                     {value.trim() ? (
                         <div className="flex flex-col py-2">
                             {searchResults.totalCount === 0 ? (
-                                <div className="p-6 text-center text-xs text-text-muted">
-                                    Không tìm thấy kết quả phù hợp cho "<span className="text-text font-bold">{value}</span>"
+                                <div className="p-6 text-center text-xs text-[#656A72]">
+                                    Không tìm thấy kết quả phù hợp cho "<span className="text-[#ECEDEF] font-bold">{value}</span>"
                                 </div>
                             ) : (
                                 <>
                                     {/* Communities preview */}
                                     {(searchResults.communities || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUsers} className="text-emerald-500" />
+                                        <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
+                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
+                                                <FontAwesomeIcon icon={faUsers} className="text-[#1688E8]" />
                                                 <span>Cộng đồng ({(searchResults.communities || []).length})</span>
                                             </p>
                                             {searchResults.communities.slice(0, 3).map((comm) => (
@@ -205,18 +205,18 @@ export const Search = () => {
                                                         setFocused(false);
                                                         navigate({ to: `/community/${comm.id}` });
                                                     }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
+                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >
                                                     <img
                                                         src={comm.logo}
                                                         alt={comm.name}
-                                                        className="w-8 h-8 rounded-xl object-cover shrink-0 border border-border"
+                                                        className="w-8 h-8 rounded-xl object-cover shrink-0"
                                                     />
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-text truncate">
+                                                        <span className="text-xs font-bold text-[#ECEDEF] truncate">
                                                             {comm.name}
                                                         </span>
-                                                        <span className="text-[10px] text-text-muted">
+                                                        <span className="text-[10px] text-[#979BA2]">
                                                             {formatCompactNumber(comm.members)} thành viên • {comm.category}
                                                         </span>
                                                     </div>
@@ -227,9 +227,9 @@ export const Search = () => {
 
                                     {/* Users preview */}
                                     {(searchResults.users || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-border/60 pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUser} className="text-cyan-500" />
+                                        <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
+                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
+                                                <FontAwesomeIcon icon={faUser} className="text-[#1688E8]" />
                                                 <span>Người dùng ({(searchResults.users || []).length})</span>
                                             </p>
                                             {searchResults.users.slice(0, 3).map((u) => (
@@ -240,18 +240,18 @@ export const Search = () => {
                                                         setFocused(false);
                                                         navigate({ to: "/profile" });
                                                     }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
+                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >
                                                     <img
                                                         src={u.avatar}
                                                         alt={u.name}
-                                                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-border"
+                                                        className="w-7 h-7 rounded-full object-cover shrink-0"
                                                     />
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-text truncate">
+                                                        <span className="text-xs font-bold text-[#ECEDEF] truncate">
                                                             {u.name}
                                                         </span>
-                                                        <span className="text-[10px] text-text-muted truncate">
+                                                        <span className="text-[10px] text-[#979BA2] truncate">
                                                             {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
                                                         </span>
                                                     </div>
@@ -263,8 +263,8 @@ export const Search = () => {
                                     {/* Posts preview */}
                                     {(searchResults.posts || []).length > 0 && (
                                         <div className="flex flex-col pb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faFileLines} className="text-rose-500" />
+                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
+                                                <FontAwesomeIcon icon={faFileLines} className="text-[#1688E8]" />
                                                 <span>Thảo luận & Bài viết ({(searchResults.posts || []).length})</span>
                                             </p>
                                             {searchResults.posts.slice(0, 3).map((post) => (
@@ -275,12 +275,12 @@ export const Search = () => {
                                                         setFocused(false);
                                                         navigate({ to: `/post/${post.id}` });
                                                     }}
-                                                    className="flex flex-col gap-0.5 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
+                                                    className="flex flex-col gap-0.5 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >
-                                                    <span className="text-xs font-bold text-text line-clamp-1">
+                                                    <span className="text-xs font-bold text-[#ECEDEF] line-clamp-1">
                                                         {post.title || post.content}
                                                     </span>
-                                                    <span className="text-[10px] text-text-muted">
+                                                    <span className="text-[10px] text-[#979BA2]">
                                                         Đăng bởi {post.author.name} {post.communityName ? `trong ${post.communityName}` : ""}
                                                     </span>
                                                 </button>
@@ -292,7 +292,7 @@ export const Search = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleExecuteSearch()}
-                                        className="flex items-center justify-between px-4 py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-colors cursor-pointer border-t border-primary/20"
+                                        className="flex items-center justify-between px-4 py-3 bg-[#1688E8]/10 hover:bg-[#1688E8]/20 text-[#1688E8] font-bold text-xs transition-colors cursor-pointer border-t border-[#1A1C1F]"
                                     >
                                         <span>Xem tất cả {searchResults.totalCount} kết quả cho "{value}"</span>
                                         <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
@@ -304,7 +304,7 @@ export const Search = () => {
                         /* Scenario B: Recent Searches when focused but value is empty */
                         <div className="flex flex-col py-2">
                             <div className="flex items-center justify-between px-4 pt-2 pb-1.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
                                     <FontAwesomeIcon icon={faHistory} className="text-xs" />
                                     <span>Lịch sử tìm kiếm</span>
                                 </span>
@@ -312,7 +312,7 @@ export const Search = () => {
                                     <button
                                         type="button"
                                         onClick={clearRecentSearches}
-                                        className="text-[10px] font-semibold text-text-faint hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+                                        className="text-[10px] font-semibold text-[#656A72] hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faTrash} className="text-[9px]" />
                                         <span>Xóa tất cả</span>
@@ -325,7 +325,7 @@ export const Search = () => {
                                     recentSearches.map((item) => (
                                         <div
                                             key={item}
-                                            className="group/item flex items-center justify-between px-4 py-2 text-xs text-text hover:bg-surface-hover transition-colors"
+                                            className="group/item flex items-center justify-between px-4 py-2 text-xs hover:bg-[#17191C] transition-colors"
                                         >
                                             <button
                                                 type="button"
@@ -337,23 +337,23 @@ export const Search = () => {
                                             >
                                                 <FontAwesomeIcon
                                                     icon={faMagnifyingGlass}
-                                                    className="text-xs text-text-faint shrink-0"
+                                                    className="text-xs text-[#656A72] shrink-0"
                                                 />
-                                                <span className="truncate text-text-muted group-hover/item:text-text font-medium">
+                                                <span className="truncate text-[#979BA2] group-hover/item:text-[#ECEDEF] font-medium">
                                                     {item}
                                                 </span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => removeRecentSearch(item)}
-                                                className="opacity-0 group-hover/item:opacity-100 p-1 text-text-faint hover:text-rose-500 transition-opacity text-xs cursor-pointer ml-2"
+                                                className="opacity-0 group-hover/item:opacity-100 p-1 text-[#656A72] hover:text-rose-500 transition-opacity text-xs cursor-pointer ml-2"
                                             >
                                                 <FontAwesomeIcon icon={faXmark} />
                                             </button>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="px-4 py-3 text-xs text-text-faint italic">
+                                    <div className="px-4 py-3 text-xs text-[#656A72] italic">
                                         Chưa có lịch sử tìm kiếm.
                                     </div>
                                 )}

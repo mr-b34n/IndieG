@@ -11,6 +11,7 @@ import {
     faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatCompactNumber } from "../../constants";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunityHubHeaderProps {
     name: string;
@@ -43,7 +44,6 @@ export const CommunityHubHeader = ({
     isJoined,
     onToggleJoin,
     onStartDiscussion,
-    isVi,
     isAdmin,
     onOpenAdminController,
     isLocked,
@@ -52,6 +52,8 @@ export const CommunityHubHeader = ({
     featured,
     isNsfw,
 }: CommunityHubHeaderProps) => {
+    const { t } = useTranslation();
+
     return (
         <div className="w-full flex flex-col gap-4 select-none">
             {/* Announcement Banner if exists */}
@@ -62,7 +64,7 @@ export const CommunityHubHeader = ({
                             <FontAwesomeIcon icon={faBullhorn} className="text-xs" />
                         </div>
                         <div className="min-w-0">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 block">THÔNG BÁO TỪ QUẢN TRỊ VIÊN</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 block">{t('community.adminAnnouncementTitle', { defaultValue: 'THÔNG BÁO TỪ QUẢN TRỊ VIÊN' })}</span>
                             <p className="text-xs text-rose-100 font-bold truncate leading-tight">{announcement}</p>
                         </div>
                     </div>
@@ -72,7 +74,7 @@ export const CommunityHubHeader = ({
                             onClick={onOpenAdminController}
                             className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-[11px] font-extrabold shrink-0 cursor-pointer shadow-xs"
                         >
-                            Sửa Thông Báo
+                            {t('community.editAnnouncement', { defaultValue: 'Sửa Thông Báo' })}
                         </button>
                     )}
                 </div>
@@ -106,21 +108,21 @@ export const CommunityHubHeader = ({
                             {featured && (
                                 <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-400 font-black text-[10px] uppercase flex items-center gap-1">
                                     <FontAwesomeIcon icon={faStar} className="text-[9px]" />
-                                    <span>FEATURED</span>
+                                    <span>{t('community.badgeFeatured', { defaultValue: 'FEATURED' })}</span>
                                 </span>
                             )}
 
                             {isLocked && (
                                 <span className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-400 font-black text-[10px] uppercase flex items-center gap-1">
                                     <FontAwesomeIcon icon={faLock} className="text-[9px]" />
-                                    <span>ĐÃ KHÓA DĂNG BÀI</span>
+                                    <span>{t('community.badgeLocked', { defaultValue: 'ĐÃ KHÓA ĐĂNG BÀI' })}</span>
                                 </span>
                             )}
 
                             {autoApprovePosts === false && (
                                 <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-400 font-black text-[10px] uppercase flex items-center gap-1">
                                     <FontAwesomeIcon icon={faTriangleExclamation} className="text-[9px]" />
-                                    <span>CẦN DUYỆT BÀI</span>
+                                    <span>{t('community.badgeReviewNeeded', { defaultValue: 'CẦN DUYỆT BÀI' })}</span>
                                 </span>
                             )}
 
@@ -132,19 +134,19 @@ export const CommunityHubHeader = ({
                         </div>
 
                         <p className="text-xs text-text-muted leading-relaxed max-w-xl">
-                            {description || `Official community hub for ${name} discussions, guides & showcases.`}
+                            {description || t('community.defaultHubDesc', { name, defaultValue: `Official community hub for ${name} discussions, guides & showcases.` })}
                         </p>
 
                         <div className="flex items-center gap-3 text-xs font-mono font-bold tracking-wide pt-1">
                             <span className="text-text">
                                 {formatCompactNumber(membersCount).toUpperCase()}{" "}
-                                <span className="text-text-muted font-sans font-medium text-[11px]">members</span>
+                                <span className="text-text-muted font-sans font-medium text-[11px]">{t('community.membersLabel', { defaultValue: 'thành viên' })}</span>
                             </span>
                             <span className="text-divider-primary font-normal">·</span>
                             <span className="flex items-center gap-1.5 text-emerald-500">
                                 <FontAwesomeIcon icon={faCircle} className="text-[6px] animate-pulse" />
                                 {formatCompactNumber(onlineCount).toUpperCase()}{" "}
-                                <span className="text-text-muted font-sans font-medium text-[11px]">online</span>
+                                <span className="text-text-muted font-sans font-medium text-[11px]">{t('community.onlineLabel', { defaultValue: 'trực tuyến' })}</span>
                             </span>
                         </div>
                     </div>
@@ -160,7 +162,7 @@ export const CommunityHubHeader = ({
                             className="px-3.5 py-1.5 rounded-[4px] bg-rose-500 hover:bg-rose-600 text-white text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-rose-500/20 border border-rose-400/50"
                         >
                             <FontAwesomeIcon icon={faShieldHalved} className="text-xs animate-pulse" />
-                            <span>ADMIN CONTROLLER</span>
+                            <span>{t('community.adminControllerBtn', { defaultValue: 'ADMIN CONTROLLER' })}</span>
                         </button>
                     )}
 
@@ -176,12 +178,12 @@ export const CommunityHubHeader = ({
                         {isJoined ? (
                             <>
                                 <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                <span>{isVi ? "JOINED" : "JOINED"}</span>
+                                <span>{t('community.joinedBtn', { defaultValue: 'ĐÃ THAM GIA' })}</span>
                             </>
                         ) : (
                             <>
                                 <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                                <span>{isVi ? "JOIN →" : "JOIN →"}</span>
+                                <span>{t('community.joinBtn', { defaultValue: 'THAM GIA →' })}</span>
                             </>
                         )}
                     </button>
@@ -197,7 +199,7 @@ export const CommunityHubHeader = ({
                         }`}
                     >
                         <FontAwesomeIcon icon={isLocked ? faLock : faPen} className="text-[10px]" />
-                        <span>{isLocked ? "Cộng Đồng Đang Khóa" : isVi ? "Đăng bài" : "Start Discussion"}</span>
+                        <span>{isLocked ? t('community.communityLocked', { defaultValue: 'Cộng Đồng Đang Khóa' }) : t('community.postBtn', { defaultValue: 'Đăng bài' })}</span>
                     </button>
                 </div>
             </div>

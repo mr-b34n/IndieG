@@ -169,7 +169,7 @@ export const LeftBar = () => {
                                         <span className="truncate">{c.name}</span>
                                     </div>
                                     <span className="text-[10px] font-medium text-[#5F646B] shrink-0">
-                                        {c.onlineNow ? `${c.onlineNow} online` : "active"}
+                                        {c.onlineNow ? `${c.onlineNow} ${t('common.online', { defaultValue: 'trực tuyến' })}` : t('common.active', { defaultValue: 'hoạt động' })}
                                     </span>
                                 </button>
                             );
@@ -191,7 +191,7 @@ export const LeftBar = () => {
                         className={`${isAdminActive ? navItemActive : navItem}`}
                     >
                         <FontAwesomeIcon icon={faShieldHalved} className="w-4 shrink-0 text-amber-500" />
-                        <span>Admin UI</span>
+                        <span>{t('common.adminUi', { defaultValue: 'Quản trị hệ thống' })}</span>
                     </button>
                 )}
 

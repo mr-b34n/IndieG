@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGamepad, faComments, faUsers, faCommentDots, faBookmark, faTrophy, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import type { ProfileTab } from "../types";
@@ -24,26 +24,30 @@ export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks
         { id: "guestbook", label: t("profile.guestbookTitle") || "Guestbook", icon: faCommentDots },
     ];
 
-    const containerRef = useRef<HTMLDivElement>(null);
     const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
-    useEffect(() => {
+    const updateIndicator = useCallback(() => {
         const btn = btnRefs.current[activeTab];
-        const container = containerRef.current;
-        if (btn && container) {
-            const br = btn.getBoundingClientRect();
-            const cr = container.getBoundingClientRect();
-            setIndicator({ left: br.left - cr.left, width: br.width });
+        if (btn) {
+            setIndicator({ left: btn.offsetLeft, width: btn.offsetWidth });
         }
-    }, [activeTab, friendsCount]);
+    }, [activeTab]);
+
+    useEffect(() => {
+        updateIndicator();
+    }, [updateIndicator, friendsCount, showBookmarks]);
+
+    useEffect(() => {
+        window.addEventListener("resize", updateIndicator);
+        return () => window.removeEventListener("resize", updateIndicator);
+    }, [updateIndicator]);
 
     return (
-        <div className="relative bg-[#0A0C0E] rounded-[12px] px-3 overflow-hidden shadow-sm">
+        <div className="bg-[#0A0C0E] rounded-[12px] px-3 shadow-sm">
             <div
-                ref={containerRef}
                 role="tablist"
-                className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-2.5"
+                className="relative flex items-center gap-1.5 overflow-x-auto scrollbar-none py-2.5"
             >
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.id;
@@ -75,13 +79,14 @@ export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks
                         </button>
                     );
                 })}
-            </div>
 
-            {/* Subtle 2px blue indicator */}
-            <div
-                className="absolute bottom-0 h-[2px] bg-[#1688E8] transition-all duration-200 ease-out"
-                style={{ left: indicator.left, width: indicator.width }}
-            />
+                {/* Subtle 2px blue indicator precisely aligned with active button */}
+                <div
+                    className="absolute bottom-0 h-[2px] bg-[#1688E8] transition-all duration-200 ease-out"
+                    style={{ left: indicator.left, width: indicator.width }}
+                />
+            </div>
         </div>
     );
 };
+

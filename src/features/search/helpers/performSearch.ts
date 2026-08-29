@@ -26,7 +26,7 @@ export function performSearchAPI(
 
     const safePosts = Array.isArray(allPosts) ? allPosts : [];
     const safeCommunities = Array.isArray(allCommunities) ? allCommunities : [];
-    const safeUsers = Array.isArray(allUsers) && allUsers.length > 0 ? allUsers : MOCK_USERS;
+    const safeUsers = Array.isArray(allUsers) ? allUsers : [];
     const safeCustomGames = Array.isArray(customGames) ? customGames : [];
 
     // Empty query handling or invalid validation
@@ -146,10 +146,10 @@ export function performSearchAPI(
         paginatedGames = matchedGames.slice(startIndex, endIndex);
     } else {
         totalItems = meta.totalPosts + meta.totalUsers + meta.totalCommunities + meta.totalGames;
-        paginatedPosts = matchedPosts.slice(0, Math.ceil(pageSize / 4));
-        paginatedUsers = matchedUsers.slice(0, Math.ceil(pageSize / 4));
-        paginatedCommunities = matchedCommunities.slice(0, Math.ceil(pageSize / 4));
-        paginatedGames = matchedGames.slice(0, Math.ceil(pageSize / 4));
+        paginatedGames = matchedGames.slice(0, 3);
+        paginatedCommunities = matchedCommunities.slice(0, 3);
+        paginatedUsers = matchedUsers.slice(0, 4);
+        paginatedPosts = matchedPosts.slice(0, 3);
     }
 
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));

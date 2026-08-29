@@ -73,11 +73,16 @@ export function SettingsPage() {
         communityActivity: false,
     });
 
-    // 4. Account & Security
     const authStore = useAuthStore();
+    const isLoggedIn = !!authStore.user || authStore.mockLogin;
+
+    if (!isLoggedIn && activeTab !== "general" && activeTab !== "feedback") {
+        setActiveTab("general");
+    }
+
     const isEmailVerified = authStore.user?.isVerified || false;
     const [emailPendingVerify, setEmailPendingVerify] = useState(false);
-    const [currentEmail, setCurrentEmail] = useState("user.indieg@gmail.com");
+    const [currentEmail, setCurrentEmail] = useState(authStore.user?.email || "");
     const [newEmail, setNewEmail] = useState("");
     const [emailPasswordConfirm, setEmailPasswordConfirm] = useState("");
     const [emailSuccessMsg, setEmailSuccessMsg] = useState<string | null>(null);
@@ -91,58 +96,10 @@ export function SettingsPage() {
     const [changePwdError, setChangePwdError] = useState<string | null>(null);
     const [changePwdSuccess, setChangePwdSuccess] = useState<string | null>(null);
 
-    const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([
-        {
-            id: "sess-1",
-            device: "Windows PC",
-            browser: "Chrome 128.0",
-            location: "TP. Hồ Chí Minh, Việt Nam",
-            ip: "113.161.42.12",
-            lastActive: "Đang hoạt động (Thiết bị này)",
-            isCurrent: true,
-            icon: faLaptop,
-        },
-        {
-            id: "sess-2",
-            device: "iPhone 15 Pro",
-            browser: "Safari Mobile",
-            location: "Đà Nẵng, Việt Nam",
-            ip: "14.232.180.88",
-            lastActive: "2 giờ trước",
-            isCurrent: false,
-            icon: faMobileScreen,
-        },
-        {
-            id: "sess-3",
-            device: "MacBook Air M2",
-            browser: "Firefox 129.0",
-            location: "Hà Nội, Việt Nam",
-            ip: "118.70.12.99",
-            lastActive: "3 ngày trước",
-            isCurrent: false,
-            icon: faLaptop,
-        },
-    ]);
+    const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
 
     // 5. Blocked Users
-    const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([
-        {
-            id: "u-blocked-1",
-            name: "ToxicGamer99",
-            username: "toxic99",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ToxicGamer99",
-            blockedAt: "2024-07-12",
-            reason: "Spam / Ngôn từ đả kích",
-        },
-        {
-            id: "u-blocked-2",
-            name: "ScammerBot",
-            username: "scammer_xyz",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ScammerBot",
-            blockedAt: "2024-08-01",
-            reason: "Lừa đảo / Phishing link",
-        },
-    ]);
+    const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
 
     // 6. Feedback
     const [feedbackType, setFeedbackType] = useState<"bug" | "idea">("bug");
@@ -290,7 +247,7 @@ export function SettingsPage() {
         }
     };
 
-    const navTabs = [
+    const allNavTabs = [
         { id: "general", label: t('settings.tabs.general', { defaultValue: "Giao diện & Ngôn ngữ" }), icon: faGlobe, desc: t('settings.tabs.generalDesc', { defaultValue: "Chủ đề, ngôn ngữ hệ thống" }) },
         { id: "quickAccess", label: t('settings.tabs.quickAccess', { defaultValue: "Game yêu thích" }), icon: faGamepad, desc: t('settings.tabs.quickAccessDesc', { defaultValue: "Lối tắt menu chính" }) },
         { id: "privacy", label: t('settings.tabs.privacy', { defaultValue: "Quyền riêng tư" }), icon: faEye, desc: t('settings.tabs.privacyDesc', { defaultValue: "Chế độ hiển thị cá nhân" }) },
@@ -300,6 +257,10 @@ export function SettingsPage() {
         { id: "feedback", label: t('settings.tabs.feedback', { defaultValue: "Báo lỗi & Đóng góp" }), icon: faBug, desc: t('settings.tabs.feedbackDesc', { defaultValue: "Gửi ý kiến phản hồi" }) },
         { id: "danger", label: t('settings.tabs.danger', { defaultValue: "Vùng nguy hiểm" }), icon: faExclamationTriangle, desc: t('settings.tabs.dangerDesc', { defaultValue: "Khóa hoặc xóa tài khoản" }), isDanger: true },
     ];
+
+    const navTabs = isLoggedIn
+        ? allNavTabs
+        : allNavTabs.filter((tab) => tab.id === "general" || tab.id === "feedback");
 
     return (
         <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 space-y-6 text-text">

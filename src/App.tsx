@@ -1,5 +1,6 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './shared/lib/queryClient'
 import { routeTree } from './routeTree.gen'
 import './App.css'
 import { useEffect } from 'react';
@@ -12,7 +13,6 @@ declare module '@tanstack/react-router' {
         router: typeof router
     }
 }
-const queryClient = new QueryClient();
 
 const App = () => {
     const initializeAuth = useAuthStore((state) => state.initializeAuth);

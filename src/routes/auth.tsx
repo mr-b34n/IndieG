@@ -26,14 +26,37 @@ import { useState } from 'react';
 import { STRENGTH_LEVELS, validatePassword, type PasswordValidationResult } from '../features/auth/helpers/passwordValidator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore, type AuthMode, AccountSwitcher, TEST_ACCOUNTS } from '@/features/auth';
+import { useTranslation } from '@/shared/hooks/useTranslate';
 
 const AuthPage = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const theme = useThemeStore((state) => state.theme);
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
     const language = useThemeStore((state) => state.language);
     const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
     const loginStoreAction = useAuthStore((state) => state.login);
+
+    const getStrengthLabel = (score: number) => {
+        switch (score) {
+            case 1: return t('auth.pwdWeak', { defaultValue: 'Yếu' });
+            case 2: return t('auth.pwdFair', { defaultValue: 'Trung bình' });
+            case 3: return t('auth.pwdGood', { defaultValue: 'Khá' });
+            case 4: return t('auth.pwdStrong', { defaultValue: 'Mạnh' });
+            default: return t('auth.pwdWeak', { defaultValue: 'Yếu' });
+        }
+    };
+
+    const getReqLabel = (id: string, defaultLabel: string) => {
+        switch (id) {
+            case 'length': return t('auth.reqLength', { defaultValue: 'Ít nhất 8 ký tự' });
+            case 'uppercase': return t('auth.reqUppercase', { defaultValue: 'Chứa chữ hoa' });
+            case 'lowercase': return t('auth.reqLowercase', { defaultValue: 'Chứa chữ thường' });
+            case 'number': return t('auth.reqNumber', { defaultValue: 'Chứa chữ số' });
+            case 'special': return t('auth.reqSpecial', { defaultValue: 'Chứa ký tự đặc biệt' });
+            default: return defaultLabel;
+        }
+    };
 
     const [mode, setMode] = useState<AuthMode>('login');
     const [isLoading, setIsLoading] = useState(false);
@@ -103,11 +126,11 @@ const AuthPage = () => {
         // --- LOGIN FLOW ---
         if (mode === 'login') {
             if (!formData.email.trim()) {
-                setServerError("Vui lòng nhập email hoặc tên đăng nhập.");
+                setServerError(t('auth.errRequireEmailUsername', { defaultValue: 'Vui lòng nhập email hoặc tên đăng nhập.' }));
                 return;
             }
             if (!formData.password) {
-                setServerError("Vui lòng nhập mật khẩu.");
+                setServerError(t('auth.errRequirePassword', { defaultValue: 'Vui lòng nhập mật khẩu.' }));
                 return;
             }
 
@@ -116,7 +139,7 @@ const AuthPage = () => {
                 await new Promise((resolve) => setTimeout(resolve, 800));
                 // Simulate invalid credentials test if password is 'wrong'
                 if (formData.password === "error") {
-                    setServerError("Mật khẩu không chính xác. Vui lòng kiểm tra lại.");
+                    setServerError(t('auth.errWrongPassword', { defaultValue: 'Mật khẩu không chính xác. Vui lòng kiểm tra lại.' }));
                     setIsLoading(false);
                     return;
                 }
@@ -137,12 +160,12 @@ const AuthPage = () => {
                     };
                 }
                 loginStoreAction(userObj);
-                setSuccessMessage("Đăng nhập thành công! Đang chuyển hướng...");
+                setSuccessMessage(t('auth.msgLoginSuccess', { defaultValue: 'Đăng nhập thành công! Đang chuyển hướng...' }));
                 setTimeout(() => {
                     navigate({ to: "/" });
                 }, 600);
             } catch {
-                setServerError("Đã xảy ra lỗi kết nối hệ thống. Vui lòng thử lại.");
+                setServerError(t('auth.errSystemConnection', { defaultValue: 'Đã xảy ra lỗi kết nối hệ thống. Vui lòng thử lại.' }));
             } finally {
                 setIsLoading(false);
             }
@@ -152,35 +175,35 @@ const AuthPage = () => {
         // --- REGISTER FLOW ---
         if (mode === 'register') {
             if (!formData.username.trim()) {
-                setServerError("Vui lòng nhập tên người dùng.");
+                setServerError(t('auth.errRequireUsername', { defaultValue: 'Vui lòng nhập tên người dùng.' }));
                 return;
             }
             if (!formData.email.includes("@")) {
-                setServerError("Địa chỉ email không hợp lệ.");
+                setServerError(t('auth.errInvalidEmail', { defaultValue: 'Địa chỉ email không hợp lệ.' }));
                 return;
             }
 
             const isPasswordValid = pwdState.requirements.every((req) => req.isMet);
             if (!isPasswordValid) {
-                setServerError("Mật khẩu chưa đạt đủ yêu cầu độ mạnh.");
+                setServerError(t('auth.errPasswordWeak', { defaultValue: 'Mật khẩu chưa đạt đủ yêu cầu độ mạnh.' }));
                 return;
             }
 
             if (formData.password !== formData.confirmPassword) {
                 setIsPasswordMatched(false);
-                setServerError("Mật khẩu xác nhận không trùng khớp.");
+                setServerError(t('auth.errPasswordMatch', { defaultValue: 'Mật khẩu xác nhận không trùng khớp.' }));
                 return;
             }
 
             setIsLoading(true);
             try {
                 await new Promise((resolve) => setTimeout(resolve, 800));
-                setSuccessMessage("Đăng ký thành công! Đã gửi mã xác nhận 6 chữ số tới email của bạn.");
+                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đã gửi mã xác nhận 6 chữ số tới email của bạn.' }));
                 setTimeout(() => {
                     setMode('verify-email');
                 }, 1000);
             } catch {
-                setServerError("Không thể tạo tài khoản lúc này. Thử lại sau.");
+                setServerError(t('auth.errRegisterFail', { defaultValue: 'Không thể tạo tài khoản lúc này. Thử lại sau.' }));
             } finally {
                 setIsLoading(false);
             }
@@ -190,19 +213,19 @@ const AuthPage = () => {
         // --- FORGOT PASSWORD FLOW ---
         if (mode === 'forgot-password') {
             if (!formData.email.includes("@")) {
-                setServerError("Vui lòng nhập địa chỉ email hợp lệ.");
+                setServerError(t('auth.errInvalidEmail', { defaultValue: 'Vui lòng nhập địa chỉ email hợp lệ.' }));
                 return;
             }
 
             setIsLoading(true);
             try {
                 await new Promise((resolve) => setTimeout(resolve, 800));
-                setSuccessMessage("Link & mã khôi phục mật khẩu đã gửi tới " + formData.email + ". Hãy nhập mã bên dưới!");
+                setSuccessMessage(t('auth.msgForgotSuccess', { email: formData.email, defaultValue: `Link & mã khôi phục mật khẩu đã gửi tới ${formData.email}. Hãy nhập mã bên dưới!` }));
                 setTimeout(() => {
                     setMode('reset-password');
                 }, 1200);
             } catch {
-                setServerError("Không thể gửi email khôi phục. Vui lòng thử lại.");
+                setServerError(t('auth.errSendResetFail', { defaultValue: 'Không thể gửi email khôi phục. Vui lòng thử lại.' }));
             } finally {
                 setIsLoading(false);
             }
@@ -212,7 +235,7 @@ const AuthPage = () => {
         // --- VERIFY EMAIL FLOW ---
         if (mode === 'verify-email') {
             if (formData.otpCode.trim().length !== 6) {
-                setServerError("Vui lòng nhập đủ mã OTP 6 chữ số (Mã thử nghiệm: 123456).");
+                setServerError(t('auth.errOtpLength', { defaultValue: 'Vui lòng nhập đủ mã OTP 6 chữ số (Mã thử nghiệm: 123456).' }));
                 return;
             }
 
@@ -220,12 +243,12 @@ const AuthPage = () => {
             try {
                 await new Promise((resolve) => setTimeout(resolve, 800));
                 if (formData.otpCode !== "123456" && formData.otpCode.trim().length !== 6) {
-                    setServerError("Mã xác thực không chính xác. Mã đúng thử nghiệm là: 123456");
+                    setServerError(t('auth.errOtpIncorrect', { defaultValue: 'Mã xác thực không chính xác. Mã đúng thử nghiệm là: 123456' }));
                     setIsLoading(false);
                     return;
                 }
 
-                setSuccessMessage("Xác thực email thành công! Tài khoản của bạn đã sẵn sàng.");
+                setSuccessMessage(t('auth.msgVerifySuccess', { defaultValue: 'Xác thực email thành công! Tài khoản của bạn đã sẵn sàng.' }));
                 const verifiedUser = {
                     id: "usr_v_" + Math.random().toString(36).substring(2, 9),
                     email: formData.email || "gamer@indieg.com",
@@ -237,7 +260,7 @@ const AuthPage = () => {
                     navigate({ to: "/" });
                 }, 800);
             } catch {
-                setServerError("Xác thực thất bại. Vui lòng kiểm tra lại mã.");
+                setServerError(t('auth.errVerifyFail', { defaultValue: 'Xác thực thất bại. Vui lòng kiểm tra lại mã.' }));
             } finally {
                 setIsLoading(false);
             }
@@ -248,24 +271,24 @@ const AuthPage = () => {
         if (mode === 'reset-password') {
             const isPasswordValid = pwdState.requirements.every((req) => req.isMet);
             if (!isPasswordValid) {
-                setServerError("Mật khẩu mới chưa đủ độ mạnh yêu cầu.");
+                setServerError(t('auth.errPasswordWeak', { defaultValue: 'Mật khẩu mới chưa đủ độ mạnh yêu cầu.' }));
                 return;
             }
             if (formData.password !== formData.confirmPassword) {
                 setIsPasswordMatched(false);
-                setServerError("Mật khẩu xác nhận không trùng khớp.");
+                setServerError(t('auth.errPasswordMatch', { defaultValue: 'Mật khẩu xác nhận không trùng khớp.' }));
                 return;
             }
 
             setIsLoading(true);
             try {
                 await new Promise((resolve) => setTimeout(resolve, 800));
-                setSuccessMessage("Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.");
+                setSuccessMessage(t('auth.msgResetSuccess', { defaultValue: 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.' }));
                 setTimeout(() => {
                     switchMode('login');
                 }, 1200);
             } catch {
-                setServerError("Không thể đặt lại mật khẩu. Vui lòng thử lại.");
+                setServerError(t('auth.errResetFail', { defaultValue: 'Không thể đặt lại mật khẩu. Vui lòng thử lại.' }));
             } finally {
                 setIsLoading(false);
             }
@@ -309,14 +332,14 @@ const AuthPage = () => {
                         className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold text-text-muted hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-                        <span className="hidden sm:inline">Trang chủ</span>
+                        <span className="hidden sm:inline">{t('common.home', { defaultValue: 'Trang chủ' })}</span>
                     </button>
 
                     <div className="w-px h-4 bg-border" />
 
                     <button
                         onClick={toggleLanguage}
-                        title="Đổi ngôn ngữ"
+                        title={t('common.switchLanguage', { defaultValue: 'Đổi ngôn ngữ' })}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                     >
                         {language.toUpperCase()}
@@ -324,7 +347,7 @@ const AuthPage = () => {
 
                     <button
                         onClick={toggleTheme}
-                        title="Đổi giao diện sáng/tối"
+                        title={t('common.toggleTheme', { defaultValue: 'Đổi giao diện sáng/tối' })}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                     >
                         <FontAwesomeIcon icon={theme === "light" ? faSun : faMoon} className="text-sm" />
@@ -340,16 +363,16 @@ const AuthPage = () => {
                     <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs sm:text-sm font-bold shadow-xs">
                             <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-400 text-xs" />
-                            <span>Gaming Social Hub • Connect & Play</span>
+                            <span>{t('auth.pageTagline', { defaultValue: 'Gaming Social Hub • Connect & Play' })}</span>
                         </div>
 
                         <div className="flex flex-col gap-3 max-w-2xl">
                             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-text leading-tight sm:leading-none">
-                                Connect Your <span className="text-primary">Squad</span>.<br />
-                                Elevate Your <span className="text-amber-500">Game</span>.
+                                {t('auth.heroTitleLine1', { defaultValue: 'Connect Your Squad' })}.<br />
+                                {t('auth.heroTitleLine2', { defaultValue: 'Elevate Your Game' })}.
                             </h1>
                             <p className="text-sm sm:text-base text-text-muted max-w-md leading-relaxed">
-                                Nền tảng kết nối đồng đội & cộng đồng game thủ thế hệ mới.
+                                {t('auth.heroSubtitle', { defaultValue: 'Nền tảng kết nối đồng đội & cộng đồng game thủ thế hệ mới.' })}
                             </p>
                         </div>
 
@@ -360,10 +383,10 @@ const AuthPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h3 className="text-sm font-extrabold text-text group-hover:text-primary transition-colors">
-                                        Connect Your Squad
+                                        {t('auth.featureConnectTitle', { defaultValue: 'Connect Your Squad' })}
                                     </h3>
                                     <p className="text-xs text-text-muted leading-relaxed">
-                                        Tìm kiếm đồng đội chuẩn gu, kết nối squad tức thì.
+                                        {t('auth.featureConnectDesc', { defaultValue: 'Tìm kiếm đồng đội chuẩn gu, kết nối squad tức thì.' })}
                                     </p>
                                 </div>
                             </div>
@@ -374,10 +397,10 @@ const AuthPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <h3 className="text-sm font-extrabold text-text group-hover:text-primary transition-colors">
-                                        Elevate Your Game
+                                        {t('auth.featureElevateTitle', { defaultValue: 'Elevate Your Game' })}
                                     </h3>
                                     <p className="text-xs text-text-muted leading-relaxed">
-                                        Nâng tầm trải nghiệm gaming cùng cộng đồng.
+                                        {t('auth.featureElevateDesc', { defaultValue: 'Nâng tầm trải nghiệm gaming cùng cộng đồng.' })}
                                     </p>
                                 </div>
                             </div>
@@ -393,18 +416,18 @@ const AuthPage = () => {
                                 <div className="flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <h2 className="text-xl sm:text-2xl font-black text-text">
-                                            {mode === 'login' && "Đăng Nhập IndieG"}
-                                            {mode === 'register' && "Tạo Tài Khoản Mới"}
-                                            {mode === 'forgot-password' && "Khôi Phục Mật Khẩu"}
-                                            {mode === 'verify-email' && "Xác Thực Địa Chỉ Email"}
-                                            {mode === 'reset-password' && "Đặt Mật Khẩu Mới"}
+                                            {mode === 'login' && t('auth.loginTitle', { defaultValue: 'Đăng Nhập IndieG' })}
+                                            {mode === 'register' && t('auth.registerTitle', { defaultValue: 'Tạo Tài Khoản Mới' })}
+                                            {mode === 'forgot-password' && t('auth.forgotPasswordTitle', { defaultValue: 'Khôi Phục Mật Khẩu' })}
+                                            {mode === 'verify-email' && t('auth.verifyEmailTitle', { defaultValue: 'Xác Thực Địa Chỉ Email' })}
+                                            {mode === 'reset-password' && t('auth.resetPasswordTitle', { defaultValue: 'Đặt Mật Khẩu Mới' })}
                                         </h2>
                                         <p className="text-xs text-text-muted mt-0.5">
-                                            {mode === 'login' && "Chào mừng bạn trở lại! Hãy nhập thông tin để chiến game."}
-                                            {mode === 'register' && "Gia nhập ngay hôm nay để mở khóa toàn bộ tính năng."}
-                                            {mode === 'forgot-password' && "Nhập địa chỉ email để nhận mã xác nhận đặt lại mật khẩu."}
-                                            {mode === 'verify-email' && "Nhập mã OTP 6 chữ số đã được gửi tới email của bạn."}
-                                            {mode === 'reset-password' && "Tạo mật khẩu mới an toàn cho tài khoản của bạn."}
+                                            {mode === 'login' && t('auth.loginSubtitle', { defaultValue: 'Chào mừng bạn trở lại! Hãy nhập thông tin để chiến game.' })}
+                                            {mode === 'register' && t('auth.registerSubtitle', { defaultValue: 'Gia nhập ngay hôm nay để mở khóa toàn bộ tính năng.' })}
+                                            {mode === 'forgot-password' && t('auth.forgotPasswordSubtitle', { defaultValue: 'Nhập địa chỉ email để nhận mã xác nhận đặt lại mật khẩu.' })}
+                                            {mode === 'verify-email' && t('auth.verifyEmailSubtitle', { defaultValue: 'Nhập mã OTP 6 chữ số đã được gửi tới email của bạn.' })}
+                                            {mode === 'reset-password' && t('auth.resetPasswordSubtitle', { defaultValue: 'Tạo mật khẩu mới an toàn cho tài khoản của bạn.' })}
                                         </p>
                                     </div>
                                 </div>
@@ -422,7 +445,7 @@ const AuthPage = () => {
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={faRightToBracket} className="text-xs" />
-                                            <span>Đăng Nhập</span>
+                                            <span>{t('auth.tabLogin', { defaultValue: 'Đăng Nhập' })}</span>
                                         </button>
 
                                         <button
@@ -435,7 +458,7 @@ const AuthPage = () => {
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
-                                            <span>Đăng Ký</span>
+                                            <span>{t('auth.tabRegister', { defaultValue: 'Đăng Ký' })}</span>
                                         </button>
                                     </div>
                                 )}
@@ -465,7 +488,7 @@ const AuthPage = () => {
                                     <div className="flex flex-col gap-1.5">
                                         <label htmlFor="username" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                                             <FontAwesomeIcon icon={faUser} className="text-primary text-xs" />
-                                            <span>Tên người dùng (Username)</span>
+                                            <span>{t('auth.usernameLabel', { defaultValue: 'Tên người dùng (Username)' })}</span>
                                         </label>
                                         <div className="flex items-center w-full rounded-2xl h-11 border border-border bg-bg/60 px-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                                             <input
@@ -473,7 +496,7 @@ const AuthPage = () => {
                                                 type="text"
                                                 value={formData.username}
                                                 onChange={handleInputChange}
-                                                placeholder="VD: ProGamer99"
+                                                placeholder={t('auth.usernamePlaceholder', { defaultValue: 'VD: ProGamer99' })}
                                                 disabled={isLoading}
                                                 className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
                                                 required
@@ -487,7 +510,7 @@ const AuthPage = () => {
                                     <div className="flex flex-col gap-1.5">
                                         <label htmlFor="email" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                                             <FontAwesomeIcon icon={faEnvelope} className="text-primary text-xs" />
-                                            <span>Địa chỉ Email</span>
+                                            <span>{t('auth.emailLabel', { defaultValue: 'Địa chỉ Email' })}</span>
                                         </label>
                                         <div className="flex items-center w-full rounded-2xl h-11 border border-border bg-bg/60 px-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                                             <input
@@ -495,7 +518,7 @@ const AuthPage = () => {
                                                 type="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                placeholder="gamer@indieg.com"
+                                                placeholder={t('auth.emailPlaceholder', { defaultValue: 'gamer@indieg.com' })}
                                                 disabled={isLoading}
                                                 className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
                                                 required
@@ -510,7 +533,7 @@ const AuthPage = () => {
                                         <div className="flex items-center justify-between">
                                             <label htmlFor="password" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faKey} className="text-primary text-xs" />
-                                                <span>{mode === 'reset-password' ? 'Mật khẩu mới' : 'Mật khẩu'}</span>
+                                                <span>{mode === 'reset-password' ? t('auth.newPasswordLabel', { defaultValue: 'Mật khẩu mới' }) : t('auth.passwordLabel', { defaultValue: 'Mật khẩu' })}</span>
                                             </label>
                                             {mode === 'login' && (
                                                 <button
@@ -518,7 +541,7 @@ const AuthPage = () => {
                                                     onClick={() => switchMode('forgot-password')}
                                                     className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
                                                 >
-                                                    Quên mật khẩu?
+                                                    {t('auth.forgotPasswordLink', { defaultValue: 'Quên mật khẩu?' })}
                                                 </button>
                                             )}
                                         </div>
@@ -548,7 +571,7 @@ const AuthPage = () => {
                                             <div className="flex flex-col gap-2 mt-1 p-3 rounded-2xl border border-border bg-bg/80 text-xs">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <span className={`font-semibold ${pwdState.isEmpty ? "text-text-faint" : pwdState.strengthConfig.color}`}>
-                                                        Độ mạnh: <span className="font-bold">{pwdState.isEmpty ? "Chưa nhập" : pwdState.strengthConfig.label}</span>
+                                                        {t('auth.pwdStrength', { defaultValue: 'Độ mạnh:' })} <span className="font-bold">{pwdState.isEmpty ? t('auth.pwdNotEntered', { defaultValue: 'Chưa nhập' }) : getStrengthLabel(pwdState.score)}</span>
                                                     </span>
                                                     <div className="grid grid-cols-4 gap-1.5 h-1.5 w-28">
                                                         {[1, 2, 3, 4].map((level) => (
@@ -572,7 +595,7 @@ const AuthPage = () => {
                                                                 className={item.isMet ? "text-emerald-500" : "text-text-faint"}
                                                             />
                                                             <span className={item.isMet ? "text-text font-medium" : "text-text-faint"}>
-                                                                {item.label}
+                                                                {getReqLabel(item.id, item.label)}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -587,7 +610,7 @@ const AuthPage = () => {
                                     <div className="flex flex-col gap-1.5">
                                         <label htmlFor="confirmPassword" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                                             <FontAwesomeIcon icon={faShieldHalved} className="text-primary text-xs" />
-                                            <span>Xác nhận mật khẩu</span>
+                                            <span>{t('auth.confirmPasswordLabel', { defaultValue: 'Xác nhận mật khẩu' })}</span>
                                         </label>
                                         <div
                                             className={`flex items-center w-full rounded-2xl h-11 border px-3.5 transition-all ${
@@ -609,7 +632,7 @@ const AuthPage = () => {
                                         </div>
                                         {!isPasswordMatched && (
                                             <p className="text-rose-500 text-xs font-bold mt-0.5">
-                                                Mật khẩu xác nhận không trùng khớp!
+                                                {t('auth.passwordMismatch', { defaultValue: 'Mật khẩu xác nhận không trùng khớp!' })}
                                             </p>
                                         )}
                                     </div>
@@ -620,7 +643,7 @@ const AuthPage = () => {
                                     <div className="flex flex-col gap-2">
                                         <label htmlFor="otpCode" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                                             <FontAwesomeIcon icon={faLock} className="text-primary text-xs" />
-                                            <span>Mã OTP xác thực 6 chữ số</span>
+                                            <span>{t('auth.otpCodeLabel', { defaultValue: 'Mã OTP xác thực 6 chữ số' })}</span>
                                         </label>
                                         <div className="flex items-center w-full rounded-2xl h-12 border border-border bg-bg/60 px-4 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                                             <input
@@ -636,7 +659,7 @@ const AuthPage = () => {
                                             />
                                         </div>
                                         <p className="text-[11px] text-text-faint text-center">
-                                            Mã thử nghiệm demo: <span className="font-mono font-bold text-primary">123456</span>
+                                            {t('auth.otpDemoHint', { defaultValue: 'Mã thử nghiệm demo:' })} <span className="font-mono font-bold text-primary">123456</span>
                                         </p>
                                     </div>
                                 )}
@@ -650,32 +673,32 @@ const AuthPage = () => {
                                     {isLoading ? (
                                         <>
                                             <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-                                            <span>Đang xử lý...</span>
+                                            <span>{t('auth.btnProcessing', { defaultValue: 'Đang xử lý...' })}</span>
                                         </>
                                     ) : mode === 'login' ? (
                                         <>
                                             <FontAwesomeIcon icon={faRightToBracket} />
-                                            <span>Đăng Nhập Ngay</span>
+                                            <span>{t('auth.btnLoginNow', { defaultValue: 'Đăng Nhập Ngay' })}</span>
                                         </>
                                     ) : mode === 'register' ? (
                                         <>
                                             <FontAwesomeIcon icon={faUserPlus} />
-                                            <span>Tạo Tài Khoản Mới</span>
+                                            <span>{t('auth.btnRegisterNow', { defaultValue: 'Tạo Tài Khoản Mới' })}</span>
                                         </>
                                     ) : mode === 'forgot-password' ? (
                                         <>
                                             <FontAwesomeIcon icon={faPaperPlane} />
-                                            <span>Gửi Mã Khôi Phục</span>
+                                            <span>{t('auth.btnSendRecovery', { defaultValue: 'Gửi Mã Khôi Phục' })}</span>
                                         </>
                                     ) : mode === 'verify-email' ? (
                                         <>
                                             <FontAwesomeIcon icon={faCircleCheck} />
-                                            <span>Xác Nhận Email</span>
+                                            <span>{t('auth.btnVerifyEmail', { defaultValue: 'Xác Nhận Email' })}</span>
                                         </>
                                     ) : (
                                         <>
                                             <FontAwesomeIcon icon={faLock} />
-                                            <span>Lưu Mật Khẩu Mới</span>
+                                            <span>{t('auth.btnSaveNewPassword', { defaultValue: 'Lưu Mật Khẩu Mới' })}</span>
                                         </>
                                     )}
                                 </button>
@@ -688,7 +711,7 @@ const AuthPage = () => {
                                     onClick={() => switchMode('login')}
                                     className="text-xs font-bold text-text-muted hover:text-primary transition-colors text-center cursor-pointer py-1"
                                 >
-                                    ← Quay lại trang Đăng Nhập
+                                    {t('auth.backToLogin', { defaultValue: '← Quay lại trang Đăng Nhập' })}
                                 </button>
                             )}
 
@@ -707,7 +730,7 @@ const AuthPage = () => {
 
             {/* Footer */}
             <footer className="relative z-20 w-full border-t border-border/50 py-4 text-center text-xs text-text-faint">
-                <p>© 2026 IndieG Gaming Hub. Tất cả quyền được bảo lưu.</p>
+                <p>{t('auth.footerRights', { defaultValue: '© 2026 IndieG Gaming Hub. Tất cả quyền được bảo lưu.' })}</p>
             </footer>
         </div>
     );

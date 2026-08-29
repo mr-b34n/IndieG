@@ -33,35 +33,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
             const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
             const savedUser = localStorage.getItem(AUTH_USER_KEY);
-            const isMocked = localStorage.getItem("indieg_mock_login") === "true";
 
             if (savedUser && savedToken) {
                 const parsedUser: AuthUser = JSON.parse(savedUser);
                 set({
                     user: parsedUser,
                     accessToken: savedToken,
-                    refreshToken: savedRefreshToken || "mock_refresh_token_" + Date.now(),
-                    mockLogin: isMocked,
-                    loading: false,
-                });
-            } else if (isMocked) {
-                const defaultUser: AuthUser = {
-                    id: "usr_gamer_demo_1",
-                    email: "gamer@indieg.com",
-                    username: "IndieGamer",
-                    avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
-                    isVerified: true,
-                    role: 'user',
-                };
-                set({
-                    user: defaultUser,
-                    accessToken: "mock_access_token_demo",
-                    refreshToken: "mock_refresh_token_demo",
-                    mockLogin: true,
+                    refreshToken: savedRefreshToken || null,
+                    mockLogin: false,
                     loading: false,
                 });
             } else {
-                set({ user: null, accessToken: null, refreshToken: null, loading: false });
+                set({ user: null, accessToken: null, refreshToken: null, loading: false, mockLogin: false });
             }
         } catch {
             set({ user: null, accessToken: null, refreshToken: null, loading: false });

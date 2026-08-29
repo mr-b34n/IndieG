@@ -300,7 +300,7 @@ export const FeedList = () => {
                         <p className="font-extrabold text-text text-sm">
                             {joinedCommunities.length === 0
                                 ? "No communities joined yet"
-                                : selectedCommunityFilter
+                                : activeCommunityFilter
                                 ? "No posts in this community yet"
                                 : "No recent posts from your communities"}
                         </p>
@@ -320,10 +320,10 @@ export const FeedList = () => {
                             <FontAwesomeIcon icon={faCompass} />
                             <span>Explore Communities</span>
                         </button>
-                        {selectedCommunityFilter && (
+                        {activeCommunityFilter && (
                             <button
                                 type="button"
-                                onClick={() => setSelectedCommunityFilter(null)}
+                                onClick={() => setActiveCommunityFilter(null)}
                                 className="px-3 py-1.5 rounded bg-surface-hover hover:bg-surface-hover/80 text-text text-xs font-semibold transition-colors cursor-pointer"
                             >
                                 View All

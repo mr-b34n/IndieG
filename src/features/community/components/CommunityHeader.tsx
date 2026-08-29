@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faCircle } from "@fortawesome/free-solid-svg-icons";
 import { formatCompactNumber } from "../constants";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunityHeaderProps {
     communityCount: number;
@@ -17,16 +18,18 @@ export const CommunityHeader = ({
     canCreateCommunity,
     onCreateCommunity
 }: CommunityHeaderProps) => {
+    const { t } = useTranslation();
+
     return (
         <div className="w-full flex flex-col gap-4 select-none pb-3 border-b border-divider-primary">
             {/* Top Row: Title + Primary Action */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex flex-col gap-1">
                     <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-text uppercase">
-                        COMMUNITIES
+                        {t('community.headerTitle', { defaultValue: 'COMMUNITIES' })}
                     </h1>
                     <p className="text-sm text-text-muted">
-                        Find your games. Find your people.
+                        {t('community.headerSub', { defaultValue: 'Find your games. Find your people.' })}
                     </p>
                 </div>
 
@@ -38,7 +41,7 @@ export const CommunityHeader = ({
                         className="self-start sm:self-center px-4 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
                     >
                         <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                        <span>Tạo cộng đồng</span>
+                        <span>{t('community.createCommunity', { defaultValue: 'Tạo cộng đồng' })}</span>
                     </button>
                 )}
             </div>
@@ -50,7 +53,7 @@ export const CommunityHeader = ({
                         {String(communityCount).padStart(2, "0")}
                     </span>
                     <span className="text-text-muted uppercase text-xs font-sans tracking-wide">
-                        COMMUNITIES
+                        {t('community.communitiesStatLabel', { defaultValue: 'COMMUNITIES' })}
                     </span>
                 </div>
 
@@ -60,7 +63,7 @@ export const CommunityHeader = ({
                         {formatCompactNumber(totalOnline).toUpperCase()}
                     </span>
                     <span className="text-text-muted uppercase text-xs font-sans tracking-wide">
-                        ONLINE NOW
+                        {t('community.onlineNowStatLabel', { defaultValue: 'ONLINE NOW' })}
                     </span>
                 </div>
 
@@ -69,7 +72,7 @@ export const CommunityHeader = ({
                         {formatCompactNumber(totalMembers).toUpperCase()}
                     </span>
                     <span className="text-text-muted uppercase text-xs font-sans tracking-wide">
-                        GAMERS JOINED
+                        {t('community.gamersJoinedStatLabel', { defaultValue: 'GAMERS JOINED' })}
                     </span>
                 </div>
             </div>

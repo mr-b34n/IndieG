@@ -12,6 +12,10 @@ import { TEST_ACCOUNTS } from "../constants";
 export const AccountSwitcher: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
     const { user, login } = useAuthStore();
 
+    if (Object.keys(TEST_ACCOUNTS).length === 0) {
+        return null;
+    }
+
     return (
         <div className={`flex flex-col gap-2.5 p-3.5 bg-surface border border-border/80 rounded-xl text-text shadow-sm ${compact ? 'text-xs' : ''}`}>
             <div className="flex items-center justify-between gap-2 border-b border-divider-primary pb-2">

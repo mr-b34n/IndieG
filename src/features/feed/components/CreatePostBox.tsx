@@ -236,7 +236,7 @@ const CommunitySelector = ({
                 {selectedCommunity ? (
                     <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
                         <img
-                            src={selectedCommunity.logo}
+                            src={selectedCommunity.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
                             alt={selectedCommunity.name}
                             className="w-4 h-4 rounded-full object-cover shrink-0"
                         />

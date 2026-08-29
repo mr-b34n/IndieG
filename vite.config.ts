@@ -17,61 +17,10 @@ function searchApiPlugin(): Plugin {
 						const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
 						const size = Math.min(50, Math.max(1, parseInt(url.searchParams.get("size") || "10", 10) || 10));
 
-						const posts = [
-							{
-								id: 1,
-								author: { name: "User123", avatar: "/assets/game-avatar.png" },
-								title: "Setup base ngoài khơi cực chill sau 40 ngày sinh tồn",
-								content: "Cuối cùng cũng build xong base 3 tầng trong Raft.",
-								likes: 24,
-								commentsCount: 8,
-								timestamp: "2 giờ trước",
-								communityName: "Raft Survivalist",
-								hashtags: ["#raft", "#survival"],
-							},
-							{
-								id: 2,
-								author: { name: "GhostRider", avatar: "/assets/game-avatar.png" },
-								title: "Bản mod đồ hoạ 4K mới ra, chạy siêu mượt cho RDR2",
-								content: "Vừa test bản mod textures mới cho Red Dead Redemption 2.",
-								likes: 56,
-								commentsCount: 19,
-								timestamp: "5 giờ trước",
-								communityName: "Red Dead Vietnam",
-								hashtags: ["#rdr2", "#mods"],
-							},
-							{
-								id: 3,
-								author: { name: "TacticalGamer", avatar: "/assets/game-avatar.png" },
-								title: "Tips aim training cho người mới lên Premier CS2",
-								content: "Luyện tập Crosshair placement và Counter-strafe trong Counter-Strike 2.",
-								likes: 112,
-								commentsCount: 43,
-								timestamp: "1 ngày trước",
-								communityName: "CS2 Competitive Hub",
-								hashtags: ["#cs2", "#esports"],
-							},
-						];
-
-						const users = [
-							{ id: "ghostrider", name: "GhostRider", username: "@ghostrider", avatar: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=120&auto=format&fit=crop&q=80", bio: "Red Dead Redemption 2 enthusiast. Outlaw by day, sheriff by night.", status: "online", game: "Red Dead Redemption 2", isFriend: true },
-							{ id: "tactical_xeno", name: "TacticalXeno", username: "@tactical_xeno", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80", bio: "Pro CS2 competitive player & tactical leader.", status: "in-game", game: "Counter-Strike 2", isFriend: true },
-							{ id: "nightowl", name: "NightOwl", username: "@nightowl", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80", bio: "Raft Hardcore survivor & building floating fortresses.", status: "online", game: "Raft Hardcore", isFriend: true },
-							{ id: "user123", name: "User123", username: "@user123", avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=120&auto=format&fit=crop&q=80", bio: "Survival game builder, streamer and content creator.", status: "online", game: "Raft", isFriend: false },
-							{ id: "s1mple_olex", name: "S1mple_Olex", username: "@s1mple_olex", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&auto=format&fit=crop&q=80", bio: "CS2 Premier 20k+ Elo AWP main.", status: "in-game", game: "Counter-Strike 2", isFriend: false },
-						];
-
-						const communities = [
-							{ id: "cs2-vn", name: "CS2 Vietnam Competitive", logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80", category: "FPS", description: "Cộng đồng Counter-Strike 2 Việt Nam. Tìm team, trao đổi skin và thảo luận giải đấu.", members: 42500 },
-							{ id: "rdr2-outlaws", name: "Red Dead Redemption 2 - Vietnam Outlaws", logo: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=120&auto=format&fit=crop&q=80", category: "Open World", description: "Hội người chơi RDR2 & Red Dead Online. Chia sẻ khoảnh khắc, mod đồ họa.", members: 28900 },
-							{ id: "raft-ocean", name: "Raft Ocean Explorers", logo: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&auto=format&fit=crop&q=80", category: "Survival", description: "Giao lưu, tìm đồng đội xây bè và sinh tồn trên đại dương Raft Hardcore.", members: 15400 },
-						];
-
-						const games = [
-							{ slug: "cs2", name: "Counter-Strike 2", genre: ["FPS", "Esports"], developer: "Valve", publisher: "Valve", ratingScore: 4.8, description: "Tựa game bắn súng góc nhìn thứ nhất eSports hàng đầu thế giới.", bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&auto=format&fit=crop&q=80" },
-							{ slug: "rdr2", name: "Red Dead Redemption 2", genre: ["Open World", "Action RPG"], developer: "Rockstar Games", publisher: "Rockstar Games", ratingScore: 4.9, description: "Kiệt tác thế giới mở viễn tây từ Rockstar Games.", bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300&auto=format&fit=crop&q=80" },
-							{ slug: "raft", name: "Raft", genre: ["Survival", "Co-op"], developer: "Redbeet Interactive", publisher: "Axolot Games", ratingScore: 4.7, description: "Sinh tồn trên bè giữa đại dương mênh mông.", bannerUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80" },
-						];
+						const posts: Array<{ title: string; content: string; author: { name: string }; hashtags: string[] }> = [];
+						const users: Array<{ name: string; username: string; bio: string }> = [];
+						const communities: Array<{ name: string; description: string; category: string }> = [];
+						const games: Array<{ name: string; developer: string; genre: string[] }> = [];
 
 						const filterTerm = q.toLowerCase();
 
@@ -151,56 +100,89 @@ function searchApiPlugin(): Plugin {
 	};
 }
 
-let backendNotifications = [
-	{
-		id: "notif-1",
-		userId: "user-current",
-		type: "like",
-		referenceId: "post-1",
-		title: "GamerX99 đã thích bài viết của bạn",
-		message: "Chê Counter-Strike 2 hack nhiều quá, Valve tính làm gì đây? 😂",
-		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=GamerX99",
-		createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-		isRead: false,
-		link: "/post/1",
-	},
-	{
-		id: "notif-2",
-		userId: "user-current",
-		type: "comment",
-		referenceId: "post-2",
-		title: "NeoCyber đã bình luận bài viết của bạn",
-		message: "\"Cảm ơn bạn đã chia sẻ tips build thuyền trong Raft, cực kỳ hữu ích luôn!\"",
-		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=NeoCyber",
-		createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-		isRead: false,
-		link: "/post/2",
-	},
-	{
-		id: "notif-3",
-		userId: "user-current",
-		type: "system",
-		referenceId: "game-cs2",
-		title: "Thông báo hệ thống từ Valve",
-		message: "Counter-Strike 2 vừa phát hành bản cập nhật mới (Armory Patch). Vào xem ngay các thay đổi vũ khí và skin!",
-		avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Valve",
-		createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-		isRead: false,
-		link: "/game/counter-strike-2",
-	},
-	{
-		id: "notif-4",
-		userId: "user-current",
-		type: "community",
-		referenceId: "comm-cs2-vn",
-		title: "Sự kiện Cộng đồng",
-		message: "Chào mừng những đồng đội mới tham gia cùng bạn trên cộng đồng CS2 Vietnam Competitive!",
-		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shouko",
-		createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-		isRead: true,
-		link: "/community",
-	},
-];
+interface BackendNotif {
+	id: string;
+	userId: string;
+	type: string;
+	referenceId: string;
+	message: string;
+	isRead: boolean;
+	createdAt: string;
+	title: string;
+	avatarUrl: string;
+	link: string;
+}
+
+let backendNotifications: BackendNotif[] = [];
+interface BackendReport {
+	id: string;
+	reporterId: string;
+	targetType: "post" | "comment" | "user";
+	targetId: string;
+	reason: string;
+	description: string;
+	status: "pending" | "resolved" | "rejected";
+	createdAt: string;
+	targetTitle: string;
+	targetAuthor: string;
+	assignedTo?: string;
+	resolvedBy?: string;
+	resolvedAt?: string;
+}
+
+let backendReports: BackendReport[] = [];
+interface BackendUser {
+	id: string;
+	name: string;
+	username: string;
+	email: string;
+	avatar: string;
+	isBanned: boolean;
+	suspendedUntil: string | null;
+	role: "admin" | "moderator" | "user";
+	createdAt: string;
+}
+
+let backendAdminUsers: BackendUser[] = [];
+interface BackendCommunity {
+	id: string;
+	name: string;
+	category: string;
+	description: string;
+	logo: string;
+	membersCount: number;
+	moderators: string[];
+	ownerId: string;
+	isDisabled: boolean;
+	createdAt: string;
+}
+
+let backendAdminCommunities: BackendCommunity[] = [];
+interface BackendContentItem {
+	id: string;
+	type: "post" | "comment";
+	title?: string;
+	content: string;
+	authorId: string;
+	authorName: string;
+	isDeleted: boolean;
+	createdAt: string;
+	reportsCount: number;
+}
+
+let backendContentItems: BackendContentItem[] = [];
+interface BackendGame {
+	id: string;
+	slug: string;
+	name: string;
+	genre: string[];
+	developer: string;
+	publisher: string;
+	bannerUrl: string;
+	isDisabled: boolean;
+}
+
+let backendAdminGames: BackendGame[] = [];
 
 function notificationApiPlugin(): Plugin {
 	return {
@@ -220,7 +202,7 @@ function notificationApiPlugin(): Plugin {
 						req.on("end", () => {
 							try {
 								const data = JSON.parse(body || "{}");
-								const newNotif = {
+								const newNotif: BackendNotif = {
 									id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
 									userId: data.userId || "user-current",
 									type: data.type || "system",
@@ -259,187 +241,6 @@ function notificationApiPlugin(): Plugin {
 		}
 	};
 }
-
-let backendReports = [
-	{
-		id: "rep-101",
-		reporterId: "user-2",
-		targetType: "post" as const,
-		targetId: "post-1",
-		reason: "Spam or misleading",
-		description: "Bài viết chứa link bài đăng quảng cáo sai sự thật",
-		status: "pending" as const,
-		createdAt: new Date(Date.now() - 3600000).toISOString(),
-		targetTitle: "Nhận ngay 1000 VP Valorant miễn phí",
-		targetAuthor: "Scammer_Pro",
-	},
-	{
-		id: "rep-102",
-		reporterId: "user-3",
-		targetType: "comment" as const,
-		targetId: "comment-45",
-		reason: "Harassment or bullying",
-		description: "Bình luận xúc phạm người chơi khác",
-		status: "pending" as const,
-		createdAt: new Date(Date.now() - 7200000).toISOString(),
-		targetTitle: "Comment #45 trên bài CS2",
-		targetAuthor: "ToxicPlayer",
-	},
-];
-
-let backendAdminUsers = [
-	{
-		id: "u-1",
-		name: "Admin Tổng",
-		username: "admin_master",
-		email: "admin@gamehub.vn",
-		avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=AdminMaster",
-		isBanned: false,
-		suspendedUntil: null,
-		role: "admin" as const,
-		createdAt: "2024-01-01T00:00:00.000Z",
-	},
-	{
-		id: "u-2",
-		name: "GamerX99",
-		username: "gamerx99",
-		email: "gamerx99@gmail.com",
-		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=GamerX99",
-		isBanned: false,
-		suspendedUntil: null,
-		role: "moderator" as const,
-		createdAt: "2024-02-15T00:00:00.000Z",
-	},
-	{
-		id: "u-3",
-		name: "Scammer_Pro",
-		username: "scammer_pro",
-		email: "scam@cheat.com",
-		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Scammer",
-		isBanned: true,
-		suspendedUntil: null,
-		role: "user" as const,
-		createdAt: "2024-03-01T00:00:00.000Z",
-	},
-	{
-		id: "u-4",
-		name: "ToxicPlayer",
-		username: "toxic_player",
-		email: "toxic@rage.com",
-		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Toxic",
-		isBanned: false,
-		suspendedUntil: "2026-08-21T00:00:00.000Z",
-		role: "user" as const,
-		createdAt: "2024-03-10T00:00:00.000Z",
-	},
-];
-
-let backendAdminCommunities = [
-	{
-		id: "comm-cs2-vn",
-		name: "CS2 Vietnam Competitive",
-		category: "FPS",
-		description: "Cộng đồng Counter-Strike 2 Việt Nam. Tìm team, trao đổi skin và thảo luận giải đấu.",
-		logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
-		membersCount: 42500,
-		moderators: ["u-1", "u-2"],
-		ownerId: "u-1",
-		isDisabled: false,
-		createdAt: "2024-01-10T00:00:00.000Z",
-	},
-	{
-		id: "comm-rdr2-outlaws",
-		name: "Red Dead Redemption 2 - Vietnam Outlaws",
-		category: "Open World",
-		description: "Hội người chơi RDR2 & Red Dead Online. Chia sẻ khoảnh khắc, mod đồ họa.",
-		logo: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=120&auto=format&fit=crop&q=80",
-		membersCount: 28900,
-		moderators: ["u-2"],
-		ownerId: "u-2",
-		isDisabled: false,
-		createdAt: "2024-01-20T00:00:00.000Z",
-	},
-	{
-		id: "comm-raft-ocean",
-		name: "Raft Ocean Explorers",
-		category: "Survival",
-		description: "Giao lưu, tìm đồng đội xây bè và sinh tồn trên đại dương Raft Hardcore.",
-		logo: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&auto=format&fit=crop&q=80",
-		membersCount: 15400,
-		moderators: ["u-4"],
-		ownerId: "u-4",
-		isDisabled: false,
-		createdAt: "2024-02-01T00:00:00.000Z",
-	},
-];
-
-let backendContentItems = [
-	{
-		id: "post-1",
-		type: "post" as const,
-		title: "Setup base ngoài khơi cực chill sau 40 ngày sinh tồn",
-		content: "Cuối cùng cũng build xong base 3 tầng trong Raft. Mọi người cho ý kiến về phòng chứa đồ nhé!",
-		authorId: "u-2",
-		authorName: "GamerX99",
-		isDeleted: false,
-		createdAt: new Date(Date.now() - 7200000).toISOString(),
-		reportsCount: 1,
-	},
-	{
-		id: "post-2",
-		type: "post" as const,
-		title: "Nhận ngay 1000 VP Valorant miễn phí",
-		content: "Truy cập ngay link https://free-vp-scam.cheat để nhận skin súng rồng múa lửa miễn phí!",
-		authorId: "u-3",
-		authorName: "Scammer_Pro",
-		isDeleted: true,
-		createdAt: new Date(Date.now() - 14400000).toISOString(),
-		reportsCount: 5,
-	},
-	{
-		id: "comment-45",
-		type: "comment" as const,
-		content: "Bớt nói nhảm đi đồ noob, chơi game như gà không biết ngắm nhắm!",
-		authorId: "u-4",
-		authorName: "ToxicPlayer",
-		isDeleted: false,
-		createdAt: new Date(Date.now() - 3600000).toISOString(),
-		reportsCount: 2,
-	},
-];
-
-let backendAdminGames = [
-	{
-		id: "game-1",
-		slug: "cs2",
-		name: "Counter-Strike 2",
-		genre: ["FPS", "Esports"],
-		developer: "Valve",
-		publisher: "Valve",
-		bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&auto=format&fit=crop&q=80",
-		isDisabled: false,
-	},
-	{
-		id: "game-2",
-		slug: "rdr2",
-		name: "Red Dead Redemption 2",
-		genre: ["Open World", "Action RPG"],
-		developer: "Rockstar Games",
-		publisher: "Rockstar Games",
-		bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=300&auto=format&fit=crop&q=80",
-		isDisabled: false,
-	},
-	{
-		id: "game-3",
-		slug: "raft",
-		name: "Raft",
-		genre: ["Survival", "Co-op"],
-		developer: "Redbeet Interactive",
-		publisher: "Axolot Games",
-		bannerUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80",
-		isDisabled: false,
-	},
-];
 
 let backendSystemSettings = {
 	general: {

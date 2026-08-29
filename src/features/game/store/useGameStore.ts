@@ -53,8 +53,8 @@ interface GameStoreState {
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
     games: loadInitialGames(),
-    followedSlugs: ["counter-strike-2", "raft", "red-dead-redemption-2", "grand-theft-auto-v", "elden-ring"],
-    quickAccessSlugs: ["raft", "red-dead-redemption-2", "counter-strike-2", "grand-theft-auto-v"],
+    followedSlugs: [],
+    quickAccessSlugs: [],
     customGuides: {},
     customReviews: {},
 

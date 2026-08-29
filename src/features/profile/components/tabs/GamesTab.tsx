@@ -10,10 +10,11 @@ interface GamesTabProps {
     t?: TranslateFn;
 }
 
-export const GamesTab = ({ games }: GamesTabProps) => {
-    const [selectedGameName, setSelectedGameName] = useState<string>(games.find((g) => g.isFeatured)?.name || games[0]?.name || "");
-    const featuredGame = games.find((g) => g.name === selectedGameName) || games[0];
-    const otherGames = games;
+export const GamesTab = ({ games = [] }: GamesTabProps) => {
+    const safeGames = games || [];
+    const [selectedGameName, setSelectedGameName] = useState<string>(safeGames.find((g) => g?.isFeatured)?.name || safeGames[0]?.name || "");
+    const featuredGame = safeGames.find((g) => g?.name === selectedGameName) || safeGames[0];
+    const otherGames = safeGames;
 
     return (
         <div className="flex flex-col gap-5 w-full animate-fade-in">
@@ -32,72 +33,74 @@ export const GamesTab = ({ games }: GamesTabProps) => {
             </div>
 
             {/* Featured Hero Game Mastery */}
-            <div className="w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-sm relative overflow-hidden flex flex-col gap-5">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#13161C] p-4 rounded-[10px]">
-                    <div className="flex items-center gap-4">
-                        <img
-                            src={featuredGame.logo}
-                            alt={featuredGame.name}
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-[8px] object-cover shrink-0"
-                        />
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-[#F0F1F2] text-lg sm:text-xl">{featuredGame.name}</h4>
-                                <span className="px-2 py-0.5 rounded-[4px] bg-[#1688E8]/15 text-[#1688E8] text-[10px] font-bold">
-                                    PRIMARY MAIN
+            {featuredGame ? (
+                <div className="w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-sm relative overflow-hidden flex flex-col gap-5">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#13161C] p-4 rounded-[10px]">
+                        <div className="flex items-center gap-4">
+                            <img
+                                src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
+                                alt={featuredGame.name || "Game"}
+                                className="w-16 h-16 sm:w-20 sm:h-20 rounded-[8px] object-cover shrink-0"
+                            />
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-[#F0F1F2] text-lg sm:text-xl">{featuredGame.name || "Featured Game"}</h4>
+                                    <span className="px-2 py-0.5 rounded-[4px] bg-[#1688E8]/15 text-[#1688E8] text-[10px] font-bold">
+                                        PRIMARY MAIN
+                                    </span>
+                                </div>
+                                <span className="text-xs font-medium text-[#9A9DA3]">
+                                    {featuredGame.rank || "Unranked"} • Last played: {featuredGame.lastPlayed || "Recently"}
                                 </span>
                             </div>
-                            <span className="text-xs font-medium text-[#9A9DA3]">
-                                {featuredGame.rank} • Last played: {featuredGame.lastPlayed}
+                        </div>
+
+                        <div className="flex flex-col items-start sm:items-end">
+                            <span className="text-xl sm:text-2xl font-bold text-[#F0F1F2] tracking-tight flex items-center gap-1.5 font-mono">
+                                <FontAwesomeIcon icon={faFire} className="text-[#E5A93D] text-base" />
+                                {featuredGame.hours || 0}h
                             </span>
+                            <span className="text-xs font-medium text-[#9A9DA3]">Rating: Premier {featuredGame.ratingScore || "18,500"}</span>
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-start sm:items-end">
-                        <span className="text-xl sm:text-2xl font-bold text-[#F0F1F2] tracking-tight flex items-center gap-1.5 font-mono">
-                            <FontAwesomeIcon icon={faFire} className="text-[#E5A93D] text-base" />
-                            {featuredGame.hours}h
-                        </span>
-                        <span className="text-xs font-medium text-[#9A9DA3]">Rating: Premier {featuredGame.ratingScore || "18,500"}</span>
+                    {/* Progress Bar */}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#F0F1F2]">
+                            <span className="text-[#9A9DA3]">Mastery & Achievement Progress</span>
+                            <span className="text-[#F0F1F2] font-mono text-xs">{featuredGame.achievements || 0} / {featuredGame.totalAchievements || 100} Unlocked</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
+                                style={{ width: `${Math.round(((featuredGame.achievements || 0) / (featuredGame.totalAchievements || 1)) * 100)}%` }}
+                            />
+                        </div>
                     </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between text-xs font-medium text-[#F0F1F2]">
-                        <span className="text-[#9A9DA3]">Mastery & Achievement Progress</span>
-                        <span className="text-[#F0F1F2] font-mono text-xs">{featuredGame.achievements} / {featuredGame.totalAchievements} Unlocked</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                            style={{ width: `${Math.round((featuredGame.achievements / featuredGame.totalAchievements) * 100)}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Skills Rating & Badges */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-                    {featuredGame.skills?.map((s) => (
-                        <div key={s.name} className="flex items-center justify-between p-3 rounded-[8px] bg-[#13161C]">
-                            <span className="font-medium text-[#F0F1F2] text-xs">{s.name} Skill</span>
-                            <div className="flex items-center gap-0.5 text-[#E5A93D] text-xs">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <FontAwesomeIcon
-                                        key={star}
-                                        icon={star <= s.stars ? faStarSolid : faStarRegular}
-                                        className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
-                                    />
-                                ))}
+                    {/* Skills Rating & Badges */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                        {featuredGame.skills?.map((s) => (
+                            <div key={s.name} className="flex items-center justify-between p-3 rounded-[8px] bg-[#13161C]">
+                                <span className="font-medium text-[#F0F1F2] text-xs">{s.name} Skill</span>
+                                <div className="flex items-center gap-0.5 text-[#E5A93D] text-xs">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <FontAwesomeIcon
+                                            key={star}
+                                            icon={star <= s.stars ? faStarSolid : faStarRegular}
+                                            className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
+                                        />
+                                    ))}
+                                </div>
                             </div>
+                        ))}
+                        <div className="flex items-center justify-center gap-2 p-3 rounded-[8px] bg-[#181C24] text-[#24C58A] font-semibold text-xs">
+                            <FontAwesomeIcon icon={faTrophy} />
+                            <span>🏆 Clutch God</span>
                         </div>
-                    ))}
-                    <div className="flex items-center justify-center gap-2 p-3 rounded-[8px] bg-[#181C24] text-[#24C58A] font-semibold text-xs">
-                        <FontAwesomeIcon icon={faTrophy} />
-                        <span>🏆 Clutch God</span>
                     </div>
                 </div>
-            </div>
+            ) : null}
 
             {/* Other Games Grid - Clickable to switch featured */}
             <div className="flex flex-col gap-2.5">
