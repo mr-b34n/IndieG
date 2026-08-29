@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbtack } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export interface PinnedThreadItem {
     id: string;
@@ -20,6 +21,7 @@ export const CommunityHubPinned = ({
     pinnedThreads,
     onThreadClick,
 }: CommunityHubPinnedProps) => {
+    const { t } = useTranslation();
     if (!pinnedThreads || pinnedThreads.length === 0) return null;
 
     return (
@@ -27,7 +29,7 @@ export const CommunityHubPinned = ({
             {/* Section Title */}
             <div className="flex items-center gap-2">
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                    PINNED
+                    {t('community.pinnedThreads', { defaultValue: 'PINNED' })}
                 </span>
             </div>
 

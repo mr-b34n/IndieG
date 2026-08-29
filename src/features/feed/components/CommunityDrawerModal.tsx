@@ -10,6 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { type CommunityData } from "@/features/community";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunityDrawerModalProps {
     isOpen: boolean;
@@ -28,6 +29,7 @@ export const CommunityDrawerModal = ({
     onSelectCommunity,
     recentIds,
 }: CommunityDrawerModalProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +92,7 @@ export const CommunityDrawerModal = ({
                 <div className="flex items-center justify-between px-5 py-4 border-b border-divider-primary bg-surface-hover/30">
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-black uppercase tracking-widest text-text">
-                            Communities
+                            {t('community.communitiesLabel', { defaultValue: 'Communities' })}
                         </span>
                         <span className="text-[11px] font-bold text-text-faint">
                             ({joinedCommunities.length})
@@ -120,7 +122,7 @@ export const CommunityDrawerModal = ({
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search your joined communities..."
+                            placeholder={t('community.searchDrawerPlaceholder', { defaultValue: 'Search your joined communities...' })}
                             className="w-full bg-surface-hover/40 border border-divider-secondary focus:border-primary rounded-[6px] pl-9 pr-8 py-2 text-xs text-text placeholder:text-text-faint outline-none transition-colors"
                         />
                         {searchQuery && (
@@ -157,10 +159,10 @@ export const CommunityDrawerModal = ({
                                 </div>
                                 <div className="flex flex-col text-left">
                                     <span className="font-bold text-xs uppercase tracking-wide">
-                                        All Communities Feed
+                                        {t('feed.generalFeed', { defaultValue: 'All Communities Feed' })}
                                     </span>
                                     <span className="text-[11px] text-text-faint">
-                                        Show posts from all {joinedCommunities.length} communities
+                                        {t('feed.homeFeedSub', { defaultValue: 'Discussions & updates from your joined communities' })}
                                     </span>
                                 </div>
                             </div>
@@ -175,7 +177,7 @@ export const CommunityDrawerModal = ({
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-text-faint">
                                 <FontAwesomeIcon icon={faClockRotateLeft} className="text-[9px]" />
-                                <span>Recent</span>
+                                <span>{t('common.recent', { defaultValue: 'Recent' })}</span>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -296,7 +298,7 @@ export const CommunityDrawerModal = ({
                         }}
                         className="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1.5"
                     >
-                        <span>Manage all communities</span>
+                        <span>{t('feed.manageCommunities', { defaultValue: 'Manage all communities' })}</span>
                         <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                     </button>
 
@@ -305,7 +307,7 @@ export const CommunityDrawerModal = ({
                         onClick={handleClose}
                         className="px-3 py-1.5 rounded-[4px] bg-surface-hover hover:bg-surface-hover/80 text-xs font-bold text-text cursor-pointer transition-colors"
                     >
-                        Close
+                        {t('common.close', { defaultValue: 'Close' })}
                     </button>
                 </div>
             </div>

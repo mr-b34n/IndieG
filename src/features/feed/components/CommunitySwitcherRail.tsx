@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { type CommunityData } from "@/features/community";
 import { CommunityDrawerModal } from "./CommunityDrawerModal";
 import { FeedSortDropdown, type FeedSortOption } from "./FeedSortDropdown";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunitySwitcherRailProps {
     joinedCommunities: CommunityData[];
@@ -20,6 +21,7 @@ export const CommunitySwitcherRail = ({
     sortOrder,
     onSortChange,
 }: CommunitySwitcherRailProps) => {
+    const { t } = useTranslation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [recentIds, setRecentIds] = useState<string[]>(() => {
         try {
@@ -83,7 +85,7 @@ export const CommunitySwitcherRail = ({
             {/* Top Micro-Header: YOUR FEED & Sort Dropdown */}
             <div className="flex items-center justify-between pb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-text-faint">
-                    YOUR FEED
+                    {t('feed.yourFeed', { defaultValue: 'YOUR FEED' })}
                 </span>
 
                 <FeedSortDropdown
@@ -104,7 +106,7 @@ export const CommunitySwitcherRail = ({
                             : "text-text-muted hover:text-text border-transparent"
                     }`}
                 >
-                    ALL
+                    {t('common.all', { defaultValue: 'ALL' }).toUpperCase()}
                 </button>
 
                 {/* Visible Top Communities */}
@@ -139,7 +141,7 @@ export const CommunitySwitcherRail = ({
                         className="text-xs font-bold text-text-faint hover:text-primary transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 border-transparent shrink-0 flex items-center gap-1"
                         title="View all joined communities"
                     >
-                        <span>+{hiddenCount} more</span>
+                        <span>{t('feed.moreCommunities', { count: hiddenCount, defaultValue: `+${hiddenCount} more` })}</span>
                     </button>
                 )}
             </div>

@@ -7,6 +7,7 @@ import {
     faMessage,
     faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export interface ContributorItem {
     id: string;
@@ -49,6 +50,7 @@ export const CommunityHubRightRail = ({
     onOpenChat,
     isVi,
 }: CommunityHubRightRailProps) => {
+    const { t } = useTranslation();
     const [contribTab, setContribTab] = useState<"week" | "month" | "all">("week");
 
     return (
@@ -72,7 +74,7 @@ export const CommunityHubRightRail = ({
                         className="flex items-center gap-2 text-primary hover:underline transition-colors"
                     >
                         <FontAwesomeIcon icon={faGlobe} className="text-xs shrink-0" />
-                        <span>Official Website</span>
+                        <span>{t('community.officialWebsite', { defaultValue: 'Official Website' })}</span>
                     </a>
                     <a
                         href={steamStoreUrl}
@@ -81,7 +83,7 @@ export const CommunityHubRightRail = ({
                         className="flex items-center gap-2 text-primary hover:underline transition-colors"
                     >
                         <FontAwesomeIcon icon={faGamepad} className="text-xs shrink-0" />
-                        <span>Steam Store Page</span>
+                        <span>{t('community.steamStorePage', { defaultValue: 'Steam Store Page' })}</span>
                     </a>
                 </div>
 
@@ -104,7 +106,7 @@ export const CommunityHubRightRail = ({
             <div className="flex flex-col gap-3 pb-5 border-b border-divider-primary/60">
                 <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                        TOP CONTRIBUTORS
+                        {t('community.topContributors', { defaultValue: 'TOP CONTRIBUTORS' })}
                     </span>
                 </div>
 
@@ -168,7 +170,7 @@ export const CommunityHubRightRail = ({
             <div className="flex flex-col gap-3 pb-5 border-b border-divider-primary/60">
                 <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                        MEMBERS ONLINE
+                        {t('community.membersOnline', { defaultValue: 'MEMBERS ONLINE' })}
                     </span>
                     <span className="flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-500">
                         <FontAwesomeIcon icon={faCircle} className="text-[6px] animate-pulse" />
@@ -189,7 +191,7 @@ export const CommunityHubRightRail = ({
                         ))}
                     </div>
                     <span className="text-xs font-mono text-text-muted">
-                        +{Math.max(0, onlineCount - 4)} online
+                        +{Math.max(0, onlineCount - 4)} {t('community.onlineCount', { defaultValue: 'online' })}
                     </span>
                 </div>
 
@@ -212,7 +214,7 @@ export const CommunityHubRightRail = ({
             {events.length > 0 && (
                 <div className="flex flex-col gap-3">
                     <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                        UPCOMING EVENTS
+                        {t('community.upcomingEvents', { defaultValue: 'UPCOMING EVENTS' })}
                     </span>
 
                     <div className="flex flex-col gap-3">

@@ -11,6 +11,7 @@ import type { CommunityData } from "../types";
 import { formatCompactNumber } from "../constants";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import { useAuthStore } from "@/features/auth";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { AdminCommunityControllerModal } from "./AdminCommunityControllerModal";
 
 interface CommunityGameTileProps {
@@ -18,6 +19,7 @@ interface CommunityGameTileProps {
 }
 
 export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
@@ -98,7 +100,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     {/* Hover Quick Cue */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                         <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5 bg-black/75 px-3 py-1 rounded-[4px] border border-white/20">
-                            <span>{community.joined ? "Open community" : "Explore community"}</span>
+                            <span>{community.joined ? t('community.openCommunity', { defaultValue: 'Open community' }) : t('community.exploreCommunity', { defaultValue: 'Explore community' })}</span>
                             <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                         </span>
                     </div>
@@ -126,7 +128,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                             {community.category}
                         </p>
                         <p className="font-medium">
-                            {formatCompactNumber(community.members)} members · <span className="text-emerald-500 font-semibold">{formatCompactNumber(community.onlineNow)} online</span>
+                            {formatCompactNumber(community.members)} {t('community.membersCount', { defaultValue: 'members' })} · <span className="text-emerald-500 font-semibold">{formatCompactNumber(community.onlineNow)} {t('community.onlineCount', { defaultValue: 'online' })}</span>
                         </p>
                     </div>
 
@@ -141,11 +143,11 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                                     title="Click to toggle membership"
                                 >
                                     <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                    <span>JOINED</span>
+                                    <span>{t('community.joinedBtn', { defaultValue: 'JOINED' })}</span>
                                 </button>
 
                                 <span className="text-xs font-bold text-text-muted group-hover:text-primary transition-colors flex items-center gap-1">
-                                    <span>OPEN</span>
+                                    <span>{t('community.openBtn', { defaultValue: 'OPEN' })}</span>
                                     <FontAwesomeIcon
                                         icon={faArrowRight}
                                         className="text-[10px] text-text-faint group-hover:text-primary group-hover:translate-x-0.5 transition-transform"
@@ -159,7 +161,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                                     onClick={handleJoinClick}
                                     className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider py-0.5 px-1 -ml-1 rounded hover:bg-primary/10 cursor-pointer"
                                 >
-                                    <span>JOIN</span>
+                                    <span>{t('community.joinBtn', { defaultValue: 'JOIN' })}</span>
                                     <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
                                 </button>
 

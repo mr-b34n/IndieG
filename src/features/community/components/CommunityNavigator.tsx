@@ -7,6 +7,7 @@ import {
     faCheck
 } from "@fortawesome/free-solid-svg-icons";
 import type { CommunityTabKey } from "../types";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunityNavigatorProps {
     search: string;
@@ -29,6 +30,7 @@ export const CommunityNavigator = ({
     onCategoryChange,
     joinedCount
 }: CommunityNavigatorProps) => {
+    const { t } = useTranslation();
     const [isMoreOpen, setIsMoreOpen] = useState(false);
     const moreDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,7 @@ export const CommunityNavigator = ({
                     type="text"
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Search communities, games, or tags..."
+                    placeholder={t('community.searchPlaceholder', { defaultValue: 'Search communities, games, or tags...' })}
                     className="w-full h-9.5 pl-9 pr-9 bg-surface hover:bg-surface-hover/70 focus:bg-surface border border-divider-primary/60 focus:border-primary rounded-[4px] text-xs font-semibold text-text placeholder:text-text-faint focus:outline-none transition-colors"
                 />
                 {search && (
@@ -82,7 +84,7 @@ export const CommunityNavigator = ({
                         activeTab === "discover" ? "text-primary" : "text-text-muted hover:text-text"
                     }`}
                 >
-                    DISCOVER
+                    {t('community.tabDiscover', { defaultValue: 'DISCOVER' })}
                     {activeTab === "discover" && (
                         <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
                     )}
@@ -95,7 +97,7 @@ export const CommunityNavigator = ({
                         activeTab === "trending" ? "text-primary" : "text-text-muted hover:text-text"
                     }`}
                 >
-                    TRENDING
+                    {t('community.tabTrending', { defaultValue: 'TRENDING' })}
                     {activeTab === "trending" && (
                         <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
                     )}
@@ -108,7 +110,7 @@ export const CommunityNavigator = ({
                         activeTab === "joined" ? "text-primary" : "text-text-muted hover:text-text"
                     }`}
                 >
-                    <span>JOINED</span>
+                    <span>{t('community.tabJoined', { defaultValue: 'JOINED' })}</span>
                     <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-[3px] ${
                         activeTab === "joined" ? "bg-primary/20 text-primary" : "bg-surface-hover text-text-faint"
                     }`}>
@@ -132,7 +134,7 @@ export const CommunityNavigator = ({
                                 : "text-text-muted hover:text-text hover:bg-surface-hover/60 border border-transparent"
                         }`}
                     >
-                        All
+                        {t('common.all', { defaultValue: 'All' })}
                     </button>
 
                     {primaryCategories.map((cat) => {
@@ -164,7 +166,7 @@ export const CommunityNavigator = ({
                                         : "text-text-muted hover:text-text hover:bg-surface-hover/60 border border-transparent"
                                 }`}
                             >
-                                <span>{isMoreSelected ? activeCategory : "More"}</span>
+                                <span>{isMoreSelected ? activeCategory : t('common.more', { defaultValue: 'More' })}</span>
                                 <FontAwesomeIcon
                                     icon={faChevronDown}
                                     className={`text-[8px] transition-transform duration-200 ${

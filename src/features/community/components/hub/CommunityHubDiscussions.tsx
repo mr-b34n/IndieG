@@ -12,6 +12,7 @@ import {
     faCircleQuestion,
     faStar,
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export interface DiscussionThread {
     id: string;
@@ -43,6 +44,7 @@ export const CommunityHubDiscussions = ({
     onThreadClick,
     isVi,
 }: CommunityHubDiscussionsProps) => {
+    const { t } = useTranslation();
     const [localLikes, setLocalLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
 
     const handleLikeToggle = (e: React.MouseEvent, threadId: string, initialLikes = 12) => {
@@ -73,10 +75,10 @@ export const CommunityHubDiscussions = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-divider-primary/60 pb-2.5">
                 <div className="flex items-center gap-3">
                     <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                        RECENT DISCUSSIONS
+                        {t('community.recentDiscussions', { defaultValue: 'RECENT DISCUSSIONS' })}
                     </span>
                     <span className="text-xs font-mono font-semibold text-text-muted">
-                        {threads.length} {threads.length === 1 ? "thread" : "threads"}
+                        {threads.length} {threads.length === 1 ? t('community.thread', { defaultValue: 'thread' }) : t('community.threads', { defaultValue: 'threads' })}
                     </span>
                 </div>
 

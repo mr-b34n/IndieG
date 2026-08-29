@@ -1,7 +1,8 @@
 import {
     faUsers, faHouse,
     faGear, faShieldHalved,
-    faCompass, faPlus
+    faCompass, faPlus,
+    faRightFromBracket
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate, useLocation } from "@tanstack/react-router"
@@ -36,6 +37,7 @@ export const LeftBar = () => {
     const user = useAuthStore((state) => state.user);
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const customAvatar = useAuthStore((state) => state.customAvatar);
+    const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
     const isAdmin = user?.role === "admin";
 
@@ -55,6 +57,12 @@ export const LeftBar = () => {
         navigate({ to: "/profile/$userId", params: { userId: "me" } });
     };
 
+    const handleLogout = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        logout();
+        navigate({ to: "/auth" });
+    };
+
     const joinedCommunities = communities.filter((c) => c.joined);
 
     return (
@@ -64,7 +72,7 @@ export const LeftBar = () => {
                 <div
                     onClick={handleProfileClick}
                     className="flex flex-row items-center gap-3 px-3 py-2.5 mb-1
-                        rounded-md cursor-pointer hover:bg-surface-hover/70 transition-colors"
+                        rounded-md cursor-pointer hover:bg-surface-hover/70 transition-colors group"
                 >
                     <img
                         src={avatarUrl}
@@ -85,6 +93,15 @@ export const LeftBar = () => {
                             {isAdmin ? t('common.systemAdmin', { defaultValue: "Quản trị viên hệ thống" }) : user ? t('common.viewProfile') : t('common.signedInDemo')}
                         </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        title={t('common.logout', { defaultValue: 'Đăng xuất' })}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-text-faint hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
+                    >
+                        <FontAwesomeIcon icon={faRightFromBracket} className="text-xs" />
+                    </button>
                 </div>
             ) : (
                 <div className="flex flex-col gap-2 px-3 py-2 mb-2 pb-3 border-b border-border/40">
@@ -203,6 +220,17 @@ export const LeftBar = () => {
                     <FontAwesomeIcon icon={faGear} className={`w-4 shrink-0 ${isSettingsActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
                     <span>{t('common.settings')}</span>
                 </button>
+
+                {isLoggedIn && (
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex flex-row items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors duration-150 cursor-pointer select-none"
+                    >
+                        <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
+                        <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
+                    </button>
+                )}
             </div>
         </div>
     )

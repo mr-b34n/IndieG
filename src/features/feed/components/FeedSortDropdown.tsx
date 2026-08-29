@@ -8,6 +8,7 @@ import {
     faComments,
     faArrowDownWideShort
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export type FeedSortOption = "latest" | "popular" | "discussed";
 
@@ -17,6 +18,7 @@ interface FeedSortDropdownProps {
 }
 
 export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,10 +32,10 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const options: { id: FeedSortOption; label: string; icon: typeof faClock }[] = [
-        { id: "latest", label: "Latest", icon: faClock },
-        { id: "popular", label: "Popular", icon: faFire },
-        { id: "discussed", label: "Discussed", icon: faComments },
+    const options: { id: FeedSortOption; labelKey: string; defaultLabel: string; icon: typeof faClock }[] = [
+        { id: "latest", labelKey: "feed.sortLatest", defaultLabel: "Latest", icon: faClock },
+        { id: "popular", labelKey: "feed.sortPopular", defaultLabel: "Popular", icon: faFire },
+        { id: "discussed", labelKey: "feed.sortDiscussed", defaultLabel: "Discussed", icon: faComments },
     ];
 
     const currentOption = options.find((o) => o.id === value) || options[0];
@@ -47,7 +49,7 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
                 className="flex items-center gap-1.5 text-xs font-bold text-text-muted hover:text-text transition-colors cursor-pointer py-0.5 px-1 rounded hover:bg-surface-hover/50 whitespace-nowrap"
             >
                 <FontAwesomeIcon icon={faArrowDownWideShort} className="text-text-faint text-[10px]" />
-                <span className="text-text text-xs">{currentOption.label}</span>
+                <span className="text-text text-xs">{t(currentOption.labelKey, { defaultValue: currentOption.defaultLabel })}</span>
                 <FontAwesomeIcon
                     icon={faChevronDown}
                     className={`text-[9px] text-text-faint transition-transform duration-200 ml-0.5 ${
@@ -77,7 +79,7 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
                             >
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={opt.icon} className="text-[11px] opacity-70" />
-                                    <span>{opt.label}</span>
+                                    <span>{t(opt.labelKey, { defaultValue: opt.defaultLabel })}</span>
                                 </div>
                                 {isSelected && (
                                     <FontAwesomeIcon icon={faCheck} className="text-primary text-[10px] shrink-0" />
