@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.0 TypeScript definitions for IndieG Backend Services
+ * OpenAPI 3.0 TypeScript definitions & UI Mappers for IndieG Backend Services
  */
 
 export interface AuthRegisterDto {
@@ -177,4 +177,43 @@ export interface ReportDto {
 export interface CreateReportDto {
     postId: string;
     reason: string;
+}
+
+/**
+ * Adapter Mappers: Safely convert backend DTOs into frontend UI models
+ * handling all optional / missing fields gracefully without runtime errors.
+ */
+export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorAvatar = "") {
+    return {
+        id: dto.id,
+        author: authorName || "Gamer",
+        authorAvatar: authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${dto.authorId || dto.id}`,
+        title: dto.title || "",
+        content: dto.content || "",
+        images: dto.images || [],
+        tags: dto.tags || [],
+        gameTag: dto.gameTag,
+        likes: dto.likes ?? 0,
+        comments: dto.commentsCount ?? 0,
+        pinned: dto.pinned ?? false,
+        allowComments: dto.allowComments ?? true,
+        timeAgo: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
+        privacy: "public" as const,
+    };
+}
+
+export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
+    return {
+        id: dto.id,
+        name: dto.name || "Cộng đồng",
+        logo: dto.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150",
+        backdrop: dto.backdrop || "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200",
+        category: dto.category || "Gaming",
+        description: dto.description || "",
+        members: 1,
+        onlineNow: dto.onlineNow ?? 1,
+        tags: dto.tags || [],
+        joined: false,
+        featured: dto.featured ?? false,
+    };
 }

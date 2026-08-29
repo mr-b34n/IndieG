@@ -6,7 +6,6 @@
 ![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![TanStack Router](https://img.shields.io/badge/TanStack_Router-v1-FF4154?style=for-the-badge&logo=react&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-v5-43853D?style=for-the-badge&logo=react&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Auth_&_DB-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 **IndieG** (`the-best-game-platform`) là nền tảng mạng xã hội và cộng đồng game thủ hiện đại, được xây dựng với mục tiêu kết nối những người đam mê trò chơi điện tử. Nơi đây cung cấp không gian toàn diện để game thủ thảo luận chiến thuật, tìm kiếm tổ đội leo rank (LFG - Looking For Group), khám phá kho game đồ sộ và tự hào phô diễn cá tính chơi game cùng dàn **Gaming Gear** cực chất.
 
@@ -69,7 +68,7 @@
 | **State Management** | [Zustand v5](https://zustand-demo.pmnd.rs/) (Theme, Auth, Sidebar, Notifications, i18n) |
 | **Styling & CSS** | [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`) |
 | **Iconography** | [FontAwesome Icons v7](https://fontawesome.com/) (`@fortawesome/free-solid-svg-icons`, brands, regular) |
-| **Backend / Auth** | [Supabase](https://supabase.com/) (`@supabase/supabase-js`) & Custom Local State Engine |
+| **Backend / REST API** | Custom Local Backend (`VITE_API_BASE_URL`) & Local State Store |
 | **Tiện ích khác** | `emoji-picker-react` (Bộ chọn biểu tượng cảm xúc), `zxcvbn` (Kiểm tra độ mạnh mật khẩu) |
 
 ---
