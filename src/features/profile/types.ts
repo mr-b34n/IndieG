@@ -12,6 +12,7 @@ export interface Badge {
     badgeText: string;
     earnedDate?: string;
     category?: string;
+    rarity?: string;
     unlocked?: boolean;
 }
 
@@ -23,6 +24,7 @@ export interface GearCategory {
 }
 
 export interface LibraryGame {
+    id?: string | number;
     name: string;
     logo: string;
     hours: number;

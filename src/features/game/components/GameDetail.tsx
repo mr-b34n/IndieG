@@ -237,7 +237,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             {game.communityId && (
                                 <button
                                     type="button"
-                                    onClick={() => navigate({ to: `/community/${game.communityId}` })}
+                                    onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(game.communityId) } })}
                                     className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-accent-500 hover:bg-accent-600 text-white flex items-center justify-center gap-2 shadow-md shadow-accent-500/25 transition-all cursor-pointer"
                                 >
                                     <FontAwesomeIcon icon={faComments} />
@@ -382,7 +382,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         {game.communityId && (
                             <button
                                 type="button"
-                                onClick={() => navigate({ to: `/community/${game.communityId}` })}
+                                onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(game.communityId) } })}
                                 className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-surface-hover hover:bg-border/80 text-text border border-border transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faComments} />

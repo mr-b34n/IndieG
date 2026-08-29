@@ -15,6 +15,7 @@ export interface PostData {
     authorAvatar: string;
     authorRank?: UserRank;
     gameTag?: string;
+    communityId?: string | number | null;
     timeAgo: string;
     title: string;
     content: string;

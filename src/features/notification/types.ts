@@ -8,6 +8,7 @@ export interface NotificationEntity {
     message: string;
     isRead: boolean;
     createdAt: string;
+    timestamp?: string | number;
     title?: string;
     avatarUrl?: string;
     link?: string;

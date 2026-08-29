@@ -145,7 +145,7 @@ export const FeedList = () => {
             // Ensure new post is displayed at top
             setDisplayLimit((prev) => Math.max(prev, 5));
         } catch {
-            setSubmitError("Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!");
+            setSubmitError(t('feed.postSubmitError', { defaultValue: "Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!" }));
         }
     };
 
@@ -293,12 +293,14 @@ export const FeedList = () => {
             {hasError ? (
                 <div className="w-full flex flex-col items-center justify-center gap-3 p-8 bg-surface/90 border border-rose-500/30 rounded-2xl text-center">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl text-rose-500" />
-                    <p className="font-bold text-text text-sm">Đã xảy ra lỗi khi tải nguồn cấp bài viết</p>
+                    <p className="font-bold text-text text-sm">
+                        {t('feed.feedLoadError', { defaultValue: 'Đã xảy ra lỗi khi tải nguồn cấp bài viết' })}
+                    </p>
                     <button
                         onClick={() => setHasError(false)}
                         className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover transition-all cursor-pointer"
                     >
-                        Thử lại
+                        {t('feed.retry', { defaultValue: 'Thử lại' })}
                     </button>
                 </div>
             ) : displayedPosts.length > 0 ? (
@@ -320,7 +322,7 @@ export const FeedList = () => {
                         {isLoadingMore && (
                             <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-primary animate-pulse">
                                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-                                <span>{t('feed.loadingMore') || "Loading more posts..."}</span>
+                                <span>{t('feed.loadingMore', { defaultValue: "Loading more posts..." })}</span>
                             </div>
                         )}
                         {!isLoadingMore && hasMore && (
@@ -335,13 +337,13 @@ export const FeedList = () => {
                                 }}
                                 className="px-4 py-1.5 text-xs font-bold text-text-muted hover:text-text bg-surface-hover hover:bg-surface-hover/80 rounded transition-colors cursor-pointer"
                             >
-                                {t('feed.loadMoreCount', { count: filteredPosts.length - displayLimit })}
+                                {t('feed.loadMoreCount', { count: filteredPosts.length - displayLimit, defaultValue: `+${filteredPosts.length - displayLimit} more` })}
                             </button>
                         )}
                         {!hasMore && filteredPosts.length > 4 && (
                             <div className="flex items-center gap-2 text-xs text-text-faint py-3 font-medium">
                                 <FontAwesomeIcon icon={faCircleCheck} className="text-primary text-xs" />
-                                <span>{t('feed.allLoaded') || "You're all caught up ✨"}</span>
+                                <span>{t('feed.allLoaded', { defaultValue: "You're all caught up ✨" })}</span>
                             </div>
                         )}
                     </div>
@@ -356,15 +358,15 @@ export const FeedList = () => {
                     <div className="flex flex-col gap-1 max-w-sm">
                         <p className="font-extrabold text-text text-sm">
                             {joinedCommunities.length === 0
-                                ? "No communities joined yet"
+                                ? t('feed.noCommunitiesJoinedTitle', { defaultValue: 'No communities joined yet' })
                                 : activeCommunityFilter
-                                ? "No posts in this community yet"
-                                : "No recent posts from your communities"}
+                                ? t('feed.noPostsInCommunityTitle', { defaultValue: 'No posts in this community yet' })
+                                : t('feed.noPostsInFeedTitle', { defaultValue: 'No recent posts from your communities' })}
                         </p>
                         <p className="text-text-muted text-xs leading-relaxed">
                             {joinedCommunities.length === 0
-                                ? "Your home feed delivers discussions and guides from the game communities you follow. Explore and join communities to get started!"
-                                : "Be the first to start the conversation or check back soon."}
+                                ? t('feed.noCommunitiesJoinedDesc', { defaultValue: 'Your home feed delivers discussions and guides from the game communities you follow. Explore and join communities to get started!' })
+                                : t('feed.noPostsFeedDesc', { defaultValue: 'Be the first to start the conversation or check back soon.' })}
                         </p>
                     </div>
 
@@ -375,7 +377,7 @@ export const FeedList = () => {
                             className="px-4 py-1.5 rounded bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-2"
                         >
                             <FontAwesomeIcon icon={faCompass} />
-                            <span>Explore Communities</span>
+                            <span>{t('feed.exploreCommunities', { defaultValue: 'Explore Communities' })}</span>
                         </button>
                         {activeCommunityFilter && (
                             <button
@@ -383,7 +385,7 @@ export const FeedList = () => {
                                 onClick={() => setActiveCommunityFilter(null)}
                                 className="px-3 py-1.5 rounded bg-surface-hover hover:bg-surface-hover/80 text-text text-xs font-semibold transition-colors cursor-pointer"
                             >
-                                View All
+                                {t('feed.viewAll', { defaultValue: 'View All' })}
                             </button>
                         )}
                     </div>

@@ -216,7 +216,17 @@ export const en: typeof vi = {
         unverifiedEmailDesc: "Activate email {email} to unlock post creation, commenting, and squad features.",
         verifyOtpPostPrompt: "Please enter your OTP to enable full post creation permissions.",
         verifyNow: "Verify Now",
-        limitedBadge: "LIMITED"
+        limitedBadge: "LIMITED",
+        noCommunitiesJoinedTitle: "No communities joined yet",
+        noCommunitiesJoinedDesc: "Your home feed delivers discussions and guides from the game communities you follow. Explore and join communities to get started!",
+        noPostsInCommunityTitle: "No posts in this community yet",
+        noPostsInFeedTitle: "No recent posts from your communities",
+        noPostsFeedDesc: "Be the first to start the conversation or check back soon.",
+        exploreCommunities: "Explore Communities",
+        viewAll: "View All",
+        feedLoadError: "An error occurred while loading the feed",
+        retry: "Retry",
+        postSubmitError: "An error occurred while publishing the post. Please try again!"
     },
     post: {
         post: "Post",

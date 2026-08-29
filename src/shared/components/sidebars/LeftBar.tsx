@@ -174,7 +174,7 @@ export const LeftBar = () => {
                                 <button
                                     key={c.id}
                                     type="button"
-                                    onClick={() => navigate({ to: `/community/${c.id}` })}
+                                    onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(c.id) } })}
                                     className={`w-full flex items-center justify-between gap-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
                                         isThisCommActive
                                             ? "bg-[#14171A] text-[#E8E9EA] font-bold border-l-2 border-[#1688E8] pl-2.5 pr-3"

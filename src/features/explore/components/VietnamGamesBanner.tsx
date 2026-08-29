@@ -238,7 +238,7 @@ export const VietnamGamesBanner = () => {
                                 type="button"
                                 onClick={() => {
                                     if (currentGame.linkSlug) {
-                                        navigate({ to: `/game/${currentGame.linkSlug}` });
+                                        navigate({ to: "/game/$gameSlug", params: { gameSlug: currentGame.linkSlug } });
                                     } else {
                                         navigate({ to: "/community" });
                                     }

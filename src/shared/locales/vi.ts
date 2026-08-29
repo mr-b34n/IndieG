@@ -214,7 +214,17 @@ export const vi = {
         unverifiedEmailDesc: "Kích hoạt email {email} để mở khóa tính năng tạo bài viết, bình luận và tạo đội nhóm.",
         verifyOtpPostPrompt: "Vui lòng nhập mã OTP để kích hoạt đầy đủ quyền tạo bài viết.",
         verifyNow: "Xác Thực Ngay",
-        limitedBadge: "LIMITED"
+        limitedBadge: "LIMITED",
+        noCommunitiesJoinedTitle: "Chưa tham gia cộng đồng nào",
+        noCommunitiesJoinedDesc: "Bảng tin trang chủ hiển thị các cuộc thảo luận và hướng dẫn từ các cộng đồng game bạn theo dõi. Khám phá và tham gia các cộng đồng để bắt đầu!",
+        noPostsInCommunityTitle: "Chưa có bài viết nào trong cộng đồng này",
+        noPostsInFeedTitle: "Chưa có bài viết mới từ các cộng đồng của bạn",
+        noPostsFeedDesc: "Hãy là người đầu tiên bắt đầu cuộc trò chuyện hoặc quay lại sau nhé.",
+        exploreCommunities: "Khám phá Cộng đồng",
+        viewAll: "Xem tất cả",
+        feedLoadError: "Đã xảy ra lỗi khi tải nguồn cấp bài viết",
+        retry: "Thử lại",
+        postSubmitError: "Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!"
     },
     post: {
         post: "Bài viết",

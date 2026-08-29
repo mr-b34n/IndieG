@@ -203,7 +203,7 @@ export const Search = () => {
                                                     onClick={() => {
                                                         saveRecentSearch(comm.name);
                                                         setFocused(false);
-                                                        navigate({ to: `/community/${comm.id}` });
+                                                        navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } });
                                                     }}
                                                     className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >
@@ -238,7 +238,7 @@ export const Search = () => {
                                                     onClick={() => {
                                                         saveRecentSearch(u.name);
                                                         setFocused(false);
-                                                        navigate({ to: "/profile" });
+                                                        navigate({ to: "/profile/$userId", params: { userId: u.id || "me" } });
                                                     }}
                                                     className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >
@@ -273,7 +273,7 @@ export const Search = () => {
                                                     onClick={() => {
                                                         saveRecentSearch(post.title || post.content.slice(0, 20));
                                                         setFocused(false);
-                                                        navigate({ to: `/post/${post.id}` });
+                                                        navigate({ to: "/post/$postId", params: { postId: String(post.id) } });
                                                     }}
                                                     className="flex flex-col gap-0.5 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
                                                 >

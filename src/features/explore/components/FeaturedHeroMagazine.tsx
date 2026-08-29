@@ -89,7 +89,7 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
 
             {/* Main Editorial Hero Canvas (4-6px radius, direct artwork overlay, no nested card boxes) */}
             <div 
-                onClick={() => navigate({ to: `/game/${currentStory.slug}` })}
+                onClick={() => navigate({ to: "/game/$gameSlug", params: { gameSlug: currentStory.slug } })}
                 className="relative w-full h-[320px] sm:h-[380px] lg:h-[420px] rounded-[6px] overflow-hidden group cursor-pointer border border-divider-primary bg-surface shadow-lg"
             >
                 {/* Background Artwork */}
@@ -142,7 +142,7 @@ export const FeaturedHeroMagazine = ({ stories }: FeaturedHeroMagazineProps) => 
                                 type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate({ to: `/game/${currentStory.slug}` });
+                                    navigate({ to: "/game/$gameSlug", params: { gameSlug: currentStory.slug } });
                                 }}
                                 className="px-4 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white font-bold text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-md"
                             >

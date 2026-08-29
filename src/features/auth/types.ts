@@ -3,6 +3,9 @@ export interface AuthUser {
     email: string;
     username: string;
     avatar_url?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    user_metadata?: Record<string, unknown>;
     isVerified?: boolean;
     createdAt?: string;
     role?: 'admin' | 'moderator' | 'user';

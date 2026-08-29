@@ -151,10 +151,13 @@ export interface CommentEntity {
     id: string;
     postId: string;
     authorId: string;
+    author?: string | { id: string; username?: string; name?: string; avatar?: string; avatar_url?: string };
     parentId?: string;
     children?: CommentEntity[];
     depth?: number;
     content: string;
+    likes?: number;
+    likesCount?: number;
     deletedAt?: string;
     createdAt: string;
     updatedAt: string;

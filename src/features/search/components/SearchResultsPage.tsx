@@ -376,7 +376,7 @@ export const SearchResultsPage = () => {
                                     return (
                                         <div
                                             key={game.slug}
-                                            onClick={() => navigate({ to: `/game/${game.slug}` })}
+                                            onClick={() => navigate({ to: "/game/$gameSlug", params: { gameSlug: game.slug } })}
                                             className="group flex items-center justify-between gap-3 p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -457,7 +457,7 @@ export const SearchResultsPage = () => {
                                 {resCommunities.slice(0, activeTab === "all" ? 3 : undefined).map((comm) => (
                                     <div
                                         key={comm.id}
-                                        onClick={() => navigate({ to: `/community/${comm.id}` })}
+                                        onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } })}
                                         className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                     >
                                         <div className="flex items-start gap-3.5 min-w-0 flex-1">
@@ -537,7 +537,7 @@ export const SearchResultsPage = () => {
                                 {resUsers.slice(0, activeTab === "all" ? 4 : undefined).map((u) => (
                                     <div
                                         key={u.id}
-                                        onClick={() => navigate({ to: "/profile" })}
+                                        onClick={() => navigate({ to: "/profile/$userId", params: { userId: u.id || "me" } })}
                                         className="group flex flex-col justify-between p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                     >
                                         <div className="flex items-start justify-between gap-3">
@@ -626,7 +626,7 @@ export const SearchResultsPage = () => {
                                 {resPosts.slice(0, activeTab === "all" ? 3 : undefined).map((post, idx, arr) => (
                                     <div
                                         key={post.id}
-                                        onClick={() => navigate({ to: `/post/${post.id}` })}
+                                        onClick={() => navigate({ to: "/post/$postId", params: { postId: String(post.id) } })}
                                         className={`group flex flex-col py-3 px-2 hover:bg-[#121416]/50 transition-all cursor-pointer ${
                                             idx !== arr.length - 1 ? "border-b border-[#1A1C1F]" : ""
                                         }`}

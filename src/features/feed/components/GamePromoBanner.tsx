@@ -122,7 +122,7 @@ export const GamePromoBanner = () => {
 
                     const handleCardClick = () => {
                         if (offset === 0) {
-                            navigate({ to: `/game/${game.slug}` });
+                            navigate({ to: "/game/$gameSlug", params: { gameSlug: game.slug } });
                         } else if (offset === -1) {
                             handlePrev();
                         } else if (offset === 1) {

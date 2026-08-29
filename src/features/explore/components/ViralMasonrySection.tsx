@@ -62,7 +62,7 @@ export const ViralMasonrySection = ({ tiles }: ViralMasonrySectionProps) => {
                     return (
                         <div
                             key={tile.id}
-                            onClick={() => navigate({ to: "/post/1" })}
+                            onClick={() => navigate({ to: "/post/$postId", params: { postId: String(tile.id || "1") } })}
                             className={`relative rounded-[6px] overflow-hidden group cursor-pointer border border-divider-primary bg-surface shadow-md ${
                                 tile.colSpan || "col-span-1 row-span-1"
                             }`}

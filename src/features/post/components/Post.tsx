@@ -40,7 +40,9 @@ import { getGameBySlug } from "@/features/game";
 import { useLikeInteraction, useBookmarkInteraction } from "../api/interaction-api";
 
 
-interface PostProps {
+export type { PostData, PostFileAttachment };
+
+export interface PostProps {
     post: PostData;
     isOwner?: boolean;
     onDelete?: (id: string | number) => void;
@@ -48,6 +50,7 @@ interface PostProps {
         id: string | number,
         data: Partial<PostData>
     ) => void;
+    onUnfollowAuthor?: ((author?: string) => void) | (() => void);
     isDetailView?: boolean;
 }
 

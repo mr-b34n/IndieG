@@ -16,7 +16,11 @@ export interface CommunityData {
     category: string;
     description: string;
     members: number;
+    membersCount?: number;
     onlineNow: number;
+    onlineCount?: number;
+    game?: string | { name: string; slug?: string; id?: string | number };
+    gameSlug?: string;
     tags: string[];
     joined: boolean;
     featured?: boolean;

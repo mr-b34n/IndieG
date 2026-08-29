@@ -24,6 +24,7 @@ import { useAuthStore } from "@/features/auth";
 import { useCommunitiesStore, type CommunityData } from "@/features/community";
 import { AttachmentPicker, useDraftsStore } from "@/features/post";
 import { type CreatePostPayload } from "../types";
+export type { CreatePostPayload };
 import { HASHTAG_REGEX, MAX_TEXTAREA_HEIGHT } from "../constants";
 
 const extractHashtags = (text: string): string[] => {

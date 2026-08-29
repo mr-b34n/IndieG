@@ -42,7 +42,7 @@ export const EditorialNewsSection = ({ items }: EditorialNewsSectionProps) => {
                 <div 
                     onClick={() => {
                         if (highlightItem.linkSlug) {
-                            navigate({ to: `/game/${highlightItem.linkSlug}` });
+                            navigate({ to: "/game/$gameSlug", params: { gameSlug: highlightItem.linkSlug } });
                         } else {
                             navigate({ to: "/community" });
                         }
@@ -93,7 +93,7 @@ export const EditorialNewsSection = ({ items }: EditorialNewsSectionProps) => {
                             key={item.id}
                             onClick={() => {
                                 if (item.linkSlug) {
-                                    navigate({ to: `/game/${item.linkSlug}` });
+                                    navigate({ to: "/game/$gameSlug", params: { gameSlug: item.linkSlug } });
                                 } else {
                                     navigate({ to: "/community" });
                                 }

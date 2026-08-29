@@ -2,15 +2,15 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faComment, faThumbtack } from "@fortawesome/free-solid-svg-icons";
-import type { PostData, PostFileAttachment } from "./Post";
+import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
-interface EditPostModalProps {
+export interface EditPostModalProps {
     initialTitle: string;
     initialContent: string;
-    initialAttachments?: Pick<PostData, "images" | "files">;
+    initialAttachments?: Partial<Pick<PostData, "images" | "files">> | PostData;
     initialPrivacy?: "public" | "friends" | "private";
     initialAllowComments?: boolean;
     initialPinned?: boolean;
