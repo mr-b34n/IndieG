@@ -27,6 +27,7 @@ import { PostsTab } from "./tabs/PostsTab";
 import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
+import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
 
 interface UserProfileProps {
     userId: string;
@@ -46,9 +47,35 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         (!userId || userId === "demo" || userId === "me" || userId === user?.id ||
         userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`);
 
+    // TanStack Query hooks for profile data
+    const cleanUsername = userId?.replace(/^@/, "");
+    const { data: myProfileData } = useMyProfileQuery(isOwnProfile && isLoggedIn);
+    const { data: otherUserProfileData } = useUserProfileQuery(!isOwnProfile ? cleanUsername : "");
+    const updateProfileMutation = useUpdateProfileMutation();
+
     const showBookmarks = isOwnProfile && isLoggedIn;
 
     const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor });
+
+    // Sync remote profile if loaded
+    React.useEffect(() => {
+        if (isOwnProfile && myProfileData) {
+            setIdentity((prev) => ({
+                ...prev,
+                name: myProfileData.name || prev.name,
+                username: myProfileData.username ? `@${myProfileData.username}` : prev.username,
+                bio: myProfileData.bio || prev.bio,
+            }));
+        } else if (!isOwnProfile && otherUserProfileData) {
+            setIdentity((prev) => ({
+                ...prev,
+                name: otherUserProfileData.name || prev.name,
+                username: otherUserProfileData.username ? `@${otherUserProfileData.username}` : prev.username,
+                bio: otherUserProfileData.bio || prev.bio,
+            }));
+        }
+    }, [isOwnProfile, myProfileData, otherUserProfileData, setIdentity]);
+
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
     const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -187,13 +214,23 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 <EditProfileModal
                     identity={identity}
                     location={profileLocation}
-                    onSave={(updated, newLoc) => {
+                    onSave={async (updated, newLoc) => {
                         setIdentity((prev: ProfileIdentity) => ({ ...prev, ...updated }));
                         setProfileLocation(newLoc);
                         setShowEditModal(false);
                         triggerToast();
+
+                        try {
+                            await updateProfileMutation.mutateAsync({
+                                name: updated.name,
+                                bio: updated.bio,
+                            });
+                        } catch {
+                            // Optimistic update applied
+                        }
                     }}
                     onClose={() => setShowEditModal(false)}
+
                     onSelectAvatarFile={(file) => {
                         const reader = new FileReader();
                         reader.onload = (ev) => ev.target?.result && setRawAvatarSrc(ev.target.result as string);

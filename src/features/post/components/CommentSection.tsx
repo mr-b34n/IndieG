@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
 import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp } from "@fortawesome/free-solid-svg-icons";
@@ -14,6 +15,8 @@ import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
 import { notificationApi } from "@/features/notification";
+import { useCommentsQuery, useCreateCommentMutation } from "@/shared/api/useQueries";
+
 
 
 const MAX_COMMENT_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -662,82 +665,121 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
 
+    // TanStack Query for Comments
+    const { data: remoteCommentsData } = useCommentsQuery(postId);
+    const createCommentMutation = useCreateCommentMutation();
     
-    const [comments, setComments] = useState<CommentData[]>([
-        {
-            id: 1,
-            author: "ProGamer99",
-            authorAvatar: avatarUser,
-            content: "Wow, layout đẹp quá bạn ơi! Có chia sẻ preset không?",
-            timeAgo: "2 giờ trước",
-            likes: 5,
-            replies: [
-                {
-                    id: "1-1",
-                    author: "DevCreator",
-                    authorAvatar: avatarUser,
-                    content: "Cảm ơn bạn! Mình dùng TailwindCSS kết hợp custom config thôi nhé.",
-                    timeAgo: "1 giờ trước",
-                    likes: 3,
-                    replies: [
-                        {
-                            id: "1-1-1",
-                            author: "ShadowSniper",
-                            authorAvatar: avatarUser,
-                            content: "Config này có hỗ trợ dark theme monochrome mới không bạn?",
-                            timeAgo: "45 phút trước",
-                            likes: 2,
-                            replies: [
-                                {
-                                    id: "1-1-1-1",
-                                    author: "DevCreator",
-                                    authorAvatar: avatarUser,
-                                    content: "@ShadowSniper Có nha, chuyển sang đen sâu #0B0C0E và xám phân cấp cực kỳ mượt mà!",
-                                    timeAgo: "20 phút trước",
-                                    likes: 1,
-                                    replies: [
-                                        {
-                                            id: "1-1-1-1-1",
-                                            author: "TacticalGamer",
-                                            authorAvatar: avatarUser,
-                                            content: "@DevCreator Tuyệt vời, cmt cấp 3 trở đi đều thẳng hàng ngay ngắn!",
-                                            timeAgo: "10 phút trước",
-                                            likes: 1,
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    id: "1-2",
-                    author: "ViperMain",
-                    authorAvatar: avatarUser,
-                    content: "Bổ sung thêm preset cho FPS 144Hz nữa là hoàn hảo!",
-                    timeAgo: "50 phút trước",
-                    likes: 1,
-                }
-            ],
-        },
-        {
-            id: 2,
-            author: "ChillVibes",
-            authorAvatar: avatarUser,
-            content: "Nhìn cái này muốn tải game lại chơi luôn quá :D",
-            timeAgo: "1 giờ trước",
-            likes: 2,
-        },
-        {
-            id: 3,
-            author: getCurrentAuthor(),
-            authorAvatar: avatarUser,
-            content: "Bài viết rất chất lượng, mình đã ghim và xin phép lưu lại nhé!",
-            timeAgo: "30 phút trước",
-            likes: 10,
-            pinned: true,
-        },
-    ]);
+    const [userComments, setUserComments] = useState<CommentData[]>([]);
+
+    const baseComments: CommentData[] = useMemo(() => {
+        const defaults: CommentData[] = [
+            {
+                id: 1,
+                author: "ProGamer99",
+                authorAvatar: avatarUser,
+                content: "Wow, layout đẹp quá bạn ơi! Có chia sẻ preset không?",
+                timeAgo: "2 giờ trước",
+                likes: 5,
+                replies: [
+                    {
+                        id: "1-1",
+                        author: "DevCreator",
+                        authorAvatar: avatarUser,
+                        content: "Cảm ơn bạn! Mình dùng TailwindCSS kết hợp custom config thôi nhé.",
+                        timeAgo: "1 giờ trước",
+                        likes: 3,
+                        replies: [
+                            {
+                                id: "1-1-1",
+                                author: "ShadowSniper",
+                                authorAvatar: avatarUser,
+                                content: "Config này có hỗ trợ dark theme monochrome mới không bạn?",
+                                timeAgo: "45 phút trước",
+                                likes: 2,
+                                replies: [
+                                    {
+                                        id: "1-1-1-1",
+                                        author: "DevCreator",
+                                        authorAvatar: avatarUser,
+                                        content: "@ShadowSniper Có nha, chuyển sang đen sâu #0B0C0E và xám phân cấp cực kỳ mượt mà!",
+                                        timeAgo: "20 phút trước",
+                                        likes: 1,
+                                        replies: [
+                                            {
+                                                id: "1-1-1-1-1",
+                                                author: "TacticalGamer",
+                                                authorAvatar: avatarUser,
+                                                content: "@DevCreator Tuyệt vời, cmt cấp 3 trở đi đều thẳng hàng ngay ngắn!",
+                                                timeAgo: "10 phút trước",
+                                                likes: 1,
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: "1-2",
+                        author: "ViperMain",
+                        authorAvatar: avatarUser,
+                        content: "Bổ sung thêm preset cho FPS 144Hz nữa là hoàn hảo!",
+                        timeAgo: "50 phút trước",
+                        likes: 1,
+                    }
+                ],
+            },
+            {
+                id: 2,
+                author: "ChillVibes",
+                authorAvatar: avatarUser,
+                content: "Nhìn cái này muốn tải game lại chơi luôn quá :D",
+                timeAgo: "1 giờ trước",
+                likes: 2,
+            },
+            {
+                id: 3,
+                author: getCurrentAuthor(),
+                authorAvatar: avatarUser,
+                content: "Bài viết rất chất lượng, mình đã ghim và xin phép lưu lại nhé!",
+                timeAgo: "30 phút trước",
+                likes: 10,
+                pinned: true,
+            },
+        ];
+
+        if (remoteCommentsData && Array.isArray(remoteCommentsData) && remoteCommentsData.length > 0) {
+            const mappedList: CommentData[] = remoteCommentsData.map((c) => ({
+                id: c.id,
+                author: c.author?.name || c.author?.username || "Thành viên",
+                authorAvatar: c.author?.avatarUrl || avatarUser,
+                content: c.content,
+                timeAgo: formatTimeAgo(c.createdAt),
+                likes: c.likesCount || 0,
+            }));
+            const unique = mappedList.filter((m) => !defaults.some((p) => String(p.id) === String(m.id)));
+            return [...defaults, ...unique];
+        }
+
+        return defaults;
+    }, [remoteCommentsData]);
+
+    const comments = useMemo(() => {
+        const result = [...baseComments];
+        userComments.forEach((uc) => {
+            const existsIndex = result.findIndex((c) => c.id === uc.id);
+            if (existsIndex >= 0) {
+                result[existsIndex] = uc;
+            } else {
+                result.push(uc);
+            }
+        });
+        return result;
+    }, [baseComments, userComments]);
+
+    const setComments = setUserComments;
+
+
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setCommentText(e.target.value);
@@ -790,6 +832,15 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         mainImage.clear();
         if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
 
+        try {
+            await createCommentMutation.mutateAsync({
+                postId: String(postId),
+                content: textContent || "[Ảnh đính kèm]",
+            });
+        } catch {
+            // Local optimistic state is already applied
+        }
+
         void notificationApi.createNotification({
             type: "comment",
             referenceId: String(postId),
@@ -800,7 +851,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     };
 
     
-    const handleAddSubReply = (parentId: string | number, text: string, image?: string) => {
+    const handleAddSubReply = async (parentId: string | number, text: string, image?: string) => {
         const newSubReply: CommentData = {
             id: `sub-${Date.now()}`,
             author: getCurrentAuthor(),
@@ -812,6 +863,16 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));
 
+        try {
+            await createCommentMutation.mutateAsync({
+                postId: String(postId),
+                parentId: String(parentId),
+                content: text,
+            });
+        } catch {
+            // Local optimistic state is applied
+        }
+
         void notificationApi.createNotification({
             type: "reply",
             referenceId: String(postId),
@@ -820,6 +881,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             link: `/post/${postId}`,
         });
     };
+
 
     const canSubmitMain = commentText.trim().length > 0 || !!mainImage.previewUrl;
 

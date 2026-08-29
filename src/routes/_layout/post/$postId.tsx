@@ -1,8 +1,11 @@
 import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { CommentSection, getCurrentAuthor, Post, usePostsStore, type PostData } from '@/features/post';
+import { usePostDetailQuery, useUpdatePostMutation, useDeletePostMutation } from '@/shared/api/useQueries';
+import { mapPostDtoToPostData } from '@/shared/api';
+import { useEffect, useMemo } from 'react';
 
 export const Route = createFileRoute('/_layout/post/$postId')({
     component: PostDetail,
@@ -15,10 +18,29 @@ function PostDetail() {
     const navigate = useNavigate();
     const router = useRouter();
 
-    const post = usePostsStore((state) => state.getPostById(postId));
+    // TanStack Query for Post Detail
+    const { data: postDto, isLoading: isQueryLoading } = usePostDetailQuery(postId);
+    const updatePostMutation = useUpdatePostMutation();
+    const deletePostMutation = useDeletePostMutation();
+
+    const localPost = usePostsStore((state) => state.getPostById(postId));
     const updatePost = usePostsStore((state) => state.updatePost);
     const deletePost = usePostsStore((state) => state.deletePost);
+    const addPost = usePostsStore((state) => state.addPost);
     const currentAuthor = getCurrentAuthor();
+
+    useEffect(() => {
+        if (postDto && !localPost) {
+            const mapped = mapPostDtoToPostData(postDto);
+            addPost(mapped);
+        }
+    }, [postDto, localPost, addPost]);
+
+    const post = useMemo(() => {
+        if (localPost) return localPost;
+        if (postDto) return mapPostDtoToPostData(postDto);
+        return null;
+    }, [localPost, postDto]);
 
     const handleGoBack = () => {
         if (window.history.length > 1) {
@@ -28,23 +50,61 @@ function PostDetail() {
         }
     };
 
-    const handleEditPost = (id: string | number, data: Partial<PostData>) => {
+    const handleEditPost = async (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
             ...data,
             title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
         });
+
+        // Trigger mutation if string ID
+        if (typeof id === "string") {
+            try {
+                await updatePostMutation.mutateAsync({
+                    id,
+                    data: {
+                        title: data.title,
+                        content: data.content,
+                        images: data.images,
+                        tags: data.tags,
+                        gameTag: data.gameTag,
+                        pinned: data.pinned,
+                        allowComments: data.allowComments,
+                    },
+                });
+            } catch {
+                // Local state is already updated
+            }
+        }
     };
 
-    const handleDeletePost = (id: string | number) => {
+    const handleDeletePost = async (id: string | number) => {
         deletePost(id);
+        if (typeof id === "string") {
+            try {
+                await deletePostMutation.mutateAsync(id);
+            } catch {
+                // Local deletion completed
+            }
+        }
         handleGoBack();
     };
 
+    if (isQueryLoading && !post) {
+        return (
+            <div className="flex flex-col items-center justify-center w-full min-h-[60vh] text-text">
+                <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-primary mb-3" />
+                <p className="text-text-muted text-sm">Đang tải bài viết...</p>
+            </div>
+        );
+    }
+
     if (!post) {
         return (
-            <div className="flex flex-col items-center justify-center w-full h-screen bg-bg text-text">
-                <p>Post not found</p>
-                <button onClick={handleGoBack} className="mt-4 text-primary underline">Go back</button>
+            <div className="flex flex-col items-center justify-center w-full min-h-[60vh] bg-bg text-text">
+                <p className="text-lg font-semibold mb-2">Không tìm thấy bài viết</p>
+                <button onClick={handleGoBack} className="text-primary hover:underline text-sm font-medium">
+                    Quay lại trang chủ
+                </button>
             </div>
         );
     }
@@ -65,7 +125,7 @@ function PostDetail() {
                                 ">
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </button>
-                    <span className="text-sm font-bold text-text-muted tracking-wide uppercase">Post</span>
+                    <span className="text-sm font-bold text-text-muted tracking-wide uppercase">Bài viết</span>
                 </div>
 
                 <div className="w-full">
@@ -83,3 +143,4 @@ function PostDetail() {
         </main>
     )
 }
+

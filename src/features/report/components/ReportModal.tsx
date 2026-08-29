@@ -7,28 +7,41 @@ import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
 import { adminApi } from "../api/adminApi";
+import { useCreateReportMutation } from "@/shared/api/useQueries";
 
 export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
     const { t } = useTranslation();
     const [selectedReason, setSelectedReason] = useState<string>("");
     const [details, setDetails] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const createReportMutation = useCreateReportMutation();
 
     const handleSubmit = async () => {
         if (!selectedReason) return;
         if (!useAuthStore.getState().requireVerifiedEmail("gửi báo cáo vi phạm")) return;
-        await adminApi.createReport({
-            targetType: "post",
-            targetId: String(postId),
-            reason: selectedReason,
-            description: details,
-            targetAuthor: author,
-        });
+        
+        try {
+            await createReportMutation.mutateAsync({
+                postId: String(postId),
+                reason: `${selectedReason}${details ? `: ${details}` : ""}`,
+            });
+        } catch {
+            // Local report fallback
+            await adminApi.createReport({
+                targetType: "post",
+                targetId: String(postId),
+                reason: selectedReason,
+                description: details,
+                targetAuthor: author,
+            });
+        }
+
         setIsSubmitted(true);
         setTimeout(() => {
             onClose();
         }, 2000);
     };
+
 
     return createPortal(
         <div

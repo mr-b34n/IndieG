@@ -16,6 +16,9 @@ import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
+import { useCommunityDetailQuery } from '@/shared/api/useQueries';
+import { mapCommunityDtoToCommunityData } from '@/shared/api';
+
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
 import { CommunityHubHeader } from '@/features/community/components/hub/CommunityHubHeader';
@@ -63,6 +66,9 @@ export function CommunityDetailPage() {
     const user = useAuthStore((state) => state.user);
     const isAdmin = user?.role === "admin";
 
+    // TanStack Query for Community Detail
+    const { data: communityDto } = useCommunityDetailQuery(communityId);
+
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
 
@@ -72,6 +78,9 @@ export function CommunityDetailPage() {
             (c) => c.id === communityId || c.slug === communityId || c.id.toString() === communityId
         );
         if (found) return found;
+        if (communityDto) {
+            return mapCommunityDtoToCommunityData(communityDto);
+        }
         const initialFound = INITIAL_COMMUNITIES.find(
             (c) => c.id === communityId || c.slug === communityId
         );
@@ -96,7 +105,8 @@ export function CommunityDetailPage() {
                 "Không quảng cáo thương mại hoặc spam link bẩn",
             ],
         };
-    }, [communityId, communities]);
+    }, [communityId, communities, communityDto]);
+
 
     // UI States
     const [activeSidebarNav, setActiveSidebarNav] = useState("all");

@@ -22,6 +22,20 @@ import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
 import { CommunitySwitcherRail } from "./CommunitySwitcherRail";
 import { type FeedSortOption } from "./FeedSortDropdown";
 import { type PostDataWithSettings } from "../types";
+import { usePostsQuery, useCreatePostMutation } from "@/shared/api/useQueries";
+import { mapPostDtoToPostData, type PostDto } from "@/shared/api";
+
+function extractPostList(res: unknown): PostDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as PostDto[];
+    if (typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.items)) return obj.items as PostDto[];
+        if (Array.isArray(obj.data)) return obj.data as PostDto[];
+        if (Array.isArray(obj.posts)) return obj.posts as PostDto[];
+    }
+    return [];
+}
 
 export const FeedList = () => {
     const { t } = useTranslation();
@@ -30,10 +44,34 @@ export const FeedList = () => {
     const mockLogin = useAuthStore((state) => state.mockLogin);
     const isLoggedIn = !!user || mockLogin;
 
+    // 1. TanStack Query for Posts
+    const { data: remotePostsData } = usePostsQuery();
+    const createPostMutation = useCreatePostMutation();
+
+
     const posts = usePostsStore((state) => state.posts);
     const addPost = usePostsStore((state) => state.addPost);
     const updatePost = usePostsStore((state) => state.updatePost);
     const deletePost = usePostsStore((state) => state.deletePost);
+
+    // Sync remote posts from TanStack Query into posts list
+    useEffect(() => {
+        if (remotePostsData) {
+            const list = extractPostList(remotePostsData);
+            if (Array.isArray(list) && list.length > 0) {
+                list.forEach((dto) => {
+                    const exists = posts.some((p) => String(p.id) === String(dto.id));
+                    if (!exists) {
+                        const mapped = mapPostDtoToPostData(dto);
+                        addPost({
+                            ...mapped,
+                            communityId: dto.communityId,
+                        } as PostDataWithSettings);
+                    }
+                });
+            }
+        }
+    }, [remotePostsData]);
 
     const communities = useCommunitiesStore((state) => state.communities);
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
@@ -85,6 +123,24 @@ export const FeedList = () => {
                 pinned,
                 communityId,
             };
+
+            // Post via TanStack Mutation to backend if communityId is available
+            if (communityId) {
+                try {
+                    await createPostMutation.mutateAsync({
+                        communityId: String(communityId),
+                        title: title || undefined,
+                        content,
+                        images: images.length > 0 ? images : undefined,
+                        tags,
+                        pinned,
+                        allowComments,
+                    });
+                } catch {
+                    // Fallback to local optimistic update
+                }
+            }
+
             addPost(newPost);
             // Ensure new post is displayed at top
             setDisplayLimit((prev) => Math.max(prev, 5));
@@ -92,6 +148,7 @@ export const FeedList = () => {
             setSubmitError("Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!");
         }
     };
+
 
     const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {

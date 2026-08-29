@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGamepad, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
-import type { CommunityTabKey } from "../types";
+import type { CommunityTabKey, CommunityData } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { CreateCommunityModal } from "./CreateCommunityModal";
 import { useAuthStore } from "@/features/auth";
@@ -10,16 +10,49 @@ import { Pagination } from "@/shared/components/ui/Pagination";
 import { CommunityHeader } from "./CommunityHeader";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
+import { useCommunitiesQuery } from "@/shared/api/useQueries";
+import { mapCommunityDtoToCommunityData, type CommunityDto } from "@/shared/api";
+
+function extractCommunityList(res: unknown): CommunityDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as CommunityDto[];
+    if (typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.items)) return obj.items as CommunityDto[];
+        if (Array.isArray(obj.data)) return obj.data as CommunityDto[];
+        if (Array.isArray(obj.communities)) return obj.communities as CommunityDto[];
+    }
+    return [];
+}
 
 export const CommunityList = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const isAdmin = user?.role === "admin";
-    const canCreateCommunity = isAdmin;
+
+    // 1. TanStack Query for communities
+    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery();
 
     const communities = useCommunitiesStore((state) => state.communities);
-    const isLoading = useCommunitiesStore((state) => state.isLoading);
-    const fetchCommunities = useCommunitiesStore((state) => state.fetchCommunities);
+    const storeLoading = useCommunitiesStore((state) => state.isLoading);
+    const isLoading = isQueryLoading || storeLoading;
+    
+    // Sync query results to global store if needed
+    useEffect(() => {
+        if (rawCommunitiesData) {
+            const list = extractCommunityList(rawCommunitiesData);
+            if (Array.isArray(list) && list.length > 0) {
+                const mapped: CommunityData[] = list.map((item) => {
+                    const existing = communities.find((c) => String(c.id) === String(item.id));
+                    return {
+                        ...mapCommunityDtoToCommunityData(item),
+                        joined: existing?.joined ?? false,
+                    };
+                });
+                useCommunitiesStore.setState({ communities: mapped, isLoading: false });
+            }
+        }
+    }, [rawCommunitiesData]);
     
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -28,9 +61,6 @@ export const CommunityList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 6;
 
-    useEffect(() => {
-        void fetchCommunities();
-    }, [fetchCommunities]);
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
