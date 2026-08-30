@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 interface CommunityHubSidebarProps {
+    communityName?: string;
     activeNav: string;
     onNavChange: (navId: string) => void;
     isVi: boolean;

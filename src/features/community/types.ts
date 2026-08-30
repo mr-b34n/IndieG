@@ -11,8 +11,11 @@ export interface CommunityMember {
 export interface CommunityData {
     id: string | number;
     name: string;
+    slug?: string;
     logo: string;
+    avatarUrl?: string;
     backdrop: string;
+    bannerUrl?: string;
     category: string;
     description: string;
     members: number;

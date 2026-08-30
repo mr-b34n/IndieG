@@ -62,7 +62,9 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
 
         const authorUsername = getCurrentAuthor();
         const { user, customAvatar } = useAuthStore.getState();
-        const displayName = user?.user_metadata?.full_name || user?.username || authorUsername;
+        const rawFullName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
+        const rawUsername = typeof user?.username === "string" ? user.username : "";
+        const displayName: string = rawFullName || rawUsername || authorUsername || "Thành viên";
         const avatar = customAvatar || user?.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${authorUsername}`;
 
         const tags = tagsInput
@@ -117,7 +119,9 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         }
 
         onClose();
-        navigate({ to: "/community/$communityId", params: { communityId: String(createdCommunity.id) } });
+        if (createdCommunity) {
+            navigate({ to: "/community/$communityId", params: { communityId: String(createdCommunity.id) } });
+        }
     };
 
     return (

@@ -73,7 +73,7 @@ export function CommunityDetailPage() {
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
 
     // Fetch active community
-    const community = useMemo(() => {
+    const community: CommunityData = useMemo(() => {
         const found = communities.find(
             (c) => c.id === communityId || c.slug === communityId || c.id.toString() === communityId
         );
@@ -89,6 +89,8 @@ export function CommunityDetailPage() {
             id: communityId,
             name: communityId.charAt(0).toUpperCase() + communityId.slice(1),
             slug: communityId,
+            category: "Gaming",
+            tags: ["gaming", communityId],
             description: "Cộng đồng chính thức dành cho game thủ: trao đổi kinh nghiệm, mẹo chơi, thiết kế và tin tức mới nhất.",
             bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
             avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
