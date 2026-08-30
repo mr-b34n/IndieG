@@ -138,4 +138,31 @@ Examples:
 → ui.md
 ```
 
+---
+### Cleanup
+
+File:
+
+`skills/clean.md`
+
+Use when the task involves:
+
+* removing mock/demo/sample data
+* removing placeholder content
+* removing dead code
+* removing unused imports/functions/constants
+* removing stale comments
+* removing commented-out code
+* removing debug code
+* removing temporary development artifacts
+* removing obsolete files/assets
+* cleaning duplicate or redundant code
+* repository-wide cleanup
+* "remove all" / "clean completely" requests
+
+This skill is intentionally generic.
+
+Select it whenever the primary goal is **removal of unnecessary project residue**, regardless of the specific residue type.
+
+
 If the task is trivial and can be completed safely without a skill file, do not load unnecessary skills.

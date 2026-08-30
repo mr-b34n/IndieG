@@ -181,3 +181,16 @@ Do not store:
 * conversation history
 
 When an active decision changes, update the relevant memory entry.
+
+## 11. Cleanup Safety
+
+When performing cleanup:
+
+* prefer evidence-based deletion
+* never delete unclear code merely because it looks unnecessary
+* preserve types, schemas, configuration, and intentional defaults
+* preserve meaningful comments
+* inspect references before deleting files or symbols
+* perform a second search after repository-wide cleanup
+* do not turn cleanup into unrelated refactoring
+* report anything intentionally preserved or still unclear
