@@ -18,23 +18,20 @@ import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
 import { useCommunityDetailQuery } from '@/shared/api/useQueries';
 import { mapCommunityDtoToCommunityData } from '@/shared/api';
-
+import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
 import { CommunityHubHeader } from '@/features/community/components/hub/CommunityHubHeader';
 import { CommunityHubNav } from '@/features/community/components/hub/CommunityHubNav';
 import {
-    CommunityHubCategories,
-    type CategoryItem,
-} from '@/features/community/components/hub/CommunityHubCategories';
-import {
-    CommunityHubPinned,
-    type PinnedThreadItem,
-} from '@/features/community/components/hub/CommunityHubPinned';
-import {
-    CommunityHubDiscussions,
-    type DiscussionThread,
-} from '@/features/community/components/hub/CommunityHubDiscussions';
+    CommunityHubFeed,
+    type CommunityFeedPost,
+    type PostType,
+} from '@/features/community/components/hub/CommunityHubFeed';
+import { CommunityHubMembers } from '@/features/community/components/hub/CommunityHubMembers';
+import { CommunityHubMediaView, type MediaItem } from '@/features/community/components/hub/CommunityHubMediaView';
+import { CommunityHubEventsView } from '@/features/community/components/hub/CommunityHubEventsView';
+import { CommunityHubAboutView } from '@/features/community/components/hub/CommunityHubAboutView';
 import {
     CommunityHubRightRail,
     type ContributorItem,
@@ -43,6 +40,7 @@ import {
 import { CommunityChatDrawer } from '@/features/community/components/hub/CommunityChatDrawer';
 import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
 import { AdminCommunityControllerModal } from '@/features/community';
+import type { CategoryItem } from '@/features/community/components/hub/CommunityHubCategories';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetailPage,
@@ -109,11 +107,9 @@ export function CommunityDetailPage() {
         };
     }, [communityId, communities, communityDto]);
 
-
-    // UI States
-    const [activeSidebarNav, setActiveSidebarNav] = useState("all");
-    const [activeSubTab, setActiveSubTab] = useState("overview");
-    const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
+    // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about
+    const [activeNav, setActiveNav] = useState("home");
+    const [activeFilter, setActiveFilter] = useState("all");
     const [sortMode, setSortMode] = useState<"hot" | "new" | "unanswered" | "top">("hot");
     const [searchQuery, setSearchQuery] = useState("");
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
@@ -172,87 +168,279 @@ export function CommunityDetailPage() {
         },
     ];
 
-    // Pinned Threads
-    const pinnedThreadsData: PinnedThreadItem[] = [];
-
-    // Recent Discussions
-    const [recentThreads, setRecentThreads] = useState<DiscussionThread[]>([]);
-
     // Contributors
-    const contributorsData: ContributorItem[] = [];
+    const contributorsData: ContributorItem[] = [
+        {
+            id: "c-1",
+            name: "Hải Đăng",
+            handle: "@haidang_craft",
+            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+            points: 2450,
+        },
+        {
+            id: "c-2",
+            name: "Minh Quân",
+            handle: "@shark_hunter99",
+            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
+            points: 1820,
+        },
+        {
+            id: "c-3",
+            name: "Thùy Trang",
+            handle: "@raft_architect",
+            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+            points: 1240,
+        },
+        {
+            id: "c-4",
+            name: "Tuấn Kiệt",
+            handle: "@tuan_kiet_dota",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+            points: 980,
+        },
+    ];
 
     // Upcoming Events
-    const upcomingEventsData: UpcomingEventTimelineItem[] = [];
+    const upcomingEventsData: UpcomingEventTimelineItem[] = [
+        {
+            id: "ev-1",
+            title: isVi ? "Giải đấu Custom 5v5 - Tranh tài vô địch" : "Community Custom Tournament 5v5",
+            dateMonth: "MAR 22",
+            time: "20:00 GMT+7",
+            attendees: 38,
+        },
+        {
+            id: "ev-2",
+            title: isVi ? "Livestream Q&A cùng ban quản trị cộng đồng" : "Developer & Community Q&A Session",
+            dateMonth: "MAR 26",
+            time: "19:30 GMT+7",
+            attendees: 52,
+        },
+    ];
 
-    // Filtered Discussions
-    const filteredThreads = useMemo(() => {
-        let result = [...recentThreads];
+    // Media Items for Media Gallery
+    const mediaGalleryData: MediaItem[] = [
+        {
+            id: "med-1",
+            title: "Căn cứ bè gỗ 3 tầng phong cách Nhật Bản",
+            imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+            authorName: "Thùy Trang",
+            authorHandle: "@raft_architect",
+            likesCount: 142,
+            repliesCount: 28,
+        },
+        {
+            id: "med-2",
+            title: "Trận chiến diệt boss cá mập trắng thành công",
+            imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+            authorName: "Minh Quân",
+            authorHandle: "@shark_hunter99",
+            likesCount: 98,
+            repliesCount: 14,
+        },
+        {
+            id: "med-3",
+            title: "Thiết kế phòng điều khiển tàu hiện đại với pin năng lượng mặt trời",
+            imageUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
+            authorName: "Hải Đăng",
+            authorHandle: "@haidang_craft",
+            likesCount: 184,
+            repliesCount: 35,
+        },
+    ];
 
-        if (activeCategoryFilter) {
-            result = result.filter((t) => t.category === activeCategoryFilter);
+    // Rich initial community feed posts
+    const [feedPosts, setFeedPosts] = useState<CommunityFeedPost[]>([
+        {
+            id: "post-1",
+            type: "guide",
+            title: isVi
+                ? "Tổng hợp mẹo sinh tồn 100 ngày đầu & cách tối ưu hóa thu hoạch nước ngọt"
+                : "Comprehensive 100-Day Survival Guide & Infinite Fresh Water Setup",
+            content: isVi
+                ? "Chia sẻ chi tiết kinh nghiệm từ việc chế tạo máy lọc nước nâng cao, bố trí lưới bắt rác tự động đến cách đối phó với cá mập mà không tốn nhiều tài nguyên kim loại quý..."
+                : "Step-by-step breakdown on automating purifier grids, collection nets placement, and preserving metal ingots during early-game shark encounters...",
+            authorName: "Hải Đăng",
+            authorHandle: "@haidang_craft",
+            authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+            authorRank: "Legendary Pioneer",
+            isPinned: true,
+            createdAt: "3 giờ trước",
+            repliesCount: 42,
+            viewsCount: 1850,
+            likesCount: 215,
+            isLiked: false,
+        },
+        {
+            id: "post-2",
+            type: "showcase",
+            title: isVi
+                ? "Showcase căn cứ bè nổi 3 tầng đầy đủ trang bị sau 60 giờ cày cuốc"
+                : "Base Showcase: 3-Story Autonomous Floating Sanctuary after 60 Hours",
+            content: isVi
+                ? "Cuối cùng cũng hoàn thiện khu vườn sinh thái trên tầng thượng và hệ thống pin năng lượng mặt trời. Mời mọi người vào đánh giá và góp ý thêm góc thư giãn nhé!"
+                : "Finished the rooftop botanical garden and solar array. Welcome any tips on aesthetic decoration and fuel pipe routing!",
+            images: [
+                "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+            ],
+            authorName: "Thùy Trang",
+            authorHandle: "@raft_architect",
+            authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+            authorRank: "Master Architect",
+            createdAt: "5 giờ trước",
+            repliesCount: 19,
+            viewsCount: 940,
+            likesCount: 128,
+            isLiked: true,
+        },
+        {
+            id: "post-3",
+            type: "poll",
+            title: isVi
+                ? "Bình chọn: Bạn muốn bản cập nhật kế tiếp tập trung vào tính năng nào nhất?"
+                : "Community Poll: Which major feature should the developers prioritize next?",
+            content: isVi
+                ? "Các nhà phát triển đang lắng nghe ý kiến cộng đồng trên roadmap. Hãy bình chọn tính năng bạn mong chờ nhất!"
+                : "The dev team is reviewing feedback for the upcoming season. Cast your vote below!",
+            pollOptions: [
+                { id: "opt-1", label: isVi ? "Thêm quần xã sinh vật đảo tuyết & núi lửa" : "New Arctic & Volcanic Island Biomes", votes: 84 },
+                { id: "opt-2", label: isVi ? "Chế độ Multiplayer 8 người & voice chat 3D" : "8-Player Co-op & Proximity Voice Chat", votes: 122 },
+                { id: "opt-3", label: isVi ? "Tự động hóa hệ thống máy bay không người lái" : "Drone Automation & Advanced Wiring", votes: 45 },
+                { id: "opt-4", label: isVi ? "Thêm boss quái vật biển sâu khổng lồ" : "Deep Sea Giant Leviathan Bosses", votes: 97 },
+            ],
+            userVotedPollId: "opt-2",
+            authorName: "Minh Quân",
+            authorHandle: "@shark_hunter99",
+            authorAvatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
+            authorRank: "Community Mod",
+            createdAt: "Hôm qua",
+            repliesCount: 65,
+            viewsCount: 2310,
+            likesCount: 310,
+        },
+        {
+            id: "post-4",
+            type: "question",
+            title: isVi
+                ? "Làm cách nào để chống cá mập cắn bè hiệu quả khi chưa có giáp sắt bảo vệ góc?"
+                : "How to effectively protect outer foundations from shark bites before reinforced armor?",
+            content: isVi
+                ? "Mình mới tới hòn đảo lớn đầu tiên, cá mập cứ cắn nát các góc bè làm rơi rương đồ. Mọi người có mẹo dùng mồi cá hay vũ khí nào xử lý nhanh không?"
+                : "Arrived at the first large island, but the shark keeps chewing through my outer wooden foundations. Any bait crafting tricks or early spearing tips?",
+            authorName: "Tuấn Kiệt",
+            authorHandle: "@tuan_kiet_dota",
+            authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+            createdAt: "1 ngày trước",
+            repliesCount: 24,
+            viewsCount: 610,
+            likesCount: 45,
+        },
+        {
+            id: "post-5",
+            type: "event",
+            title: isVi
+                ? "Giải đấu cộng đồng: Thử thách sinh tồn Hardcore 5v5 diễn ra vào thứ Bảy"
+                : "Weekend Community Challenge: 5v5 Hardcore Speedrun Tournament",
+            content: isVi
+                ? "Đăng ký tham gia ngay để nhận huy hiệu độc quyền và phần quà từ ban quản trị. Thời gian bắt đầu: 20:00 Thứ Bảy tuần này."
+                : "Register your team for our weekly community tournament. Exclusive badges and prizes for the winning survival squad!",
+            authorName: "Hải Đăng",
+            authorHandle: "@haidang_craft",
+            authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+            authorRank: "Admin",
+            createdAt: "2 ngày trước",
+            repliesCount: 31,
+            viewsCount: 1420,
+            likesCount: 156,
+        },
+    ]);
+
+    // Handle post filtering & sorting
+    const filteredFeedPosts = useMemo(() => {
+        let result = [...feedPosts];
+
+        // Nav-level filtering if navigating via tabs
+        if (activeNav === "discussions") {
+            result = result.filter((p) => p.type === "discussion" || p.type === "question");
+        } else if (activeNav === "guides") {
+            result = result.filter((p) => p.type === "guide");
+        } else if (activeNav === "media") {
+            result = result.filter((p) => p.type === "showcase" || (p.images && p.images.length > 0));
+        } else if (activeNav === "events") {
+            result = result.filter((p) => p.type === "event");
         }
 
-        if (activeSidebarNav !== "all" && activeSidebarNav !== "overview") {
-            if (activeSidebarNav === "qa") result = result.filter((t) => t.category === "gameplay");
-            if (activeSidebarNav === "guides") result = result.filter((t) => t.category === "guides");
-            if (activeSidebarNav === "showcase") result = result.filter((t) => t.category === "showcase");
+        // Sub-filter chip filtering (All, Question, Guide, Showcase, Poll, Event)
+        if (activeFilter !== "all") {
+            result = result.filter((p) => p.type === activeFilter);
         }
 
-        if (activeSubTab !== "overview" && activeSubTab !== "discussions") {
-            if (activeSubTab === "guides") result = result.filter((t) => t.category === "guides");
-            if (activeSubTab === "showcase") result = result.filter((t) => t.category === "showcase");
-        }
-
+        // Search Query
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(
-                (t) => t.title.toLowerCase().includes(q) || t.authorName.toLowerCase().includes(q)
+                (p) =>
+                    p.title.toLowerCase().includes(q) ||
+                    p.authorName.toLowerCase().includes(q) ||
+                    (p.content && p.content.toLowerCase().includes(q))
             );
         }
 
+        // Sorting
         if (sortMode === "new") {
-            result.reverse();
+            // Keep recent on top
         } else if (sortMode === "top") {
-            result.sort((a, b) => b.viewsCount - a.viewsCount);
+            result.sort((a, b) => b.likesCount - a.likesCount);
         } else if (sortMode === "unanswered") {
             result.sort((a, b) => a.repliesCount - b.repliesCount);
+        } else {
+            // Hot: sort by combined engagement
+            result.sort((a, b) => (b.likesCount * 2 + b.repliesCount * 3) - (a.likesCount * 2 + a.repliesCount * 3));
         }
 
         return result;
-    }, [recentThreads, activeCategoryFilter, activeSidebarNav, activeSubTab, searchQuery, sortMode]);
+    }, [feedPosts, activeNav, activeFilter, searchQuery, sortMode]);
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
-    // Handle Discussion Creation
-    const handleCreateThread = ({
+    // Handle Post Creation
+    const handleCreatePost = ({
         title,
-        category,
+        content,
+        type = "discussion",
     }: {
         title: string;
         category: string;
         content: string;
+        type?: PostType;
     }) => {
-        if (!requireVerifiedEmail("tạo thảo luận mới")) return;
-        const catObj = categoriesData.find((c) => c.id === category);
-        const newThread: DiscussionThread = {
-            id: `th-new-${Date.now()}`,
+        if (!requireVerifiedEmail("đăng bài viết mới")) return;
+        const newPost: CommunityFeedPost = {
+            id: `post-${Date.now()}`,
+            type,
             title,
-            category,
-            categoryLabel: catObj ? (isVi ? catObj.titleVi : catObj.titleEn) : "Discussion",
-            authorName: "You",
-            authorHandle: "@current_user",
-            authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=currentuser",
+            content,
+            authorName: user?.username || "You",
+            authorHandle: user?.username ? `@${user.username}` : "@current_user",
+            authorAvatar: user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=currentuser",
+            authorRank: "Active Member",
+            createdAt: isVi ? "Vừa xong" : "Just now",
             repliesCount: 0,
             viewsCount: 1,
             likesCount: 1,
-            createdAt: "Just now",
+            isLiked: true,
         };
-        setRecentThreads([newThread, ...recentThreads]);
+        setFeedPosts([newPost, ...feedPosts]);
+    };
+
+    const handleNavChange = (navId: string) => {
+        setActiveNav(navId);
+        setActiveFilter("all");
     };
 
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 font-sans text-text animate-fade-in pb-16">
-            {/* 1. TOP BREADCRUMB / CONTEXT BAR (Maintains IndieG Identity) */}
+            {/* 1. TOP BREADCRUMB / CONTEXT BAR */}
             <div className="w-full flex items-center justify-between gap-4 border-b border-divider-primary/60 pb-3 select-none">
                 <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider">
                     <button
@@ -336,24 +524,21 @@ export function CommunityDetailPage() {
                 </div>
             </div>
 
-            {/* 2. 3-COLUMN INFORMATION ARCHITECTURE: 220px | minmax(0, 1fr) | 260px */}
+            {/* 2. 3-COLUMN ARCHITECTURE: 220px | minmax(0, 1fr) | 260px */}
             <div className="w-full flex flex-col lg:flex-row items-start gap-8 min-w-0">
                 {/* LEFT COLUMN: Community Navigation Rail (220px) */}
                 <div className="w-full lg:w-[220px] shrink-0">
                     <CommunityHubSidebar
                         communityName={community.name}
-                        activeNav={activeSidebarNav}
-                        onNavChange={(navId) => {
-                            setActiveSidebarNav(navId);
-                            setActiveCategoryFilter(null);
-                        }}
+                        activeNav={activeNav}
+                        onNavChange={handleNavChange}
                         isVi={isVi}
                     />
                 </div>
 
-                {/* CENTER COLUMN: Community Content (Header, Sub-Nav, Categories, Pinned, Discussions) */}
+                {/* CENTER COLUMN: Community Content */}
                 <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
-                    {/* Header + Editorial Artwork */}
+                    {/* Header: Identity + Actions */}
                     <CommunityHubHeader
                         name={community.name}
                         description={community.description}
@@ -367,7 +552,7 @@ export function CommunityDetailPage() {
                             toggleJoin(community.id);
                         }}
                         onStartDiscussion={() => {
-                            if (!requireVerifiedEmail("đăng bài thảo luận")) return;
+                            if (!requireVerifiedEmail("đăng bài")) return;
                             setIsCreateModalOpen(true);
                         }}
                         isVi={isVi}
@@ -380,42 +565,54 @@ export function CommunityDetailPage() {
                         isNsfw={community.isNsfw}
                     />
 
-                    {/* Sub-navigation Under Header (Overview · Discussions · Guides · Showcase · Events) */}
+                    {/* Sub-navigation Under Header (Home · Discussions · Guides · Media · Events · Members) */}
                     <CommunityHubNav
-                        activeTab={activeSubTab}
-                        onTabChange={(tab) => {
-                            setActiveSubTab(tab);
-                            setActiveCategoryFilter(null);
-                        }}
+                        activeTab={activeNav}
+                        onTabChange={handleNavChange}
                         isVi={isVi}
                     />
 
-                    {/* Categories Section (Index style, no outer box) */}
-                    <CommunityHubCategories
-                        categories={categoriesData}
-                        activeCategory={activeCategoryFilter}
-                        onSelectCategory={(catId) => setActiveCategoryFilter(catId)}
-                        isVi={isVi}
-                    />
-
-                    {/* Pinned Threads (Clean list, no outer box) */}
-                    <CommunityHubPinned
-                        pinnedThreads={pinnedThreadsData}
-                        onThreadClick={(id) => navigate({ to: `/post/${id}` as string })}
-                        isVi={isVi}
-                    />
-
-                    {/* Recent Discussions (Post consistency: Avatar, Title, Engagement, Dividers) */}
-                    <CommunityHubDiscussions
-                        threads={filteredThreads}
-                        sortMode={sortMode}
-                        onSortChange={(mode) => setSortMode(mode)}
-                        onThreadClick={(id) => navigate({ to: `/post/${id}` as string })}
-                        isVi={isVi}
-                    />
+                    {/* VIEW SWITCHER BASED ON ACTIVE TAB */}
+                    {activeNav === "members" || activeNav === "leaderboard" ? (
+                        <CommunityHubMembers
+                            communityName={community.name}
+                            contributors={contributorsData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "media" ? (
+                        <CommunityHubMediaView
+                            communityName={community.name}
+                            mediaItems={mediaGalleryData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "events" ? (
+                        <CommunityHubEventsView
+                            communityName={community.name}
+                            events={upcomingEventsData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "rules" || activeNav === "about" || activeNav === "wiki" || activeNav === "links" ? (
+                        <CommunityHubAboutView
+                            viewType={activeNav as "rules" | "about" | "wiki" | "links"}
+                            communityName={community.name}
+                            description={community.description}
+                            isVi={isVi}
+                        />
+                    ) : (
+                        /* Default: Home (Feed) & Discussions & Guides */
+                        <CommunityHubFeed
+                            posts={filteredFeedPosts}
+                            activeFilter={activeFilter}
+                            onFilterChange={(filter) => setActiveFilter(filter)}
+                            sortMode={sortMode}
+                            onSortChange={(mode) => setSortMode(mode)}
+                            onPostClick={(postId) => navigate({ to: `/post/${postId}` as string })}
+                            isVi={isVi}
+                        />
+                    )}
                 </div>
 
-                {/* RIGHT COLUMN: About & Social Hub Rail (260px) */}
+                {/* RIGHT COLUMN: Contextual Rail (260px) */}
                 <div className="w-full lg:w-[260px] shrink-0">
                     <CommunityHubRightRail
                         communityName={community.name}
@@ -429,12 +626,12 @@ export function CommunityDetailPage() {
                 </div>
             </div>
 
-            {/* CREATE DISCUSSION MODAL */}
+            {/* CREATE POST MODAL */}
             <CreateThreadModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
                 categories={categoriesData}
-                onSubmit={handleCreateThread}
+                onSubmit={handleCreatePost}
                 communityName={community.name}
                 isVi={isVi}
             />
@@ -457,3 +654,4 @@ export function CommunityDetailPage() {
         </div>
     );
 }
+

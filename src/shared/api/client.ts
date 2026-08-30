@@ -55,12 +55,7 @@ export function buildQueryString(params?: Record<string, string | number | boole
 
 export function isMockToken(token?: string | null): boolean {
     if (!token) return true;
-    return (
-        token.startsWith("token_") ||
-        token.startsWith("mock_") ||
-        token.startsWith("guest_") ||
-        token.startsWith("usr_")
-    );
+    return token === "mock_guest";
 }
 
 /**
@@ -99,7 +94,7 @@ export async function apiRequest<T = unknown>(
         }
     }
 
-    if (token && !isMockToken(token) && !headers["Authorization"] && !headers["authorization"]) {
+    if (token && !headers["Authorization"] && !headers["authorization"]) {
         headers["Authorization"] = `Bearer ${token}`;
     }
 

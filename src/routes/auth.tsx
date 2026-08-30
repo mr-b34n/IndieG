@@ -145,16 +145,27 @@ const AuthPage = () => {
                         email: formData.email.trim(),
                         password: formData.password,
                     });
-                    accessToken = res.accessToken || res.token;
-                    userProfile = (res.user as Record<string, unknown>) || null;
+                    const anyRes = res as unknown as Record<string, unknown>;
+                    accessToken =
+                        res.accessToken ||
+                        res.token ||
+                        (anyRes.access_token as string) ||
+                        ((anyRes.data as Record<string, unknown>)?.accessToken as string) ||
+                        ((anyRes.data as Record<string, unknown>)?.token as string);
+                    userProfile =
+                        (res.user as Record<string, unknown>) ||
+                        ((anyRes.data as Record<string, unknown>)?.user as Record<string, unknown>) ||
+                        (anyRes.userProfile as Record<string, unknown>) ||
+                        (anyRes.data as Record<string, unknown>) ||
+                        (res.id ? anyRes : null);
 
-                    // If token received, try to fetch current profile
+                    // If token received, save immediately
                     if (accessToken) {
                         try {
                             localStorage.setItem("indieg_access_token", accessToken);
                             localStorage.setItem("access_token", accessToken);
                             const me = await profilesApi.getMyProfile();
-                            if (me && me.id) {
+                            if (me && (me.id || me.username)) {
                                 userProfile = me as unknown as Record<string, unknown>;
                             }
                         } catch {

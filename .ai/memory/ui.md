@@ -77,3 +77,24 @@ Excessive cards fragment the interface.
 Implications:
 
 Use containers when they provide meaningful grouping or interaction.
+
+---
+
+## Decision: Feed-Centric Community Architecture
+
+Status: Active
+
+Date: 2026-08-30
+
+Decision:
+
+Community pages adopt a direct feed-centric structure (Home = Feed) without an intermediate "Overview" category landing page.
+
+Why:
+
+Users visit communities to see active posts and discussions directly rather than traversing an extra layer of category boxes.
+
+Implications:
+
+Top navigation and community sidebar synchronize across 4 functional domains: Community (Feed/Discussions/Guides/Media/Events), People (Members/Leaderboard), Resources (Wiki/Links), and About (Rules/About).
+

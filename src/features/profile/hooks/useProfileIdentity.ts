@@ -1,41 +1,45 @@
 import { useState, useMemo } from "react";
-import { FRIEND_PROFILES } from "../constants";
 import type { ProfileIdentity } from "../types";
+import type { UserProfileDto } from "@/shared/api/types";
 
 interface UseProfileIdentityArgs {
     userId: string;
     isOwnProfile: boolean;
     currentAuthor: string;
+    remoteProfile?: UserProfileDto | null;
 }
 
 /**
  * Resolves display identity (name/username/bio/status) for the profile being viewed,
- * and keeps local editable copies in sync whenever the viewed profile changes.
- *
- * Note: syncing state from a derived value must happen in an effect, not during
- * render (the original component compared a `profileKey` and called setState
- * inline in the render body, which is a React anti-pattern).
+ * and keeps local editable copies in sync whenever the viewed profile or remote data changes.
  */
-export function useProfileIdentity({ userId, isOwnProfile, currentAuthor }: UseProfileIdentityArgs) {
+export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remoteProfile }: UseProfileIdentityArgs) {
     const initial = useMemo<ProfileIdentity>(() => {
         if (isOwnProfile) {
             return {
-                name: currentAuthor,
-                username: `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`,
-                bio: "",
+                name: remoteProfile?.name || remoteProfile?.username || currentAuthor,
+                username: remoteProfile?.username
+                    ? `@${remoteProfile.username}`
+                    : `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`,
+                bio: remoteProfile?.bio || "",
                 status: "online",
+                avatarUrl: remoteProfile?.avatarUrl,
+                coverUrl: remoteProfile?.coverUrl,
+                createdAt: remoteProfile?.createdAt,
             };
         }
-        const cleanId = userId?.replace(/^@/, "").toLowerCase() || "";
-        return (
-            FRIEND_PROFILES[cleanId] || {
-                name: userId?.replace(/^@/, "") || "Gamer",
-                username: userId?.startsWith("@") ? userId : `@${userId || "gamer"}`,
-                bio: "",
-                status: "online",
-            }
-        );
-    }, [userId, isOwnProfile, currentAuthor]);
+        return {
+            name: remoteProfile?.name || remoteProfile?.username || userId?.replace(/^@/, "") || "Gamer",
+            username: remoteProfile?.username
+                ? `@${remoteProfile.username}`
+                : (userId?.startsWith("@") ? userId : `@${userId || "gamer"}`),
+            bio: remoteProfile?.bio || "",
+            status: "online",
+            avatarUrl: remoteProfile?.avatarUrl,
+            coverUrl: remoteProfile?.coverUrl,
+            createdAt: remoteProfile?.createdAt,
+        };
+    }, [userId, isOwnProfile, currentAuthor, remoteProfile]);
 
     const [prevInitial, setPrevInitial] = useState<ProfileIdentity>(initial);
     const [identity, setIdentity] = useState<ProfileIdentity>(initial);

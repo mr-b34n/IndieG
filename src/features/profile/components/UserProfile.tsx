@@ -4,7 +4,8 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft, faGamepad, faRightToBracket } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
@@ -16,7 +17,7 @@ import {
     DEFAULT_COVER, LIBRARY_GAMES,
     COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES, getBadgeCatalogue,
 } from "../constants";
-import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity } from "../types";
+import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { GamesTab } from "./tabs/GamesTab";
@@ -34,6 +35,7 @@ interface UserProfileProps {
 
 export const UserProfile = ({ userId }: UserProfileProps) => {
     const { t, language } = useTranslation();
+    const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
@@ -44,55 +46,40 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isOwnProfile =
         isLoggedIn &&
         (!userId || userId === "demo" || userId === "me" || userId === user?.id ||
-        userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`);
+        userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}` ||
+        (user?.username && userId === `@${user.username.toLowerCase().replace(/\s+/g, "_")}`));
 
     // TanStack Query hooks for profile data
     const cleanUsername = userId?.replace(/^@/, "");
-    const { data: myProfileData } = useMyProfileQuery(isOwnProfile && isLoggedIn);
-    const { data: otherUserProfileData } = useUserProfileQuery(!isOwnProfile ? cleanUsername : "");
+    const { data: myProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(isOwnProfile && isLoggedIn);
+    const { data: otherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
     const updateProfileMutation = useUpdateProfileMutation();
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
-    const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor });
-
-    // Sync remote profile if loaded
-    React.useEffect(() => {
-        if (isOwnProfile && myProfileData) {
-            setIdentity((prev) => ({
-                ...prev,
-                name: myProfileData.name || prev.name,
-                username: myProfileData.username ? `@${myProfileData.username}` : prev.username,
-                bio: myProfileData.bio || prev.bio,
-            }));
-        } else if (!isOwnProfile && otherUserProfileData) {
-            setIdentity((prev) => ({
-                ...prev,
-                name: otherUserProfileData.name || prev.name,
-                username: otherUserProfileData.username ? `@${otherUserProfileData.username}` : prev.username,
-                bio: otherUserProfileData.bio || prev.bio,
-            }));
-        }
-    }, [isOwnProfile, myProfileData, otherUserProfileData, setIdentity]);
-
+    const remoteProfile = isOwnProfile ? myProfileData : otherUserProfileData;
+    const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor, remoteProfile });
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
     const [customBg, setCustomBg] = useState<string>(DEFAULT_COVER);
-
     const [showEditModal, setShowEditModal] = useState(false);
     const [profileLocation, setProfileLocation] = useState("");
-    const isLoading = false;
+
+    const effectiveCover = identity.coverUrl || customBg;
+
+    const isLoading = (isOwnProfile && isMyProfileLoading) || (!isOwnProfile && isOtherProfileLoading);
     const isError = userId === "error" || userId === "not-found";
 
     const [gearData, setGearData] = useState<Record<string, string>>({});
 
     const [showBadgeSelector, setShowBadgeSelector] = useState(false);
     const badges = getBadgeCatalogue(t);
-    const [selectedBadgeId, setSelectedBadgeId] = useState<string>("clutch");
-    const equippedBadge = badges.find((b) => b.id === selectedBadgeId) || badges[0];
+    const unlockedBadges = badges.filter((b) => b.unlocked);
+    const [selectedBadgeId, setSelectedBadgeId] = useState<string>(unlockedBadges[0]?.id || "");
+    const equippedBadge = badges.find((b) => b.id === selectedBadgeId && b.unlocked);
 
     const triggerToast = () => {
         setShowSuccessToast(true);
@@ -105,7 +92,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const avatarUrl: string =
         (isOwnProfile && customAvatar ? customAvatar
-        : isOwnProfile && typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url
+        : isOwnProfile && (identity.avatarUrl || user?.avatar_url || (typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : undefined))
+            ? (identity.avatarUrl || user?.avatar_url || (user?.user_metadata?.avatar_url as string))
+        : identity.avatarUrl
+            ? identity.avatarUrl
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`) || "";
 
     const handleAddGuestbook = (e: React.FormEvent) => {
@@ -160,7 +150,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     // ---- Posts ----
     const posts = usePostsStore((state) => state.posts);
-    const userPosts = posts.filter((p) => p.author === identity.name || p.author === currentAuthor);
+    const userPosts = posts.filter((p) => p.author === identity.name || (isOwnProfile && p.author === currentAuthor));
     const displayPosts = userPosts;
 
     const forumRank = getUserRankConfig(identity.name);
@@ -172,11 +162,32 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         </span>
     );
 
+    // If not logged in and visiting own profile or /profile/me
+    if (!isLoggedIn && (userId === "me" || isOwnProfile || !userId || userId === "demo")) {
+        return (
+            <div className="w-full max-w-lg mx-auto my-16 p-8 rounded-3xl bg-[#0A0C0E] border border-[#1E232F] flex flex-col items-center text-center gap-4 shadow-xl animate-fade-in">
+                <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl">
+                    <FontAwesomeIcon icon={faGamepad} />
+                </div>
+                <h3 className="text-xl font-extrabold text-[#F0F1F2]">Yêu cầu đăng nhập</h3>
+                <p className="text-sm text-[#9A9DA3]">Vui lòng đăng nhập tài khoản để xem thông tin hồ sơ, huy hiệu và dữ liệu gaming của bạn.</p>
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/auth" })}
+                    className="mt-3 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-primary/25"
+                >
+                    <FontAwesomeIcon icon={faRightToBracket} />
+                    <span>Đăng nhập ngay</span>
+                </button>
+            </div>
+        );
+    }
+
     if (isLoading) {
         return (
             <div className="w-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-4xl text-primary" />
-                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ gamer...</p>
+                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ...</p>
             </div>
         );
     }
@@ -256,7 +267,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
             {/* Gamer Hero Header */}
             <ProfileHero
-                coverSrc={customBg}
+                coverSrc={effectiveCover}
                 avatarUrl={avatarUrl}
                 isOwnProfile={isOwnProfile}
                 identity={identity}
@@ -283,8 +294,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onBlock={() => { setIsBlocked(true); triggerToast(); }}
                 onUnblock={() => { setIsBlocked(false); triggerToast(); }}
                 location={profileLocation}
-                joinedDate="Tháng 6, 2026"
-                reputationPercent={98}
+                joinedDate={identity.createdAt ? new Date(identity.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : undefined}
+                reputationPercent={100}
+                followersCount={friendsList.length}
+                postsCount={displayPosts.length}
+                communitiesCount={COMMUNITY_REPUTATIONS.length}
                 t={t}
             />
 

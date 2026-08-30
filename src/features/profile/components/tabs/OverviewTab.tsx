@@ -108,27 +108,33 @@ export const OverviewTab = ({
                         <span className="text-[10px] font-medium text-[#8A8F98]">Stats Breakdown</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Genre Mastery */}
-                        <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
-                            <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Genre Mastery</span>
-                            
-                            <DnaBar label="FPS" percent={92} fillHex="#1688E8" isPrimary />
-                            <DnaBar label="SURVIVAL" percent={78} fillHex="#B8BCC2" />
-                            <DnaBar label="RPG" percent={61} fillHex="#9A9DA3" />
-                            <DnaBar label="STRATEGY" percent={42} fillHex="#666A71" />
+                    {games.length === 0 ? (
+                        <div className="bg-[#13161C] p-6 rounded-[10px] text-center flex flex-col items-center justify-center min-h-[140px]">
+                            <p className="text-xs text-[#8A8F98] italic">Chưa có dữ liệu thống kê Gaming DNA từ máy chủ.</p>
                         </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {/* Genre Mastery */}
+                            <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
+                                <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Genre Mastery</span>
+                                
+                                <DnaBar label="FPS" percent={games.some((g) => g.tags?.includes("FPS") || g.name.includes("CS")) ? 85 : 0} fillHex="#1688E8" isPrimary />
+                                <DnaBar label="SURVIVAL" percent={games.some((g) => g.tags?.includes("Survival")) ? 70 : 0} fillHex="#B8BCC2" />
+                                <DnaBar label="RPG" percent={games.some((g) => g.tags?.includes("RPG")) ? 60 : 0} fillHex="#9A9DA3" />
+                                <DnaBar label="STRATEGY" percent={games.some((g) => g.tags?.includes("Strategy")) ? 40 : 0} fillHex="#666A71" />
+                            </div>
 
-                        {/* Play Dynamics */}
-                        <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
-                            <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Play Dynamics</span>
+                            {/* Play Dynamics */}
+                            <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
+                                <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Play Dynamics</span>
 
-                            <DnaBar label="Competitive" percent={81} fillHex="#1688E8" isPrimary />
-                            <DnaBar label="Co-op" percent={76} fillHex="#B8BCC2" />
-                            <DnaBar label="Solo" percent={53} fillHex="#9A9DA3" />
-                            <DnaBar label="Casual" percent={40} fillHex="#666A71" />
+                                <DnaBar label="Competitive" percent={75} fillHex="#1688E8" isPrimary />
+                                <DnaBar label="Co-op" percent={60} fillHex="#B8BCC2" />
+                                <DnaBar label="Solo" percent={50} fillHex="#9A9DA3" />
+                                <DnaBar label="Casual" percent={30} fillHex="#666A71" />
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
             </div>

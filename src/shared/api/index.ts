@@ -1,4 +1,4 @@
-import { apiRequest, isMockToken } from "./client";
+import { apiRequest } from "./client";
 import {
     type AuthRegisterDto,
     type AuthLoginDto,
@@ -161,16 +161,6 @@ export const profilesApi = {
 
     /** Get current user's profile - GET /profiles/me */
     getMyProfile: async () => {
-        const token =
-            typeof window !== "undefined"
-                ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
-                : null;
-
-        if (isMockToken(token)) {
-            const fallback = getLocalFallbackProfile();
-            if (fallback) return fallback;
-        }
-
         try {
             return await apiRequest<UserProfileDto>("/profiles/me", {
                 method: "GET",
@@ -194,20 +184,9 @@ export const profilesApi = {
     /** Get user profile by username - GET /profiles/@{username} */
     getUserByUsername: async (username: string) => {
         const cleanName = username.replace(/^@/, "");
-        const token =
-            typeof window !== "undefined"
-                ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
-                : null;
 
         if (cleanName === "me" || cleanName === "demo") {
             return profilesApi.getMyProfile();
-        }
-
-        if (isMockToken(token)) {
-            const fallback = getLocalFallbackProfile();
-            if (fallback && (fallback.username.toLowerCase() === cleanName.toLowerCase() || fallback.id === cleanName)) {
-                return fallback;
-            }
         }
 
         try {

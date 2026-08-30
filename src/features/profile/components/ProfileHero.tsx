@@ -30,9 +30,12 @@ interface ProfileHeroProps {
     onUnfriend: () => void;
     onBlock: () => void;
     onUnblock: () => void;
-    location: string;
-    joinedDate: string;
-    reputationPercent: number;
+    location?: string;
+    joinedDate?: string;
+    reputationPercent?: number;
+    followersCount?: number;
+    postsCount?: number;
+    communitiesCount?: number;
     t: TranslateFn;
 }
 
@@ -48,7 +51,8 @@ const statusCfg = (s: ProfileStatus) =>
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
     isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity, onOpenBadgeSelector,
-    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location, reputationPercent, t,
+    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location,
+    reputationPercent = 100, followersCount = 0, postsCount = 0, communitiesCount = 0, t,
 }: ProfileHeroProps) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
@@ -77,10 +81,10 @@ export const ProfileHero = ({
 
     const cfg = statusCfg(identity.status);
 
-    const level = identity.level || 42;
-    const currentXp = identity.currentXp || 8420;
-    const maxXp = identity.maxXp || 10000;
-    const xpPercent = Math.min(100, Math.round((currentXp / maxXp) * 100));
+    const level = identity.level || 1;
+    const currentXp = identity.currentXp || 0;
+    const maxXp = identity.maxXp || 1000;
+    const xpPercent = maxXp > 0 ? Math.min(100, Math.round((currentXp / maxXp) * 100)) : 0;
 
     const defaultTitles = identity.titles && identity.titles.length > 0
         ? identity.titles.join(" · ")
@@ -409,21 +413,21 @@ export const ProfileHero = ({
                     <div className="w-1 h-1 rounded-full bg-[#242A36] hidden sm:block" />
 
                     <div className="flex flex-col">
-                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">1.2K</span>
+                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{followersCount}</span>
                         <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Followers</span>
                     </div>
 
                     <div className="w-1 h-1 rounded-full bg-[#242A36] hidden sm:block" />
 
                     <div className="flex flex-col">
-                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">86</span>
+                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{postsCount}</span>
                         <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Posts</span>
                     </div>
 
                     <div className="w-1 h-1 rounded-full bg-[#242A36] hidden sm:block" />
 
                     <div className="flex flex-col">
-                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">14</span>
+                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{communitiesCount}</span>
                         <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Communities</span>
                     </div>
                 </div>

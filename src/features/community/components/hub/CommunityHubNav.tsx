@@ -11,11 +11,12 @@ export const CommunityHubNav = ({
     isVi,
 }: CommunityHubNavProps) => {
     const tabs = [
-        { id: "overview", labelVi: "Overview", labelEn: "Overview" },
+        { id: "home", labelVi: "Home", labelEn: "Home" },
         { id: "discussions", labelVi: "Discussions", labelEn: "Discussions" },
         { id: "guides", labelVi: "Guides", labelEn: "Guides" },
-        { id: "showcase", labelVi: "Showcase", labelEn: "Showcase" },
+        { id: "media", labelVi: "Media", labelEn: "Media" },
         { id: "events", labelVi: "Events", labelEn: "Events" },
+        { id: "members", labelVi: "Members", labelEn: "Members" },
     ];
 
     return (
@@ -28,7 +29,7 @@ export const CommunityHubNav = ({
                         type="button"
                         onClick={() => onTabChange(tab.id)}
                         className={`relative pb-2.5 text-xs font-bold transition-colors cursor-pointer tracking-wider uppercase whitespace-nowrap ${
-                            isActive ? "text-primary" : "text-text-muted hover:text-text"
+                            isActive ? "text-primary font-black" : "text-text-muted hover:text-text"
                         }`}
                     >
                         <span>{isVi ? tab.labelVi : tab.labelEn}</span>
@@ -41,3 +42,4 @@ export const CommunityHubNav = ({
         </div>
     );
 };
+

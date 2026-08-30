@@ -8,12 +8,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from "@/features/auth";
 import type { CategoryItem } from "./CommunityHubCategories";
+import type { PostType } from "./CommunityHubFeed";
 
 interface CreateThreadModalProps {
     isOpen: boolean;
     onClose: () => void;
     categories: CategoryItem[];
-    onSubmit: (threadData: { title: string; category: string; content: string }) => void;
+    onSubmit: (threadData: { title: string; category: string; content: string; type?: PostType }) => void;
     communityName: string;
     isVi: boolean;
 }
@@ -27,6 +28,7 @@ export const CreateThreadModal = ({
     isVi,
 }: CreateThreadModalProps) => {
     const [title, setTitle] = useState("");
+    const [type, setType] = useState<PostType>("discussion");
     const [category, setCategory] = useState(categories[0]?.id || "general");
     const [content, setContent] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,13 +42,23 @@ export const CreateThreadModal = ({
 
         setIsSubmitting(true);
         setTimeout(() => {
-            onSubmit({ title: title.trim(), category, content: content.trim() });
+            onSubmit({ title: title.trim(), category, content: content.trim(), type });
             setTitle("");
             setContent("");
+            setType("discussion");
             setIsSubmitting(false);
             onClose();
         }, 300);
     };
+
+    const typeOptions = [
+        { id: "discussion", labelVi: "Thảo luận", labelEn: "Discussion" },
+        { id: "question", labelVi: "Hỏi đáp / Trợ giúp", labelEn: "Question / Help" },
+        { id: "guide", labelVi: "Hướng dẫn / Guide", labelEn: "Guide & Tips" },
+        { id: "showcase", labelVi: "Showcase & Media", labelEn: "Showcase" },
+        { id: "poll", labelVi: "Bình chọn / Poll", labelEn: "Poll" },
+        { id: "event", labelVi: "Sự kiện", labelEn: "Event" },
+    ] as const;
 
     return (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
@@ -55,7 +67,7 @@ export const CreateThreadModal = ({
                 <div className="flex items-center justify-between border-b border-divider-primary pb-3">
                     <span className="font-extrabold text-sm text-text uppercase tracking-tight flex items-center gap-2">
                         <FontAwesomeIcon icon={faPen} className="text-primary text-xs" />
-                        <span>{isVi ? `Đăng bài trong ${communityName}` : `Start Discussion in ${communityName}`}</span>
+                        <span>{isVi ? `Đăng bài trong ${communityName}` : `Create Post in ${communityName}`}</span>
                     </span>
                     <button
                         type="button"
@@ -67,6 +79,32 @@ export const CreateThreadModal = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-3.5">
+                    {/* Post Type Selector */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-text block">
+                            {isVi ? "Loại bài đăng:" : "Post Type:"}
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                            {typeOptions.map((opt) => {
+                                const isSelected = type === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => setType(opt.id as PostType)}
+                                        className={`py-1.5 px-2 rounded-[4px] text-xs font-bold transition-all cursor-pointer truncate border ${
+                                            isSelected
+                                                ? "bg-primary text-white border-primary"
+                                                : "bg-surface-inner border-divider-primary text-text-muted hover:text-text"
+                                        }`}
+                                    >
+                                        {isVi ? opt.labelVi : opt.labelEn}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Title */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text block">
@@ -77,7 +115,7 @@ export const CreateThreadModal = ({
                             required
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder={isVi ? "Nhập tiêu đề thảo luận..." : "What do you want to discuss?"}
+                            placeholder={isVi ? "Nhập tiêu đề bài viết..." : "What do you want to discuss?"}
                             className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
                         />
                     </div>
@@ -148,7 +186,7 @@ export const CreateThreadModal = ({
                         >
                             {isSubmitting
                                 ? (isVi ? "Đang đăng..." : "Publishing...")
-                                : (isVi ? "Đăng bài" : "Publish Discussion")}
+                                : (isVi ? "Đăng bài" : "Publish Post")}
                         </button>
                     </div>
                 </form>
@@ -156,3 +194,4 @@ export const CreateThreadModal = ({
         </div>
     );
 };
+
