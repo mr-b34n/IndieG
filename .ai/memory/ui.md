@@ -80,7 +80,7 @@ Use containers when they provide meaningful grouping or interaction.
 
 ---
 
-## Decision: Feed-Centric Community Architecture
+## Decision: Editorial Social Forum Design Language
 
 Status: Active
 
@@ -88,13 +88,15 @@ Date: 2026-08-30
 
 Decision:
 
-Community pages adopt a direct feed-centric structure (Home = Feed) without an intermediate "Overview" category landing page.
+The Community Detail page uses an "Editorial Social Forum" design language (Tumblr visual feed sensibility + Reddit structural discussion clarity).
 
 Why:
 
-Users visit communities to see active posts and discussions directly rather than traversing an extra layer of category boxes.
+The prior layout contained excessive controls, duplicate navigation tabs, and dashboard-like visual clutter that competed with actual content.
 
 Implications:
 
-Top navigation and community sidebar synchronize across 4 functional domains: Community (Feed/Discussions/Guides/Media/Events), People (Members/Leaderboard), Resources (Wiki/Links), and About (Rules/About).
+1. **3-Column Architecture**: Left Sidebar (collapsible persistent navigation), Center Feed (max 760-840px content-first feed with compact sort/filter dropdowns and inline lightweight social interactions), Right Rail (lightweight contextual modules: About, Community, Up Next).
+2. **Reduced Cognitive Clutter**: No duplicate header tabs under the cover banner, no 8-filter button rows (replaced by 2 quiet dropdowns), and no heavy cards inside cards.
+3. **Typography & Spacing**: Generous line heights, subtle meta lines, muted secondary text, and single-line tags.
 

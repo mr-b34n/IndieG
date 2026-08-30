@@ -2,15 +2,15 @@ import { useState, useMemo } from 'react';
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faComments,
-    faCircleQuestion,
-    faBook,
-    faImages,
-    faHouse,
     faChevronRight,
     faMagnifyingGlass,
     faXmark,
     faChevronDown,
+    faComments,
+    faBook,
+    faHouse,
+    faCircleQuestion,
+    faImages,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
@@ -22,7 +22,6 @@ import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
 import { CommunityHubHeader } from '@/features/community/components/hub/CommunityHubHeader';
-import { CommunityHubNav } from '@/features/community/components/hub/CommunityHubNav';
 import {
     CommunityHubFeed,
     type CommunityFeedPost,
@@ -37,7 +36,6 @@ import {
     type ContributorItem,
     type UpcomingEventTimelineItem,
 } from '@/features/community/components/hub/CommunityHubRightRail';
-import { CommunityChatDrawer } from '@/features/community/components/hub/CommunityChatDrawer';
 import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
 import { AdminCommunityControllerModal } from '@/features/community';
 import type { CategoryItem } from '@/features/community/components/hub/CommunityHubCategories';
@@ -89,7 +87,7 @@ export function CommunityDetailPage() {
             slug: communityId,
             category: "Gaming",
             tags: ["gaming", communityId],
-            description: "Cộng đồng chính thức dành cho game thủ: trao đổi kinh nghiệm, mẹo chơi, thiết kế và tin tức mới nhất.",
+            description: "Cộng đồng chính thức: trao đổi kinh nghiệm, mẹo chơi, thiết kế căn cứ và hoạt động nổi bật.",
             bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
             avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
             backdrop: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
@@ -101,8 +99,8 @@ export function CommunityDetailPage() {
             rules: [
                 "Tôn trọng các thành viên khác trong cộng đồng",
                 "Không đăng tải thông tin sai sự thật hoặc lừa đảo",
-                "Đặt tiêu đề bài viết rõ ràng, đúng danh mục",
-                "Không quảng cáo thương mại hoặc spam link bẩn",
+                "Đặt tiêu đề bài viết rõ ràng, đúng chủ đề",
+                "Không quảng cáo thương mại hoặc spam liên kết",
             ],
         };
     }, [communityId, communities, communityDto]);
@@ -113,13 +111,13 @@ export function CommunityDetailPage() {
     const [sortMode, setSortMode] = useState<"hot" | "new" | "unanswered" | "top">("hot");
     const [searchQuery, setSearchQuery] = useState("");
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // Modals & Drawers
+    // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isChatOpen, setIsChatOpen] = useState(false);
     const [isAdminControllerOpen, setIsAdminControllerOpen] = useState(false);
 
-    // Categories definition
+    // Categories definition for creation modal
     const categoriesData: CategoryItem[] = [
         {
             id: "general",
@@ -204,17 +202,10 @@ export function CommunityDetailPage() {
     const upcomingEventsData: UpcomingEventTimelineItem[] = [
         {
             id: "ev-1",
-            title: isVi ? "Giải đấu Custom 5v5 - Tranh tài vô địch" : "Community Custom Tournament 5v5",
+            title: isVi ? "Giải đấu Custom 5v5 - Tranh tài vô địch" : "Community Farm Tour & Showcase",
             dateMonth: "MAR 22",
             time: "20:00 GMT+7",
             attendees: 38,
-        },
-        {
-            id: "ev-2",
-            title: isVi ? "Livestream Q&A cùng ban quản trị cộng đồng" : "Developer & Community Q&A Session",
-            dateMonth: "MAR 26",
-            time: "19:30 GMT+7",
-            attendees: 52,
         },
     ];
 
@@ -265,11 +256,13 @@ export function CommunityDetailPage() {
             authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
             authorRank: "Legendary Pioneer",
             isPinned: true,
-            createdAt: "3 giờ trước",
+            createdAt: "3h",
             repliesCount: 42,
             viewsCount: 1850,
             likesCount: 215,
+            repostsCount: 18,
             isLiked: false,
+            tags: ["survival", "guide", "automation"],
         },
         {
             id: "post-2",
@@ -287,18 +280,20 @@ export function CommunityDetailPage() {
             authorHandle: "@raft_architect",
             authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
             authorRank: "Master Architect",
-            createdAt: "5 giờ trước",
+            createdAt: "5h",
             repliesCount: 19,
             viewsCount: 940,
             likesCount: 128,
+            repostsCount: 12,
             isLiked: true,
+            tags: ["showcase", "architecture"],
         },
         {
             id: "post-3",
             type: "poll",
             title: isVi
                 ? "Bình chọn: Bạn muốn bản cập nhật kế tiếp tập trung vào tính năng nào nhất?"
-                : "Community Poll: Which major feature should the developers prioritize next?",
+                : "Which major feature should the developers prioritize next?",
             content: isVi
                 ? "Các nhà phát triển đang lắng nghe ý kiến cộng đồng trên roadmap. Hãy bình chọn tính năng bạn mong chờ nhất!"
                 : "The dev team is reviewing feedback for the upcoming season. Cast your vote below!",
@@ -313,10 +308,11 @@ export function CommunityDetailPage() {
             authorHandle: "@shark_hunter99",
             authorAvatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
             authorRank: "Community Mod",
-            createdAt: "Hôm qua",
+            createdAt: "1d",
             repliesCount: 65,
             viewsCount: 2310,
             likesCount: 310,
+            repostsCount: 24,
         },
         {
             id: "post-4",
@@ -330,10 +326,12 @@ export function CommunityDetailPage() {
             authorName: "Tuấn Kiệt",
             authorHandle: "@tuan_kiet_dota",
             authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            createdAt: "1 ngày trước",
+            createdAt: "1d",
             repliesCount: 24,
             viewsCount: 610,
             likesCount: 45,
+            repostsCount: 4,
+            tags: ["question", "gameplay"],
         },
         {
             id: "post-5",
@@ -348,10 +346,14 @@ export function CommunityDetailPage() {
             authorHandle: "@haidang_craft",
             authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
             authorRank: "Admin",
-            createdAt: "2 ngày trước",
+            createdAt: "2d",
             repliesCount: 31,
             viewsCount: 1420,
             likesCount: 156,
+            repostsCount: 9,
+            eventDate: "MAR 22",
+            eventTime: "20:00 GMT+7",
+            eventLocation: "Custom Tournament Lobby",
         },
     ]);
 
@@ -359,7 +361,7 @@ export function CommunityDetailPage() {
     const filteredFeedPosts = useMemo(() => {
         let result = [...feedPosts];
 
-        // Nav-level filtering if navigating via tabs
+        // Nav-level filtering if navigating via sidebar
         if (activeNav === "discussions") {
             result = result.filter((p) => p.type === "discussion" || p.type === "question");
         } else if (activeNav === "guides") {
@@ -370,7 +372,7 @@ export function CommunityDetailPage() {
             result = result.filter((p) => p.type === "event");
         }
 
-        // Sub-filter chip filtering (All, Question, Guide, Showcase, Poll, Event)
+        // Sub-filter dropdown filtering (All, Discussion, Question, Guide, Showcase, Poll, Event)
         if (activeFilter !== "all") {
             result = result.filter((p) => p.type === activeFilter);
         }
@@ -388,13 +390,13 @@ export function CommunityDetailPage() {
 
         // Sorting
         if (sortMode === "new") {
-            // Keep recent on top
+            // Newest
         } else if (sortMode === "top") {
             result.sort((a, b) => b.likesCount - a.likesCount);
         } else if (sortMode === "unanswered") {
             result.sort((a, b) => a.repliesCount - b.repliesCount);
         } else {
-            // Hot: sort by combined engagement
+            // Hot: combined engagement
             result.sort((a, b) => (b.likesCount * 2 + b.repliesCount * 3) - (a.likesCount * 2 + a.repliesCount * 3));
         }
 
@@ -424,10 +426,11 @@ export function CommunityDetailPage() {
             authorHandle: user?.username ? `@${user.username}` : "@current_user",
             authorAvatar: user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=currentuser",
             authorRank: "Active Member",
-            createdAt: isVi ? "Vừa xong" : "Just now",
+            createdAt: "Just now",
             repliesCount: 0,
             viewsCount: 1,
             likesCount: 1,
+            repostsCount: 0,
             isLiked: true,
         };
         setFeedPosts([newPost, ...feedPosts]);
@@ -439,9 +442,9 @@ export function CommunityDetailPage() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto flex flex-col gap-6 font-sans text-text animate-fade-in pb-16">
-            {/* 1. TOP BREADCRUMB / CONTEXT BAR */}
-            <div className="w-full flex items-center justify-between gap-4 border-b border-divider-primary/60 pb-3 select-none">
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 font-sans text-text animate-fade-in pb-16">
+            {/* 1. TOP BREADCRUMB / SEARCH BAR */}
+            <div className="w-full flex items-center justify-between gap-4 border-b border-divider-primary/40 pb-2.5 select-none">
                 <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider">
                     <button
                         type="button"
@@ -450,12 +453,12 @@ export function CommunityDetailPage() {
                     >
                         COMMUNITIES
                     </button>
-                    <FontAwesomeIcon icon={faChevronRight} className="text-[9px] text-text-faint" />
+                    <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
                     <div className="relative">
                         <button
                             type="button"
                             onClick={() => setShowCommunitySwitcher(!showCommunitySwitcher)}
-                            className="text-primary hover:underline cursor-pointer flex items-center gap-1.5 uppercase font-black"
+                            className="text-primary hover:underline cursor-pointer flex items-center gap-1.5 uppercase font-bold"
                         >
                             <span>{community.name}</span>
                             <FontAwesomeIcon icon={faChevronDown} className="text-[8px]" />
@@ -467,7 +470,7 @@ export function CommunityDetailPage() {
                                     className="fixed inset-0 z-40"
                                     onClick={() => setShowCommunitySwitcher(false)}
                                 />
-                                <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[4px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
+                                <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
                                     {INITIAL_COMMUNITIES.map((c) => (
                                         <button
                                             key={c.id}
@@ -499,8 +502,8 @@ export function CommunityDetailPage() {
                     </div>
                 </div>
 
-                {/* Right: Inline Search Bar */}
-                <div className="relative w-48 sm:w-64">
+                {/* Right: Search Input */}
+                <div className="relative w-44 sm:w-60">
                     <FontAwesomeIcon
                         icon={faMagnifyingGlass}
                         className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint text-xs"
@@ -510,7 +513,7 @@ export function CommunityDetailPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={`Search in ${community.name}...`}
-                        className="w-full h-8 pl-8 pr-7 bg-surface hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/60 focus:border-primary rounded-[4px] text-xs font-semibold text-text placeholder:text-text-faint focus:outline-none transition-colors"
+                        className="w-full h-7.5 pl-8 pr-7 bg-surface-inner hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/50 focus:border-primary rounded-[4px] text-xs font-medium text-text placeholder:text-text-faint focus:outline-none transition-colors"
                     />
                     {searchQuery && (
                         <button
@@ -524,21 +527,26 @@ export function CommunityDetailPage() {
                 </div>
             </div>
 
-            {/* 2. 3-COLUMN ARCHITECTURE: 220px | minmax(0, 1fr) | 260px */}
-            <div className="w-full flex flex-col lg:flex-row items-start gap-8 min-w-0">
-                {/* LEFT COLUMN: Community Navigation Rail (220px) */}
-                <div className="w-full lg:w-[220px] shrink-0">
+            {/* 2. 3-COLUMN DESKTOP LAYOUT (Left: 220px/64px, Center: 760-840px, Right: 260-280px) */}
+            <div className="w-full flex flex-col md:flex-row items-start gap-6 lg:gap-8 min-w-0">
+                {/* LEFT COLUMN: Persistent Navigation Sidebar */}
+                <div
+                    className={`shrink-0 transition-all duration-300 ${
+                        isSidebarCollapsed ? "w-14" : "w-full md:w-[200px] lg:w-[220px]"
+                    }`}
+                >
                     <CommunityHubSidebar
-                        communityName={community.name}
                         activeNav={activeNav}
                         onNavChange={handleNavChange}
+                        isCollapsed={isSidebarCollapsed}
+                        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                         isVi={isVi}
                     />
                 </div>
 
-                {/* CENTER COLUMN: Community Content */}
-                <div className="flex-1 w-full min-w-0 flex flex-col gap-6">
-                    {/* Header: Identity + Actions */}
+                {/* CENTER COLUMN: Main Content & Activity Feed */}
+                <main className="flex-1 w-full min-w-0 max-w-[840px] flex flex-col gap-6">
+                    {/* Compact Community Header */}
                     <CommunityHubHeader
                         name={community.name}
                         description={community.description}
@@ -552,30 +560,20 @@ export function CommunityDetailPage() {
                             toggleJoin(community.id);
                         }}
                         onStartDiscussion={() => {
-                            if (!requireVerifiedEmail("đăng bài")) return;
+                            if (!requireVerifiedEmail("tạo bài viết")) return;
                             setIsCreateModalOpen(true);
                         }}
                         isVi={isVi}
                         isAdmin={isAdmin}
                         onOpenAdminController={() => setIsAdminControllerOpen(true)}
                         isLocked={community.isLocked}
-                        autoApprovePosts={community.autoApprovePosts}
                         announcement={community.announcement}
                         featured={community.featured}
-                        isNsfw={community.isNsfw}
                     />
 
-                    {/* Sub-navigation Under Header (Home · Discussions · Guides · Media · Events · Members) */}
-                    <CommunityHubNav
-                        activeTab={activeNav}
-                        onTabChange={handleNavChange}
-                        isVi={isVi}
-                    />
-
-                    {/* VIEW SWITCHER BASED ON ACTIVE TAB */}
+                    {/* VIEW SWITCHER: Display content according to selected destination */}
                     {activeNav === "members" || activeNav === "leaderboard" ? (
                         <CommunityHubMembers
-                            communityName={community.name}
                             contributors={contributorsData}
                             isVi={isVi}
                         />
@@ -599,7 +597,7 @@ export function CommunityDetailPage() {
                             isVi={isVi}
                         />
                     ) : (
-                        /* Default: Home (Feed) & Discussions & Guides */
+                        /* Default: Activity Feed (Home, Discussions, Guides) */
                         <CommunityHubFeed
                             posts={filteredFeedPosts}
                             activeFilter={activeFilter}
@@ -610,17 +608,18 @@ export function CommunityDetailPage() {
                             isVi={isVi}
                         />
                     )}
-                </div>
+                </main>
 
-                {/* RIGHT COLUMN: Contextual Rail (260px) */}
-                <div className="w-full lg:w-[260px] shrink-0">
+                {/* RIGHT COLUMN: Lightweight Contextual Rail */}
+                <div className="w-full md:w-[240px] lg:w-[260px] shrink-0 hidden md:block">
                     <CommunityHubRightRail
                         communityName={community.name}
                         description={community.description}
+                        membersCount={community.members || 24540}
                         onlineCount={community.onlineNow || 416}
                         contributors={contributorsData}
-                        events={upcomingEventsData}
-                        onOpenChat={() => setIsChatOpen(true)}
+                        nextEvent={upcomingEventsData[0]}
+                        onNavigateNav={handleNavChange}
                         isVi={isVi}
                     />
                 </div>
@@ -636,15 +635,7 @@ export function CommunityDetailPage() {
                 isVi={isVi}
             />
 
-            {/* REALTIME CHAT DRAWER */}
-            <CommunityChatDrawer
-                isOpen={isChatOpen}
-                onClose={() => setIsChatOpen(false)}
-                communityName={community.name}
-                isVi={isVi}
-            />
-
-            {/* ADMIN COMMUNITY CONTROLLER MODAL */}
+            {/* ADMIN CONTROLLER MODAL */}
             {isAdminControllerOpen && (
                 <AdminCommunityControllerModal
                     community={community}
@@ -654,4 +645,3 @@ export function CommunityDetailPage() {
         </div>
     );
 }
-
