@@ -15,7 +15,9 @@ import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
 import { notificationApi } from "@/features/notification";
-import { useCommentsQuery, useCreateCommentMutation } from "@/shared/api/useQueries";
+import { useCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
+import type { CommentEntity } from "@/shared/api/types";
+import { faComments as faCommentsIcon } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -650,6 +652,42 @@ const CommentItem = ({
     );
 };
 
+function extractCommentList(res: unknown): CommentEntity[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as CommentEntity[];
+    if (typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.items)) return obj.items as CommentEntity[];
+        if (Array.isArray(obj.data)) return obj.data as CommentEntity[];
+        if (Array.isArray(obj.comments)) return obj.comments as CommentEntity[];
+    }
+    return [];
+}
+
+function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
+    const authorObj = typeof c.author === "object" && c.author !== null ? c.author : null;
+    const authorName = authorObj
+        ? (authorObj.name || authorObj.username || "Thành viên")
+        : (typeof c.author === "string" && c.author.trim() ? c.author : (c.authorId ? `User_${c.authorId.slice(0, 5)}` : "Thành viên"));
+    const authorAvatar = authorObj
+        ? (authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || (authorObj as { avatarUrl?: string }).avatarUrl || avatarUser)
+        : avatarUser;
+
+    const childList = c.children || (c as { replies?: CommentEntity[] }).replies || [];
+    const mappedReplies = childList.map(mapCommentEntityToCommentData);
+
+    return {
+        id: c.id,
+        author: authorName,
+        authorAvatar: authorAvatar,
+        content: c.content || "",
+        timeAgo: c.createdAt ? formatTimeAgo(c.createdAt) : "Vừa xong",
+        likes: c.likesCount ?? c.likes ?? 0,
+        pinned: !!c.pinned,
+        replies: mappedReplies.length > 0 ? mappedReplies : undefined,
+    };
+}
+
 export const CommentSection = ({ postId }: CommentSectionProps) => {
     const { t } = useTranslation();
     const [showMainEmoji, setShowMainEmoji] = useState(false);
@@ -666,113 +704,23 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const navigate = useNavigate();
 
     // TanStack Query for Comments
-    const { data: remoteCommentsData } = useCommentsQuery(postId);
+    const { data: remoteCommentsData, isLoading: isCommentsLoading } = useCommentsQuery(postId);
     const createCommentMutation = useCreateCommentMutation();
+    const updateCommentMutation = useUpdateCommentMutation();
+    const deleteCommentMutation = useDeleteCommentMutation();
     
     const [userComments, setUserComments] = useState<CommentData[]>([]);
 
     const baseComments: CommentData[] = useMemo(() => {
-        const defaults: CommentData[] = [
-            {
-                id: 1,
-                author: "ProGamer99",
-                authorAvatar: avatarUser,
-                content: "Wow, layout đẹp quá bạn ơi! Có chia sẻ preset không?",
-                timeAgo: "2 giờ trước",
-                likes: 5,
-                replies: [
-                    {
-                        id: "1-1",
-                        author: "DevCreator",
-                        authorAvatar: avatarUser,
-                        content: "Cảm ơn bạn! Mình dùng TailwindCSS kết hợp custom config thôi nhé.",
-                        timeAgo: "1 giờ trước",
-                        likes: 3,
-                        replies: [
-                            {
-                                id: "1-1-1",
-                                author: "ShadowSniper",
-                                authorAvatar: avatarUser,
-                                content: "Config này có hỗ trợ dark theme monochrome mới không bạn?",
-                                timeAgo: "45 phút trước",
-                                likes: 2,
-                                replies: [
-                                    {
-                                        id: "1-1-1-1",
-                                        author: "DevCreator",
-                                        authorAvatar: avatarUser,
-                                        content: "@ShadowSniper Có nha, chuyển sang đen sâu #0B0C0E và xám phân cấp cực kỳ mượt mà!",
-                                        timeAgo: "20 phút trước",
-                                        likes: 1,
-                                        replies: [
-                                            {
-                                                id: "1-1-1-1-1",
-                                                author: "TacticalGamer",
-                                                authorAvatar: avatarUser,
-                                                content: "@DevCreator Tuyệt vời, cmt cấp 3 trở đi đều thẳng hàng ngay ngắn!",
-                                                timeAgo: "10 phút trước",
-                                                likes: 1,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        id: "1-2",
-                        author: "ViperMain",
-                        authorAvatar: avatarUser,
-                        content: "Bổ sung thêm preset cho FPS 144Hz nữa là hoàn hảo!",
-                        timeAgo: "50 phút trước",
-                        likes: 1,
-                    }
-                ],
-            },
-            {
-                id: 2,
-                author: "ChillVibes",
-                authorAvatar: avatarUser,
-                content: "Nhìn cái này muốn tải game lại chơi luôn quá :D",
-                timeAgo: "1 giờ trước",
-                likes: 2,
-            },
-            {
-                id: 3,
-                author: getCurrentAuthor(),
-                authorAvatar: avatarUser,
-                content: "Bài viết rất chất lượng, mình đã ghim và xin phép lưu lại nhé!",
-                timeAgo: "30 phút trước",
-                likes: 10,
-                pinned: true,
-            },
-        ];
-
-        if (remoteCommentsData && Array.isArray(remoteCommentsData) && remoteCommentsData.length > 0) {
-            const mappedList: CommentData[] = remoteCommentsData.map((c) => {
-                const authorObj = typeof c.author === "object" && c.author !== null ? c.author : null;
-                const authorName = authorObj ? (authorObj.name || authorObj.username || "Thành viên") : (typeof c.author === "string" ? c.author : "Thành viên");
-                const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatar_url || avatarUser) : avatarUser;
-                return {
-                    id: c.id,
-                    author: authorName,
-                    authorAvatar: authorAvatar,
-                    content: c.content,
-                    timeAgo: formatTimeAgo(c.createdAt),
-                    likes: c.likesCount || 0,
-                };
-            });
-            const unique = mappedList.filter((m) => !defaults.some((p) => String(p.id) === String(m.id)));
-            return [...defaults, ...unique];
-        }
-
-        return defaults;
+        if (!remoteCommentsData) return [];
+        const rawList = extractCommentList(remoteCommentsData);
+        return rawList.map(mapCommentEntityToCommentData);
     }, [remoteCommentsData]);
 
     const comments = useMemo(() => {
         const result = [...baseComments];
         userComments.forEach((uc) => {
-            const existsIndex = result.findIndex((c) => c.id === uc.id);
+            const existsIndex = result.findIndex((c) => String(c.id) === String(uc.id));
             if (existsIndex >= 0) {
                 result[existsIndex] = uc;
             } else {
@@ -925,12 +873,25 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         });
     };
 
-    const handleDeleteComment = (commentId: string | number) => {
+    const handleDeleteComment = async (commentId: string | number) => {
         setComments((prev) => removeCommentFromTree(prev, commentId));
+        try {
+            await deleteCommentMutation.mutateAsync(String(commentId));
+        } catch {
+            // optimistic update already handled locally
+        }
     };
 
-    const handleEditComment = (commentId: string | number, newContent: string) => {
+    const handleEditComment = async (commentId: string | number, newContent: string) => {
         setComments((prev) => editCommentInTree(prev, commentId, newContent));
+        try {
+            await updateCommentMutation.mutateAsync({
+                id: String(commentId),
+                content: newContent,
+            });
+        } catch {
+            // optimistic update already handled locally
+        }
     };
 
     const handleTogglePinComment = (commentId: string | number) => {
@@ -1081,19 +1042,50 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
 
             {/* List */}
             <div className="flex flex-col gap-6 px-4 pb-4">
-                {sortComments(comments, sortBy).map((cmt) => (
-                    <CommentItem
-                        key={cmt.id}
-                        comment={cmt}
-                        isLoggedIn={isLoggedIn}
-                        isCommentsAllowed={isCommentsAllowed}
-                        sortBy={sortBy}
-                        onAddReply={handleAddSubReply}
-                        onDeleteComment={handleDeleteComment}
-                        onEditComment={handleEditComment}
-                        onTogglePinComment={handleTogglePinComment}
-                    />
-                ))}
+                {isCommentsLoading ? (
+                    <div className="flex flex-col gap-4 py-4">
+                        <div className="flex items-center gap-3 animate-pulse">
+                            <div className="w-9 h-9 rounded-full bg-surface-hover" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-3.5 bg-surface-hover rounded w-1/4" />
+                                <div className="h-3 bg-surface-hover rounded w-3/4" />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 animate-pulse">
+                            <div className="w-9 h-9 rounded-full bg-surface-hover" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-3.5 bg-surface-hover rounded w-1/3" />
+                                <div className="h-3 bg-surface-hover rounded w-2/3" />
+                            </div>
+                        </div>
+                    </div>
+                ) : comments.length === 0 ? (
+                    <div className="w-full flex flex-col items-center justify-center py-8 px-4 text-center bg-surface-inner/40 rounded-xl border border-dashed border-border/80 my-2">
+                        <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-text-faint mb-2">
+                            <FontAwesomeIcon icon={faCommentsIcon} className="text-base" />
+                        </div>
+                        <p className="font-semibold text-sm text-text mb-1">
+                            {t('comment.emptyTitle') || "Chưa có bình luận nào"}
+                        </p>
+                        <p className="text-xs text-text-muted max-w-sm">
+                            {t('comment.emptyDesc') || "Hãy là người đầu tiên chia sẻ suy nghĩ và bắt đầu cuộc thảo luận!"}
+                        </p>
+                    </div>
+                ) : (
+                    sortComments(comments, sortBy).map((cmt) => (
+                        <CommentItem
+                            key={cmt.id}
+                            comment={cmt}
+                            isLoggedIn={isLoggedIn}
+                            isCommentsAllowed={isCommentsAllowed}
+                            sortBy={sortBy}
+                            onAddReply={handleAddSubReply}
+                            onDeleteComment={handleDeleteComment}
+                            onEditComment={handleEditComment}
+                            onTogglePinComment={handleTogglePinComment}
+                        />
+                    ))
+                )}
             </div>
         </div>
     );

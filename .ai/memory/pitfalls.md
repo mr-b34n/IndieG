@@ -46,14 +46,17 @@ Enforce sensitive restrictions server-side.
 
 ---
 
-## Pitfall: Rendering All Search Results
+---
+
+## Pitfall: Mock Data Shadowing API Responses
 
 Status: Active
 
 Problem:
 
-Rendering every search result makes discovery pages long and difficult to scan.
+Components defining hardcoded default mock arrays in `useMemo` or local state can unintentionally shadow or overwrite real API responses from TanStack Query.
 
 Prevention:
 
-Use limited previews and progressive discovery.
+Always map remote query data directly (`extractList` -> `mapEntityToModel`), render skeleton loaders while queries are pending, and display standard empty states when zero items are returned rather than falling back to hardcoded mock entries.
+

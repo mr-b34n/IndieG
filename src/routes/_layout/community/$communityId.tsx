@@ -16,8 +16,8 @@ import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
-import { useCommunityDetailQuery } from '@/shared/api/useQueries';
-import { mapCommunityDtoToCommunityData } from '@/shared/api';
+import { useCommunityDetailQuery, usePostsQuery, useCreatePostMutation, useProfilesListQuery } from '@/shared/api/useQueries';
+import { mapCommunityDtoToCommunityData, type PostDto, type ProfileEntity } from '@/shared/api';
 import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
@@ -44,6 +44,41 @@ export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetailPage,
 });
 
+function extractPostList(res: unknown): PostDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as PostDto[];
+    if (typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.items)) return obj.items as PostDto[];
+        if (Array.isArray(obj.data)) return obj.data as PostDto[];
+        if (Array.isArray(obj.posts)) return obj.posts as PostDto[];
+    }
+    return [];
+}
+
+function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
+    const rawType = (dto.tags?.find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t)) || "discussion") as PostType;
+    return {
+        id: String(dto.id),
+        type: rawType,
+        title: dto.title || "Bài viết",
+        content: dto.content || "",
+        authorName: dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên",
+        authorHandle: dto.authorId ? `@user_${dto.authorId.slice(0, 5)}` : "@member",
+        authorAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${dto.authorId || dto.id}`,
+        authorRank: "Member",
+        isPinned: !!dto.pinned,
+        createdAt: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
+        repliesCount: dto.commentsCount ?? 0,
+        viewsCount: 1,
+        likesCount: dto.likes ?? 0,
+        repostsCount: 0,
+        isLiked: false,
+        images: dto.images && dto.images.length > 0 ? dto.images : undefined,
+        tags: dto.tags || [],
+    };
+}
+
 export function CommunityDetailPage() {
     let communityId = "raft";
     try {
@@ -62,8 +97,11 @@ export function CommunityDetailPage() {
     const user = useAuthStore((state) => state.user);
     const isAdmin = user?.role === "admin";
 
-    // TanStack Query for Community Detail
+    // TanStack Query for Community Detail & Posts & Profiles
     const { data: communityDto } = useCommunityDetailQuery(communityId);
+    const { data: remotePostsData } = usePostsQuery({ communityId });
+    const { data: profilesData } = useProfilesListQuery({ limit: 6 });
+    const createPostMutation = useCreatePostMutation();
 
     const communities = useCommunitiesStore((state) => state.communities);
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
@@ -167,36 +205,49 @@ export function CommunityDetailPage() {
     ];
 
     // Contributors
-    const contributorsData: ContributorItem[] = [
-        {
-            id: "c-1",
-            name: "Hải Đăng",
-            handle: "@haidang_craft",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            points: 2450,
-        },
-        {
-            id: "c-2",
-            name: "Minh Quân",
-            handle: "@shark_hunter99",
-            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            points: 1820,
-        },
-        {
-            id: "c-3",
-            name: "Thùy Trang",
-            handle: "@raft_architect",
-            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            points: 1240,
-        },
-        {
-            id: "c-4",
-            name: "Tuấn Kiệt",
-            handle: "@tuan_kiet_dota",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            points: 980,
-        },
-    ];
+    const contributorsData: ContributorItem[] = useMemo(() => {
+        if (!profilesData) {
+            return [
+                {
+                    id: "c-1",
+                    name: "Hải Đăng",
+                    handle: "@haidang_craft",
+                    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+                    points: 2450,
+                },
+                {
+                    id: "c-2",
+                    name: "Minh Quân",
+                    handle: "@shark_hunter99",
+                    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
+                    points: 1820,
+                },
+            ];
+        }
+        const rawList = Array.isArray(profilesData)
+            ? (profilesData as ProfileEntity[])
+            : (profilesData as { items?: ProfileEntity[]; data?: ProfileEntity[] })?.items ||
+              (profilesData as { data?: ProfileEntity[] })?.data ||
+              [];
+        if (rawList.length === 0) {
+            return [
+                {
+                    id: "c-1",
+                    name: "Hải Đăng",
+                    handle: "@haidang_craft",
+                    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+                    points: 2450,
+                },
+            ];
+        }
+        return rawList.slice(0, 5).map((p, idx) => ({
+            id: p.id || `c-${idx}`,
+            name: p.displayName || p.username || "Thành viên",
+            handle: `@${p.username || "member"}`,
+            avatar: p.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username || idx}`,
+            points: (idx + 1) * 350 + 500,
+        }));
+    }, [profilesData]);
 
     // Upcoming Events
     const upcomingEventsData: UpcomingEventTimelineItem[] = [
@@ -209,157 +260,114 @@ export function CommunityDetailPage() {
         },
     ];
 
-    // Media Items for Media Gallery
-    const mediaGalleryData: MediaItem[] = [
-        {
-            id: "med-1",
-            title: "Căn cứ bè gỗ 3 tầng phong cách Nhật Bản",
-            imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
-            authorName: "Thùy Trang",
-            authorHandle: "@raft_architect",
-            likesCount: 142,
-            repliesCount: 28,
-        },
-        {
-            id: "med-2",
-            title: "Trận chiến diệt boss cá mập trắng thành công",
-            imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
-            authorName: "Minh Quân",
-            authorHandle: "@shark_hunter99",
-            likesCount: 98,
-            repliesCount: 14,
-        },
-        {
-            id: "med-3",
-            title: "Thiết kế phòng điều khiển tàu hiện đại với pin năng lượng mặt trời",
-            imageUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
-            authorName: "Hải Đăng",
-            authorHandle: "@haidang_craft",
-            likesCount: 184,
-            repliesCount: 35,
-        },
-    ];
+    // Local user created posts
+    const [userCreatedPosts, setUserCreatedPosts] = useState<CommunityFeedPost[]>([]);
 
-    // Rich initial community feed posts
-    const [feedPosts, setFeedPosts] = useState<CommunityFeedPost[]>([
-        {
-            id: "post-1",
-            type: "guide",
-            title: isVi
-                ? "Tổng hợp mẹo sinh tồn 100 ngày đầu & cách tối ưu hóa thu hoạch nước ngọt"
-                : "Comprehensive 100-Day Survival Guide & Infinite Fresh Water Setup",
-            content: isVi
-                ? "Chia sẻ chi tiết kinh nghiệm từ việc chế tạo máy lọc nước nâng cao, bố trí lưới bắt rác tự động đến cách đối phó với cá mập mà không tốn nhiều tài nguyên kim loại quý..."
-                : "Step-by-step breakdown on automating purifier grids, collection nets placement, and preserving metal ingots during early-game shark encounters...",
-            authorName: "Hải Đăng",
-            authorHandle: "@haidang_craft",
-            authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            authorRank: "Legendary Pioneer",
-            isPinned: true,
-            createdAt: "3h",
-            repliesCount: 42,
-            viewsCount: 1850,
-            likesCount: 215,
-            repostsCount: 18,
-            isLiked: false,
-            tags: ["survival", "guide", "automation"],
-        },
-        {
-            id: "post-2",
-            type: "showcase",
-            title: isVi
-                ? "Showcase căn cứ bè nổi 3 tầng đầy đủ trang bị sau 60 giờ cày cuốc"
-                : "Base Showcase: 3-Story Autonomous Floating Sanctuary after 60 Hours",
-            content: isVi
-                ? "Cuối cùng cũng hoàn thiện khu vườn sinh thái trên tầng thượng và hệ thống pin năng lượng mặt trời. Mời mọi người vào đánh giá và góp ý thêm góc thư giãn nhé!"
-                : "Finished the rooftop botanical garden and solar array. Welcome any tips on aesthetic decoration and fuel pipe routing!",
-            images: [
-                "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-            ],
-            authorName: "Thùy Trang",
-            authorHandle: "@raft_architect",
-            authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            authorRank: "Master Architect",
-            createdAt: "5h",
-            repliesCount: 19,
-            viewsCount: 940,
-            likesCount: 128,
-            repostsCount: 12,
-            isLiked: true,
-            tags: ["showcase", "architecture"],
-        },
-        {
-            id: "post-3",
-            type: "poll",
-            title: isVi
-                ? "Bình chọn: Bạn muốn bản cập nhật kế tiếp tập trung vào tính năng nào nhất?"
-                : "Which major feature should the developers prioritize next?",
-            content: isVi
-                ? "Các nhà phát triển đang lắng nghe ý kiến cộng đồng trên roadmap. Hãy bình chọn tính năng bạn mong chờ nhất!"
-                : "The dev team is reviewing feedback for the upcoming season. Cast your vote below!",
-            pollOptions: [
-                { id: "opt-1", label: isVi ? "Thêm quần xã sinh vật đảo tuyết & núi lửa" : "New Arctic & Volcanic Island Biomes", votes: 84 },
-                { id: "opt-2", label: isVi ? "Chế độ Multiplayer 8 người & voice chat 3D" : "8-Player Co-op & Proximity Voice Chat", votes: 122 },
-                { id: "opt-3", label: isVi ? "Tự động hóa hệ thống máy bay không người lái" : "Drone Automation & Advanced Wiring", votes: 45 },
-                { id: "opt-4", label: isVi ? "Thêm boss quái vật biển sâu khổng lồ" : "Deep Sea Giant Leviathan Bosses", votes: 97 },
-            ],
-            userVotedPollId: "opt-2",
-            authorName: "Minh Quân",
-            authorHandle: "@shark_hunter99",
-            authorAvatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            authorRank: "Community Mod",
-            createdAt: "1d",
-            repliesCount: 65,
-            viewsCount: 2310,
-            likesCount: 310,
-            repostsCount: 24,
-        },
-        {
-            id: "post-4",
-            type: "question",
-            title: isVi
-                ? "Làm cách nào để chống cá mập cắn bè hiệu quả khi chưa có giáp sắt bảo vệ góc?"
-                : "How to effectively protect outer foundations from shark bites before reinforced armor?",
-            content: isVi
-                ? "Mình mới tới hòn đảo lớn đầu tiên, cá mập cứ cắn nát các góc bè làm rơi rương đồ. Mọi người có mẹo dùng mồi cá hay vũ khí nào xử lý nhanh không?"
-                : "Arrived at the first large island, but the shark keeps chewing through my outer wooden foundations. Any bait crafting tricks or early spearing tips?",
-            authorName: "Tuấn Kiệt",
-            authorHandle: "@tuan_kiet_dota",
-            authorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            createdAt: "1d",
-            repliesCount: 24,
-            viewsCount: 610,
-            likesCount: 45,
-            repostsCount: 4,
-            tags: ["question", "gameplay"],
-        },
-        {
-            id: "post-5",
-            type: "event",
-            title: isVi
-                ? "Giải đấu cộng đồng: Thử thách sinh tồn Hardcore 5v5 diễn ra vào thứ Bảy"
-                : "Weekend Community Challenge: 5v5 Hardcore Speedrun Tournament",
-            content: isVi
-                ? "Đăng ký tham gia ngay để nhận huy hiệu độc quyền và phần quà từ ban quản trị. Thời gian bắt đầu: 20:00 Thứ Bảy tuần này."
-                : "Register your team for our weekly community tournament. Exclusive badges and prizes for the winning survival squad!",
-            authorName: "Hải Đăng",
-            authorHandle: "@haidang_craft",
-            authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            authorRank: "Admin",
-            createdAt: "2d",
-            repliesCount: 31,
-            viewsCount: 1420,
-            likesCount: 156,
-            repostsCount: 9,
-            eventDate: "MAR 22",
-            eventTime: "20:00 GMT+7",
-            eventLocation: "Custom Tournament Lobby",
-        },
-    ]);
+    // API + Local posts
+    const allFeedPosts = useMemo<CommunityFeedPost[]>(() => {
+        const rawList = extractPostList(remotePostsData);
+        const mappedRemote = rawList.map(mapPostDtoToCommunityFeedPost);
+
+        if (mappedRemote.length > 0) {
+            const merged = [...userCreatedPosts];
+            mappedRemote.forEach((rem) => {
+                if (!merged.some((p) => p.id === rem.id)) {
+                    merged.push(rem);
+                }
+            });
+            return merged;
+        }
+
+        // Fallback default sample posts when no remote posts yet
+        const defaults: CommunityFeedPost[] = [
+            {
+                id: "post-1",
+                type: "guide",
+                title: isVi
+                    ? "Tổng hợp mẹo sinh tồn 100 ngày đầu & cách tối ưu hóa thu hoạch nước ngọt"
+                    : "Comprehensive 100-Day Survival Guide & Infinite Fresh Water Setup",
+                content: isVi
+                    ? "Chia sẻ chi tiết kinh nghiệm từ việc chế tạo máy lọc nước nâng cao, bố trí lưới bắt rác tự động đến cách đối phó với cá mập mà không tốn nhiều tài nguyên kim loại quý..."
+                    : "Step-by-step breakdown on automating purifier grids, collection nets placement, and preserving metal ingots during early-game shark encounters...",
+                authorName: "Hải Đăng",
+                authorHandle: "@haidang_craft",
+                authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+                authorRank: "Legendary Pioneer",
+                isPinned: true,
+                createdAt: "3h",
+                repliesCount: 42,
+                viewsCount: 1850,
+                likesCount: 215,
+                repostsCount: 18,
+                isLiked: false,
+                tags: ["survival", "guide", "automation"],
+            },
+            {
+                id: "post-2",
+                type: "showcase",
+                title: isVi
+                    ? "Showcase căn cứ bè nổi 3 tầng đầy đủ trang bị sau 60 giờ cày cuốc"
+                    : "Base Showcase: 3-Story Autonomous Floating Sanctuary after 60 Hours",
+                content: isVi
+                    ? "Cuối cùng cũng hoàn thiện khu vườn sinh thái trên tầng thượng và hệ thống pin năng lượng mặt trời. Mời mọi người vào đánh giá và góp ý thêm góc thư giãn nhé!"
+                    : "Finished the rooftop botanical garden and solar array. Welcome any tips on aesthetic decoration and fuel pipe routing!",
+                images: [
+                    "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+                ],
+                authorName: "Thùy Trang",
+                authorHandle: "@raft_architect",
+                authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+                authorRank: "Master Architect",
+                createdAt: "5h",
+                repliesCount: 19,
+                viewsCount: 940,
+                likesCount: 128,
+                repostsCount: 12,
+                isLiked: true,
+                tags: ["showcase", "architecture"],
+            },
+        ];
+
+        return [...userCreatedPosts, ...defaults];
+    }, [remotePostsData, userCreatedPosts, isVi]);
+
+    // Media Items for Media Gallery extracted from real posts
+    const mediaGalleryData: MediaItem[] = useMemo(() => {
+        const list: MediaItem[] = [];
+        allFeedPosts.forEach((post) => {
+            if (post.images && post.images.length > 0) {
+                post.images.forEach((img, idx) => {
+                    list.push({
+                        id: `${post.id}-img-${idx}`,
+                        title: post.title || "Media item",
+                        imageUrl: img,
+                        authorName: post.authorName,
+                        authorHandle: post.authorHandle,
+                        likesCount: post.likesCount,
+                        repliesCount: post.repliesCount,
+                    });
+                });
+            }
+        });
+        if (list.length === 0) {
+            return [
+                {
+                    id: "med-1",
+                    title: "Căn cứ bè gỗ 3 tầng phong cách Nhật Bản",
+                    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+                    authorName: "Thùy Trang",
+                    authorHandle: "@raft_architect",
+                    likesCount: 142,
+                    repliesCount: 28,
+                },
+            ];
+        }
+        return list;
+    }, [allFeedPosts]);
 
     // Handle post filtering & sorting
     const filteredFeedPosts = useMemo(() => {
-        let result = [...feedPosts];
+        let result = [...allFeedPosts];
 
         // Nav-level filtering if navigating via sidebar
         if (activeNav === "discussions") {
@@ -401,14 +409,15 @@ export function CommunityDetailPage() {
         }
 
         return result;
-    }, [feedPosts, activeNav, activeFilter, searchQuery, sortMode]);
+    }, [allFeedPosts, activeNav, activeFilter, searchQuery, sortMode]);
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
     // Handle Post Creation
-    const handleCreatePost = ({
+    const handleCreatePost = async ({
         title,
         content,
+        category,
         type = "discussion",
     }: {
         title: string;
@@ -432,8 +441,20 @@ export function CommunityDetailPage() {
             likesCount: 1,
             repostsCount: 0,
             isLiked: true,
+            tags: [type, category].filter(Boolean),
         };
-        setFeedPosts([newPost, ...feedPosts]);
+        setUserCreatedPosts((prev) => [newPost, ...prev]);
+
+        try {
+            await createPostMutation.mutateAsync({
+                communityId,
+                title,
+                content,
+                tags: [type, category].filter(Boolean),
+            });
+        } catch {
+            // locally retained
+        }
     };
 
     const handleNavChange = (navId: string) => {
