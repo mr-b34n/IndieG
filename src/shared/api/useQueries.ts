@@ -208,11 +208,19 @@ export function useDeleteCommunityMutation() {
 // -------------------------------------------------------------
 // 4. Hooks for Comments
 // -------------------------------------------------------------
-export function useCommentsQuery(postId: string, page?: number, limit?: number) {
+export function useCommentsQuery(postId: string, page = 1, limit = 6) {
     return useQuery({
         queryKey: QUERY_KEYS.comments(postId, { page, limit }),
         queryFn: () => commentsApi.getRootComments({ postId, page, limit }),
         enabled: Boolean(postId),
+    });
+}
+
+export function useReplyCommentsQuery(parentId: string, cursor?: string, limit = 5, enabled = false) {
+    return useQuery({
+        queryKey: [...QUERY_KEYS.commentReplies(parentId), cursor, limit],
+        queryFn: () => commentsApi.getReplyComments({ parentId, cursor, limit }),
+        enabled: Boolean(parentId) && enabled,
     });
 }
 
@@ -287,6 +295,12 @@ export function useUserSessionsQuery() {
     return useQuery({
         queryKey: QUERY_KEYS.userSessions,
         queryFn: () => usersApi.getSessions(),
+    });
+}
+
+export function useChangePasswordMutation() {
+    return useMutation({
+        mutationFn: (data: ChangePasswordDto) => usersApi.changePassword(data),
     });
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -15,7 +15,7 @@ import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
 import { notificationApi } from "@/features/notification";
-import { useCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
+import { useCommentsQuery, useReplyCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
 import type { CommentEntity } from "@/shared/api/types";
 import { faComments as faCommentsIcon } from "@fortawesome/free-solid-svg-icons";
 
@@ -215,6 +215,28 @@ const CommentItem = ({
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState(comment.content);
     const [copied, setCopied] = useState(false);
+
+    // Reply comments query on demand
+    const [shouldFetchReplies, setShouldFetchReplies] = useState(false);
+    const { data: remoteRepliesData, isLoading: isRepliesLoading } = useReplyCommentsQuery(
+        String(comment.id),
+        undefined,
+        5,
+        shouldFetchReplies
+    );
+
+    const combinedReplies = useMemo(() => {
+        const local = comment.replies || [];
+        if (!remoteRepliesData) return local;
+        const remoteList = extractCommentList(remoteRepliesData).map(mapCommentEntityToCommentData);
+        const merged = [...local];
+        remoteList.forEach((r) => {
+            if (!merged.some((m) => String(m.id) === String(r.id))) {
+                merged.push(r);
+            }
+        });
+        return merged;
+    }, [comment.replies, remoteRepliesData]);
 
     const currentAuthor = getCurrentAuthor();
     const isAuthor = comment.author === currentAuthor || comment.author === "You";
@@ -568,8 +590,8 @@ const CommentItem = ({
             </div>
 
             {/* Nested Replies */}
-            {depth < 2 && comment.replies && comment.replies.length > 0 && (() => {
-                let allReplies = sortComments(comment.replies, sortBy);
+            {depth < 2 && (combinedReplies.length > 0 || shouldFetchReplies) && (() => {
+                let allReplies = sortComments(combinedReplies, sortBy);
                 
                 if (depth === 1) {
                     const flatten = (replies: CommentData[]): CommentData[] => {
@@ -582,12 +604,11 @@ const CommentItem = ({
                         }
                         return res;
                     };
-                    allReplies = sortComments(flatten(comment.replies), sortBy);
+                    allReplies = sortComments(flatten(combinedReplies), sortBy);
                 }
 
                 const visibleReplies = showAllReplies ? allReplies : allReplies.slice(0, 1);
-                const hasMore = allReplies.length > 1;
-                const hiddenCount = allReplies.length - 1;
+                const hiddenCount = Math.max(0, allReplies.length - 1);
                 
                 // Align replies with the content block of the parent comment. Max 3 visual depths (0, 1, 2).
                 const indentClass = depth === 0 ? "pl-[46px] sm:pl-[48px]" : "pl-[38px] sm:pl-[40px]";
@@ -609,34 +630,59 @@ const CommentItem = ({
                             />
                         ))}
 
-                        {hasMore && (
-                            <div className="pt-0.5">
-                                {!showAllReplies ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAllReplies(true)}
-                                        className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-colors py-1 pl-1 cursor-pointer group/expand"
-                                    >
+                        <div className="pt-0.5 flex flex-wrap items-center gap-3">
+                            {!showAllReplies ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAllReplies(true);
+                                        setShouldFetchReplies(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-colors py-1 pl-1 cursor-pointer group/expand"
+                                >
+                                    {isRepliesLoading ? (
+                                        <FontAwesomeIcon icon={faSpinner} spin className="text-[10px] text-primary" />
+                                    ) : (
                                         <FontAwesomeIcon
                                             icon={faReply}
                                             className="rotate-180 text-[10px] text-text-faint group-hover/expand:text-primary transition-transform"
                                         />
-                                        <span>
-                                            {t('comment.viewMoreReplies', { count: hiddenCount })}
-                                        </span>
-                                    </button>
-                                ) : (
+                                    )}
+                                    <span>
+                                        {hiddenCount > 0
+                                            ? t('comment.viewMoreReplies', { count: hiddenCount }) || `Xem thêm ${hiddenCount} câu trả lời`
+                                            : t('comment.viewMoreRepliesSingle') || "Xem thêm câu trả lời"}
+                                    </span>
+                                </button>
+                            ) : (
+                                <>
                                     <button
                                         type="button"
                                         onClick={() => setShowAllReplies(false)}
                                         className="inline-flex items-center gap-1.5 text-xs font-medium text-text-faint hover:text-text-muted transition-colors py-1 pl-1 cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faChevronUp} className="text-[10px]" />
-                                        <span>{t('comment.hideReplies')}</span>
+                                        <span>{t('comment.hideReplies') || "Ẩn câu trả lời"}</span>
                                     </button>
-                                )}
-                            </div>
-                        )}
+                                    {!shouldFetchReplies && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShouldFetchReplies(true)}
+                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline py-1 cursor-pointer"
+                                        >
+                                            <FontAwesomeIcon icon={faReply} className="rotate-180 text-[10px]" />
+                                            <span>{t('comment.loadMoreRepliesServer') || "Tải thêm câu trả lời từ máy chủ"}</span>
+                                        </button>
+                                    )}
+                                    {isRepliesLoading && (
+                                        <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                                            <FontAwesomeIcon icon={faSpinner} spin className="text-[10px] text-primary" />
+                                            <span>Đang tải...</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 );
             })()}
@@ -703,8 +749,9 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const isLoggedIn = !!user || mockLogin;
     const navigate = useNavigate();
 
-    // TanStack Query for Comments
-    const { data: remoteCommentsData, isLoading: isCommentsLoading } = useCommentsQuery(postId);
+    // TanStack Query for Comments with limit = 6 (between 5 and 7)
+    const [commentLimit, setCommentLimit] = useState(6);
+    const { data: remoteCommentsData, isLoading: isCommentsLoading, isFetching: isCommentsFetching } = useCommentsQuery(postId, 1, commentLimit);
     const createCommentMutation = useCreateCommentMutation();
     const updateCommentMutation = useUpdateCommentMutation();
     const deleteCommentMutation = useDeleteCommentMutation();
@@ -1072,19 +1119,44 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                         </p>
                     </div>
                 ) : (
-                    sortComments(comments, sortBy).map((cmt) => (
-                        <CommentItem
-                            key={cmt.id}
-                            comment={cmt}
-                            isLoggedIn={isLoggedIn}
-                            isCommentsAllowed={isCommentsAllowed}
-                            sortBy={sortBy}
-                            onAddReply={handleAddSubReply}
-                            onDeleteComment={handleDeleteComment}
-                            onEditComment={handleEditComment}
-                            onTogglePinComment={handleTogglePinComment}
-                        />
-                    ))
+                    <>
+                        {sortComments(comments, sortBy).map((cmt) => (
+                            <CommentItem
+                                key={cmt.id}
+                                comment={cmt}
+                                isLoggedIn={isLoggedIn}
+                                isCommentsAllowed={isCommentsAllowed}
+                                sortBy={sortBy}
+                                onAddReply={handleAddSubReply}
+                                onDeleteComment={handleDeleteComment}
+                                onEditComment={handleEditComment}
+                                onTogglePinComment={handleTogglePinComment}
+                            />
+                        ))}
+
+                        {(comments.length >= commentLimit || isCommentsFetching) && (
+                            <div className="flex justify-center pt-3 pb-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setCommentLimit((prev) => prev + 6)}
+                                    disabled={isCommentsFetching}
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-full transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
+                                >
+                                    {isCommentsFetching ? (
+                                        <>
+                                            <FontAwesomeIcon icon={faSpinner} spin className="text-xs" />
+                                            <span>{t('comment.loadingMore') || "Đang tải bình luận..."}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FontAwesomeIcon icon={faCommentsIcon} className="text-xs" />
+                                            <span>{t('comment.loadMoreComments') || "Xem thêm bình luận"}</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
