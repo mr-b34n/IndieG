@@ -41,6 +41,7 @@ export interface CommunitiesState {
     error: string | null;
     fetchCommunities: () => Promise<void>;
     toggleJoin: (id: string | number) => void;
+    toggleJoinCommunity: (id: string | number) => void;
     getCommunityById: (id: string | number) => CommunityData | undefined;
     addCommunity: (community: CommunityData) => void;
     createCommunity?: (dto: { name: string; category?: string; description?: string; logo?: string; backdrop?: string; tags?: string[] }) => Promise<CommunityData | null>;

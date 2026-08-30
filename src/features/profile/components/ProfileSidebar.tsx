@@ -82,7 +82,7 @@ export const ProfileSidebar = ({
                     </div>
                 ) : (
                     <p className="text-sm text-text-muted leading-relaxed">
-                        {bio || <span className="text-text-faint italic">Chưa có bio.</span>}
+                        {bio || <span className="text-text-faint italic">{t("profile.empty.bio")}</span>}
                     </p>
                 )}
 
@@ -161,7 +161,7 @@ export const ProfileSidebar = ({
                     </div>
                 ) : (
                     <p className="text-xs text-text-faint italic text-center py-6">
-                        {t("profile.noGearListed") || "Chưa có thông tin setup."}
+                        {t("profile.empty.gear")}
                     </p>
                 )}
             </Card>

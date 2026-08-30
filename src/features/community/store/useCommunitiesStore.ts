@@ -81,6 +81,8 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
         }
     },
 
+    toggleJoinCommunity: (id) => get().toggleJoin(id),
+
     getCommunityById: (id) => get().communities.find((c) => String(c.id) === String(id)),
 
     addCommunity: (community) =>

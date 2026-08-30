@@ -165,10 +165,11 @@ export const FeedList = () => {
     const filteredPosts = useMemo(() => {
         return posts
             .filter((p) => {
-                if (hiddenAuthors.includes(p.author)) return false;
+                const authorName = typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "");
+                if (hiddenAuthors.includes(authorName)) return false;
 
                 // My own posts always show
-                if (p.author === currentAuthor) return true;
+                if (authorName === currentAuthor) return true;
 
                 const postCommId = p.communityId?.toString().toLowerCase();
                 const postGameTag = p.gameTag?.toLowerCase();

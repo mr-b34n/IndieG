@@ -13,8 +13,7 @@ import { ProfileHero } from "./ProfileHero";
 import { ProfileTabBar } from "./ProfileTabBar";
 
 import {
-    DEFAULT_COVER, DEFAULT_GEAR, LIBRARY_GAMES,
-    INITIAL_FRIENDS, INITIAL_FRIEND_REQUESTS, INITIAL_GUESTBOOK,
+    DEFAULT_COVER, LIBRARY_GAMES,
     COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES, getBadgeCatalogue,
 } from "../constants";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity } from "../types";
@@ -84,11 +83,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [customBg, setCustomBg] = useState<string>(DEFAULT_COVER);
 
     const [showEditModal, setShowEditModal] = useState(false);
-    const [profileLocation, setProfileLocation] = useState("Vietnam / SEA");
+    const [profileLocation, setProfileLocation] = useState("");
     const isLoading = false;
     const isError = userId === "error" || userId === "not-found";
 
-    const [gearData, setGearData] = useState<Record<string, string>>(DEFAULT_GEAR);
+    const [gearData, setGearData] = useState<Record<string, string>>({});
 
     const [showBadgeSelector, setShowBadgeSelector] = useState(false);
     const badges = getBadgeCatalogue(t);
@@ -101,7 +100,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     // ---- Guestbook ----
-    const [guestbookComments, setGuestbookComments] = useState(INITIAL_GUESTBOOK);
+    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([]);
     const [newCommentText, setNewCommentText] = useState("");
 
     const avatarUrl: string =
@@ -124,8 +123,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     // ---- Friends ----
-    const [friendsList, setFriendsList] = useState<FriendEntry[]>(INITIAL_FRIENDS);
-    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>(INITIAL_FRIEND_REQUESTS);
+    const [friendsList, setFriendsList] = useState<FriendEntry[]>([]);
+    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([]);
     const [isBlocked, setIsBlocked] = useState(false);
 
     const isFriend = friendsList.some((f) => f.name === identity.name && f.isFriend);
@@ -162,7 +161,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     // ---- Posts ----
     const posts = usePostsStore((state) => state.posts);
     const userPosts = posts.filter((p) => p.author === identity.name || p.author === currentAuthor);
-    const displayPosts = userPosts.length > 0 ? userPosts : posts.slice(0, 2);
+    const displayPosts = userPosts;
 
     const forumRank = getUserRankConfig(identity.name);
     const forumRankNode = (

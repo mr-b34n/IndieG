@@ -2,14 +2,16 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrophy, faCheckCircle, faLock } from "@fortawesome/free-solid-svg-icons";
 import type { Badge } from "../../types";
-import type { TranslateFn } from "@/shared/hooks/useTranslate";
+import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 
 interface AchievementsTabProps {
     badges: Badge[];
-    t: TranslateFn;
+    t?: TranslateFn;
 }
 
-export const AchievementsTab = ({ badges }: AchievementsTabProps) => {
+export const AchievementsTab = ({ badges, t: propT }: AchievementsTabProps) => {
+    const { t: hookT } = useTranslation();
+    const t = propT || hookT;
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
     const categories = ["All", "FPS", "Survival", "Competitive", "Platform"];
@@ -54,46 +56,54 @@ export const AchievementsTab = ({ badges }: AchievementsTabProps) => {
             </div>
 
             {/* Badges Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {filteredBadges.map((badge) => {
-                    const isUnlocked = badge.unlocked !== false;
+            {filteredBadges.length === 0 ? (
+                <div className="w-full bg-[#13161C] rounded-[10px] p-8 text-center flex flex-col items-center justify-center gap-2">
+                    <FontAwesomeIcon icon={faTrophy} className="text-2xl text-[#5F697C]" />
+                    <h4 className="text-xs font-bold text-[#F0F1F2]">{t("profile.empty.achievementsTitle")}</h4>
+                    <p className="text-[11px] text-[#8D97AA]">{t("profile.empty.achievementsDesc")}</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    {filteredBadges.map((badge) => {
+                        const isUnlocked = badge.unlocked !== false;
 
-                    return (
-                        <div
-                            key={badge.id}
-                            className={`flex flex-col justify-between p-4 rounded-[10px] transition-all ${
-                                isUnlocked
-                                    ? "bg-[#13161C] hover:bg-[#181C24]"
-                                    : "bg-[#0E1014] opacity-35 grayscale"
-                            }`}
-                        >
-                            <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className="w-10 h-10 rounded-[8px] bg-[#181C24] flex items-center justify-center text-lg shrink-0 text-[#E5A93D]">
-                                    <FontAwesomeIcon icon={badge.icon} />
-                                </div>
-                                <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold uppercase ${
+                        return (
+                            <div
+                                key={badge.id}
+                                className={`flex flex-col justify-between p-4 rounded-[10px] transition-all ${
                                     isUnlocked
-                                        ? "bg-[#24C58A]/15 text-[#24C58A]"
-                                        : "bg-[#181C24] text-[#8A8F98]"
-                                }`}>
-                                    <FontAwesomeIcon icon={isUnlocked ? faCheckCircle : faLock} className="mr-1 text-[9px]" />
-                                    {isUnlocked ? "Unlocked" : "Locked"}
-                                </span>
-                            </div>
+                                        ? "bg-[#13161C] hover:bg-[#181C24]"
+                                        : "bg-[#0E1014] opacity-35 grayscale"
+                                }`}
+                            >
+                                <div className="flex items-start justify-between gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-[8px] bg-[#181C24] flex items-center justify-center text-lg shrink-0 text-[#E5A93D]">
+                                        <FontAwesomeIcon icon={badge.icon} />
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold uppercase ${
+                                        isUnlocked
+                                            ? "bg-[#24C58A]/15 text-[#24C58A]"
+                                            : "bg-[#181C24] text-[#8A8F98]"
+                                    }`}>
+                                        <FontAwesomeIcon icon={isUnlocked ? faCheckCircle : faLock} className="mr-1 text-[9px]" />
+                                        {isUnlocked ? "Unlocked" : "Locked"}
+                                    </span>
+                                </div>
 
-                            <div className="flex flex-col gap-1">
-                                <h4 className="font-bold text-[#F0F1F2] text-sm">{badge.title}</h4>
-                                <p className="text-xs text-[#9A9DA3] leading-relaxed">{badge.desc}</p>
-                            </div>
+                                <div className="flex flex-col gap-1">
+                                    <h4 className="font-bold text-[#F0F1F2] text-sm">{badge.title}</h4>
+                                    <p className="text-xs text-[#9A9DA3] leading-relaxed">{badge.desc}</p>
+                                </div>
 
-                            <div className="flex items-center justify-between text-[11px] font-medium text-[#8A8F98] pt-3 mt-3 bg-[#0E1116] p-2 rounded-[6px]">
-                                <span>Category: {badge.category || "General"}</span>
-                                <span>{badge.earnedDate ? `Earned ${badge.earnedDate}` : "Locked"}</span>
+                                <div className="flex items-center justify-between text-[11px] font-medium text-[#8A8F98] pt-3 mt-3 bg-[#0E1116] p-2 rounded-[6px]">
+                                    <span>Category: {badge.category || "General"}</span>
+                                    <span>{badge.earnedDate ? `Earned ${badge.earnedDate}` : "Locked"}</span>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };

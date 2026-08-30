@@ -37,16 +37,7 @@ export const GEAR_CATEGORIES: GearCategory[] = [
     { value: "Controller / Other", label: "Controller / Thiết bị khác", icon: faGamepad, color: "text-amber-300" },
 ];
 
-export const DEFAULT_GEAR: Record<string, string> = {
-    CPU: "Intel Core i9-14900K @ 5.8GHz",
-    GPU: "NVIDIA GeForce RTX 4090 24GB GDDR6X",
-    Monitor: 'ROG Swift 360Hz OLED 27" (1440p 0.03ms)',
-    Mouse: "Logitech G Pro X Superlight 2 (800 DPI)",
-    Keyboard: "Wooting 60HE+ Custom",
-    Headphones: "HyperX Cloud III Wireless",
-    Microphone: "Shure SM7B + GoXLR Mini",
-    Mousepad: "Artisan Zero FX Soft XL",
-};
+export const DEFAULT_GEAR: Record<string, string> = {};
 
 export const LIBRARY_GAMES: LibraryGame[] = [];
 

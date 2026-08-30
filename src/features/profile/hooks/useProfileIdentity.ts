@@ -22,16 +22,16 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor }: UseP
             return {
                 name: currentAuthor,
                 username: `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`,
-                bio: "FPS Veteran | Raft survival architect | Looking for squad in CS2 Premier & Red Dead Redemption 2. Let's party up!",
+                bio: "",
                 status: "online",
             };
         }
         const cleanId = userId?.replace(/^@/, "").toLowerCase() || "";
         return (
             FRIEND_PROFILES[cleanId] || {
-                name: userId?.replace(/^@/, "") || "TacticalXeno",
-                username: userId?.startsWith("@") ? userId : `@${userId || "tactical_xeno"}`,
-                bio: "Pro competitive player & tactical leader. Always online for high rank pushes!",
+                name: userId?.replace(/^@/, "") || "Gamer",
+                username: userId?.startsWith("@") ? userId : `@${userId || "gamer"}`,
+                bio: "",
                 status: "online",
             }
         );

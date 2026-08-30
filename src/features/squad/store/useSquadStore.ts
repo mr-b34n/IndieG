@@ -7,7 +7,7 @@ import {
 } from "@/shared/constants/images";
 import { getCurrentAuthor } from "@/features/post/helpers/getCurrentAuthor";
 import { useNotificationStore } from "@/features/notification/store/useNotificationStore";
-import { type Squad, type SquadState } from "../types";
+import { type Squad, type SquadMember, type SquadStatus, type SquadState } from "../types";
 import { INITIAL_SQUADS } from "../constants";
 
 export * from "../types";
@@ -89,7 +89,7 @@ export const useSquadStore = create<SquadState>((set) => ({
                     ...sq,
                     isMySquad: true,
                     currentMembers: newCount,
-                    status: newCount >= sq.maxMembers ? "full" : "recruiting",
+                    status: (newCount >= sq.maxMembers ? "full" : "recruiting") as SquadStatus,
                     members: [...sq.members, newMember],
                 };
             });
@@ -118,7 +118,7 @@ export const useSquadStore = create<SquadState>((set) => ({
                     ...sq,
                     isMySquad: false,
                     currentMembers: newCount,
-                    status: "recruiting",
+                    status: "recruiting" as SquadStatus,
                     members: filteredMembers,
                 };
             });
@@ -135,7 +135,7 @@ export const useSquadStore = create<SquadState>((set) => ({
                 return {
                     ...sq,
                     currentMembers: newCount,
-                    status: "recruiting",
+                    status: "recruiting" as SquadStatus,
                     members: filteredMembers,
                 };
             });

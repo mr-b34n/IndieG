@@ -67,10 +67,11 @@ export function performSearchAPI(
     const matchedGames = gamesList.filter((game) => {
         if (!game) return false;
         const nameMatch = game.name?.toLowerCase().includes(q) ?? false;
+        const gameObj = game as unknown as Record<string, unknown>;
         const tagMatch =
-            (game as Record<string, unknown>).tags &&
-            Array.isArray((game as Record<string, unknown>).tags)
-                ? ((game as Record<string, unknown>).tags as unknown[]).some(
+            gameObj.tags &&
+            Array.isArray(gameObj.tags)
+                ? (gameObj.tags as unknown[]).some(
                       (t) => typeof t === "string" && t.toLowerCase().includes(q)
                   )
                 : false;

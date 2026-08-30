@@ -84,7 +84,7 @@ export const ProfileHero = ({
 
     const defaultTitles = identity.titles && identity.titles.length > 0
         ? identity.titles.join(" · ")
-        : "FPS Veteran · Survival Architect";
+        : "";
 
     return (
         <div className="relative w-full rounded-[14px] overflow-hidden bg-[#0A0C0E] shadow-sm" style={{ isolation: "isolate" }}>
@@ -243,8 +243,12 @@ export const ProfileHero = ({
 
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-xs text-[#9A9DA3] font-medium">{identity.username}</span>
-                                        <span className="text-[#666A71]">•</span>
-                                        <span className="text-xs text-[#9A9DA3] font-medium">{defaultTitles}</span>
+                                        {defaultTitles && (
+                                            <>
+                                                <span className="text-[#666A71]">•</span>
+                                                <span className="text-xs text-[#9A9DA3] font-medium">{defaultTitles}</span>
+                                            </>
+                                        )}
                                         {location && (
                                             <>
                                                 <span className="text-[#666A71]">•</span>

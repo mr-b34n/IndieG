@@ -6,6 +6,7 @@ import {
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { Badge, LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import { GEAR_CATEGORIES } from "../../constants";
+import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 
 interface OverviewTabProps {
     identity: ProfileIdentity;
@@ -17,6 +18,7 @@ interface OverviewTabProps {
     isOwnProfile: boolean;
     onGearChange?: (key: string, value: string) => void;
     onSaveGear?: () => void;
+    t?: TranslateFn;
 }
 
 const PLATFORMS = [
@@ -29,6 +31,7 @@ const PLATFORMS = [
 export const OverviewTab = ({
     identity, games = [], badges = [], reputations = [], activities = [], gearData = {}, isOwnProfile, onGearChange, onSaveGear,
 }: OverviewTabProps) => {
+    const { t } = useTranslation();
     const safeGames = games || [];
     const [hoveredBadge, setHoveredBadge] = useState<Badge | null>(null);
     const [selectedGameSlug, setSelectedGameSlug] = useState<string>("cs2");
@@ -67,50 +70,32 @@ export const OverviewTab = ({
                         </span>
                     </div>
 
-                    {identity.bio && (
+                    {identity.bio ? (
                         <div className="bg-[#13161C] p-3 rounded-[8px]">
                             <p className="text-xs text-[#9A9DA3] italic leading-relaxed">
                                 "{identity.bio}"
                             </p>
                         </div>
+                    ) : (
+                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
+                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
+                        </div>
                     )}
 
                     {/* Roles / Archetypes */}
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
-                            <span className="text-[#E5A93D]">🎯</span> FPS Veteran
-                        </div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
-                            <span className="text-[#1688E8]">🏕️</span> Survival Architect
-                        </div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
-                            <span className="text-[#9A9DA3]">🧠</span> Tactical Competitor
-                        </div>
-                    </div>
-
-                    {/* Main Roles */}
-                    <div className="flex flex-col gap-1.5 pt-1">
-                        <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Main Roles</span>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            {["Rifler", "Support", "IGL"].map((role) => (
-                                <span key={role} className="px-2.5 py-1 rounded-[6px] bg-[#13161C] text-[#F0F1F2] font-semibold text-xs">
-                                    {role}
-                                </span>
+                    {identity.titles && identity.titles.length > 0 ? (
+                        <div className="flex flex-col gap-2">
+                            {identity.titles.map((title, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
+                                    <span className="text-[#E5A93D]">🎯</span> {title}
+                                </div>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Playstyle & Preference */}
-                    <div className="grid grid-cols-2 gap-3 pt-2 bg-[#13161C] p-3 rounded-[8px] text-xs">
-                        <div>
-                            <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider block mb-0.5">Playstyle</span>
-                            <span className="font-medium text-[#F0F1F2]">Aggressive · Tactical</span>
+                    ) : (
+                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
+                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.playstyle")}</p>
                         </div>
-                        <div>
-                            <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider block mb-0.5">Usually Plays</span>
-                            <span className="font-medium text-[#F0F1F2]">FPS · Survival · RPG</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* GAMING DNA (7 cols) - Mature Monochrome Progress Bars */}
@@ -250,7 +235,7 @@ export const OverviewTab = ({
                                 <button
                                     key={game.name}
                                     type="button"
-                                    onClick={() => setSelectedGameSlug(game.id || "cs2")}
+                                    onClick={() => setSelectedGameSlug(String(game.id || "cs2"))}
                                     className={`relative flex items-center gap-3 p-3 rounded-[10px] text-left transition-all cursor-pointer ${
                                         isSelected
                                             ? "bg-[#192230] shadow-sm"
@@ -296,37 +281,43 @@ export const OverviewTab = ({
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Achievements</h3>
                         </div>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-[#13161C] text-[#9A9DA3]">
-                            14 Unlocked
+                            {badges.filter((b) => b.unlocked !== false).length} Unlocked
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2.5">
-                        {badges.map((b) => {
-                            const rarityCfg = getBadgeRarityCfg(b.rarity);
-                            return (
-                                <div
-                                    key={b.id}
-                                    onMouseEnter={() => setHoveredBadge(b)}
-                                    onMouseLeave={() => setHoveredBadge(null)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-[8px] transition-all cursor-pointer text-center gap-1.5 ${
-                                        b.unlocked !== false
-                                            ? "bg-[#13161C] hover:bg-[#1B1F28]"
-                                            : "bg-[#0E1014] opacity-35 grayscale"
-                                    }`}
-                                >
-                                    <div className="w-8 h-8 rounded-[6px] bg-[#181C24] flex items-center justify-center text-sm text-[#E5A93D]">
-                                        <FontAwesomeIcon icon={b.icon} />
+                    {badges.length === 0 ? (
+                        <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
+                            <span>{t("profile.empty.achievementsText")}</span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-2.5">
+                            {badges.map((b) => {
+                                const rarityCfg = getBadgeRarityCfg(b.rarity);
+                                return (
+                                    <div
+                                        key={b.id}
+                                        onMouseEnter={() => setHoveredBadge(b)}
+                                        onMouseLeave={() => setHoveredBadge(null)}
+                                        className={`flex flex-col items-center justify-center p-3 rounded-[8px] transition-all cursor-pointer text-center gap-1.5 ${
+                                            b.unlocked !== false
+                                                ? "bg-[#13161C] hover:bg-[#1B1F28]"
+                                                : "bg-[#0E1014] opacity-35 grayscale"
+                                        }`}
+                                    >
+                                        <div className="w-8 h-8 rounded-[6px] bg-[#181C24] flex items-center justify-center text-sm text-[#E5A93D]">
+                                            <FontAwesomeIcon icon={b.icon} />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-[#F0F1F2] leading-tight truncate w-full">
+                                            {b.title}
+                                        </span>
+                                        <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-[4px] ${rarityCfg.bg} ${rarityCfg.color}`}>
+                                            {rarityCfg.label}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] font-bold text-[#F0F1F2] leading-tight truncate w-full">
-                                        {b.title}
-                                    </span>
-                                    <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-[4px] ${rarityCfg.bg} ${rarityCfg.color}`}>
-                                        {rarityCfg.label}
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {/* Badge Detail Hover Box */}
                     {hoveredBadge ? (
@@ -354,27 +345,33 @@ export const OverviewTab = ({
                         <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
                     </div>
 
-                    <div className="flex flex-col gap-2.5">
-                        {activities.map((act) => (
-                            <div key={act.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all">
-                                <span className="text-base leading-none shrink-0 mt-0.5">{act.icon || "🎮"}</span>
-                                <div className="flex flex-col min-w-0 flex-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <h5 className="font-semibold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
-                                        <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
+                    {activities.length === 0 ? (
+                        <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
+                            <span>{t("profile.empty.activityText")}</span>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2.5">
+                            {activities.map((act) => (
+                                <div key={act.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all">
+                                    <span className="text-base leading-none shrink-0 mt-0.5">{act.icon || "🎮"}</span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h5 className="font-semibold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
+                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
+                                        </div>
+                                        {act.subtitle && (
+                                            <p className="text-[11px] text-[#9A9DA3] leading-normal mt-0.5">{act.subtitle}</p>
+                                        )}
+                                        {act.upvotes !== undefined && (
+                                            <span className="text-[10px] font-bold text-[#24C58A] mt-1">
+                                                ▲ +{act.upvotes} Upvotes
+                                            </span>
+                                        )}
                                     </div>
-                                    {act.subtitle && (
-                                        <p className="text-[11px] text-[#9A9DA3] leading-normal mt-0.5">{act.subtitle}</p>
-                                    )}
-                                    {act.upvotes !== undefined && (
-                                        <span className="text-[10px] font-bold text-[#24C58A] mt-1">
-                                            ▲ +{act.upvotes} Upvotes
-                                        </span>
-                                    )}
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
             </div>
@@ -389,23 +386,29 @@ export const OverviewTab = ({
                             <FontAwesomeIcon icon={faUsers} className="text-[#1688E8] text-xs" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Community Reputation</h3>
                         </div>
-                        <span className="text-[10px] font-medium text-[#8A8F98]">4 Joined</span>
+                        <span className="text-[10px] font-medium text-[#8A8F98]">{reputations.length} Joined</span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        {reputations.map((rep) => (
-                            <div
-                                key={rep.id}
-                                className="flex flex-col items-center justify-center p-3 rounded-[8px] bg-[#13161C] text-center gap-1.5 hover:bg-[#1B1F28] transition-all"
-                            >
-                                <span className="text-2xl">{rep.icon}</span>
-                                <span className="text-xs font-bold text-[#F0F1F2] truncate w-full">{rep.name}</span>
-                                <span className="px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[#24C58A] text-[10px] font-bold">
-                                    {rep.tier}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                    {reputations.length === 0 ? (
+                        <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
+                            <span>{t("profile.empty.communitiesText")}</span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            {reputations.map((rep) => (
+                                <div
+                                    key={rep.id}
+                                    className="flex flex-col items-center justify-center p-3 rounded-[8px] bg-[#13161C] text-center gap-1.5 hover:bg-[#1B1F28] transition-all"
+                                >
+                                    <span className="text-2xl">{rep.icon}</span>
+                                    <span className="text-xs font-bold text-[#F0F1F2] truncate w-full">{rep.name}</span>
+                                    <span className="px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[#24C58A] text-[10px] font-bold">
+                                        {rep.tier}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* CONNECTED ACCOUNTS & SETUP GEAR (6 cols) */}
@@ -462,6 +465,10 @@ export const OverviewTab = ({
                                 <FontAwesomeIcon icon={faCheck} />
                                 <span>Lưu cấu hình</span>
                             </button>
+                        </div>
+                    ) : filledGear.length === 0 ? (
+                        <div className="p-3 rounded-[6px] bg-[#13161C] text-[#8A8F98] text-xs text-center italic">
+                            {t("profile.empty.gear")}
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-2 pt-1">
