@@ -198,7 +198,6 @@ export const vi = {
         mediaButton: "Ảnh / Video",
         gameDiscussion: "Thảo luận Game",
         tagsPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
-        tagPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
         spoiler: "Cảnh báo nội dung (Spoiler)",
         settings: "Cài đặt bài đăng",
         postTitlePlaceholder: "Đặt tiêu đề cho bài viết...",
@@ -341,7 +340,6 @@ export const vi = {
     },
     community: {
         noCommunitiesJoined: "Chưa tham gia cộng đồng nào",
-        nocommunitiesjoined: "Chưa tham gia cộng đồng nào",
         headerTitle: "CỘNG ĐỒNG",
         headerSub: "Tìm kiếm tựa game của bạn. Tìm kiếm những đồng đội cùng đam mê.",
         createCommunity: "Tạo cộng đồng",
@@ -548,7 +546,6 @@ export const vi = {
         subtitle: "Các bài viết, hướng dẫn và thảo luận bạn đã lưu lại để đọc sau.",
         empty: "Bạn chưa lưu bài viết nào",
         emptyTitle: "Bạn chưa lưu bài viết nào",
-        titleempty: "Bạn chưa lưu bài viết nào",
         emptyDesc: "Khi lướt bảng tin, hãy nhấn biểu tượng dấu trang để lưu lại những nội dung hữu ích.",
         exploreFeed: "Khám phá bảng tin ngay"
     },

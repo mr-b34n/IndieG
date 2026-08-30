@@ -198,7 +198,6 @@ export const en = {
         mediaButton: "Media / Video",
         gameDiscussion: "Game Discussion",
         tagsPlaceholder: "Add tags (separated by commas)...",
-        tagPlaceholder: "Add tags (separated by commas)...",
         spoiler: "Content Warning (Spoiler)",
         settings: "Post Settings",
         postTitlePlaceholder: "Give your post a title...",
@@ -341,7 +340,6 @@ export const en = {
     },
     community: {
         noCommunitiesJoined: "No communities joined",
-        nocommunitiesjoined: "No communities joined",
         headerTitle: "COMMUNITIES",
         headerSub: "Find your games. Find your people.",
         createCommunity: "Create community",
@@ -548,7 +546,6 @@ export const en = {
         subtitle: "Posts, guides, and discussions you have saved for later.",
         empty: "You haven't saved any posts yet",
         emptyTitle: "You haven't saved any posts yet",
-        titleempty: "You haven't saved any posts yet",
         emptyDesc: "When browsing the feed, click the bookmark icon to save useful content.",
         exploreFeed: "Explore feed now"
     },

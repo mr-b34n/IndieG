@@ -693,6 +693,7 @@ export default defineConfig({
 	server: {
 		host: "0.0.0.0",
 		port: 3000,
+		strictPort: true,
 		allowedHosts: true,
 	},
 	plugins: [
@@ -714,12 +715,6 @@ export default defineConfig({
 			"@/shared": path.resolve(__dirname, "./src/shared"),
 			"@/app": path.resolve(__dirname, "./src/app"),
 		},
-	},
-	server: {
-		host: "0.0.0.0",
-		port: 3000,
-		strictPort: true,
-		allowedHosts: true,
 	},
 	build: {
 		rollupOptions: {
