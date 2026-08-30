@@ -33,6 +33,7 @@ export interface CommentData {
     likes: number;
     image?: string; // URL ảnh đính kèm (nếu có)
     replies?: CommentData[]; // 👈 Bổ sung danh sách reply con
+    replyCount?: number; // 👈 Tổng số câu trả lời từ backend
     pinned?: boolean; // 👈 Ghim bình luận
 }
 
@@ -590,7 +591,7 @@ const CommentItem = ({
             </div>
 
             {/* Nested Replies */}
-            {depth < 2 && (combinedReplies.length > 0 || shouldFetchReplies) && (() => {
+            {depth < 2 && (combinedReplies.length > 0 || shouldFetchReplies || (comment.replyCount !== undefined && comment.replyCount > 0)) && (() => {
                 let allReplies = sortComments(combinedReplies, sortBy);
                 
                 if (depth === 1) {
@@ -608,7 +609,8 @@ const CommentItem = ({
                 }
 
                 const visibleReplies = showAllReplies ? allReplies : allReplies.slice(0, 1);
-                const hiddenCount = Math.max(0, allReplies.length - 1);
+                const replyCountDisplay = comment.replyCount || (allReplies.length > 0 ? allReplies.length : 1);
+                const hiddenCount = allReplies.length > 1 ? allReplies.length - 1 : replyCountDisplay;
                 
                 // Align replies with the content block of the parent comment. Max 3 visual depths (0, 1, 2).
                 const indentClass = depth === 0 ? "pl-[46px] sm:pl-[48px]" : "pl-[38px] sm:pl-[40px]";
@@ -722,6 +724,19 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
     const childList = c.children || (c as { replies?: CommentEntity[] }).replies || [];
     const mappedReplies = childList.map(mapCommentEntityToCommentData);
 
+    let parsedReplyCount = 0;
+    if (Array.isArray(c.replyCount)) {
+        parsedReplyCount = c.replyCount.length;
+    } else if (typeof c.replyCount === "number") {
+        parsedReplyCount = c.replyCount;
+    } else if (typeof c.replyCount === "string") {
+        parsedReplyCount = parseInt(c.replyCount, 10) || 0;
+    } else if (typeof (c as { repliesCount?: number }).repliesCount === "number") {
+        parsedReplyCount = (c as { repliesCount?: number }).repliesCount!;
+    } else if (mappedReplies.length > 0) {
+        parsedReplyCount = mappedReplies.length;
+    }
+
     return {
         id: c.id,
         author: authorName,
@@ -731,6 +746,7 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
         likes: c.likesCount ?? c.likes ?? 0,
         pinned: !!c.pinned,
         replies: mappedReplies.length > 0 ? mappedReplies : undefined,
+        replyCount: parsedReplyCount,
     };
 }
 

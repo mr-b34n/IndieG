@@ -78,9 +78,12 @@ export async function apiRequest<T = unknown>(
         ...(customHeaders as Record<string, string>),
     };
 
+    const method = (customOptions.method || "GET").toUpperCase();
+    const isGetOrHead = method === "GET" || method === "HEAD";
+
     let serializedBody: BodyInit | null = null;
 
-    if (body !== undefined && body !== null) {
+    if (!isGetOrHead && body !== undefined && body !== null) {
         if (
             typeof body === "string" ||
             body instanceof FormData ||

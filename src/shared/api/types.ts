@@ -158,6 +158,8 @@ export interface CommentEntity {
     content: string;
     likes?: number;
     likesCount?: number;
+    replyCount?: string[] | number;
+    repliesCount?: number;
     deletedAt?: string;
     createdAt: string;
     updatedAt: string;

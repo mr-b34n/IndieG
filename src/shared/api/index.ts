@@ -374,7 +374,6 @@ export const commentsApi = {
         apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
             method: "GET",
             params: sanitizePaginationParams(params, 5),
-            body: params,
         }),
 };
 
