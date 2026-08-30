@@ -70,7 +70,7 @@ export const useSquadStore = create<SquadState>((set) => ({
         let joinedName = "";
 
         set((state) => {
-            const updatedSquads = state.squads.map((sq) => {
+            const updatedSquads: Squad[] = state.squads.map((sq) => {
                 if (sq.id !== squadId) return sq;
                 if (sq.isMySquad || sq.currentMembers >= sq.maxMembers) return sq;
 
@@ -85,11 +85,12 @@ export const useSquadStore = create<SquadState>((set) => ({
                 };
 
                 const newCount = sq.currentMembers + 1;
+                const newStatus: SquadStatus = newCount >= sq.maxMembers ? "full" : "recruiting";
                 return {
                     ...sq,
                     isMySquad: true,
                     currentMembers: newCount,
-                    status: (newCount >= sq.maxMembers ? "full" : "recruiting") as SquadStatus,
+                    status: newStatus,
                     members: [...sq.members, newMember],
                 };
             });
@@ -110,15 +111,16 @@ export const useSquadStore = create<SquadState>((set) => ({
     leaveSquad: (squadId) => {
         const currentAuthor = getCurrentAuthor();
         set((state) => {
-            const updatedSquads = state.squads.map((sq) => {
+            const updatedSquads: Squad[] = state.squads.map((sq) => {
                 if (sq.id !== squadId || !sq.isMySquad) return sq;
                 const filteredMembers = sq.members.filter((m) => m.username !== currentAuthor);
                 const newCount = Math.max(0, sq.currentMembers - 1);
+                const newStatus: SquadStatus = "recruiting";
                 return {
                     ...sq,
                     isMySquad: false,
                     currentMembers: newCount,
-                    status: "recruiting" as SquadStatus,
+                    status: newStatus,
                     members: filteredMembers,
                 };
             });
@@ -128,14 +130,15 @@ export const useSquadStore = create<SquadState>((set) => ({
 
     kickMember: (squadId, memberUsername) => {
         set((state) => {
-            const updatedSquads = state.squads.map((sq) => {
+            const updatedSquads: Squad[] = state.squads.map((sq) => {
                 if (sq.id !== squadId) return sq;
                 const filteredMembers = sq.members.filter((m) => m.username !== memberUsername);
                 const newCount = Math.max(0, sq.currentMembers - 1);
+                const newStatus: SquadStatus = "recruiting";
                 return {
                     ...sq,
                     currentMembers: newCount,
-                    status: "recruiting" as SquadStatus,
+                    status: newStatus,
                     members: filteredMembers,
                 };
             });
@@ -174,9 +177,9 @@ export const useSquadStore = create<SquadState>((set) => ({
 
     toggleSquadStatus: (squadId) => {
         set((state) => {
-            const updatedSquads = state.squads.map((sq) => {
+            const updatedSquads: Squad[] = state.squads.map((sq) => {
                 if (sq.id !== squadId) return sq;
-                const newStatus = sq.status === "recruiting" ? "full" : "recruiting";
+                const newStatus: SquadStatus = sq.status === "recruiting" ? "full" : "recruiting";
                 return {
                     ...sq,
                     status: newStatus,
