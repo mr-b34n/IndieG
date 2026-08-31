@@ -102,7 +102,7 @@ Implications:
 
 ---
 
-## Decision: Profile Customization Mode
+## Decision: Profile Customization & Section Edit Architecture
 
 Status: Active
 
@@ -110,10 +110,9 @@ Date: 2026-08-31
 
 Decision:
 
-Profile info tabs replace scattered per-section edit buttons with a single compact "Tùy chỉnh" icon button (`faSliders`). Toggling Customization Mode activates interactive section controls (Eye/EyeSlash toggles) allowing users to hide or show individual profile sections with persistent state in `localStorage`.
-
-Why:
-
-Multiple scattered edit buttons caused visual clutter. A central customization toggle streamlines section visibility control while keeping avatar and cover background photo editing capabilities intact.
+1. **Customization & Direct Edit Coexistence**: Profile hero and tabs combine the compact "Tùy chỉnh" mode toggle (`faSliders`) for section visibility (Hide/Show saved in `localStorage`) with direct action edit buttons ("Sửa hồ sơ", "Huy hiệu", "Sửa Bio", "Sửa Setup").
+2. **Battlestation Setup Only**: The "Accounts & Battlestation" section was converted to "Battlestation Setup", removing connected account platform badges and providing interactive inline editing for hardware specifications (CPU, GPU, Monitor, Gear, etc.).
+3. **Clean Tab Layout**: Removed top reminder banner below tab list.
+4. **Reputation Default**: Default reputation is set to 0%.
 
 

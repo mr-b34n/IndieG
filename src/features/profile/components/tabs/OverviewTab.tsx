@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faStar as faStarSolid, faCrown, faUsers, faShareNodes, faEye, faEyeSlash,
+    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash,
+    faPen, faCheck, faAward, faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { Badge, LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
@@ -22,15 +23,12 @@ interface OverviewTabProps {
     onCloseCustomizeMode?: () => void;
     onGearChange?: (key: string, value: string) => void;
     onSaveGear?: () => void;
+    onIdentityChange?: (next: Partial<ProfileIdentity>) => void;
+    onSaveIdentity?: () => void;
+    onOpenBadgeSelector?: () => void;
+    onOpenEditModal?: () => void;
     t?: TranslateFn;
 }
-
-const PLATFORMS = [
-    { label: "Steam", sub: "Verified", bg: "bg-[#13161C]", text: "text-[#1688E8]", icon: "🎮" },
-    { label: "Riot Games", sub: "VN2 Server", bg: "bg-[#13161C]", text: "text-[#E05252]", icon: "🔥" },
-    { label: "Xbox Live", sub: "Connected", bg: "bg-[#13161C]", text: "text-[#24C58A]", icon: "🎯" },
-    { label: "Discord", sub: "Linked", bg: "bg-[#13161C]", text: "text-[#9A9DA3]", icon: "🎧" },
-];
 
 export const OverviewTab = ({
     identity,
@@ -39,15 +37,27 @@ export const OverviewTab = ({
     reputations = [],
     activities = [],
     gearData = {},
+    isOwnProfile,
     isCustomizeMode = false,
     hiddenSections = {},
     onToggleHideSection,
-    onCloseCustomizeMode,
+    onGearChange,
+    onSaveGear,
+    onIdentityChange,
+    onSaveIdentity,
+    onOpenBadgeSelector,
+    onOpenEditModal,
 }: OverviewTabProps) => {
     const { t } = useTranslation();
     const safeGames = games || [];
     const [hoveredBadge, setHoveredBadge] = useState<Badge | null>(null);
     const [selectedGameSlug, setSelectedGameSlug] = useState<string>("cs2");
+
+    // Inline edit states
+    const [isEditingGear, setIsEditingGear] = useState(false);
+    const [isEditingBio, setIsEditingBio] = useState(false);
+    const [tempBio, setTempBio] = useState(identity.bio || "");
+    const [tempTitles, setTempTitles] = useState((identity.titles || []).join(", "));
 
     const featuredGame = safeGames.find((g) => g?.id === selectedGameSlug || g?.isFeatured) || safeGames[0];
     const secondaryGames = safeGames;
@@ -94,6 +104,18 @@ export const OverviewTab = ({
         );
     };
 
+    const handleSaveBio = () => {
+        if (onIdentityChange) {
+            const parsedTitles = tempTitles.split(",").map((t) => t.trim()).filter(Boolean);
+            onIdentityChange({
+                bio: tempBio.trim(),
+                titles: parsedTitles,
+            });
+        }
+        if (onSaveIdentity) onSaveIdentity();
+        setIsEditingBio(false);
+    };
+
     // Visibility flags
     const showPlayerIdentity = isSectionVisible("playerIdentity");
     const showGamingDna = isSectionVisible("gamingDna");
@@ -106,28 +128,6 @@ export const OverviewTab = ({
     return (
         <div className="flex flex-col gap-5 w-full animate-fade-in">
 
-            {/* Customize Mode Banner */}
-            {isCustomizeMode && (
-                <div className="bg-[#1688E8]/10 border border-[#1688E8]/30 rounded-[12px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#F0F1F2] shadow-sm animate-fade-in">
-                    <div className="flex items-center gap-3">
-                        <span className="text-xl shrink-0">🛠️</span>
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-extrabold text-[#1688E8] text-sm">Chế độ tùy chỉnh giao diện</span>
-                            <span className="text-[#9A9DA3]">Bấm vào biểu tượng 👁️ ở góc mỗi phần để Ẩn hoặc Hiện thông tin trên hồ sơ của bạn.</span>
-                        </div>
-                    </div>
-                    {onCloseCustomizeMode && (
-                        <button
-                            type="button"
-                            onClick={onCloseCustomizeMode}
-                            className="px-4 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white font-bold text-xs cursor-pointer shrink-0 transition-all shadow-xs"
-                        >
-                            Hoàn tất
-                        </button>
-                    )}
-                </div>
-            )}
-
             {/* ── ROW 1: PLAYER IDENTITY + GAMING DNA ─────────────────────── */}
             {(showPlayerIdentity || showGamingDna) && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full">
@@ -135,45 +135,108 @@ export const OverviewTab = ({
                     {/* PLAYER IDENTITY */}
                     {showPlayerIdentity && (
                         <div className={`${showGamingDna ? "lg:col-span-5" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden transition-all ${cardCustomStyle("playerIdentity")}`}>
-                            <div className="flex items-center justify-between pb-1.5">
+                            <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm">🎯</span>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {(isOwnProfile || isCustomizeMode) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (onOpenEditModal) {
+                                                    onOpenEditModal();
+                                                } else if (isEditingBio) {
+                                                    handleSaveBio();
+                                                } else {
+                                                    setTempBio(identity.bio || "");
+                                                    setTempTitles((identity.titles || []).join(", "));
+                                                    setIsEditingBio(true);
+                                                }
+                                            }}
+                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8] text-[10px] font-bold cursor-pointer transition-all"
+                                            title="Sửa thông tin tiểu sử & phong cách chơi"
+                                        >
+                                            <FontAwesomeIcon icon={isEditingBio ? faCheck : faPen} className="text-[10px]" />
+                                            <span>{isEditingBio ? "Lưu Bio" : "Sửa Bio"}</span>
+                                        </button>
+                                    )}
                                     {renderToggleBtn("playerIdentity")}
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[#24C58A] flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#24C58A]" />
-                                        <span>Online</span>
-                                    </span>
                                 </div>
                             </div>
 
-                            {identity.bio ? (
-                                <div className="bg-[#13161C] p-3 rounded-[8px]">
-                                    <p className="text-xs text-[#9A9DA3] italic leading-relaxed">
-                                        "{identity.bio}"
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
-                                    <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
-                                </div>
-                            )}
+                            {/* Inline Bio Editing */}
+                            {isEditingBio ? (
+                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[8px] animate-fade-in">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] font-bold text-[#8A8F98]">Tiểu sử (Bio):</label>
+                                        <textarea
+                                            value={tempBio}
+                                            onChange={(e) => setTempBio(e.target.value)}
+                                            rows={3}
+                                            placeholder="Nhập tiểu sử ngắn của bạn..."
+                                            className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
+                                        />
+                                    </div>
 
-                            {/* Roles / Archetypes */}
-                            {identity.titles && identity.titles.length > 0 ? (
-                                <div className="flex flex-col gap-2">
-                                    {identity.titles.map((title, i) => (
-                                        <div key={i} className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
-                                            <span className="text-[#E5A93D]">🎯</span> {title}
-                                        </div>
-                                    ))}
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] font-bold text-[#8A8F98]">Phong cách chơi (phân cách bằng dấu phẩy):</label>
+                                        <input
+                                            type="text"
+                                            value={tempTitles}
+                                            onChange={(e) => setTempTitles(e.target.value)}
+                                            placeholder="Sniper God, Entry Fragger, ICL Main..."
+                                            className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingBio(false)}
+                                            className="px-3 py-1 rounded-[6px] bg-[#1D212A] text-[#9A9DA3] text-[11px] font-semibold hover:text-[#F0F1F2] cursor-pointer"
+                                        >
+                                            Hủy
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveBio}
+                                            className="px-3 py-1 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-[11px] font-bold cursor-pointer"
+                                        >
+                                            Lưu thay đổi
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
-                                    <p className="text-xs text-[#666A71] italic">{t("profile.empty.playstyle")}</p>
-                                </div>
+                                <>
+                                    {identity.bio ? (
+                                        <div className="bg-[#13161C] p-3 rounded-[8px]">
+                                            <p className="text-xs text-[#9A9DA3] italic leading-relaxed">
+                                                "{identity.bio}"
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
+                                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Roles / Archetypes */}
+                                    {identity.titles && identity.titles.length > 0 ? (
+                                        <div className="flex flex-col gap-2">
+                                            {identity.titles.map((title, i) => (
+                                                <div key={i} className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
+                                                    <span className="text-[#E5A93D]">🎯</span> {title}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
+                                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.playstyle")}</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}
@@ -181,7 +244,7 @@ export const OverviewTab = ({
                     {/* GAMING DNA */}
                     {showGamingDna && (
                         <div className={`${showPlayerIdentity ? "lg:col-span-7" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("gamingDna")}`}>
-                            <div className="flex items-center justify-between pb-1.5">
+                            <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm">🧬</span>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Gaming DNA</h3>
@@ -228,7 +291,7 @@ export const OverviewTab = ({
             {/* ── ROW 2: GAME MASTERY ───────────────────────── */}
             {showGameMastery && (
                 <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-sm flex flex-col gap-5 transition-all ${cardCustomStyle("gameMastery")}`}>
-                    <div className="flex items-center justify-between pb-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
                         <div className="flex items-center gap-2">
                             <FontAwesomeIcon icon={faCrown} className="text-[#E5A93D] text-xs" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Game Mastery</h3>
@@ -324,43 +387,50 @@ export const OverviewTab = ({
 
                     {/* Secondary Game Cards */}
                     {secondaryGames.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {secondaryGames.map((game) => {
-                                const isSelected = (game.id === selectedGameSlug) || (game.name === featuredGame?.name);
-                                return (
-                                    <button
-                                        key={game.name}
-                                        type="button"
-                                        onClick={() => setSelectedGameSlug(String(game.id || "cs2"))}
-                                        className={`relative flex items-center gap-3 p-3 rounded-[10px] text-left transition-all cursor-pointer ${
-                                            isSelected
-                                                ? "bg-[#192230] shadow-sm"
-                                                : "bg-[#13161C] hover:bg-[#1B1F28]"
-                                        }`}
-                                    >
-                                        {isSelected && (
-                                            <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#1688E8] rounded-r-full" />
-                                        )}
+                        <div className="flex flex-col gap-2">
+                            {isCustomizeMode && (
+                                <span className="text-[10px] font-bold text-[#1688E8] italic">
+                                    💡 Click vào một tựa game bên dưới để đổi làm Game Nổi Bật hiển thị trên hồ sơ.
+                                </span>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                {secondaryGames.map((game) => {
+                                    const isSelected = (game.id === selectedGameSlug) || (game.name === featuredGame?.name);
+                                    return (
+                                        <button
+                                            key={game.name}
+                                            type="button"
+                                            onClick={() => setSelectedGameSlug(String(game.id || "cs2"))}
+                                            className={`relative flex items-center gap-3 p-3 rounded-[10px] text-left transition-all cursor-pointer ${
+                                                isSelected
+                                                    ? "bg-[#192230] shadow-sm ring-1 ring-[#1688E8]/50"
+                                                    : "bg-[#13161C] hover:bg-[#1B1F28]"
+                                            }`}
+                                        >
+                                            {isSelected && (
+                                                <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-[#1688E8] rounded-r-full" />
+                                            )}
 
-                                        <img 
-                                            src={game.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"} 
-                                            alt={game.name || "Game"} 
-                                            className="w-11 h-11 rounded-[6px] object-cover shrink-0"
-                                        />
-                                        <div className="flex flex-col min-w-0 flex-1 pl-1">
-                                            <h5 className="font-bold text-xs text-[#F0F1F2] truncate">
-                                                {game.name}
-                                            </h5>
-                                            <span className="text-[11px] font-semibold text-[#9A9DA3]">
-                                                {game.hours}h played
-                                            </span>
-                                            <span className="text-[10px] text-[#8A8F98] truncate">
-                                                {game.rank}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                                            <img 
+                                                src={game.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"} 
+                                                alt={game.name || "Game"} 
+                                                className="w-11 h-11 rounded-[6px] object-cover shrink-0"
+                                            />
+                                            <div className="flex flex-col min-w-0 flex-1 pl-1">
+                                                <h5 className="font-bold text-xs text-[#F0F1F2] truncate">
+                                                    {game.name}
+                                                </h5>
+                                                <span className="text-[11px] font-semibold text-[#9A9DA3]">
+                                                    {game.hours}h played
+                                                </span>
+                                                <span className="text-[10px] text-[#8A8F98] truncate">
+                                                    {game.rank}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -373,12 +443,23 @@ export const OverviewTab = ({
                     {/* ACHIEVEMENTS COLLECTION */}
                     {showAchievements && (
                         <div className={`${showRecentActivity ? "lg:col-span-5" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative transition-all ${cardCustomStyle("achievements")}`}>
-                            <div className="flex items-center justify-between pb-1">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm">🏆</span>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Achievements</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {(isOwnProfile || isCustomizeMode) && onOpenBadgeSelector && (
+                                        <button
+                                            type="button"
+                                            onClick={onOpenBadgeSelector}
+                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#E5A93D] text-[10px] font-bold cursor-pointer transition-all"
+                                            title="Đổi huy hiệu chính"
+                                        >
+                                            <FontAwesomeIcon icon={faAward} className="text-[10px]" />
+                                            <span>Đổi Huy Hiệu</span>
+                                        </button>
+                                    )}
                                     {renderToggleBtn("achievements")}
                                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-[#13161C] text-[#9A9DA3]">
                                         {badges.filter((b) => b.unlocked !== false).length} Unlocked
@@ -440,7 +521,7 @@ export const OverviewTab = ({
                     {/* RECENT ACTIVITY */}
                     {showRecentActivity && (
                         <div className={`${showAchievements ? "lg:col-span-7" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("recentActivity")}`}>
-                            <div className="flex items-center justify-between pb-1">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm">⚡</span>
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
@@ -484,14 +565,14 @@ export const OverviewTab = ({
                 </div>
             )}
 
-            {/* ── ROW 4: COMMUNITIES REPUTATION + CONNECTED ACCOUNTS & GEAR ─ */}
+            {/* ── ROW 4: COMMUNITIES REPUTATION + BATTLESTATION SETUP ─ */}
             {(showCommunityReputation || showConnectedAccounts) && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full">
                     
                     {/* COMMUNITIES REPUTATION */}
                     {showCommunityReputation && (
                         <div className={`${showConnectedAccounts ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("communityReputation")}`}>
-                            <div className="flex items-center justify-between pb-1">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUsers} className="text-[#1688E8] text-xs" />
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Community Reputation</h3>
@@ -525,49 +606,104 @@ export const OverviewTab = ({
                         </div>
                     )}
 
-                    {/* CONNECTED ACCOUNTS & SETUP GEAR */}
+                    {/* BATTLESTATION SETUP (Only Setup, Accounts grid hidden) */}
                     {showConnectedAccounts && (
                         <div className={`${showCommunityReputation ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("connectedAccounts")}`}>
-                            <div className="flex items-center justify-between pb-1">
+                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faShareNodes} className="text-[#1688E8] text-xs" />
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Accounts & Battlestation</h3>
+                                    <FontAwesomeIcon icon={faDesktop} className="text-[#1688E8] text-xs" />
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Battlestation Setup</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {(isOwnProfile || isCustomizeMode) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (isEditingGear) {
+                                                    if (onSaveGear) onSaveGear();
+                                                    setIsEditingGear(false);
+                                                } else {
+                                                    setIsEditingGear(true);
+                                                }
+                                            }}
+                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8] text-[10px] font-bold cursor-pointer transition-all"
+                                            title="Sửa thông tin góc máy / thiết bị"
+                                        >
+                                            <FontAwesomeIcon icon={isEditingGear ? faCheck : faPen} className="text-[10px]" />
+                                            <span>{isEditingGear ? "Lưu Setup" : "Sửa Setup"}</span>
+                                        </button>
+                                    )}
                                     {renderToggleBtn("connectedAccounts")}
                                 </div>
                             </div>
 
-                            {/* Connected Accounts Badges */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                {PLATFORMS.map((p) => (
-                                    <div key={p.label} className={`flex items-center gap-2 p-2.5 rounded-[8px] ${p.bg} ${p.text}`}>
-                                        <span className="text-sm leading-none">{p.icon}</span>
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-[11px] font-bold text-[#F0F1F2] truncate">{p.label}</span>
-                                            <span className="text-[9px] font-medium opacity-70 truncate">{p.sub}</span>
-                                        </div>
+                            {/* Inline Edit Mode for Setup */}
+                            {isEditingGear ? (
+                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px] animate-fade-in max-h-[300px] overflow-y-auto">
+                                    <span className="text-[10px] font-extrabold text-[#1688E8] uppercase tracking-wider">
+                                        Cập nhật thông tin thiết bị góc máy
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        {GEAR_CATEGORIES.map((cat) => (
+                                            <div key={cat.value} className="flex flex-col gap-1">
+                                                <label className="text-[10px] font-semibold text-[#8A8F98] flex items-center gap-1">
+                                                    <FontAwesomeIcon icon={cat.icon} className={`${cat.color} text-[10px]`} />
+                                                    <span>{cat.label}</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={gearData[cat.value] || ""}
+                                                    onChange={(e) => onGearChange?.(cat.value, e.target.value)}
+                                                    placeholder={`Tên ${cat.value}...`}
+                                                    className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] px-2.5 py-1.5 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-
-                            {/* Quick Gear Summary */}
-                            {filledGear.length === 0 ? (
-                                <div className="p-3 rounded-[6px] bg-[#13161C] text-[#8A8F98] text-xs text-center italic">
-                                    {t("profile.empty.gear")}
+                                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#222834]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (onSaveGear) onSaveGear();
+                                                setIsEditingGear(false);
+                                            }}
+                                            className="px-4 py-1.5 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold cursor-pointer transition-all"
+                                        >
+                                            Hoàn tất & Lưu Setup
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                    {filledGear.slice(0, 4).map((cat) => (
-                                        <div key={cat.value} className="flex items-center gap-2 p-2 rounded-[6px] bg-[#13161C] text-xs">
-                                            <FontAwesomeIcon icon={cat.icon} className={`${cat.color} shrink-0 text-xs`} />
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[9px] font-semibold uppercase text-[#8A8F98]">{cat.value}</span>
-                                                <span className="text-[11px] font-medium text-[#F0F1F2] truncate">{gearData[cat.value]}</span>
-                                            </div>
+                                <>
+                                    {filledGear.length === 0 ? (
+                                        <div className="p-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center italic flex flex-col items-center gap-2">
+                                            <span>Chưa cập nhật thông tin thiết bị góc máy.</span>
+                                            {(isOwnProfile || isCustomizeMode) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsEditingGear(true)}
+                                                    className="px-3 py-1 rounded-[6px] bg-[#1688E8]/20 text-[#1688E8] font-bold text-xs hover:bg-[#1688E8]/30 transition-all cursor-pointer"
+                                                >
+                                                    + Thêm Setup Ngay
+                                                </button>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            {filledGear.map((cat) => (
+                                                <div key={cat.value} className="flex items-center gap-2.5 p-2.5 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all">
+                                                    <div className="w-8 h-8 rounded-[6px] bg-[#181C24] flex items-center justify-center shrink-0">
+                                                        <FontAwesomeIcon icon={cat.icon} className={`${cat.color} text-xs`} />
+                                                    </div>
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-[9px] font-semibold uppercase text-[#8A8F98]">{cat.value}</span>
+                                                        <span className="text-xs font-bold text-[#F0F1F2] truncate">{gearData[cat.value]}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     )}

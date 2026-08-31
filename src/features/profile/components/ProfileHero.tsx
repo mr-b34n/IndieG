@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faCheck, faXmark, faCamera,
+    faCheck, faXmark, faCamera, faPen, faAward,
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
     faImage, faSliders, faArrowLeft, faMessage, faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
@@ -53,8 +53,8 @@ const statusCfg = (s: ProfileStatus) =>
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
     isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity,
-    isCustomizeMode, onToggleCustomizeMode, onAddFriend, onUnfriend, onBlock, onUnblock, location,
-    reputationPercent = 100, followersCount = 0, postsCount = 0, communitiesCount = 0, t,
+    onOpenBadgeSelector, onOpenEditModal, isCustomizeMode, onToggleCustomizeMode, onAddFriend, onUnfriend, onBlock, onUnblock, location,
+    reputationPercent = 0, followersCount = 0, postsCount = 0, communitiesCount = 0, t,
 }: ProfileHeroProps) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
@@ -272,9 +272,31 @@ export const ProfileHero = ({
                     </div>
 
                     {/* Actions Bar */}
-                    <div className="flex items-center gap-2 shrink-0 self-end">
+                    <div className="flex items-center gap-2 shrink-0 self-end flex-wrap">
                         {isOwnProfile ? (
                             <>
+                                {onOpenEditModal && (
+                                    <button
+                                        type="button"
+                                        onClick={onOpenEditModal}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                        title="Chỉnh sửa thông tin hồ sơ"
+                                    >
+                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
+                                        <span>Sửa hồ sơ</span>
+                                    </button>
+                                )}
+                                {onOpenBadgeSelector && (
+                                    <button
+                                        type="button"
+                                        onClick={onOpenBadgeSelector}
+                                        className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                        title="Thay đổi huy hiệu / danh hiệu"
+                                    >
+                                        <FontAwesomeIcon icon={faAward} className="text-xs" />
+                                        <span>Huy hiệu</span>
+                                    </button>
+                                )}
                                 {onToggleCustomizeMode && (
                                     <button
                                         type="button"

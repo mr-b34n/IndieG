@@ -73,7 +73,33 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isLoading = (isOwnProfile && isMyProfileLoading) || (!isOwnProfile && isOtherProfileLoading);
     const isError = userId === "error" || userId === "not-found";
 
-    const [gearData, setGearData] = useState<Record<string, string>>({});
+    const [gearData, setGearData] = useState<Record<string, string>>(() => {
+        try {
+            const saved = localStorage.getItem(`profile_gear_${userId || "me"}`);
+            return saved ? JSON.parse(saved) : {
+                CPU: "Intel Core i9-14900K",
+                GPU: "NVIDIA RTX 4090 24GB",
+                Monitor: "ZOWIE XL2566K 360Hz",
+                Mouse: "Logitech G Pro X Superlight 2",
+                Keyboard: "Wooting 60HE",
+                Headphones: "Sennheiser HD 660S2",
+            };
+        } catch {
+            return {};
+        }
+    });
+
+    const handleGearChange = (key: string, val: string) => {
+        setGearData((prev) => {
+            const next = { ...prev, [key]: val };
+            try {
+                localStorage.setItem(`profile_gear_${userId || "me"}`, JSON.stringify(next));
+            } catch {
+                // Ignore storage error
+            }
+            return next;
+        });
+    };
 
     const [showBadgeSelector, setShowBadgeSelector] = useState(false);
     const badges = getBadgeCatalogue(t);
@@ -327,7 +353,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onUnblock={() => { setIsBlocked(false); triggerToast(); }}
                 location={profileLocation}
                 joinedDate={identity.createdAt ? new Date(identity.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : undefined}
-                reputationPercent={100}
+                reputationPercent={0}
                 followersCount={friendsList.length}
                 postsCount={displayPosts.length}
                 communitiesCount={COMMUNITY_REPUTATIONS.length}
@@ -377,8 +403,12 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         hiddenSections={hiddenSections}
                         onToggleHideSection={handleToggleHideSection}
                         onCloseCustomizeMode={() => setIsCustomizeMode(false)}
-                        onGearChange={(key, val) => setGearData((prev) => ({ ...prev, [key]: val }))}
+                        onGearChange={handleGearChange}
                         onSaveGear={triggerToast}
+                        onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
+                        onSaveIdentity={triggerToast}
+                        onOpenBadgeSelector={() => setShowBadgeSelector(true)}
+                        onOpenEditModal={() => setShowEditModal(true)}
                         t={t}
                     />
                 )}
