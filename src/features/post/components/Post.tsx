@@ -2,11 +2,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
     faComment,
     faBookmark as faBookmarkOutline,
-    faHeart as faHeartOutline,
 } from "@fortawesome/free-regular-svg-icons"
 import {
     faBookmark as faBookmarkSolid,
-    faHeart as faHeartSolid,
+    faArrowUp,
     faShare,
     faEllipsis,
     faEyeSlash,
@@ -485,17 +484,18 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
             {/* Action Row */}
             <div className="flex flex-row items-center gap-4 sm:gap-6 pt-3 mt-1 text-xs text-text-muted">
-                {/* Like Button */}
+                {/* Upvote Button */}
                 <button
                     onClick={handleLike}
                     className={`
                         flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
                         ${isLiked 
-                            ? "text-rose-500 font-bold" 
+                            ? "text-primary font-bold" 
                             : "hover:text-text"}
                     `}
+                    title={isLiked ? "Đã upvote" : "Upvote"}
                 >
-                    <FontAwesomeIcon icon={isLiked ? faHeartSolid : faHeartOutline} className="text-xs" />
+                    <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
                     <span>{likeCount}</span>
                 </button>
 

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart as faHeartOutline } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -496,9 +495,10 @@ const CommentItem = ({
                     <div className="flex flex-row items-center gap-5 mt-1 text-xs font-medium text-text-faint">
                         <button 
                             onClick={toggleLike} 
-                            className={`flex flex-row items-center gap-1.5 hover:text-like transition-colors ${liked ? "text-like" : ""}`}
+                            className={`flex flex-row items-center gap-1.5 hover:text-primary transition-colors ${liked ? "text-primary font-bold" : ""}`}
+                            title={liked ? "Đã upvote" : "Upvote"}
                         >
-                            <FontAwesomeIcon icon={liked ? faHeartSolid : faHeartOutline} className="text-xs" />
+                            <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
                             <span>{likeCount > 0 ? likeCount : ""}</span>
                         </button>
 

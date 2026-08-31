@@ -41,6 +41,66 @@ function sanitizePaginationParams<T extends { page?: number; limit?: number }>(
     return sanitized;
 }
 
+export interface ApiPaginationMeta {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+/** Extract pagination metadata (e.g. meta: { total, page, limit, totalPages }) from API responses */
+export function extractPaginationMeta(
+    res: unknown,
+    fallbackTotal = 0,
+    fallbackLimit = 9,
+    fallbackPage = 1
+): ApiPaginationMeta {
+    if (res && typeof res === "object") {
+        const obj = res as Record<string, unknown>;
+
+        const metaObj = (
+            typeof obj.meta === "object" && obj.meta !== null
+                ? obj.meta
+                : typeof obj.pagination === "object" && obj.pagination !== null
+                ? obj.pagination
+                : obj
+        ) as Record<string, unknown>;
+
+        const total = typeof metaObj.total === "number" ? metaObj.total :
+                      typeof metaObj.totalItems === "number" ? metaObj.totalItems :
+                      typeof metaObj.count === "number" ? metaObj.count : fallbackTotal;
+
+        const page = typeof metaObj.page === "number" ? metaObj.page :
+                     typeof metaObj.currentPage === "number" ? metaObj.currentPage : fallbackPage;
+
+        const limit = typeof metaObj.limit === "number" ? metaObj.limit :
+                      typeof metaObj.perPage === "number" ? metaObj.perPage :
+                      typeof metaObj.pageSize === "number" ? metaObj.pageSize : fallbackLimit;
+
+        let totalPages = typeof metaObj.totalPages === "number" ? metaObj.totalPages :
+                         typeof metaObj.pageCount === "number" ? metaObj.pageCount :
+                         typeof metaObj.lastPage === "number" ? metaObj.lastPage : 0;
+
+        if (!totalPages && total > 0 && limit > 0) {
+            totalPages = Math.ceil(total / limit);
+        }
+
+        return {
+            total: Math.max(0, total),
+            page: Math.max(1, page),
+            limit: Math.max(1, limit),
+            totalPages: Math.max(1, totalPages || 1),
+        };
+    }
+
+    return {
+        total: fallbackTotal,
+        page: fallbackPage,
+        limit: fallbackLimit,
+        totalPages: Math.max(1, Math.ceil(fallbackTotal / fallbackLimit) || 1),
+    };
+}
+
 /**
  * 1. Authentication Services (/auth/*)
  */

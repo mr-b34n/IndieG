@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faHeart as faHeartRegular,
     faComment,
 } from "@fortawesome/free-regular-svg-icons";
 import {
-    faHeart as faHeartSolid,
+    faArrowUp,
     faExpand,
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -99,9 +98,10 @@ export const CommunityHubMediaView = ({
                                         <button
                                             type="button"
                                             onClick={(e) => handleLike(e, item)}
-                                            className={`flex items-center gap-1 cursor-pointer transition-colors ${likeState.liked ? "text-rose-500 font-bold" : "hover:text-rose-500"}`}
+                                            className={`flex items-center gap-1 cursor-pointer transition-colors ${likeState.liked ? "text-primary font-bold" : "hover:text-primary"}`}
+                                            title="Upvote"
                                         >
-                                            <FontAwesomeIcon icon={likeState.liked ? faHeartSolid : faHeartRegular} className="text-[10px]" />
+                                            <FontAwesomeIcon icon={faArrowUp} className="text-[10px]" />
                                             <span className="font-mono text-[10px]">{likeState.count}</span>
                                         </button>
                                         <div className="flex items-center gap-1">

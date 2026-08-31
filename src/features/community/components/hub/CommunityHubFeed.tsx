@@ -2,13 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faComment,
-    faHeart as faHeartRegular,
     faBookmark as faBookmarkRegular,
 } from "@fortawesome/free-regular-svg-icons";
 import {
-    faHeart as faHeartSolid,
+    faArrowUp,
     faBookmark as faBookmarkSolid,
-    faRetweet,
     faShareNodes,
     faChevronDown,
     faThumbtack,
@@ -76,7 +74,6 @@ export const CommunityHubFeed = ({
 
     // Interactive social states
     const [localLikes, setLocalLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
-    const [localReposts, setLocalReposts] = useState<Record<string, { count: number; reposted: boolean }>>({});
     const [localBookmarks, setLocalBookmarks] = useState<Record<string, boolean>>({});
     const [localVotes, setLocalVotes] = useState<Record<string, { votedId: string; options: { id: string; label: string; votes: number }[] }>>({});
     const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
@@ -126,21 +123,6 @@ export const CommunityHubFeed = ({
                 [postId]: {
                     count: liked ? current.count + 1 : Math.max(0, current.count - 1),
                     liked,
-                },
-            };
-        });
-    };
-
-    const handleRepostToggle = (e: React.MouseEvent, postId: string, initialReposts = 0) => {
-        e.stopPropagation();
-        setLocalReposts((prev) => {
-            const current = prev[postId] || { count: initialReposts, reposted: false };
-            const reposted = !current.reposted;
-            return {
-                ...prev,
-                [postId]: {
-                    count: reposted ? current.count + 1 : Math.max(0, current.count - 1),
-                    reposted,
                 },
             };
         });
@@ -302,10 +284,6 @@ export const CommunityHubFeed = ({
                             count: post.likesCount,
                             liked: post.isLiked ?? false,
                         };
-                        const repostsState = localReposts[post.id] || {
-                            count: post.repostsCount ?? 8,
-                            reposted: post.isReposted ?? false,
-                        };
                         const isBookmarked = localBookmarks[post.id] ?? post.isBookmarked ?? false;
                         const pollState = localVotes[post.id] || {
                             votedId: post.userVotedPollId || "",
@@ -465,7 +443,7 @@ export const CommunityHubFeed = ({
                                     </div>
                                 )}
 
-                                {/* Social Interactions Row: 💬 Comments   ↻ Repost   ♡ Like   🔖 Bookmark   ↗ Share */}
+                                {/* Social Interactions Row: 💬 Comments   ▲ Upvote   🔖 Bookmark   ↗ Share */}
                                 <div className="flex items-center justify-between text-xs text-text-muted pt-2">
                                     <div className="flex items-center gap-6">
                                         {/* Comments */}
@@ -474,34 +452,19 @@ export const CommunityHubFeed = ({
                                             <span className="font-mono text-xs">{post.repliesCount}</span>
                                         </div>
 
-                                        {/* Repost / Reshare */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => handleRepostToggle(e, post.id, post.repostsCount)}
-                                            className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs ${
-                                                repostsState.reposted
-                                                    ? "text-emerald-400 font-bold"
-                                                    : "text-text-muted hover:text-emerald-400"
-                                            }`}
-                                            title="Repost"
-                                        >
-                                            <FontAwesomeIcon icon={faRetweet} className="text-xs" />
-                                            <span className="font-mono text-xs">{repostsState.count}</span>
-                                        </button>
-
-                                        {/* Like */}
+                                        {/* Upvote */}
                                         <button
                                             type="button"
                                             onClick={(e) => handleLikeToggle(e, post.id, post.likesCount)}
                                             className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs ${
                                                 likesState.liked
-                                                    ? "text-rose-500 font-bold"
-                                                    : "text-text-muted hover:text-rose-500"
+                                                    ? "text-primary font-bold"
+                                                    : "text-text-muted hover:text-primary"
                                             }`}
-                                            title="Like"
+                                            title="Upvote"
                                         >
                                             <FontAwesomeIcon
-                                                icon={likesState.liked ? faHeartSolid : faHeartRegular}
+                                                icon={faArrowUp}
                                                 className="text-xs"
                                             />
                                             <span className="font-mono text-xs">{likesState.count}</span>

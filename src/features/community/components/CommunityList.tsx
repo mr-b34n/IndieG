@@ -11,7 +11,7 @@ import { CommunityHeader } from "./CommunityHeader";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
-import { mapCommunityDtoToCommunityData, type CommunityDto } from "@/shared/api";
+import { mapCommunityDtoToCommunityData, extractPaginationMeta, type CommunityDto } from "@/shared/api";
 
 function extractCommunityList(res: unknown): CommunityDto[] {
     if (!res) return [];
@@ -31,8 +31,14 @@ export const CommunityList = () => {
     const isAdmin = user?.role === "admin";
     const canCreateCommunity = isAdmin;
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 9;
+
     // 1. TanStack Query for communities
-    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery();
+    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+    });
 
     const communities = useCommunitiesStore((state) => state.communities);
     const storeLoading = useCommunitiesStore((state) => state.isLoading);
@@ -59,9 +65,6 @@ export const CommunityList = () => {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 6;
-
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
@@ -104,11 +107,28 @@ export const CommunityList = () => {
         return list;
     }, [communities, activeTab, activeCategory, search]);
 
-    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    const isFilteredLocally = Boolean(search.trim() || activeCategory || activeTab !== "discover");
+
+    const apiMeta = useMemo(() => {
+        return extractPaginationMeta(rawCommunitiesData, filtered.length, ITEMS_PER_PAGE, currentPage);
+    }, [rawCommunitiesData, filtered.length, currentPage]);
+
+    const totalPages = isFilteredLocally
+        ? Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+        : Math.max(1, apiMeta.totalPages || Math.ceil(filtered.length / ITEMS_PER_PAGE));
+
+    const totalItems = isFilteredLocally
+        ? filtered.length
+        : apiMeta.total || filtered.length;
+
     const paginatedCommunities = useMemo(() => {
+        const rawList = extractCommunityList(rawCommunitiesData);
+        if (!isFilteredLocally && rawList.length > 0 && rawList.length <= ITEMS_PER_PAGE && apiMeta.total > ITEMS_PER_PAGE) {
+            return filtered.slice(0, ITEMS_PER_PAGE);
+        }
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         return filtered.slice(start, start + ITEMS_PER_PAGE);
-    }, [filtered, currentPage]);
+    }, [filtered, currentPage, rawCommunitiesData, isFilteredLocally, apiMeta.total]);
 
     const handleTabChange = (tab: CommunityTabKey) => {
         setActiveTab(tab);
@@ -171,7 +191,7 @@ export const CommunityList = () => {
                         currentPage={currentPage}
                         totalPages={totalPages}
                         onPageChange={setCurrentPage}
-                        totalItems={filtered.length}
+                        totalItems={totalItems}
                         itemsPerPage={ITEMS_PER_PAGE}
                     />
                 </div>

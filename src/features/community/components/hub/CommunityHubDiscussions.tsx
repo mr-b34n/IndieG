@@ -2,10 +2,9 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faComment,
-    faHeart as faHeartRegular,
 } from "@fortawesome/free-regular-svg-icons";
 import {
-    faHeart as faHeartSolid,
+    faArrowUp,
     faEye,
     faFire,
     faClock,
@@ -154,12 +153,13 @@ export const CommunityHubDiscussions = ({
                                             onClick={(e) => handleLikeToggle(e, thread.id, thread.likesCount)}
                                             className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs font-semibold ${
                                                 likesState.liked
-                                                    ? "text-rose-500 font-bold"
-                                                    : "text-text-muted hover:text-rose-500"
+                                                    ? "text-primary font-bold"
+                                                    : "text-text-muted hover:text-primary"
                                             }`}
+                                            title="Upvote"
                                         >
                                             <FontAwesomeIcon
-                                                icon={likesState.liked ? faHeartSolid : faHeartRegular}
+                                                icon={faArrowUp}
                                                 className="text-[11px]"
                                             />
                                             <span className="font-mono text-[11px]">{likesState.count}</span>
