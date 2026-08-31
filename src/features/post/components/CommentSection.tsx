@@ -219,11 +219,12 @@ const CommentItem = ({
 
     // Reply comments query on demand
     const [shouldFetchReplies, setShouldFetchReplies] = useState(false);
+    const [replyLimit, setReplyLimit] = useState(5);
     const parentIdStr = String(comment.id ?? "").trim();
-    const { data: remoteRepliesData, isLoading: isRepliesLoading } = useReplyCommentsQuery(
+    const { data: remoteRepliesData, isLoading: isRepliesLoading, isFetching: isRepliesFetching } = useReplyCommentsQuery(
         parentIdStr,
         undefined,
-        5,
+        replyLimit,
         shouldFetchReplies
     );
 
@@ -609,9 +610,11 @@ const CommentItem = ({
                     allReplies = sortComments(flatten(combinedReplies), sortBy);
                 }
 
-                const visibleReplies = showAllReplies ? allReplies : allReplies.slice(0, 1);
-                const replyCountDisplay = comment.replyCount || (allReplies.length > 0 ? allReplies.length : 1);
-                const hiddenCount = allReplies.length > 1 ? allReplies.length - 1 : replyCountDisplay;
+                const visibleReplies = showAllReplies ? allReplies : [];
+                const remoteList = remoteRepliesData ? extractCommentList(remoteRepliesData) : [];
+                const hasMoreReplies =
+                    (remoteList.length >= replyLimit) ||
+                    (comment.replyCount !== undefined && comment.replyCount > allReplies.length);
                 
                 // Align replies with the content block of the parent comment. Max 3 visual depths (0, 1, 2).
                 const indentClass = depth === 0 ? "pl-[46px] sm:pl-[48px]" : "pl-[38px] sm:pl-[40px]";
@@ -643,7 +646,7 @@ const CommentItem = ({
                                     }}
                                     className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-primary transition-colors py-1 pl-1 cursor-pointer group/expand"
                                 >
-                                    {isRepliesLoading ? (
+                                    {isRepliesLoading || isRepliesFetching ? (
                                         <FontAwesomeIcon icon={faSpinner} spin className="text-[10px] text-primary" />
                                     ) : (
                                         <FontAwesomeIcon
@@ -651,11 +654,7 @@ const CommentItem = ({
                                             className="rotate-180 text-[10px] text-text-faint group-hover/expand:text-primary transition-transform"
                                         />
                                     )}
-                                    <span>
-                                        {hiddenCount > 0
-                                            ? t('comment.viewMoreReplies', { count: hiddenCount }) || `Xem thêm ${hiddenCount} câu trả lời`
-                                            : t('comment.viewMoreRepliesSingle') || "Xem thêm câu trả lời"}
-                                    </span>
+                                    <span>{t('comment.viewMoreReplies')}</span>
                                 </button>
                             ) : (
                                 <>
@@ -665,22 +664,27 @@ const CommentItem = ({
                                         className="inline-flex items-center gap-1.5 text-xs font-medium text-text-faint hover:text-text-muted transition-colors py-1 pl-1 cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faChevronUp} className="text-[10px]" />
-                                        <span>{t('comment.hideReplies') || "Ẩn câu trả lời"}</span>
+                                        <span>{t('comment.hideReplies')}</span>
                                     </button>
-                                    {!shouldFetchReplies && (
+
+                                    {hasMoreReplies && !(isRepliesLoading || isRepliesFetching) && (
                                         <button
                                             type="button"
-                                            onClick={() => setShouldFetchReplies(true)}
+                                            onClick={() => {
+                                                setReplyLimit((prev) => prev + 5);
+                                                setShouldFetchReplies(true);
+                                            }}
                                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline py-1 cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faReply} className="rotate-180 text-[10px]" />
-                                            <span>{t('comment.loadMoreRepliesServer') || "Tải thêm câu trả lời từ máy chủ"}</span>
+                                            <span>{t('comment.loadMoreReplies')}</span>
                                         </button>
                                     )}
-                                    {isRepliesLoading && (
+
+                                    {(isRepliesLoading || isRepliesFetching) && (
                                         <div className="flex items-center gap-1.5 text-xs text-text-muted">
                                             <FontAwesomeIcon icon={faSpinner} spin className="text-[10px] text-primary" />
-                                            <span>Đang tải...</span>
+                                            <span>{t('comment.loadingMoreReplies')}</span>
                                         </div>
                                     )}
                                 </>

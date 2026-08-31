@@ -751,8 +751,11 @@ export const en = {
         loginSign: "Log in / Sign up",
         pinnedBadge: "Pinned by author",
         repliesCount: "{count} replies",
-        viewMoreReplies: "View {count} more replies",
+        viewMoreReplies: "View more replies",
+        viewReplies: "View replies",
         hideReplies: "Hide replies",
+        loadMoreReplies: "View more",
+        loadingMoreReplies: "Loading more replies...",
         options: "Comment options"
     },
     game: {

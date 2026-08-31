@@ -751,8 +751,11 @@ export const vi = {
         loginSign: "Đăng nhập / Đăng ký",
         pinnedBadge: "Đã ghim bởi tác giả",
         repliesCount: "{count} phản hồi",
-        viewMoreReplies: "Xem thêm {count} phản hồi",
-        hideReplies: "Thu gọn phản hồi",
+        viewMoreReplies: "Xem thêm bình luận",
+        viewReplies: "Xem các câu trả lời",
+        hideReplies: "Thu gọn câu trả lời",
+        loadMoreReplies: "Xem thêm",
+        loadingMoreReplies: "Đang tải thêm câu trả lời...",
         options: "Tùy chọn bình luận"
     },
     game: {
