@@ -324,6 +324,7 @@ const CommentItem = ({
     };
 
     const handleSaveEdit = () => {
+        if (!requireVerifiedEmail("chỉnh sửa bình luận")) return;
         if (!editText.trim()) return;
         if (onEditComment) {
             onEditComment(comment.id, editText.trim());
@@ -332,6 +333,7 @@ const CommentItem = ({
     };
 
     const handleDelete = () => {
+        if (!requireVerifiedEmail("xóa bình luận")) return;
         if (onDeleteComment) {
             onDeleteComment(comment.id);
         }
@@ -339,6 +341,7 @@ const CommentItem = ({
     };
 
     const handleTogglePin = () => {
+        if (!requireVerifiedEmail("ghim bình luận")) return;
         if (onTogglePinComment) {
             onTogglePinComment(comment.id);
         }

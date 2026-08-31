@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                             username: profile.username || userObj?.username || "Gamer",
                             avatar_url: profile.avatarUrl || userObj?.avatar_url,
                             role: (userObj?.role as 'admin' | 'moderator' | 'user') || (profile.username?.toLowerCase().includes("admin") ? "admin" : "user"),
-                            isVerified: true,
+                            isVerified: profile.isVerified !== undefined ? Boolean(profile.isVerified) : (profile.isEmailVerified !== undefined ? Boolean(profile.isEmailVerified) : (profile.status === 'active' || Boolean(userObj?.isVerified))),
                             createdAt: profile.createdAt,
                         };
                         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userObj));

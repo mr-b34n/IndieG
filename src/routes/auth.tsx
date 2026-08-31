@@ -204,14 +204,14 @@ const AuthPage = () => {
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
-                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : true,
+                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : (userProfile.isEmailVerified !== undefined ? Boolean(userProfile.isEmailVerified) : userProfile.status === 'active'),
                       }
                     : {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
                           role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
-                          isVerified: true,
+                          isVerified: false,
                       };
 
                 loginStoreAction(userObj, accessToken);
@@ -291,14 +291,14 @@ const AuthPage = () => {
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
-                          isVerified: true,
+                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : (userProfile.isEmailVerified !== undefined ? Boolean(userProfile.isEmailVerified) : userProfile.status === 'active'),
                       }
                     : {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
                           role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
-                          isVerified: true,
+                          isVerified: false,
                       };
 
                 loginStoreAction(userObj, accessToken);

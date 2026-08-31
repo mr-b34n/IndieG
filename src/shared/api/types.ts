@@ -43,6 +43,8 @@ export interface UserProfileDto {
     status?: string;
     archived?: boolean;
     platformStatus?: number;
+    isVerified?: boolean;
+    isEmailVerified?: boolean;
     createdAt?: string;
     updatedAt?: string;
 }
