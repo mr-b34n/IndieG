@@ -370,11 +370,19 @@ export const commentsApi = {
         }),
 
     /** Get replies - GET /comments/reply-comments (max limit 5) */
-    getReplyComments: (params: { parentId: string; cursor?: string; limit?: number }) =>
-        apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
+    getReplyComments: (params: { parentId: string | number; cursor?: string; limit?: number }) => {
+        const parentIdStr = String(params.parentId ?? "").trim();
+        return apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
             method: "GET",
-            params: sanitizePaginationParams(params, 5),
-        }),
+            params: sanitizePaginationParams(
+                {
+                    ...params,
+                    parentId: parentIdStr,
+                },
+                5
+            ),
+        });
+    },
 };
 
 /**

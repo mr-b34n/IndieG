@@ -219,8 +219,9 @@ const CommentItem = ({
 
     // Reply comments query on demand
     const [shouldFetchReplies, setShouldFetchReplies] = useState(false);
+    const parentIdStr = String(comment.id ?? "").trim();
     const { data: remoteRepliesData, isLoading: isRepliesLoading } = useReplyCommentsQuery(
-        String(comment.id),
+        parentIdStr,
         undefined,
         5,
         shouldFetchReplies
