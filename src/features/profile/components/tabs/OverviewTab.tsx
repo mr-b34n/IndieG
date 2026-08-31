@@ -79,7 +79,6 @@ export const OverviewTab = ({
 
     // Visibility flags
     const showPlayerIdentity = isSectionVisible("playerIdentity");
-    const showGamingDna = isSectionVisible("gamingDna");
     const showGameMastery = isSectionVisible("gameMastery");
     const showRecentActivity = isSectionVisible("recentActivity");
     const showCommunityReputation = isSectionVisible("communityReputation");
@@ -88,128 +87,56 @@ export const OverviewTab = ({
     return (
         <div className="flex flex-col gap-5 w-full animate-fade-in">
 
-            {/* ── ROW 1: PLAYER IDENTITY + GAMING DNA ─────────────────────── */}
-            {(showPlayerIdentity || showGamingDna) && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full">
-                    
-                    {/* PLAYER IDENTITY */}
-                    {showPlayerIdentity && (
-                        <div className={`${showGamingDna ? "lg:col-span-5" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden transition-all ${cardCustomStyle("playerIdentity")}`}>
-                            <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm">🎯</span>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {renderToggleBtn("playerIdentity")}
-                                </div>
+            {/* ── ROW 1: PLAYER IDENTITY ─────────────────────── */}
+            {showPlayerIdentity && (
+                <div className="w-full">
+                    <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden transition-all ${cardCustomStyle("playerIdentity")}`}>
+                        <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm">🎯</span>
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
                             </div>
+                            <div className="flex items-center gap-2">
+                                {renderToggleBtn("playerIdentity")}
+                            </div>
+                        </div>
 
-                            {/* Inline Bio & Archetypes Editing */}
-                            {isCustomizeMode ? (
-                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[8px] animate-fade-in">
-                                    <div className="flex flex-col gap-1">
+                        {/* Inline Bio Editing */}
+                        {isCustomizeMode ? (
+                            <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[8px] animate-fade-in">
+                                <div className="flex flex-col gap-1.5">
+                                    <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-bold text-[#8A8F98]">Tiểu sử (Bio):</label>
-                                        <textarea
-                                            value={identity.bio || ""}
-                                            onChange={(e) => onIdentityChange?.({ bio: e.target.value })}
-                                            rows={3}
-                                            placeholder="Nhập tiểu sử ngắn của bạn..."
-                                            className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
-                                        />
+                                        <span className={`text-[10px] font-medium ${(identity.bio?.length || 0) >= 240 ? "text-[#E05252]" : "text-[#8A8F98]"}`}>
+                                            {identity.bio?.length || 0} / 250
+                                        </span>
                                     </div>
-
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-[10px] font-bold text-[#8A8F98]">Phong cách chơi (phân cách bằng dấu phẩy):</label>
-                                        <input
-                                            type="text"
-                                            value={(identity.titles || []).join(", ")}
-                                            onChange={(e) => {
-                                                const titles = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
-                                                onIdentityChange?.({ titles });
-                                            }}
-                                            placeholder="Sniper God, Entry Fragger, IGL Main..."
-                                            className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
-                                        />
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    {identity.bio ? (
-                                        <div className="bg-[#13161C] p-3 rounded-[8px]">
-                                            <p className="text-xs text-[#9A9DA3] italic leading-relaxed">
-                                                "{identity.bio}"
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
-                                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Roles / Archetypes */}
-                                    {identity.titles && identity.titles.length > 0 ? (
-                                        <div className="flex flex-col gap-2">
-                                            {identity.titles.map((title, i) => (
-                                                <div key={i} className="flex items-center gap-2 text-xs font-bold text-[#F0F1F2]">
-                                                    <span className="text-[#E5A93D]">🎯</span> {title}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
-                                            <p className="text-xs text-[#666A71] italic">{t("profile.empty.playstyle")}</p>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {/* GAMING DNA */}
-                    {showGamingDna && (
-                        <div className={`${showPlayerIdentity ? "lg:col-span-7" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("gamingDna")}`}>
-                            <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm">🧬</span>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Gaming DNA</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {renderToggleBtn("gamingDna")}
-                                    <span className="text-[10px] font-medium text-[#8A8F98]">Stats Breakdown</span>
+                                    <textarea
+                                        value={identity.bio || ""}
+                                        onChange={(e) => onIdentityChange?.({ bio: e.target.value })}
+                                        maxLength={250}
+                                        rows={3}
+                                        placeholder="Nhập tiểu sử ngắn của bạn (tối đa 250 ký tự)..."
+                                        className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors resize-none"
+                                    />
                                 </div>
                             </div>
-
-                            {games.length === 0 ? (
-                                <div className="bg-[#13161C] p-6 rounded-[10px] text-center flex flex-col items-center justify-center min-h-[140px]">
-                                    <p className="text-xs text-[#8A8F98] italic">Chưa có dữ liệu thống kê Gaming DNA từ máy chủ.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    {/* Genre Mastery */}
-                                    <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
-                                        <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Genre Mastery</span>
-                                        
-                                        <DnaBar label="FPS" percent={games.some((g) => g.tags?.includes("FPS") || g.name.includes("CS")) ? 85 : 0} fillHex="#1688E8" isPrimary />
-                                        <DnaBar label="SURVIVAL" percent={games.some((g) => g.tags?.includes("Survival")) ? 70 : 0} fillHex="#B8BCC2" />
-                                        <DnaBar label="RPG" percent={games.some((g) => g.tags?.includes("RPG")) ? 60 : 0} fillHex="#9A9DA3" />
-                                        <DnaBar label="STRATEGY" percent={games.some((g) => g.tags?.includes("Strategy")) ? 40 : 0} fillHex="#666A71" />
+                        ) : (
+                            <>
+                                {identity.bio ? (
+                                    <div className="bg-[#13161C] p-3 rounded-[8px]">
+                                        <p className="text-xs text-[#9A9DA3] leading-relaxed">
+                                            {identity.bio}
+                                        </p>
                                     </div>
-
-                                    {/* Play Dynamics */}
-                                    <div className="flex flex-col gap-3 bg-[#13161C] p-4 rounded-[10px]">
-                                        <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Play Dynamics</span>
-
-                                        <DnaBar label="Competitive" percent={75} fillHex="#1688E8" isPrimary />
-                                        <DnaBar label="Co-op" percent={60} fillHex="#B8BCC2" />
-                                        <DnaBar label="Solo" percent={50} fillHex="#9A9DA3" />
-                                        <DnaBar label="Casual" percent={30} fillHex="#666A71" />
+                                ) : (
+                                    <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
+                                        <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -515,18 +442,3 @@ export const OverviewTab = ({
         </div>
     );
 };
-
-const DnaBar = ({ label, percent, fillHex, isPrimary = false }: { label: string; percent: number; fillHex: string; isPrimary?: boolean }) => (
-    <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between text-xs">
-            <span className={`font-semibold ${isPrimary ? "text-[#F0F1F2]" : "text-[#9A9DA3]"}`}>{label}</span>
-            <span className={`font-mono text-xs ${isPrimary ? "text-[#1688E8] font-bold" : "text-[#9A9DA3]"}`}>{percent}%</span>
-        </div>
-        <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
-            <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{ width: `${percent}%`, backgroundColor: fillHex }}
-            />
-        </div>
-    </div>
-);

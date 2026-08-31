@@ -7,13 +7,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
-import { BadgeSelectorModal } from "./BadgeSelectorModal";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileTabBar } from "./ProfileTabBar";
 
 import {
     DEFAULT_COVER, LIBRARY_GAMES,
-    COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES, getBadgeCatalogue,
+    COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES,
 } from "../constants";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
@@ -24,7 +23,7 @@ import { PostsTab } from "./tabs/PostsTab";
 import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
-import { useMyProfileQuery, useUserProfileQuery } from "@/shared/api/useQueries";
+import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
 
 interface UserProfileProps {
     userId: string;
@@ -49,6 +48,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const cleanUsername = userId?.replace(/^@/, "");
     const { data: myProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(isOwnProfile && isLoggedIn);
     const { data: otherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
+    const updateProfileMutation = useUpdateProfileMutation();
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
@@ -124,11 +124,38 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         } catch {
             // Ignore storage error
         }
+        if (isOwnProfile) {
+            updateProfileMutation.mutate(
+                {
+                    name: identity.name.trim(),
+                    bio: identity.bio?.trim(),
+                },
+                {
+                    onSuccess: () => {
+                        try {
+                            const savedUser = localStorage.getItem("indieg_auth_user");
+                            if (savedUser) {
+                                const parsed = JSON.parse(savedUser);
+                                parsed.name = identity.name.trim();
+                                localStorage.setItem("indieg_auth_user", JSON.stringify(parsed));
+                            }
+                        } catch {
+                            // Ignore
+                        }
+                        triggerToast();
+                    },
+                    onError: () => {
+                        triggerToast();
+                    },
+                }
+            );
+        } else {
+            triggerToast();
+        }
         setIsCustomizeMode(false);
         setSnapshotIdentity(null);
         setSnapshotGear(null);
         setSnapshotHiddenSections(null);
-        triggerToast();
     };
 
     const handleDiscardEdit = () => {
@@ -180,25 +207,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                p.author.toLowerCase() === cleanUsername?.toLowerCase();
     });
 
-    // Badges Catalogue
-    const badges = getBadgeCatalogue(t);
-    const [selectedBadgeId, setSelectedBadgeId] = useState<string>("master-strategist");
-    const [showBadgeSelector, setShowBadgeSelector] = useState(false);
-
-    const equippedBadge = badges.find((b) => b.id === selectedBadgeId) || badges[0];
-
     // Friends list state
-    const [friendsList, setFriendsList] = useState<FriendEntry[]>([
-        { id: "1", name: "Minh Triết", handle: "@triet_gamer", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80", status: "online", game: "CS2 · Premier 19.2k", isFriend: true },
-        { id: "2", name: "Hoàng Long", handle: "@long_sniper", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80", status: "in-game", game: "Valorant · Radiant", isFriend: true },
-        { id: "3", name: "Thu Hà", handle: "@ha_support", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80", status: "offline", isFriend: true },
-        { id: "4", name: "Đức Anh", handle: "@anh_igl", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", status: "online", game: "Dota 2 · Immortal", isFriend: true },
-    ]);
-
-    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([
-        { id: "req-1", name: "Quốc Bảo", handle: "@bao_duelist", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80", mutualFriends: 3, time: "2 giờ trước" },
-        { id: "req-2", name: "Thanh Trúc", handle: "@truc_healer", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80", mutualFriends: 1, time: "1 ngày trước" },
-    ]);
+    const [friendsList, setFriendsList] = useState<FriendEntry[]>([]);
+    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([]);
 
     const [isFriend, setIsFriend] = useState(false);
     const [isBlocked, setIsBlocked] = useState(false);
@@ -231,10 +242,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     // Guestbook comments state
-    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([
-        { id: "gb-1", author: "Minh Triết", handle: "@triet_gamer", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80", content: "+rep clutch king, gánh team cực mạnh tối qua nhé bro 🔥", timeAgo: "1 ngày trước", likes: 5, isLiked: false },
-        { id: "gb-2", author: "Hoàng Long", handle: "@long_sniper", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80", content: "Tối nay 8h làm vài trận Premier tiếp không ông bạn?", timeAgo: "3 ngày trước", likes: 2, isLiked: false },
-    ]);
+    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([]);
     const [newCommentText, setNewCommentText] = useState("");
 
     const handleAddGuestbook = () => {
@@ -329,16 +337,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 </div>
             )}
 
-            {showBadgeSelector && (
-                <BadgeSelectorModal
-                    badges={badges}
-                    selectedBadgeId={selectedBadgeId}
-                    onSelect={(id) => { setSelectedBadgeId(id); setShowBadgeSelector(false); triggerToast(); }}
-                    onClose={() => setShowBadgeSelector(false)}
-                    t={t}
-                />
-            )}
-
             {/* Gamer Hero Header */}
             <ProfileHero
                 coverSrc={effectiveCover}
@@ -346,7 +344,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 isOwnProfile={isOwnProfile}
                 identity={identity}
                 onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
-                equippedBadge={equippedBadge}
                 forumRankNode={forumRankNode}
                 isFriend={isFriend}
                 isBlocked={isBlocked}
@@ -361,7 +358,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     reader.readAsDataURL(file);
                 }}
                 onSaveIdentity={triggerToast}
-                onOpenBadgeSelector={() => setShowBadgeSelector(true)}
                 isCustomizeMode={isCustomizeMode}
                 onToggleCustomizeMode={handleToggleCustomizeMode}
                 isEditMode={isCustomizeMode}
@@ -428,7 +424,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         onSaveGear={triggerToast}
                         onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
                         onSaveIdentity={triggerToast}
-                        onOpenBadgeSelector={() => setShowBadgeSelector(true)}
                         t={t}
                     />
                 )}

@@ -196,8 +196,8 @@ function getLocalFallbackProfile(): UserProfileDto | null {
                     id: user.id || "me",
                     username,
                     name: username,
-                    avatarUrl: user.avatar_url || localStorage.getItem("user_custom_avatar") || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-                    bio: "Game enthusiast & IndieG member",
+                    avatarUrl: user.avatar_url || localStorage.getItem("user_custom_avatar") || undefined,
+                    bio: "",
                     createdAt: user.createdAt || new Date().toISOString(),
                 };
             }

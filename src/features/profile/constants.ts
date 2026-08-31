@@ -3,16 +3,13 @@ import {
     faDesktop, faHeadphones, faMicrochip, faComputerMouse, faKeyboard,
     faMicrophone, faLayerGroup, faVolumeHigh, faTv,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-    CS2_BG as cs2Bg,
-} from "@/shared/constants/images";
 import type {
     Badge, GearCategory, LibraryGame, FriendEntry, FriendRequest,
     GuestbookComment, ProfileIdentity, ProfileStatus, CommunityReputation, RecentActivityItem,
 } from "./types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 
-export const DEFAULT_COVER = cs2Bg;
+export const DEFAULT_COVER = "";
 
 /** Badge catalogue. Titles/descriptions are translated at call time via getBadgeCatalogue(t). */
 export const getBadgeCatalogue = (t: TranslateFn): Badge[] => [
