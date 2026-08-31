@@ -4,7 +4,7 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
@@ -101,6 +101,45 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     });
 
     const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+    const [snapshotIdentity, setSnapshotIdentity] = useState<ProfileIdentity | null>(null);
+    const [snapshotGear, setSnapshotGear] = useState<Record<string, string> | null>(null);
+    const [snapshotHiddenSections, setSnapshotHiddenSections] = useState<Record<string, boolean> | null>(null);
+
+    const handleStartEditMode = () => {
+        setSnapshotIdentity({ ...identity });
+        setSnapshotGear({ ...gearData });
+        setSnapshotHiddenSections({ ...hiddenSections });
+        setIsCustomizeMode(true);
+        setActiveTab("overview");
+    };
+
+    const handleSaveEdit = () => {
+        try {
+            localStorage.setItem(`profile_gear_${userId || "me"}`, JSON.stringify(gearData));
+        } catch {
+            // Ignore storage error
+        }
+        try {
+            localStorage.setItem(`profile_hidden_sections_${userId || "me"}`, JSON.stringify(hiddenSections));
+        } catch {
+            // Ignore storage error
+        }
+        setIsCustomizeMode(false);
+        setSnapshotIdentity(null);
+        setSnapshotGear(null);
+        setSnapshotHiddenSections(null);
+        triggerToast();
+    };
+
+    const handleDiscardEdit = () => {
+        if (snapshotIdentity) setIdentity(snapshotIdentity);
+        if (snapshotGear) setGearData(snapshotGear);
+        if (snapshotHiddenSections) setHiddenSections(snapshotHiddenSections);
+        setIsCustomizeMode(false);
+        setSnapshotIdentity(null);
+        setSnapshotGear(null);
+        setSnapshotHiddenSections(null);
+    };
 
     const handleToggleHideSection = (sectionId: string) => {
         setHiddenSections((prev) => {
@@ -115,9 +154,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleToggleCustomizeMode = () => {
-        setIsCustomizeMode((prev) => !prev);
         if (!isCustomizeMode) {
-            setActiveTab("overview");
+            handleStartEditMode();
+        } else {
+            handleSaveEdit();
         }
     };
 
@@ -199,17 +239,20 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleAddGuestbook = () => {
         if (!newCommentText.trim()) return;
-        const newEntry: GuestbookComment = {
-            id: `gb-${Date.now()}`,
-            author: currentAuthor || "Gamer",
-            handle: `@${(currentAuthor || "gamer").toLowerCase().replace(/\s+/g, "_")}`,
-            avatar: avatarUrl,
-            content: newCommentText.trim(),
-            timeAgo: "Vừa xong",
-            likes: 0,
-            isLiked: false,
-        };
-        setGuestbookComments((prev) => [newEntry, ...prev]);
+        const commentContent = newCommentText.trim();
+        setGuestbookComments((prev) => [
+            {
+                id: `gb-${prev.length + 1}-${Math.random().toString(36).substring(2, 7)}`,
+                author: currentAuthor || "Gamer",
+                handle: `@${(currentAuthor || "gamer").toLowerCase().replace(/\s+/g, "_")}`,
+                avatar: avatarUrl,
+                content: commentContent,
+                timeAgo: "Vừa xong",
+                likes: 0,
+                isLiked: false,
+            },
+            ...prev,
+        ]);
         setNewCommentText("");
         triggerToast();
     };
@@ -281,8 +324,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
             {warnCustomizeToast && (
                 <div className="fixed top-20 right-6 z-50 bg-[#E5A93D] text-black px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-bold text-sm">
-                    <FontAwesomeIcon icon={faLock} className="text-base" />
-                    <span>Đang ở chế độ tùy chỉnh. Hãy nhấn "Xong" ở tab Tổng quan để lưu trước khi chuyển tab!</span>
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-base" />
+                    <span>Đang ở chế độ chỉnh sửa. Hãy nhấn "Lưu thay đổi" hoặc "Hủy" ở tab Tổng quan trước khi chuyển tab!</span>
                 </div>
             )}
 
@@ -321,6 +364,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onOpenBadgeSelector={() => setShowBadgeSelector(true)}
                 isCustomizeMode={isCustomizeMode}
                 onToggleCustomizeMode={handleToggleCustomizeMode}
+                isEditMode={isCustomizeMode}
+                onStartEditMode={handleStartEditMode}
+                onSaveEdit={handleSaveEdit}
+                onDiscardEdit={handleDiscardEdit}
                 onAddFriend={() => toggleFriend(identity.name)}
                 onUnfriend={() => toggleFriend(identity.name)}
                 onBlock={() => { setIsBlocked(true); triggerToast(); }}

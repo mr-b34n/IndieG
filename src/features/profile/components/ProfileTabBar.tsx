@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGamepad, faComments, faUsers, faCommentDots, faBookmark, faLayerGroup, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faGamepad, faComments, faUsers, faCommentDots, faBookmark, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import type { ProfileTab } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 
@@ -59,12 +59,12 @@ export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks
                             role="tab"
                             aria-selected={isActive}
                             onClick={() => onChange(tab.id)}
-                            title={isLocked ? "Vui lòng lưu/xong tùy chỉnh ở tab Tổng quan trước khi đổi tab" : undefined}
+                            title={isLocked ? "Vui lòng lưu hoặc hủy chỉnh sửa ở tab Tổng quan trước khi đổi tab" : undefined}
                             className={`relative flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold whitespace-nowrap transition-all rounded-[8px] cursor-pointer ${
                                 isActive
                                     ? "bg-[#181C24] text-[#F0F1F2]"
                                     : isLocked
-                                    ? "text-[#666A71] hover:text-[#9A9DA3] opacity-60"
+                                    ? "text-[#666A71] opacity-35 hover:opacity-50"
                                     : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#12151B]"
                             }`}
                         >
@@ -73,9 +73,6 @@ export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks
                                 className={`text-xs transition-colors ${isActive ? "text-[#1688E8]" : "text-[#8A8F98]"}`}
                             />
                             <span>{tab.label}</span>
-                            {isLocked && (
-                                <FontAwesomeIcon icon={faLock} className="text-[10px] text-amber-500/80 ml-0.5" />
-                            )}
                             {tab.count !== undefined && !isLocked && (
                                 <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none transition-colors ${
                                     isActive ? "bg-[#252C3A] text-[#F0F1F2]" : "bg-[#14171E] text-[#8A8F98]"

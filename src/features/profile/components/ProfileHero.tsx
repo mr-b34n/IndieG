@@ -23,11 +23,15 @@ interface ProfileHeroProps {
     isBlocked: boolean;
     onSelectCoverFile: (file: File) => void;
     onSelectAvatarFile: (file: File) => void;
-    onSaveIdentity: () => void;
+    onSaveIdentity?: () => void;
     onOpenBadgeSelector?: () => void;
     onOpenEditModal?: () => void;
     isCustomizeMode?: boolean;
     onToggleCustomizeMode?: () => void;
+    isEditMode?: boolean;
+    onStartEditMode?: () => void;
+    onSaveEdit?: () => void;
+    onDiscardEdit?: () => void;
     onAddFriend: () => void;
     onUnfriend: () => void;
     onBlock: () => void;
@@ -52,11 +56,13 @@ const statusCfg = (s: ProfileStatus) =>
 
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
-    isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity,
-    onOpenBadgeSelector, onOpenEditModal, isCustomizeMode, onToggleCustomizeMode, onAddFriend, onUnfriend, onBlock, onUnblock, location,
+    isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile,
+    onOpenBadgeSelector, isCustomizeMode, onToggleCustomizeMode,
+    isEditMode = false, onStartEditMode, onSaveEdit, onDiscardEdit,
+    onAddFriend, onUnfriend, onBlock, onUnblock, location,
     reputationPercent = 0, followersCount = 0, postsCount = 0, communitiesCount = 0, t,
 }: ProfileHeroProps) => {
-    const [isEditingName, setIsEditingName] = useState(false);
+    const isEditing = isEditMode || isCustomizeMode;
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [showFriendMenu, setShowFriendMenu] = useState(false);
 
@@ -198,36 +204,22 @@ export const ProfileHero = ({
 
                         {/* Text Identity Block */}
                         <div className="flex flex-col gap-1 pb-1">
-                            {isEditingName ? (
+                            {isEditing ? (
                                 <div className="flex flex-wrap items-center gap-2">
                                     <input
                                         type="text"
                                         value={identity.name}
                                         onChange={(e) => onIdentityChange({ name: e.target.value })}
-                                        className="px-3 py-1.5 rounded-[8px] bg-[#14171D] text-[#F0F1F2] font-bold text-base w-40 focus:outline-none focus:bg-[#1D212A]"
-                                        placeholder="Display name"
+                                        className="px-3 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-[#F0F1F2] font-bold text-base w-44 focus:outline-none focus:border-[#1688E8] transition-colors"
+                                        placeholder="Tên hiển thị"
                                     />
                                     <input
                                         type="text"
                                         value={identity.username}
                                         onChange={(e) => onIdentityChange({ username: e.target.value })}
-                                        className="px-3 py-1.5 rounded-[8px] bg-[#14171D] text-[#9A9DA3] font-semibold text-xs w-32 focus:outline-none focus:bg-[#1D212A]"
+                                        className="px-3 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-[#9A9DA3] font-semibold text-xs w-36 focus:outline-none focus:border-[#1688E8] transition-colors"
                                         placeholder="@username"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => { setIsEditingName(false); onSaveIdentity(); }}
-                                        className="w-7 h-7 rounded-[6px] bg-[#1688E8] text-white flex items-center justify-center text-xs hover:bg-[#1478D0] transition cursor-pointer"
-                                    >
-                                        <FontAwesomeIcon icon={faCheck} />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsEditingName(false)}
-                                        className="w-7 h-7 rounded-[6px] bg-[#1D212A] text-[#9A9DA3] flex items-center justify-center text-xs hover:text-[#F0F1F2] transition cursor-pointer"
-                                    >
-                                        <FontAwesomeIcon icon={faXmark} />
-                                    </button>
                                 </div>
                             ) : (
                                 <>
@@ -275,51 +267,57 @@ export const ProfileHero = ({
                     <div className="flex items-center gap-2 shrink-0 self-end flex-wrap">
                         {isOwnProfile ? (
                             <>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (isEditingName) {
-                                            setIsEditingName(false);
-                                            onSaveIdentity();
-                                        } else {
-                                            setIsEditingName(true);
-                                        }
-                                    }}
-                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                                        isEditingName
-                                            ? "bg-[#1688E8] text-white"
-                                            : "bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2]"
-                                    }`}
-                                    title="Chỉnh sửa thông tin hồ sơ trực tiếp"
-                                >
-                                    <FontAwesomeIcon icon={isEditingName ? faCheck : faPen} className={isEditingName ? "text-white text-xs" : "text-[#1688E8] text-xs"} />
-                                    <span>{isEditingName ? "Lưu hồ sơ" : "Sửa hồ sơ"}</span>
-                                </button>
-                                {onOpenBadgeSelector && (
+                                {!isEditing ? (
                                     <button
                                         type="button"
-                                        onClick={onOpenBadgeSelector}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer shadow-xs"
-                                        title="Thay đổi huy hiệu / danh hiệu"
+                                        onClick={() => {
+                                            if (onStartEditMode) onStartEditMode();
+                                            else if (onToggleCustomizeMode) onToggleCustomizeMode();
+                                        }}
+                                        className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                        title="Chỉnh sửa thông tin và tùy chỉnh giao diện hồ sơ"
                                     >
-                                        <FontAwesomeIcon icon={faAward} className="text-xs" />
-                                        <span>Huy hiệu</span>
+                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
+                                        <span>Chỉnh sửa hồ sơ</span>
                                     </button>
-                                )}
-                                {onToggleCustomizeMode && (
-                                    <button
-                                        type="button"
-                                        onClick={onToggleCustomizeMode}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                                            isCustomizeMode
-                                                ? "bg-[#1688E8] text-white ring-2 ring-[#1688E8]/40"
-                                                : "bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8]"
-                                        }`}
-                                        title={isCustomizeMode ? "Thoát chế độ tùy chỉnh" : "Tùy chỉnh giao diện"}
-                                    >
-                                        <FontAwesomeIcon icon={faSliders} className="text-xs" />
-                                        <span>{isCustomizeMode ? "Xong" : "Tùy chỉnh"}</span>
-                                    </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (onDiscardEdit) onDiscardEdit();
+                                                else if (onToggleCustomizeMode) onToggleCustomizeMode();
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A] hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                            title="Hủy bỏ thay đổi và hoàn tác"
+                                        >
+                                            <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                                            <span>Hủy</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (onSaveEdit) onSaveEdit();
+                                                else if (onToggleCustomizeMode) onToggleCustomizeMode();
+                                            }}
+                                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                            title="Lưu tất cả thay đổi hồ sơ"
+                                        >
+                                            <FontAwesomeIcon icon={faCheck} className="text-xs" />
+                                            <span>Lưu thay đổi</span>
+                                        </button>
+                                        {onOpenBadgeSelector && (
+                                            <button
+                                                type="button"
+                                                onClick={onOpenBadgeSelector}
+                                                className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                                title="Thay đổi huy hiệu / danh hiệu"
+                                            >
+                                                <FontAwesomeIcon icon={faAward} className="text-xs" />
+                                                <span>Huy hiệu</span>
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </>
                         ) : isBlocked ? (

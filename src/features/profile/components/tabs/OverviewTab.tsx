@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash,
-    faPen, faCheck, faDesktop,
+    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
@@ -34,24 +33,15 @@ export const OverviewTab = ({
     reputations = [],
     activities = [],
     gearData = {},
-    isOwnProfile,
     isCustomizeMode = false,
     hiddenSections = {},
     onToggleHideSection,
     onGearChange,
-    onSaveGear,
     onIdentityChange,
-    onSaveIdentity,
 }: OverviewTabProps) => {
     const { t } = useTranslation();
     const safeGames = games || [];
     const [selectedGameSlug, setSelectedGameSlug] = useState<string>("cs2");
-
-    // Inline edit states
-    const [isEditingGear, setIsEditingGear] = useState(false);
-    const [isEditingBio, setIsEditingBio] = useState(false);
-    const [tempBio, setTempBio] = useState(identity.bio || "");
-    const [tempTitles, setTempTitles] = useState((identity.titles || []).join(", "));
 
     const featuredGame = safeGames.find((g) => g?.id === selectedGameSlug || g?.isFeatured) || safeGames[0];
     const secondaryGames = safeGames;
@@ -87,18 +77,6 @@ export const OverviewTab = ({
         );
     };
 
-    const handleSaveBio = () => {
-        if (onIdentityChange) {
-            const parsedTitles = tempTitles.split(",").map((t) => t.trim()).filter(Boolean);
-            onIdentityChange({
-                bio: tempBio.trim(),
-                titles: parsedTitles,
-            });
-        }
-        if (onSaveIdentity) onSaveIdentity();
-        setIsEditingBio(false);
-    };
-
     // Visibility flags
     const showPlayerIdentity = isSectionVisible("playerIdentity");
     const showGamingDna = isSectionVisible("gamingDna");
@@ -123,37 +101,18 @@ export const OverviewTab = ({
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {(isOwnProfile || isCustomizeMode) && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (isEditingBio) {
-                                                    handleSaveBio();
-                                                } else {
-                                                    setTempBio(identity.bio || "");
-                                                    setTempTitles((identity.titles || []).join(", "));
-                                                    setIsEditingBio(true);
-                                                }
-                                            }}
-                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8] text-[10px] font-bold cursor-pointer transition-all"
-                                            title="Sửa thông tin tiểu sử & phong cách chơi"
-                                        >
-                                            <FontAwesomeIcon icon={isEditingBio ? faCheck : faPen} className="text-[10px]" />
-                                            <span>{isEditingBio ? "Lưu Bio" : "Sửa Bio"}</span>
-                                        </button>
-                                    )}
                                     {renderToggleBtn("playerIdentity")}
                                 </div>
                             </div>
 
-                            {/* Inline Bio Editing */}
-                            {isEditingBio ? (
+                            {/* Inline Bio & Archetypes Editing */}
+                            {isCustomizeMode ? (
                                 <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[8px] animate-fade-in">
                                     <div className="flex flex-col gap-1">
                                         <label className="text-[10px] font-bold text-[#8A8F98]">Tiểu sử (Bio):</label>
                                         <textarea
-                                            value={tempBio}
-                                            onChange={(e) => setTempBio(e.target.value)}
+                                            value={identity.bio || ""}
+                                            onChange={(e) => onIdentityChange?.({ bio: e.target.value })}
                                             rows={3}
                                             placeholder="Nhập tiểu sử ngắn của bạn..."
                                             className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
@@ -164,28 +123,14 @@ export const OverviewTab = ({
                                         <label className="text-[10px] font-bold text-[#8A8F98]">Phong cách chơi (phân cách bằng dấu phẩy):</label>
                                         <input
                                             type="text"
-                                            value={tempTitles}
-                                            onChange={(e) => setTempTitles(e.target.value)}
-                                            placeholder="Sniper God, Entry Fragger, ICL Main..."
+                                            value={(identity.titles || []).join(", ")}
+                                            onChange={(e) => {
+                                                const titles = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
+                                                onIdentityChange?.({ titles });
+                                            }}
+                                            placeholder="Sniper God, Entry Fragger, IGL Main..."
                                             className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
                                         />
-                                    </div>
-
-                                    <div className="flex items-center justify-end gap-2 pt-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsEditingBio(false)}
-                                            className="px-3 py-1 rounded-[6px] bg-[#1D212A] text-[#9A9DA3] text-[11px] font-semibold hover:text-[#F0F1F2] cursor-pointer"
-                                        >
-                                            Hủy
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleSaveBio}
-                                            className="px-3 py-1 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-[11px] font-bold cursor-pointer"
-                                        >
-                                            Lưu thay đổi
-                                        </button>
                                     </div>
                                 </div>
                             ) : (
@@ -510,30 +455,12 @@ export const OverviewTab = ({
                                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Battlestation Setup</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {(isOwnProfile || isCustomizeMode) && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (isEditingGear) {
-                                                    if (onSaveGear) onSaveGear();
-                                                    setIsEditingGear(false);
-                                                } else {
-                                                    setIsEditingGear(true);
-                                                }
-                                            }}
-                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8] text-[10px] font-bold cursor-pointer transition-all"
-                                            title="Sửa thông tin góc máy / thiết bị"
-                                        >
-                                            <FontAwesomeIcon icon={isEditingGear ? faCheck : faPen} className="text-[10px]" />
-                                            <span>{isEditingGear ? "Lưu Setup" : "Sửa Setup"}</span>
-                                        </button>
-                                    )}
                                     {renderToggleBtn("connectedAccounts")}
                                 </div>
                             </div>
 
                             {/* Inline Edit Mode for Setup */}
-                            {isEditingGear ? (
+                            {isCustomizeMode ? (
                                 <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px] animate-fade-in max-h-[300px] overflow-y-auto">
                                     <span className="text-[10px] font-extrabold text-[#1688E8] uppercase tracking-wider">
                                         Cập nhật thông tin thiết bị góc máy
@@ -555,33 +482,12 @@ export const OverviewTab = ({
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#222834]">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (onSaveGear) onSaveGear();
-                                                setIsEditingGear(false);
-                                            }}
-                                            className="px-4 py-1.5 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold cursor-pointer transition-all"
-                                        >
-                                            Hoàn tất & Lưu Setup
-                                        </button>
-                                    </div>
                                 </div>
                             ) : (
                                 <>
                                     {filledGear.length === 0 ? (
                                         <div className="p-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center italic flex flex-col items-center gap-2">
                                             <span>Chưa cập nhật thông tin thiết bị góc máy.</span>
-                                            {(isOwnProfile || isCustomizeMode) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsEditingGear(true)}
-                                                    className="px-3 py-1 rounded-[6px] bg-[#1688E8]/20 text-[#1688E8] font-bold text-xs hover:bg-[#1688E8]/30 transition-all cursor-pointer"
-                                                >
-                                                    + Thêm Setup Ngay
-                                                </button>
-                                            )}
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
