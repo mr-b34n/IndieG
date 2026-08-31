@@ -225,7 +225,13 @@ export const ProfileHero = ({
                                             className="px-3 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-[#F0F1F2] font-bold text-base w-48 sm:w-60 focus:outline-none focus:border-[#1688E8] transition-colors"
                                             placeholder="Tên hiển thị"
                                         />
-                                        <span className="text-xs text-[#9A9DA3] font-medium">{identity.username}</span>
+                                        <input
+                                            type="text"
+                                            value={identity.username}
+                                            onChange={(e) => onIdentityChange({ username: e.target.value })}
+                                            className="px-2 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-xs text-[#9A9DA3] font-medium w-32 focus:outline-none focus:border-[#1688E8] transition-colors"
+                                            placeholder="@username"
+                                        />
                                     </div>
                                 </div>
                             ) : (

@@ -128,6 +128,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             updateProfileMutation.mutate(
                 {
                     name: identity.name.trim(),
+                    username: identity.username?.trim(),
                     bio: identity.bio?.trim(),
                 },
                 {
@@ -137,6 +138,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                             if (savedUser) {
                                 const parsed = JSON.parse(savedUser);
                                 parsed.name = identity.name.trim();
+                                if (identity.username?.trim()) {
+                                    parsed.username = identity.username.trim().replace(/^@/, "");
+                                }
                                 localStorage.setItem("indieg_auth_user", JSON.stringify(parsed));
                             }
                         } catch {

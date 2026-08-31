@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
     postsApi,
     profilesApi,
@@ -246,6 +246,7 @@ export function useCommentsQuery(postId: string, page = 1, limit = 6) {
         queryKey: QUERY_KEYS.comments(postId, { page, limit }),
         queryFn: () => commentsApi.getRootComments({ postId, page, limit }),
         enabled: Boolean(postId),
+        placeholderData: keepPreviousData,
     });
 }
 
@@ -256,6 +257,7 @@ export function useReplyCommentsQuery(parentId: string | number, cursor?: string
         queryKey: [...QUERY_KEYS.commentReplies(parentIdStr), cursor, limit],
         queryFn: () => commentsApi.getReplyComments({ parentId: parentIdStr, cursor, limit }),
         enabled: isNumericString && enabled,
+        placeholderData: keepPreviousData,
     });
 }
 
