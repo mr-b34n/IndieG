@@ -32,6 +32,7 @@ export const Header = () => {
     const toggleLeft = useSidebarStore((state) => state.toggleLeft);
     const toggleRight = useSidebarStore((state) => state.toggleRight);
     const { pathname } = useLocation();
+    const isHomePage = pathname === '/' || pathname === '';
     const hideSidebars = 
         pathname.startsWith('/settings') || 
         pathname.startsWith('/profile') || 
@@ -158,90 +159,92 @@ export const Header = () => {
                             )}
                         </div>
 
-                        {/* User Avatar Menu */}
-                        <div className="relative shrink-0" ref={userMenuRef}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowUserMenu(!showUserMenu);
-                                    setShowNotifications(false);
-                                }}
-                                className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-[#14171A] transition-colors cursor-pointer group"
-                            >
-                                <img
-                                    src={avatarUrl}
-                                    alt="User avatar"
-                                    className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
-                                />
-                                <FontAwesomeIcon
-                                    icon={faChevronDown}
-                                    className={`text-[10px] text-[#8B9097] group-hover:text-[#E8E9EA] transition-transform duration-200 ${
-                                        showUserMenu ? "rotate-180" : ""
-                                    }`}
-                                />
-                            </button>
+                        {/* User Avatar Menu (Only displayed when not on home page) */}
+                        {!isHomePage && (
+                            <div className="relative shrink-0" ref={userMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowUserMenu(!showUserMenu);
+                                        setShowNotifications(false);
+                                    }}
+                                    className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-[#14171A] transition-colors cursor-pointer group"
+                                >
+                                    <img
+                                        src={avatarUrl}
+                                        alt="User avatar"
+                                        className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
+                                    />
+                                    <FontAwesomeIcon
+                                        icon={faChevronDown}
+                                        className={`text-[10px] text-[#8B9097] group-hover:text-[#E8E9EA] transition-transform duration-200 ${
+                                            showUserMenu ? "rotate-180" : ""
+                                        }`}
+                                    />
+                                </button>
 
-                            {/* User Dropdown */}
-                            {showUserMenu && (
-                                <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#121417] border border-[#23272C] shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
-                                    <div className="px-4 py-2.5 border-b border-[#23272C]/80">
-                                        <p className="font-bold text-xs text-[#E8E9EA] truncate">{displayName}</p>
-                                        <p className="text-[11px] text-[#8B9097] truncate">{user?.email || "demo@indieg.com"}</p>
-                                    </div>
+                                {/* User Dropdown */}
+                                {showUserMenu && (
+                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#121417] border border-[#23272C] shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="px-4 py-2.5 border-b border-[#23272C]/80">
+                                            <p className="font-bold text-xs text-[#E8E9EA] truncate">{displayName}</p>
+                                            <p className="text-[11px] text-[#8B9097] truncate">{user?.email || "demo@indieg.com"}</p>
+                                        </div>
 
-                                    <div className="py-1">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowUserMenu(false);
-                                                navigate({ to: "/profile/$userId", params: { userId: "me" } });
-                                            }}
-                                            className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
-                                        >
-                                            <FontAwesomeIcon icon={faUser} className="w-3.5 text-[#8B9097]" />
-                                            <span>{t('common.viewProfile', { defaultValue: 'Trang cá nhân' })}</span>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowUserMenu(false);
-                                                navigate({ to: "/settings" });
-                                            }}
-                                            className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
-                                        >
-                                            <FontAwesomeIcon icon={faGear} className="w-3.5 text-[#8B9097]" />
-                                            <span>{t('common.settings', { defaultValue: 'Cài đặt' })}</span>
-                                        </button>
-
-                                        {isAdmin && (
+                                        <div className="py-1">
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     setShowUserMenu(false);
-                                                    navigate({ to: "/admin" });
+                                                    navigate({ to: "/profile/$userId", params: { userId: "me" } });
                                                 }}
-                                                className="w-full px-4 py-2 text-xs font-medium text-amber-400 hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
                                             >
-                                                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 text-amber-500" />
-                                                <span>{t('common.adminUi', { defaultValue: 'Quản trị hệ thống' })}</span>
+                                                <FontAwesomeIcon icon={faUser} className="w-3.5 text-[#8B9097]" />
+                                                <span>{t('common.viewProfile', { defaultValue: 'Trang cá nhân' })}</span>
                                             </button>
-                                        )}
-                                    </div>
 
-                                    <div className="border-t border-[#23272C]/80 pt-1 mt-1">
-                                        <button
-                                            type="button"
-                                            onClick={handleLogout}
-                                            className="w-full px-4 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
-                                        >
-                                            <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5" />
-                                            <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
-                                        </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowUserMenu(false);
+                                                    navigate({ to: "/settings" });
+                                                }}
+                                                className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                            >
+                                                <FontAwesomeIcon icon={faGear} className="w-3.5 text-[#8B9097]" />
+                                                <span>{t('common.settings', { defaultValue: 'Cài đặt' })}</span>
+                                            </button>
+
+                                            {isAdmin && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowUserMenu(false);
+                                                        navigate({ to: "/admin" });
+                                                    }}
+                                                    className="w-full px-4 py-2 text-xs font-medium text-amber-400 hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                >
+                                                    <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 text-amber-500" />
+                                                    <span>{t('common.adminUi', { defaultValue: 'Quản trị hệ thống' })}</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="border-t border-[#23272C]/80 pt-1 mt-1">
+                                            <button
+                                                type="button"
+                                                onClick={handleLogout}
+                                                className="w-full px-4 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                            >
+                                                <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5" />
+                                                <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
                     </>
                 ) : (
                     <button

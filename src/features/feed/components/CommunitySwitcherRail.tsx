@@ -81,69 +81,68 @@ export const CommunitySwitcherRail = ({
     const hiddenCount = Math.max(0, joinedCommunities.length - visibleCommunities.length);
 
     return (
-        <div className="w-full flex flex-col pt-3">
-            {/* Top Micro-Header: YOUR FEED & Sort Dropdown */}
-            <div className="flex items-center justify-between pb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-text-faint">
-                    {t('feed.yourFeed', { defaultValue: 'YOUR FEED' })}
-                </span>
-
-                <FeedSortDropdown
-                    value={sortOrder}
-                    onChange={onSortChange}
-                />
-            </div>
-
-            {/* Switcher Rail: ALL + Top Communities + (+N more) */}
-            <div className="flex items-center gap-5 sm:gap-7 border-b border-divider-primary pt-1 overflow-x-hidden">
-                {/* ALL Option */}
-                <button
-                    type="button"
-                    onClick={() => handleSelect(null)}
-                    className={`text-xs uppercase tracking-wider font-bold transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 shrink-0 ${
-                        activeCommunityId === null
-                            ? "text-primary border-primary"
-                            : "text-text-muted hover:text-text border-transparent"
-                    }`}
-                >
-                    {t('common.all', { defaultValue: 'ALL' }).toUpperCase()}
-                </button>
-
-                {/* Visible Top Communities */}
-                {visibleCommunities.map((c) => {
-                    const isSelected = String(c.id) === String(activeCommunityId);
-                    return (
-                        <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => handleSelect(isSelected ? null : String(c.id))}
-                            className={`flex items-center gap-2 text-xs uppercase tracking-wider font-bold transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 shrink-0 ${
-                                isSelected
-                                    ? "text-primary border-primary"
-                                    : "text-text-muted hover:text-text border-transparent"
-                            }`}
-                        >
-                            <img
-                                src={c.logo}
-                                alt={c.name}
-                                className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
-                            />
-                            <span className="truncate max-w-[120px] sm:max-w-[180px]">{c.name}</span>
-                        </button>
-                    );
-                })}
-
-                {/* +N More Communities Button */}
-                {hiddenCount > 0 && (
+        <div className="w-full flex flex-col pt-1">
+            {/* Switcher Rail + Sort Dropdown */}
+            <div className="flex items-center justify-between border-b border-divider-primary gap-4 overflow-x-hidden">
+                {/* Switcher Rail: ALL + Top Communities + (+N more) */}
+                <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar min-w-0">
+                    {/* ALL Option */}
                     <button
                         type="button"
-                        onClick={() => setIsDrawerOpen(true)}
-                        className="text-xs font-bold text-text-faint hover:text-primary transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 border-transparent shrink-0 flex items-center gap-1"
-                        title="View all joined communities"
+                        onClick={() => handleSelect(null)}
+                        className={`text-xs uppercase tracking-wider font-bold transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 shrink-0 ${
+                            activeCommunityId === null
+                                ? "text-primary border-primary"
+                                : "text-text-muted hover:text-text border-transparent"
+                        }`}
                     >
-                        <span>{t('feed.moreCommunities', { count: hiddenCount, defaultValue: `+${hiddenCount} more` })}</span>
+                        {t('common.all', { defaultValue: 'ALL' }).toUpperCase()}
                     </button>
-                )}
+
+                    {/* Visible Top Communities */}
+                    {visibleCommunities.map((c) => {
+                        const isSelected = String(c.id) === String(activeCommunityId);
+                        return (
+                            <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => handleSelect(isSelected ? null : String(c.id))}
+                                className={`flex items-center gap-2 text-xs uppercase tracking-wider font-bold transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 shrink-0 ${
+                                    isSelected
+                                        ? "text-primary border-primary"
+                                        : "text-text-muted hover:text-text border-transparent"
+                                }`}
+                            >
+                                <img
+                                    src={c.logo}
+                                    alt={c.name}
+                                    className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
+                                />
+                                <span className="truncate max-w-[120px] sm:max-w-[180px]">{c.name}</span>
+                            </button>
+                        );
+                    })}
+
+                    {/* +N More Communities Button */}
+                    {hiddenCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setIsDrawerOpen(true)}
+                            className="text-xs font-bold text-text-faint hover:text-primary transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 border-transparent shrink-0 flex items-center gap-1"
+                            title="View all joined communities"
+                        >
+                            <span>{t('feed.moreCommunities', { count: hiddenCount, defaultValue: `+${hiddenCount} more` })}</span>
+                        </button>
+                    )}
+                </div>
+
+                {/* Sort Dropdown on the right */}
+                <div className="shrink-0 pb-1.5">
+                    <FeedSortDropdown
+                        value={sortOrder}
+                        onChange={onSortChange}
+                    />
+                </div>
             </div>
 
             {/* Community Drawer Modal */}

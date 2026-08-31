@@ -5,7 +5,6 @@ import {
     faCircleCheck, 
     faExclamationTriangle,
     faXmark,
-    faUsers,
     faCompass
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -249,38 +248,6 @@ export const FeedList = () => {
                 </div>
             )}
 
-            {/* Home Feed Editorial Header */}
-            <div className="w-full flex flex-col pt-1">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-black text-text tracking-tight uppercase">
-                            {t('feed.homeFeedTitle', { defaultValue: 'Home Feed' })}
-                        </h1>
-                        <p className="text-xs text-text-muted mt-0.5">
-                            {t('feed.homeFeedSub', { defaultValue: 'Discussions & updates from your joined communities' })}
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => navigate({ to: "/community" })}
-                        className="self-start sm:self-auto text-xs font-bold text-primary hover:underline transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                        <FontAwesomeIcon icon={faUsers} className="text-[11px]" />
-                        <span>{t('feed.manageCommunities', { defaultValue: 'Manage communities' })}</span>
-                    </button>
-                </div>
-
-                {/* Community Switcher Rail: YOUR FEED, Top Communities, +N More, and Sort Dropdown */}
-                <CommunitySwitcherRail
-                    joinedCommunities={joinedCommunities}
-                    activeCommunityId={activeCommunityFilter}
-                    onSelectCommunity={setActiveCommunityFilter}
-                    sortOrder={sortOrder}
-                    onSortChange={setSortOrder}
-                />
-            </div>
-
             {/* Create Post Area */}
             {isLoggedIn && (
                 <CreatePostBox
@@ -289,6 +256,15 @@ export const FeedList = () => {
                     onPostCreated={handleCreatePost}
                 />
             )}
+
+            {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
+            <CommunitySwitcherRail
+                joinedCommunities={joinedCommunities}
+                activeCommunityId={activeCommunityFilter}
+                onSelectCommunity={setActiveCommunityFilter}
+                sortOrder={sortOrder}
+                onSortChange={setSortOrder}
+            />
 
             {/* Error State Display */}
             {hasError ? (

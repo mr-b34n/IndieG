@@ -149,11 +149,11 @@ export const LeftBar = () => {
                 </button>
             </div>
 
-            {/* SECTION: MY COMMUNITIES */}
+            {/* SECTION: YOUR SHORTCUTS (LỐI TẮT CỦA BẠN - FB STYLE) */}
             <div className="border-t border-[#1C1F22] pt-3 mt-2">
                 <div className="flex items-center justify-between px-3 pb-2">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[#5F646B]">
-                        {t('common.myCommunities', { defaultValue: 'My Communities' })}
+                        {t('common.yourShortcuts', { defaultValue: 'Lối tắt của bạn' })}
                     </p>
                     <button
                         type="button"
@@ -168,29 +168,46 @@ export const LeftBar = () => {
 
                 <div className="flex flex-col gap-0.5 px-1 pb-1">
                     {joinedCommunities.length > 0 ? (
-                        joinedCommunities.map((c) => {
-                            const isThisCommActive = pathname.startsWith(`/community/${c.id}`);
-                            return (
+                        <>
+                            {joinedCommunities.slice(0, 5).map((c) => {
+                                const isThisCommActive = pathname.startsWith(`/community/${c.id}`);
+                                return (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(c.id) } })}
+                                        className={`w-full flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg text-xs transition-colors cursor-pointer group ${
+                                            isThisCommActive
+                                                ? "bg-[#14171A] text-[#E8E9EA] font-bold border-l-2 border-[#1688E8]"
+                                                : "text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] font-medium"
+                                        }`}
+                                    >
+                                        {c.logo ? (
+                                            <img
+                                                src={c.logo}
+                                                alt={c.name}
+                                                className="w-5 h-5 rounded-[5px] object-cover bg-[#1C1F26] shrink-0 border border-[#2B303C]/40"
+                                            />
+                                        ) : (
+                                            <span className="w-5 h-5 rounded-[5px] bg-[#1688E8]/15 text-[#1688E8] flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                {c.name.charAt(0).toUpperCase()}
+                                            </span>
+                                        )}
+                                        <span className="truncate flex-1 text-left">{c.name}</span>
+                                    </button>
+                                );
+                            })}
+
+                            {joinedCommunities.length > 5 && (
                                 <button
-                                    key={c.id}
                                     type="button"
-                                    onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(c.id) } })}
-                                    className={`w-full flex items-center justify-between gap-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                                        isThisCommActive
-                                            ? "bg-[#14171A] text-[#E8E9EA] font-bold border-l-2 border-[#1688E8] pl-2.5 pr-3"
-                                            : "text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] px-3 font-medium"
-                                    }`}
+                                    onClick={() => navigate({ to: "/community" })}
+                                    className="w-full text-left px-3 py-1.5 text-[11px] font-bold text-[#1688E8] hover:underline cursor-pointer transition-colors"
                                 >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                                        <span className="truncate">{c.name}</span>
-                                    </div>
-                                    <span className="text-[10px] font-medium text-[#5F646B] shrink-0">
-                                        {c.onlineNow ? `${c.onlineNow} ${t('common.online', { defaultValue: 'trực tuyến' })}` : t('common.active', { defaultValue: 'hoạt động' })}
-                                    </span>
+                                    {t('common.seeAllCommunities', { defaultValue: `Xem tất cả (${joinedCommunities.length})` })}
                                 </button>
-                            );
-                        })
+                            )}
+                        </>
                     ) : (
                         <div className="px-3 py-2 text-xs text-[#5F646B]">
                             {t('community.noCommunitiesJoined', { defaultValue: 'Chưa tham gia cộng đồng nào' })}
@@ -220,17 +237,6 @@ export const LeftBar = () => {
                     <FontAwesomeIcon icon={faGear} className={`w-4 shrink-0 ${isSettingsActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
                     <span>{t('common.settings')}</span>
                 </button>
-
-                {isLoggedIn && (
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="w-full flex flex-row items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors duration-150 cursor-pointer select-none"
-                    >
-                        <FontAwesomeIcon icon={faRightFromBracket} className="w-4 shrink-0" />
-                        <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
-                    </button>
-                )}
             </div>
         </div>
     )

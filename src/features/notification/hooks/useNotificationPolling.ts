@@ -1,20 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect } from "react";
-import { notificationApi } from "../api/notificationApi";
 
 /**
- * Hook to perform polling for notifications (MVP acceptable mechanism).
- * Automatically refetches notifications every `intervalMs` milliseconds.
+ * Hook to perform polling for notifications (temporarily disabled while API is under development).
  */
-export function useNotificationPolling(intervalMs: number = 15000, userId: string = "user-current") {
+export function useNotificationPolling(intervalMs?: number, userId?: string) {
     useEffect(() => {
-        // Initial fetch
-        void notificationApi.getNotifications(userId);
-
-        // Polling interval
-        const timer = setInterval(() => {
-            void notificationApi.getNotifications(userId);
-        }, intervalMs);
-
-        return () => clearInterval(timer);
-    }, [intervalMs, userId]);
+        // Notification API polling disabled temporarily
+    }, []);
 }
