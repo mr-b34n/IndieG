@@ -81,6 +81,36 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [selectedBadgeId, setSelectedBadgeId] = useState<string>(unlockedBadges[0]?.id || "");
     const equippedBadge = badges.find((b) => b.id === selectedBadgeId && b.unlocked);
 
+    // Profile Customization Mode & Section Visibility
+    const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+    const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
+        try {
+            const saved = localStorage.getItem(`profile_hidden_sections_${userId || "me"}`);
+            return saved ? JSON.parse(saved) : {};
+        } catch {
+            return {};
+        }
+    });
+
+    const handleToggleHideSection = (sectionId: string) => {
+        setHiddenSections((prev) => {
+            const next = { ...prev, [sectionId]: !prev[sectionId] };
+            try {
+                localStorage.setItem(`profile_hidden_sections_${userId || "me"}`, JSON.stringify(next));
+            } catch {
+                // Ignore storage error
+            }
+            return next;
+        });
+    };
+
+    const handleToggleCustomizeMode = () => {
+        setIsCustomizeMode((prev) => !prev);
+        if (activeTab !== "overview") {
+            setActiveTab("overview");
+        }
+    };
+
     const triggerToast = () => {
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -289,6 +319,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onSaveIdentity={triggerToast}
                 onOpenBadgeSelector={() => setShowBadgeSelector(true)}
                 onOpenEditModal={() => setShowEditModal(true)}
+                isCustomizeMode={isCustomizeMode}
+                onToggleCustomizeMode={handleToggleCustomizeMode}
                 onAddFriend={() => toggleFriend(identity.name)}
                 onUnfriend={() => toggleFriend(identity.name)}
                 onBlock={() => { setIsBlocked(true); triggerToast(); }}
@@ -341,6 +373,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         activities={RECENT_ACTIVITIES}
                         gearData={gearData}
                         isOwnProfile={isOwnProfile}
+                        isCustomizeMode={isCustomizeMode}
+                        hiddenSections={hiddenSections}
+                        onToggleHideSection={handleToggleHideSection}
+                        onCloseCustomizeMode={() => setIsCustomizeMode(false)}
                         onGearChange={(key, val) => setGearData((prev) => ({ ...prev, [key]: val }))}
                         onSaveGear={triggerToast}
                         t={t}

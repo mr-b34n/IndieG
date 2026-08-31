@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faCheck, faXmark, faCamera, faPen, faAward,
+    faCheck, faXmark, faCamera,
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
     faImage, faSliders, faArrowLeft, faMessage, faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
@@ -24,8 +24,10 @@ interface ProfileHeroProps {
     onSelectCoverFile: (file: File) => void;
     onSelectAvatarFile: (file: File) => void;
     onSaveIdentity: () => void;
-    onOpenBadgeSelector: () => void;
+    onOpenBadgeSelector?: () => void;
     onOpenEditModal?: () => void;
+    isCustomizeMode?: boolean;
+    onToggleCustomizeMode?: () => void;
     onAddFriend: () => void;
     onUnfriend: () => void;
     onBlock: () => void;
@@ -50,8 +52,8 @@ const statusCfg = (s: ProfileStatus) =>
 
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, equippedBadge, forumRankNode,
-    isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity, onOpenBadgeSelector,
-    onOpenEditModal, onAddFriend, onUnfriend, onBlock, onUnblock, location,
+    isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile, onSaveIdentity,
+    isCustomizeMode, onToggleCustomizeMode, onAddFriend, onUnfriend, onBlock, onUnblock, location,
     reputationPercent = 100, followersCount = 0, postsCount = 0, communitiesCount = 0, t,
 }: ProfileHeroProps) => {
     const [isEditingName, setIsEditingName] = useState(false);
@@ -233,16 +235,6 @@ export const ProfileHero = ({
                                         <h1 className="text-xl sm:text-2xl font-bold text-[#F0F1F2] tracking-tight">
                                             {identity.name}
                                         </h1>
-                                        {isOwnProfile && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsEditingName(true)}
-                                                className="w-6 h-6 rounded-[6px] bg-black/40 text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-[10px] transition cursor-pointer"
-                                                title={t("profile.editName")}
-                                            >
-                                                <FontAwesomeIcon icon={faPen} />
-                                            </button>
-                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -283,24 +275,21 @@ export const ProfileHero = ({
                     <div className="flex items-center gap-2 shrink-0 self-end">
                         {isOwnProfile ? (
                             <>
-                                {onOpenEditModal && (
+                                {onToggleCustomizeMode && (
                                     <button
                                         type="button"
-                                        onClick={onOpenEditModal}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                        onClick={onToggleCustomizeMode}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-[8px] text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                                            isCustomizeMode
+                                                ? "bg-[#1688E8] text-white ring-2 ring-[#1688E8]/40"
+                                                : "bg-[#14171D] hover:bg-[#1D212A] text-[#1688E8]"
+                                        }`}
+                                        title={isCustomizeMode ? "Thoát chế độ tùy chỉnh" : "Tùy chỉnh giao diện"}
                                     >
-                                        <FontAwesomeIcon icon={faPen} className="text-xs" />
-                                        <span>Chỉnh sửa hồ sơ</span>
+                                        <FontAwesomeIcon icon={faSliders} className="text-xs" />
+                                        <span>{isCustomizeMode ? "Xong" : "Tùy chỉnh"}</span>
                                     </button>
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={onOpenBadgeSelector}
-                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
-                                >
-                                    <FontAwesomeIcon icon={faAward} className="text-[#E5A93D]" />
-                                    <span>{t("profile.changeBadge")}</span>
-                                </button>
                             </>
                         ) : isBlocked ? (
                             <button

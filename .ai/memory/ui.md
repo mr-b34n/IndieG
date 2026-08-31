@@ -100,3 +100,20 @@ Implications:
 2. **Reduced Cognitive Clutter**: No duplicate header tabs under the cover banner, no 8-filter button rows (replaced by 2 quiet dropdowns), and no heavy cards inside cards.
 3. **Typography & Spacing**: Generous line heights, subtle meta lines, muted secondary text, and single-line tags.
 
+---
+
+## Decision: Profile Customization Mode
+
+Status: Active
+
+Date: 2026-08-31
+
+Decision:
+
+Profile info tabs replace scattered per-section edit buttons with a single compact "Tùy chỉnh" icon button (`faSliders`). Toggling Customization Mode activates interactive section controls (Eye/EyeSlash toggles) allowing users to hide or show individual profile sections with persistent state in `localStorage`.
+
+Why:
+
+Multiple scattered edit buttons caused visual clutter. A central customization toggle streamlines section visibility control while keeping avatar and cover background photo editing capabilities intact.
+
+
