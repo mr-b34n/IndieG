@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faArrowDown, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -199,6 +199,7 @@ const CommentItem = ({
     onTogglePinComment,
 }: CommentItemProps) => {
     const [liked, setLiked] = useState(false);
+    const [downvoted, setDownvoted] = useState(false);
     const [likeCount, setLikeCount] = useState(comment.likes);
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
@@ -250,9 +251,34 @@ const CommentItem = ({
             navigate({ to: "/auth" });
             return;
         }
-        if (!requireVerifiedEmail("thích bình luận")) return;
-        setLiked((prev) => !prev);
-        setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+        if (!requireVerifiedEmail("upvote bình luận")) return;
+        if (liked) {
+            setLiked(false);
+            setLikeCount((prev) => Math.max(0, prev - 1));
+        } else {
+            setLiked(true);
+            setLikeCount((prev) => prev + 1);
+            if (downvoted) {
+                setDownvoted(false);
+            }
+        }
+    };
+
+    const toggleDownvote = () => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
+        if (!requireVerifiedEmail("downvote bình luận")) return;
+        if (downvoted) {
+            setDownvoted(false);
+        } else {
+            setDownvoted(true);
+            if (liked) {
+                setLiked(false);
+                setLikeCount((prev) => Math.max(0, prev - 1));
+            }
+        }
     };
 
     const handleReplyClick = () => {
@@ -492,7 +518,7 @@ const CommentItem = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-row items-center gap-5 mt-1 text-xs font-medium text-text-faint">
+                    <div className="flex flex-row items-center gap-4 mt-1 text-xs font-medium text-text-faint">
                         <button 
                             onClick={toggleLike} 
                             className={`flex flex-row items-center gap-1.5 hover:text-primary transition-colors ${liked ? "text-primary font-bold" : ""}`}
@@ -500,6 +526,14 @@ const CommentItem = ({
                         >
                             <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
                             <span>{likeCount > 0 ? likeCount : ""}</span>
+                        </button>
+
+                        <button 
+                            onClick={toggleDownvote} 
+                            className={`flex flex-row items-center gap-1.5 hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold" : ""}`}
+                            title={downvoted ? "Đã downvote" : "Downvote"}
+                        >
+                            <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
                         </button>
 
                         {isCommentsAllowed && (

@@ -6,6 +6,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowUp,
+    faArrowDown,
     faBookmark as faBookmarkSolid,
     faShareNodes,
     faChevronDown,
@@ -74,6 +75,7 @@ export const CommunityHubFeed = ({
 
     // Interactive social states
     const [localLikes, setLocalLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+    const [localDownvotes, setLocalDownvotes] = useState<Record<string, boolean>>({});
     const [localBookmarks, setLocalBookmarks] = useState<Record<string, boolean>>({});
     const [localVotes, setLocalVotes] = useState<Record<string, { votedId: string; options: { id: string; label: string; votes: number }[] }>>({});
     const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
@@ -126,6 +128,26 @@ export const CommunityHubFeed = ({
                 },
             };
         });
+        if (localDownvotes[postId]) {
+            setLocalDownvotes((prev) => ({ ...prev, [postId]: false }));
+        }
+    };
+
+    const handleDownvoteToggle = (e: React.MouseEvent, postId: string, initialLikes: number) => {
+        e.stopPropagation();
+        setLocalDownvotes((prev) => ({
+            ...prev,
+            [postId]: !prev[postId],
+        }));
+        if (localLikes[postId]?.liked) {
+            setLocalLikes((prev) => ({
+                ...prev,
+                [postId]: {
+                    count: Math.max(0, (prev[postId]?.count || initialLikes) - 1),
+                    liked: false,
+                },
+            }));
+        }
     };
 
     const handleBookmarkToggle = (e: React.MouseEvent, postId: string, initialBookmarked = false) => {
@@ -452,23 +474,41 @@ export const CommunityHubFeed = ({
                                             <span className="font-mono text-xs">{post.repliesCount}</span>
                                         </div>
 
-                                        {/* Upvote */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => handleLikeToggle(e, post.id, post.likesCount)}
-                                            className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs ${
-                                                likesState.liked
-                                                    ? "text-primary font-bold"
-                                                    : "text-text-muted hover:text-primary"
-                                            }`}
-                                            title="Upvote"
-                                        >
-                                            <FontAwesomeIcon
-                                                icon={faArrowUp}
-                                                className="text-xs"
-                                            />
-                                            <span className="font-mono text-xs">{likesState.count}</span>
-                                        </button>
+                                        {/* Upvote & Downvote */}
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleLikeToggle(e, post.id, post.likesCount)}
+                                                className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs ${
+                                                    likesState.liked
+                                                        ? "text-primary font-bold"
+                                                        : "text-text-muted hover:text-primary"
+                                                }`}
+                                                title="Upvote"
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faArrowUp}
+                                                    className="text-xs"
+                                                />
+                                                <span className="font-mono text-xs">{likesState.count}</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleDownvoteToggle(e, post.id, post.likesCount)}
+                                                className={`flex items-center transition-colors cursor-pointer text-xs ${
+                                                    localDownvotes[post.id]
+                                                        ? "text-rose-500 font-bold"
+                                                        : "text-text-muted hover:text-rose-500"
+                                                }`}
+                                                title="Downvote"
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faArrowDown}
+                                                    className="text-xs"
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Bookmark & Share */}

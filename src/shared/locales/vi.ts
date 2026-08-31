@@ -756,6 +756,12 @@ export const vi = {
         hideReplies: "Thu gọn câu trả lời",
         loadMoreReplies: "Xem thêm",
         loadingMoreReplies: "Đang tải thêm câu trả lời...",
+        loadMoreComments: "Xem thêm bình luận",
+        loadingMore: "Đang tải bình luận...",
+        emptyTitle: "Chưa có bình luận nào",
+        emptyDesc: "Hãy là người đầu tiên chia sẻ suy nghĩ và bắt đầu cuộc thảo luận!",
+        verifyEmailDesc: "Xác thực email ({email}) để gửi bình luận bài viết này.",
+        verifyOtpPrompt: "Vui lòng nhập mã OTP để bình luận bài viết.",
         options: "Tùy chọn bình luận"
     },
     game: {

@@ -5,6 +5,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowUp,
+    faArrowDown,
     faExpand,
     faXmark,
 } from "@fortawesome/free-solid-svg-icons";
@@ -34,6 +35,7 @@ export const CommunityHubMediaView = ({
     const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
 
     const [likes, setLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+    const [downvotes, setDownvotes] = useState<Record<string, boolean>>({});
 
     const handleLike = (e: React.MouseEvent, item: MediaItem) => {
         e.stopPropagation();
@@ -48,6 +50,26 @@ export const CommunityHubMediaView = ({
                 },
             };
         });
+        if (downvotes[item.id]) {
+            setDownvotes((prev) => ({ ...prev, [item.id]: false }));
+        }
+    };
+
+    const handleDownvote = (e: React.MouseEvent, item: MediaItem) => {
+        e.stopPropagation();
+        setDownvotes((prev) => ({
+            ...prev,
+            [item.id]: !prev[item.id],
+        }));
+        if (likes[item.id]?.liked) {
+            setLikes((prev) => ({
+                ...prev,
+                [item.id]: {
+                    count: Math.max(0, (prev[item.id]?.count || item.likesCount) - 1),
+                    liked: false,
+                },
+            }));
+        }
     };
 
     return (
@@ -103,6 +125,14 @@ export const CommunityHubMediaView = ({
                                         >
                                             <FontAwesomeIcon icon={faArrowUp} className="text-[10px]" />
                                             <span className="font-mono text-[10px]">{likeState.count}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => handleDownvote(e, item)}
+                                            className={`flex items-center cursor-pointer transition-colors ${downvotes[item.id] ? "text-rose-500 font-bold" : "hover:text-rose-500"}`}
+                                            title="Downvote"
+                                        >
+                                            <FontAwesomeIcon icon={faArrowDown} className="text-[10px]" />
                                         </button>
                                         <div className="flex items-center gap-1">
                                             <FontAwesomeIcon icon={faComment} className="text-[10px]" />

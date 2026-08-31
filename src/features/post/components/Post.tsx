@@ -6,6 +6,7 @@ import {
 import {
     faBookmark as faBookmarkSolid,
     faArrowUp,
+    faArrowDown,
     faShare,
     faEllipsis,
     faEyeSlash,
@@ -159,6 +160,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
 
     const [isLiked, setIsLiked] = useState(false);
+    const [isDownvoted, setIsDownvoted] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
 
     const navigate = useNavigate();
@@ -173,21 +175,44 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             navigate({ to: "/auth" });
             return;
         }
-        if (!requireVerifiedEmail("thả tim bài viết")) return;
+        if (!requireVerifiedEmail("upvote bài viết")) return;
 
         const nextLiked = !isLiked;
         setIsLiked(nextLiked);
         setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        if (nextLiked && isDownvoted) {
+            setIsDownvoted(false);
+        }
         likeMutation.mutate(nextLiked);
 
         if (nextLiked) {
             void notificationApi.createNotification({
                 type: "like",
                 referenceId: String(post.id),
-                title: "Lượt thích bài viết",
-                message: `Bạn đã thích bài viết: "${post.title}"`,
+                title: "Upvote bài viết",
+                message: `Bạn đã upvote bài viết: "${post.title}"`,
                 link: `/post/${post.id}`,
             });
+        }
+    };
+
+    const handleDownvote = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
+        if (!requireVerifiedEmail("downvote bài viết")) return;
+
+        if (isDownvoted) {
+            setIsDownvoted(false);
+        } else {
+            setIsDownvoted(true);
+            if (isLiked) {
+                setIsLiked(false);
+                setLikeCount((prev) => Math.max(0, prev - 1));
+                likeMutation.mutate(false);
+            }
         }
     };
 
@@ -484,20 +509,35 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
             {/* Action Row */}
             <div className="flex flex-row items-center gap-4 sm:gap-6 pt-3 mt-1 text-xs text-text-muted">
-                {/* Upvote Button */}
-                <button
-                    onClick={handleLike}
-                    className={`
-                        flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
-                        ${isLiked 
-                            ? "text-primary font-bold" 
-                            : "hover:text-text"}
-                    `}
-                    title={isLiked ? "Đã upvote" : "Upvote"}
-                >
-                    <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
-                    <span>{likeCount}</span>
-                </button>
+                {/* Upvote & Downvote */}
+                <div className="flex flex-row items-center gap-3">
+                    <button
+                        onClick={handleLike}
+                        className={`
+                            flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
+                            ${isLiked 
+                                ? "text-primary font-bold" 
+                                : "hover:text-text"}
+                        `}
+                        title={isLiked ? "Đã upvote" : "Upvote"}
+                    >
+                        <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
+                        <span>{likeCount}</span>
+                    </button>
+
+                    <button
+                        onClick={handleDownvote}
+                        className={`
+                            flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
+                            ${isDownvoted 
+                                ? "text-rose-500 font-bold" 
+                                : "hover:text-text"}
+                        `}
+                        title={isDownvoted ? "Đã downvote" : "Downvote"}
+                    >
+                        <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                    </button>
+                </div>
 
                 {/* Comment Button */}
                 {post.allowComments === false ? (

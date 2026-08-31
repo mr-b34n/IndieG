@@ -756,6 +756,12 @@ export const en = {
         hideReplies: "Hide replies",
         loadMoreReplies: "View more",
         loadingMoreReplies: "Loading more replies...",
+        loadMoreComments: "Load more comments",
+        loadingMore: "Loading comments...",
+        emptyTitle: "No comments yet",
+        emptyDesc: "Be the first to share your thoughts and start the discussion!",
+        verifyEmailDesc: "Verify email ({email}) to comment on this post.",
+        verifyOtpPrompt: "Please enter OTP to comment on this post.",
         options: "Comment options"
     },
     game: {

@@ -5,6 +5,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import {
     faArrowUp,
+    faArrowDown,
     faEye,
     faFire,
     faClock,
@@ -45,6 +46,7 @@ export const CommunityHubDiscussions = ({
 }: CommunityHubDiscussionsProps) => {
     const { t } = useTranslation();
     const [localLikes, setLocalLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+    const [localDownvotes, setLocalDownvotes] = useState<Record<string, boolean>>({});
 
     const handleLikeToggle = (e: React.MouseEvent, threadId: string, initialLikes = 12) => {
         e.stopPropagation();
@@ -59,6 +61,26 @@ export const CommunityHubDiscussions = ({
                 },
             };
         });
+        if (localDownvotes[threadId]) {
+            setLocalDownvotes((prev) => ({ ...prev, [threadId]: false }));
+        }
+    };
+
+    const handleDownvoteToggle = (e: React.MouseEvent, threadId: string, initialLikes = 12) => {
+        e.stopPropagation();
+        setLocalDownvotes((prev) => ({
+            ...prev,
+            [threadId]: !prev[threadId],
+        }));
+        if (localLikes[threadId]?.liked) {
+            setLocalLikes((prev) => ({
+                ...prev,
+                [threadId]: {
+                    count: Math.max(0, (prev[threadId]?.count || initialLikes) - 1),
+                    liked: false,
+                },
+            }));
+        }
     };
 
     const sortOptions = [
@@ -163,6 +185,22 @@ export const CommunityHubDiscussions = ({
                                                 className="text-[11px]"
                                             />
                                             <span className="font-mono text-[11px]">{likesState.count}</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => handleDownvoteToggle(e, thread.id, thread.likesCount)}
+                                            className={`flex items-center transition-colors cursor-pointer text-xs font-semibold ${
+                                                localDownvotes[thread.id]
+                                                    ? "text-rose-500 font-bold"
+                                                    : "text-text-muted hover:text-rose-500"
+                                            }`}
+                                            title="Downvote"
+                                        >
+                                            <FontAwesomeIcon
+                                                icon={faArrowDown}
+                                                className="text-[11px]"
+                                            />
                                         </button>
 
                                         <div className="flex items-center gap-1.5 text-text-muted hover:text-text text-xs">
