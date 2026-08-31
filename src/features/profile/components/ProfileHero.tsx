@@ -275,17 +275,26 @@ export const ProfileHero = ({
                     <div className="flex items-center gap-2 shrink-0 self-end flex-wrap">
                         {isOwnProfile ? (
                             <>
-                                {onOpenEditModal && (
-                                    <button
-                                        type="button"
-                                        onClick={onOpenEditModal}
-                                        className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
-                                        title="Chỉnh sửa thông tin hồ sơ"
-                                    >
-                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
-                                        <span>Sửa hồ sơ</span>
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (isEditingName) {
+                                            setIsEditingName(false);
+                                            onSaveIdentity();
+                                        } else {
+                                            setIsEditingName(true);
+                                        }
+                                    }}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                                        isEditingName
+                                            ? "bg-[#1688E8] text-white"
+                                            : "bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2]"
+                                    }`}
+                                    title="Chỉnh sửa thông tin hồ sơ trực tiếp"
+                                >
+                                    <FontAwesomeIcon icon={isEditingName ? faCheck : faPen} className={isEditingName ? "text-white text-xs" : "text-[#1688E8] text-xs"} />
+                                    <span>{isEditingName ? "Lưu hồ sơ" : "Sửa hồ sơ"}</span>
+                                </button>
                                 {onOpenBadgeSelector && (
                                     <button
                                         type="button"

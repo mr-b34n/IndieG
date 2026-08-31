@@ -149,7 +149,10 @@ export const en = {
         msgRegisterSuccess: "Registration successful! A 6-digit verification code has been sent to your email.",
         msgForgotSuccess: "Recovery link & code sent to {email}. Enter your code below!",
         msgVerifySuccess: "Email verified successfully! Your account is ready.",
-        msgResetSuccess: "Password reset successful! Please log in with your new password."
+        msgResetSuccess: "Password reset successful! Please log in with your new password.",
+        sessionExpiredTitle: "Session Expired",
+        sessionExpiredDesc: "Your session has expired. Please log in again to continue using the system.",
+        sessionExpiredToast: "Session expired. Please log in again."
     },
     feed: {
         createPost: "CREATE POST",

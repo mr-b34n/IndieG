@@ -2,17 +2,16 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash,
-    faPen, faCheck, faAward, faDesktop,
+    faPen, faCheck, faDesktop,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
-import type { Badge, LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
+import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 
 interface OverviewTabProps {
     identity: ProfileIdentity;
     games: LibraryGame[];
-    badges: Badge[];
     reputations: CommunityReputation[];
     activities: RecentActivityItem[];
     gearData: Record<string, string>;
@@ -26,14 +25,12 @@ interface OverviewTabProps {
     onIdentityChange?: (next: Partial<ProfileIdentity>) => void;
     onSaveIdentity?: () => void;
     onOpenBadgeSelector?: () => void;
-    onOpenEditModal?: () => void;
     t?: TranslateFn;
 }
 
 export const OverviewTab = ({
     identity,
     games = [],
-    badges = [],
     reputations = [],
     activities = [],
     gearData = {},
@@ -45,12 +42,9 @@ export const OverviewTab = ({
     onSaveGear,
     onIdentityChange,
     onSaveIdentity,
-    onOpenBadgeSelector,
-    onOpenEditModal,
 }: OverviewTabProps) => {
     const { t } = useTranslation();
     const safeGames = games || [];
-    const [hoveredBadge, setHoveredBadge] = useState<Badge | null>(null);
     const [selectedGameSlug, setSelectedGameSlug] = useState<string>("cs2");
 
     // Inline edit states
@@ -62,16 +56,6 @@ export const OverviewTab = ({
     const featuredGame = safeGames.find((g) => g?.id === selectedGameSlug || g?.isFeatured) || safeGames[0];
     const secondaryGames = safeGames;
     const filledGear = GEAR_CATEGORIES.filter((cat) => gearData[cat.value]?.trim());
-
-    // Achievement tier rarity helper
-    const getBadgeRarityCfg = (rarity?: string) => {
-        switch (rarity?.toLowerCase()) {
-            case "legendary": return { color: "text-[#E5A93D]", bg: "bg-[#E5A93D]/15", label: "Legendary" };
-            case "epic":      return { color: "text-[#F0F1F2]", bg: "bg-[#252C3A]", label: "Epic" };
-            case "rare":      return { color: "text-[#1688E8]", bg: "bg-[#1688E8]/15", label: "Rare" };
-            default:          return { color: "text-[#9A9DA3]", bg: "bg-[#13161C]", label: "Common" };
-        }
-    };
 
     const isSectionHidden = (sectionId: string) => !!hiddenSections[sectionId];
     const isSectionVisible = (sectionId: string) => isCustomizeMode || !isSectionHidden(sectionId);
@@ -91,15 +75,14 @@ export const OverviewTab = ({
                     e.stopPropagation();
                     onToggleHideSection(sectionId);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[10px] font-bold cursor-pointer transition-all ${
+                className={`w-7 h-7 rounded-[6px] flex items-center justify-center cursor-pointer transition-all ${
                     hidden
                         ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30"
                         : "bg-[#1688E8]/20 text-[#1688E8] hover:bg-[#1688E8]/30"
                 }`}
-                title={hidden ? "Hiện mục này" : "Ẩn mục này"}
+                title={hidden ? "Đã ẩn (Click để hiện)" : "Đang hiện (Click để ẩn)"}
             >
-                <FontAwesomeIcon icon={hidden ? faEyeSlash : faEye} className="text-[10px]" />
-                <span>{hidden ? "Đã ẩn" : "Đang hiện"}</span>
+                <FontAwesomeIcon icon={hidden ? faEyeSlash : faEye} className="text-xs" />
             </button>
         );
     };
@@ -120,7 +103,6 @@ export const OverviewTab = ({
     const showPlayerIdentity = isSectionVisible("playerIdentity");
     const showGamingDna = isSectionVisible("gamingDna");
     const showGameMastery = isSectionVisible("gameMastery");
-    const showAchievements = isSectionVisible("achievements");
     const showRecentActivity = isSectionVisible("recentActivity");
     const showCommunityReputation = isSectionVisible("communityReputation");
     const showConnectedAccounts = isSectionVisible("connectedAccounts");
@@ -145,9 +127,7 @@ export const OverviewTab = ({
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                if (onOpenEditModal) {
-                                                    onOpenEditModal();
-                                                } else if (isEditingBio) {
+                                                if (isEditingBio) {
                                                     handleSaveBio();
                                                 } else {
                                                     setTempBio(identity.bio || "");
@@ -414,7 +394,7 @@ export const OverviewTab = ({
                                             <img 
                                                 src={game.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"} 
                                                 alt={game.name || "Game"} 
-                                                className="w-11 h-11 rounded-[6px] object-cover shrink-0"
+                                                className="w-11 h-11 rounded-[6px] object-cover shrink-0" 
                                             />
                                             <div className="flex flex-col min-w-0 flex-1 pl-1">
                                                 <h5 className="font-bold text-xs text-[#F0F1F2] truncate">
@@ -436,132 +416,47 @@ export const OverviewTab = ({
                 </div>
             )}
 
-            {/* ── ROW 3: ACHIEVEMENTS + RECENT ACTIVITY ───────────────────── */}
-            {(showAchievements || showRecentActivity) && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full">
-                    
-                    {/* ACHIEVEMENTS COLLECTION */}
-                    {showAchievements && (
-                        <div className={`${showRecentActivity ? "lg:col-span-5" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative transition-all ${cardCustomStyle("achievements")}`}>
-                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm">🏆</span>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Achievements</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {(isOwnProfile || isCustomizeMode) && onOpenBadgeSelector && (
-                                        <button
-                                            type="button"
-                                            onClick={onOpenBadgeSelector}
-                                            className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#14171D] hover:bg-[#1D212A] text-[#E5A93D] text-[10px] font-bold cursor-pointer transition-all"
-                                            title="Đổi huy hiệu chính"
-                                        >
-                                            <FontAwesomeIcon icon={faAward} className="text-[10px]" />
-                                            <span>Đổi Huy Hiệu</span>
-                                        </button>
-                                    )}
-                                    {renderToggleBtn("achievements")}
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-[#13161C] text-[#9A9DA3]">
-                                        {badges.filter((b) => b.unlocked !== false).length} Unlocked
-                                    </span>
-                                </div>
-                            </div>
-
-                            {badges.length === 0 ? (
-                                <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
-                                    <span>{t("profile.empty.achievementsText")}</span>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-3 gap-2.5">
-                                    {badges.map((b) => {
-                                        const rarityCfg = getBadgeRarityCfg(b.rarity);
-                                        return (
-                                            <div
-                                                key={b.id}
-                                                onMouseEnter={() => setHoveredBadge(b)}
-                                                onMouseLeave={() => setHoveredBadge(null)}
-                                                className={`flex flex-col items-center justify-center p-3 rounded-[8px] transition-all cursor-pointer text-center gap-1.5 ${
-                                                    b.unlocked !== false
-                                                        ? "bg-[#13161C] hover:bg-[#1B1F28]"
-                                                        : "bg-[#0E1014] opacity-35 grayscale"
-                                                }`}
-                                            >
-                                                <div className="w-8 h-8 rounded-[6px] bg-[#181C24] flex items-center justify-center text-sm text-[#E5A93D]">
-                                                    <FontAwesomeIcon icon={b.icon} />
-                                                </div>
-                                                <span className="text-[10px] font-bold text-[#F0F1F2] leading-tight truncate w-full">
-                                                    {b.title}
-                                                </span>
-                                                <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-[4px] ${rarityCfg.bg} ${rarityCfg.color}`}>
-                                                    {rarityCfg.label}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {/* Badge Detail Hover Box */}
-                            {hoveredBadge ? (
-                                <div className="p-3 rounded-[8px] bg-[#13161C] text-xs flex flex-col gap-1 animate-fade-in shadow-md">
-                                    <div className="flex items-center justify-between font-bold text-[#F0F1F2]">
-                                        <span className="text-[#1688E8]">{hoveredBadge.title}</span>
-                                        <span className="text-[10px] text-[#8A8F98]">{hoveredBadge.earnedDate || "Earned 2026"}</span>
-                                    </div>
-                                    <p className="text-[11px] text-[#9A9DA3] leading-snug">{hoveredBadge.desc}</p>
-                                </div>
-                            ) : (
-                                <span className="text-[10px] text-[#8A8F98] italic text-center pt-0.5">
-                                    Rê chuột vào biểu tượng để xem điều kiện đạt được.
-                                </span>
-                            )}
+            {/* ── ROW 3: RECENT ACTIVITY ───────────────────── */}
+            {showRecentActivity && (
+                <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("recentActivity")}`}>
+                    <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm">⚡</span>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
                         </div>
-                    )}
+                        <div className="flex items-center gap-2">
+                            {renderToggleBtn("recentActivity")}
+                            <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
+                        </div>
+                    </div>
 
-                    {/* RECENT ACTIVITY */}
-                    {showRecentActivity && (
-                        <div className={`${showAchievements ? "lg:col-span-7" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("recentActivity")}`}>
-                            <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm">⚡</span>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {renderToggleBtn("recentActivity")}
-                                    <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
-                                </div>
-                            </div>
-
-                            {activities.length === 0 ? (
-                                <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
-                                    <span>{t("profile.empty.activityText")}</span>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-2.5">
-                                    {activities.map((act) => (
-                                        <div key={act.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all">
-                                            <span className="text-base leading-none shrink-0 mt-0.5">{act.icon || "🎮"}</span>
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <h5 className="font-semibold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
-                                                    <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
-                                                </div>
-                                                {act.subtitle && (
-                                                    <p className="text-[11px] text-[#9A9DA3] leading-normal mt-0.5">{act.subtitle}</p>
-                                                )}
-                                                {act.upvotes !== undefined && (
-                                                    <span className="text-[10px] font-bold text-[#24C58A] mt-1">
-                                                        ▲ +{act.upvotes} Upvotes
-                                                    </span>
-                                                )}
-                                            </div>
+                    {activities.length === 0 ? (
+                        <div className="p-6 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center flex flex-col items-center gap-1.5">
+                            <span>{t("profile.empty.activityText")}</span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {activities.map((act) => (
+                                <div key={act.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all">
+                                    <span className="text-base leading-none shrink-0 mt-0.5">{act.icon || "🎮"}</span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h5 className="font-semibold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
+                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
                                         </div>
-                                    ))}
+                                        {act.subtitle && (
+                                            <p className="text-[11px] text-[#9A9DA3] leading-normal mt-0.5">{act.subtitle}</p>
+                                        )}
+                                        {act.upvotes !== undefined && (
+                                            <span className="text-[10px] font-bold text-[#24C58A] mt-1">
+                                                ▲ +{act.upvotes} Upvotes
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
+                            ))}
                         </div>
                     )}
-
                 </div>
             )}
 
@@ -606,7 +501,7 @@ export const OverviewTab = ({
                         </div>
                     )}
 
-                    {/* BATTLESTATION SETUP (Only Setup, Accounts grid hidden) */}
+                    {/* BATTLESTATION SETUP */}
                     {showConnectedAccounts && (
                         <div className={`${showCommunityReputation ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm transition-all ${cardCustomStyle("connectedAccounts")}`}>
                             <div className="flex items-center justify-between pb-1 border-b border-[#181C24]/60">

@@ -111,8 +111,12 @@ Date: 2026-08-31
 Decision:
 
 1. **Customization & Direct Edit Coexistence**: Profile hero and tabs combine the compact "Tùy chỉnh" mode toggle (`faSliders`) for section visibility (Hide/Show saved in `localStorage`) with direct action edit buttons ("Sửa hồ sơ", "Huy hiệu", "Sửa Bio", "Sửa Setup").
-2. **Battlestation Setup Only**: The "Accounts & Battlestation" section was converted to "Battlestation Setup", removing connected account platform badges and providing interactive inline editing for hardware specifications (CPU, GPU, Monitor, Gear, etc.).
-3. **Clean Tab Layout**: Removed top reminder banner below tab list.
-4. **Reputation Default**: Default reputation is set to 0%.
+2. **Minimalist Visibility Toggles**: Section toggle buttons in customize mode use clean icon-only indicators (`faEye` / `faEyeSlash`) without text labels.
+3. **Direct Inline Editing**: User profile edits (display name, username, bio, gaming setup) occur directly inline on the respective cards/hero, removing modal popups and portals.
+4. **Customize Mode Overview-Bound**: Customization mode is restricted exclusively to the Overview tab. Attempting to switch tabs triggers a helpful warning toast to complete/save before leaving.
+5. **No Preset Default Gear**: Battlestation setup starts completely unpopulated by default, allowing users to add their own custom hardware gear.
+6. **Achievements Removal**: The Achievements section and tab were removed in favor of a streamlined Game Mastery and Activity feed.
+7. **Clean Tab Layout**: Adjacent tabs (Game Mastery, Communities, Posts, Friends) use concise, high-density layouts without redundant description blocks.
+8. **Reputation Default**: Default reputation is set to 0%.
 
 

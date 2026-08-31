@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock, faFire, faStar as faStarSolid, faTrophy, faCrown, faGamepad } from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarSolid, faCrown, faGamepad } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame } from "../../types";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
@@ -24,19 +24,16 @@ export const GamesTab = ({ games = [], t: propT }: GamesTabProps) => {
             <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faCrown} className="text-[#E5A93D] text-sm" />
-                    <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Game Mastery Library</h3>
-                        <p className="text-xs text-[#9A9DA3]">Tương tác & thành tựu nổi bật trên các tựa game đã chơi</p>
-                    </div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Game Mastery Library</h3>
                 </div>
-                <span className="text-xs font-semibold text-[#F0F1F2] px-3 py-1 rounded-[6px] bg-[#13161C]">
-                    {games.length} Games Linked
+                <span className="text-xs font-semibold text-[#8A8F98] px-3 py-1 rounded-[6px] bg-[#13161C]">
+                    {games.length} Games
                 </span>
             </div>
 
             {safeGames.length === 0 ? (
-                <div className="w-full bg-[#0A0C0E] rounded-[14px] p-10 text-center flex flex-col items-center justify-center gap-3 shadow-sm border border-[#13161C]">
-                    <div className="w-14 h-14 rounded-full bg-[#13161C] flex items-center justify-center text-[#5F697C] text-2xl">
+                <div className="w-full bg-[#0A0C0E] rounded-[14px] p-10 text-center flex flex-col items-center justify-center gap-3 shadow-sm">
+                    <div className="w-12 h-12 rounded-full bg-[#13161C] flex items-center justify-center text-[#5F697C] text-xl">
                         <FontAwesomeIcon icon={faGamepad} />
                     </div>
                     <h4 className="text-sm font-bold text-[#F0F1F2]">{t("profile.empty.gamesTitle")}</h4>
@@ -46,132 +43,92 @@ export const GamesTab = ({ games = [], t: propT }: GamesTabProps) => {
                 <>
                     {/* Featured Hero Game Mastery */}
                     {featuredGame && (
-                        <div className="w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-sm relative overflow-hidden flex flex-col gap-5">
+                        <div className="w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-sm flex flex-col gap-4">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#13161C] p-4 rounded-[10px]">
                                 <div className="flex items-center gap-4">
                                     <img
                                         src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
                                         alt={featuredGame.name || "Game"}
-                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-[8px] object-cover shrink-0"
+                                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-[8px] object-cover shrink-0"
                                     />
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-0.5">
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-bold text-[#F0F1F2] text-lg sm:text-xl">{featuredGame.name || "Featured Game"}</h4>
+                                            <h4 className="font-bold text-[#F0F1F2] text-base sm:text-lg">{featuredGame.name || "Featured Game"}</h4>
                                             <span className="px-2 py-0.5 rounded-[4px] bg-[#1688E8]/15 text-[#1688E8] text-[10px] font-bold">
-                                                {t("profile.empty.primaryMain")}
+                                                FEATURED
                                             </span>
                                         </div>
-                                        <span className="text-xs font-medium text-[#9A9DA3]">
-                                            {featuredGame.rank || "Unranked"} • Last played: {featuredGame.lastPlayed || "Recently"}
+                                        <span className="text-xs text-[#9A9DA3]">
+                                            {featuredGame.hours} Hours · {featuredGame.ratingScore || "Top Tier"}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-start sm:items-end">
-                                    <span className="text-xl sm:text-2xl font-bold text-[#F0F1F2] tracking-tight flex items-center gap-1.5 font-mono">
-                                        <FontAwesomeIcon icon={faFire} className="text-[#E5A93D] text-base" />
-                                        {featuredGame.hours || 0}h
+                                <div className="flex items-center gap-3">
+                                    <span className="px-2.5 py-1 rounded-[6px] bg-[#181C24] text-[#24C58A] text-xs font-bold">
+                                        {featuredGame.keyStat || "68.4% Winrate"}
                                     </span>
-                                    <span className="text-xs font-medium text-[#9A9DA3]">{t("profile.empty.ratingPremier")} {featuredGame.ratingScore || "18,500"}</span>
                                 </div>
                             </div>
 
-                            {/* Progress Bar */}
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center justify-between text-xs font-medium text-[#F0F1F2]">
-                                    <span className="text-[#9A9DA3]">{t("profile.empty.masteryProgress")}</span>
-                                    <span className="text-[#F0F1F2] font-mono text-xs">{featuredGame.achievements || 0} / {featuredGame.totalAchievements || 100} {t("profile.empty.unlocked")}</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                                        style={{ width: `${Math.round(((featuredGame.achievements || 0) / (featuredGame.totalAchievements || 1)) * 100)}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Skills Rating & Badges */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-                                {featuredGame.skills?.map((s) => (
-                                    <div key={s.name} className="flex items-center justify-between p-3 rounded-[8px] bg-[#13161C]">
-                                        <span className="font-medium text-[#F0F1F2] text-xs">{s.name} Skill</span>
-                                        <div className="flex items-center gap-0.5 text-[#E5A93D] text-xs">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <FontAwesomeIcon
-                                                    key={star}
-                                                    icon={star <= s.stars ? faStarSolid : faStarRegular}
-                                                    className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
-                                                />
-                                            ))}
+                            {/* Skills breakdown */}
+                            {featuredGame.skills && featuredGame.skills.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    {featuredGame.skills.map((s) => (
+                                        <div key={s.name} className="flex items-center justify-between p-2.5 rounded-[8px] bg-[#13161C] text-xs">
+                                            <span className="font-medium text-[#9A9DA3]">{s.name}</span>
+                                            <div className="flex items-center gap-0.5 text-[#E5A93D] text-[11px]">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <FontAwesomeIcon
+                                                        key={star}
+                                                        icon={star <= s.stars ? faStarSolid : faStarRegular}
+                                                        className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
+                                                    />
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                                <div className="flex items-center justify-center gap-2 p-3 rounded-[8px] bg-[#181C24] text-[#24C58A] font-semibold text-xs">
-                                    <FontAwesomeIcon icon={faTrophy} />
-                                    <span>{t("profile.empty.clutchGod")}</span>
+                                    ))}
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
-                    {/* Other Games Grid - Clickable to switch featured */}
-                    <div className="flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#8A8F98]">
-                            <FontAwesomeIcon icon={faGamepad} />
-                            <span>{t("profile.empty.selectGameToInspect")}</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {otherGames.map((game) => {
-                                const isSelected = game.name === featuredGame?.name;
-                                return (
-                                    <button
-                                        key={game.name}
-                                        type="button"
-                                        onClick={() => setSelectedGameName(game.name)}
-                                        className={`relative flex flex-col gap-3 p-4 rounded-[10px] text-left transition-all cursor-pointer ${
-                                            isSelected
-                                                ? "bg-[#192230] shadow-sm"
-                                                : "bg-[#0A0C0E] hover:bg-[#13161C] text-[#9A9DA3]"
-                                        }`}
-                                    >
-                                        {isSelected && (
-                                            <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-[#1688E8] rounded-r-full" />
-                                        )}
-
-                                        <div className="flex items-center justify-between gap-3 pl-1">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <img 
-                                                    src={game.logo} 
-                                                    alt={game.name} 
-                                                    className="w-12 h-12 rounded-[6px] object-cover shrink-0" 
-                                                />
-                                                <div className="flex flex-col min-w-0">
-                                                    <h4 className="font-bold text-sm text-[#F0F1F2] truncate">
-                                                        {game.name}
-                                                    </h4>
-                                                    <span className="inline-block px-2 py-0.5 rounded-[4px] text-[10px] font-semibold w-fit mt-0.5 bg-[#13161C] text-[#9A9DA3]">
-                                                        {game.rank}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <span className="text-sm font-bold font-mono text-[#F0F1F2] shrink-0">
-                                                {game.hours}h
+                    {/* Games Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {otherGames.map((game) => {
+                            const isSelected = game.name === featuredGame?.name;
+                            return (
+                                <button
+                                    key={game.name}
+                                    type="button"
+                                    onClick={() => setSelectedGameName(game.name)}
+                                    className={`relative flex items-center justify-between p-3.5 rounded-[10px] text-left transition-all cursor-pointer ${
+                                        isSelected
+                                            ? "bg-[#192230] shadow-sm ring-1 ring-[#1688E8]/50"
+                                            : "bg-[#0A0C0E] hover:bg-[#13161C] text-[#9A9DA3]"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img 
+                                            src={game.logo} 
+                                            alt={game.name} 
+                                            className="w-11 h-11 rounded-[6px] object-cover shrink-0" 
+                                        />
+                                        <div className="flex flex-col min-w-0">
+                                            <h4 className="font-bold text-xs sm:text-sm text-[#F0F1F2] truncate">
+                                                {game.name}
+                                            </h4>
+                                            <span className="text-[11px] text-[#8A8F98]">
+                                                {game.rank}
                                             </span>
                                         </div>
-
-                                        <div className="flex items-center justify-between text-xs pt-2 bg-[#13161C] p-2 rounded-[6px] text-[#8A8F98]">
-                                            <span className="flex items-center gap-1 font-medium text-[#9A9DA3]">
-                                                <FontAwesomeIcon icon={faClock} className="text-[10px]" />
-                                                {game.lastPlayed}
-                                            </span>
-                                            <span className="font-medium text-[#E5A93D]">
-                                                {game.keyStat}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                                    </div>
+                                    <span className="text-xs font-bold font-mono text-[#F0F1F2] shrink-0 pl-2">
+                                        {game.hours}h
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </>
             )}

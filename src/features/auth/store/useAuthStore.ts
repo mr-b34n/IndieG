@@ -8,6 +8,8 @@ const ACCESS_TOKEN_KEY = "indieg_access_token";
 const REFRESH_TOKEN_KEY = "indieg_refresh_token";
 const AUTH_USER_KEY = "indieg_auth_user";
 
+let hasSetupAuthListeners = false;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     accessToken: null,
@@ -29,6 +31,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initializeAuth: async () => {
         if (typeof window === "undefined") return;
+
+        if (!hasSetupAuthListeners) {
+            hasSetupAuthListeners = true;
+            window.addEventListener("indieg:token-refreshed", (e: Event) => {
+                const customEv = e as CustomEvent<{ accessToken: string }>;
+                if (customEv.detail?.accessToken) {
+                    set({ accessToken: customEv.detail.accessToken });
+                }
+            });
+            window.addEventListener("indieg:session-expired", () => {
+                set({ user: null, accessToken: null, refreshToken: null, mockLogin: false, loading: false });
+            });
+        }
 
         try {
             const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");

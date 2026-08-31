@@ -4,12 +4,10 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft, faGamepad, faRightToBracket } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "@tanstack/react-router";
+import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft, faLock } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { BadgeSelectorModal } from "./BadgeSelectorModal";
-import { EditProfileModal } from "./EditProfileModal";
 import { ProfileHero } from "./ProfileHero";
 import { ProfileTabBar } from "./ProfileTabBar";
 
@@ -22,12 +20,11 @@ import { useProfileIdentity } from "../hooks/useProfileIdentity";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { GamesTab } from "./tabs/GamesTab";
 import { CommunitiesTab } from "./tabs/CommunitiesTab";
-import { AchievementsTab } from "./tabs/AchievementsTab";
 import { PostsTab } from "./tabs/PostsTab";
 import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
-import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
+import { useMyProfileQuery, useUserProfileQuery } from "@/shared/api/useQueries";
 
 interface UserProfileProps {
     userId: string;
@@ -35,7 +32,6 @@ interface UserProfileProps {
 
 export const UserProfile = ({ userId }: UserProfileProps) => {
     const { t, language } = useTranslation();
-    const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
@@ -53,7 +49,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const cleanUsername = userId?.replace(/^@/, "");
     const { data: myProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(isOwnProfile && isLoggedIn);
     const { data: otherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
-    const updateProfileMutation = useUpdateProfileMutation();
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
@@ -62,28 +57,22 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
     const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [warnCustomizeToast, setWarnCustomizeToast] = useState(false);
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
     const [customBg, setCustomBg] = useState<string>(DEFAULT_COVER);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [profileLocation, setProfileLocation] = useState("");
+    const profileLocation = "";
 
     const effectiveCover = identity.coverUrl || customBg;
 
     const isLoading = (isOwnProfile && isMyProfileLoading) || (!isOwnProfile && isOtherProfileLoading);
     const isError = userId === "error" || userId === "not-found";
 
+    // Start with empty gear setup by default (no mock presets)
     const [gearData, setGearData] = useState<Record<string, string>>(() => {
         try {
             const saved = localStorage.getItem(`profile_gear_${userId || "me"}`);
-            return saved ? JSON.parse(saved) : {
-                CPU: "Intel Core i9-14900K",
-                GPU: "NVIDIA RTX 4090 24GB",
-                Monitor: "ZOWIE XL2566K 360Hz",
-                Mouse: "Logitech G Pro X Superlight 2",
-                Keyboard: "Wooting 60HE",
-                Headphones: "Sennheiser HD 660S2",
-            };
+            return saved ? JSON.parse(saved) : {};
         } catch {
             return {};
         }
@@ -101,14 +90,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         });
     };
 
-    const [showBadgeSelector, setShowBadgeSelector] = useState(false);
-    const badges = getBadgeCatalogue(t);
-    const unlockedBadges = badges.filter((b) => b.unlocked);
-    const [selectedBadgeId, setSelectedBadgeId] = useState<string>(unlockedBadges[0]?.id || "");
-    const equippedBadge = badges.find((b) => b.id === selectedBadgeId && b.unlocked);
-
-    // Profile Customization Mode & Section Visibility
-    const [isCustomizeMode, setIsCustomizeMode] = useState(false);
+    // Hidden sections configuration for customize mode
     const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
         try {
             const saved = localStorage.getItem(`profile_hidden_sections_${userId || "me"}`);
@@ -117,6 +99,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             return {};
         }
     });
+
+    const [isCustomizeMode, setIsCustomizeMode] = useState(false);
 
     const handleToggleHideSection = (sectionId: string) => {
         setHiddenSections((prev) => {
@@ -132,118 +116,137 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleToggleCustomizeMode = () => {
         setIsCustomizeMode((prev) => !prev);
-        if (activeTab !== "overview") {
+        if (!isCustomizeMode) {
             setActiveTab("overview");
         }
     };
 
-    const triggerToast = () => {
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 3000);
+    const handleTabChange = (tab: ProfileTab) => {
+        if (isCustomizeMode && tab !== "overview") {
+            setWarnCustomizeToast(true);
+            setTimeout(() => setWarnCustomizeToast(false), 4000);
+            return;
+        }
+        setActiveTab(tab);
     };
 
-    // ---- Guestbook ----
-    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([]);
-    const [newCommentText, setNewCommentText] = useState("");
+    // User's posts
+    const allPosts = usePostsStore((state) => state.posts);
+    const displayPosts = allPosts.filter((p) => {
+        if (isOwnProfile) {
+            return p.author === identity.name || p.author === "Bạn" || p.author === currentAuthor;
+        }
+        return p.author.toLowerCase() === identity.name.toLowerCase() ||
+               p.author.toLowerCase() === cleanUsername?.toLowerCase();
+    });
 
-    const avatarUrl: string =
-        (isOwnProfile && customAvatar ? customAvatar
-        : isOwnProfile && (identity.avatarUrl || user?.avatar_url || (typeof user?.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : undefined))
-            ? (identity.avatarUrl || user?.avatar_url || (user?.user_metadata?.avatar_url as string))
-        : identity.avatarUrl
-            ? identity.avatarUrl
-        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${identity.name}`) || "";
+    // Badges Catalogue
+    const badges = getBadgeCatalogue(t);
+    const [selectedBadgeId, setSelectedBadgeId] = useState<string>("master-strategist");
+    const [showBadgeSelector, setShowBadgeSelector] = useState(false);
 
-    const handleAddGuestbook = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newCommentText.trim()) return;
-        setGuestbookComments((prev) => [
-            { id: `c-${Date.now()}`, author: currentAuthor, avatar: avatarUrl, date: "Vừa xong", content: newCommentText, likes: 0, isLiked: false },
-            ...prev,
-        ]);
-        setNewCommentText("");
-    };
+    const equippedBadge = badges.find((b) => b.id === selectedBadgeId) || badges[0];
 
-    const toggleLikeComment = (id: string) => {
-        setGuestbookComments((prev) => prev.map((c) => (c.id === id ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 } : c)));
-    };
+    // Friends list state
+    const [friendsList, setFriendsList] = useState<FriendEntry[]>([
+        { id: "1", name: "Minh Triết", handle: "@triet_gamer", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80", status: "online", game: "CS2 · Premier 19.2k", isFriend: true },
+        { id: "2", name: "Hoàng Long", handle: "@long_sniper", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80", status: "in-game", game: "Valorant · Radiant", isFriend: true },
+        { id: "3", name: "Thu Hà", handle: "@ha_support", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80", status: "offline", isFriend: true },
+        { id: "4", name: "Đức Anh", handle: "@anh_igl", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80", status: "online", game: "Dota 2 · Immortal", isFriend: true },
+    ]);
 
-    // ---- Friends ----
-    const [friendsList, setFriendsList] = useState<FriendEntry[]>([]);
-    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([]);
+    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([
+        { id: "req-1", name: "Quốc Bảo", handle: "@bao_duelist", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80", mutualFriends: 3, time: "2 giờ trước" },
+        { id: "req-2", name: "Thanh Trúc", handle: "@truc_healer", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80", mutualFriends: 1, time: "1 ngày trước" },
+    ]);
+
+    const [isFriend, setIsFriend] = useState(false);
     const [isBlocked, setIsBlocked] = useState(false);
 
-    const isFriend = friendsList.some((f) => f.name === identity.name && f.isFriend);
-
     const toggleFriend = (name: string) => {
-        setFriendsList((prev) => {
-            const exists = prev.some((f) => f.name === name && f.isFriend);
-            if (!exists) {
-                const inList = prev.some((f) => f.name === name);
-                if (inList) return prev.map((f) => (f.name === name ? { ...f, isFriend: true } : f));
-                return [{ name, game: "Online", logo: null, status: "online", isFriend: true }, ...prev];
-            }
-            return prev.filter((f) => f.name !== name);
-        });
+        setFriendsList((prev) =>
+            prev.map((f) => (f.name === name ? { ...f, isFriend: !f.isFriend } : f))
+        );
+        setIsFriend((prev) => !prev);
         triggerToast();
     };
 
     const blockFriend = (name: string) => {
         setFriendsList((prev) => prev.filter((f) => f.name !== name));
+        setIsBlocked(true);
         triggerToast();
     };
 
     const handleAcceptRequest = (req: FriendRequest) => {
-        setFriendsList((prev) => [{ name: req.name, game: req.game || "Online", logo: req.logo, status: "online", isFriend: true }, ...prev]);
         setFriendRequestsList((prev) => prev.filter((r) => r.id !== req.id));
+        setFriendsList((prev) => [
+            ...prev,
+            { id: req.id, name: req.name, handle: req.handle, avatar: req.avatar, status: "online", isFriend: true },
+        ]);
         triggerToast();
     };
 
     const handleDeclineRequest = (id: string) => {
         setFriendRequestsList((prev) => prev.filter((r) => r.id !== id));
+    };
+
+    // Guestbook comments state
+    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([
+        { id: "gb-1", author: "Minh Triết", handle: "@triet_gamer", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80", content: "+rep clutch king, gánh team cực mạnh tối qua nhé bro 🔥", timeAgo: "1 ngày trước", likes: 5, isLiked: false },
+        { id: "gb-2", author: "Hoàng Long", handle: "@long_sniper", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80", content: "Tối nay 8h làm vài trận Premier tiếp không ông bạn?", timeAgo: "3 ngày trước", likes: 2, isLiked: false },
+    ]);
+    const [newCommentText, setNewCommentText] = useState("");
+
+    const handleAddGuestbook = () => {
+        if (!newCommentText.trim()) return;
+        const newEntry: GuestbookComment = {
+            id: `gb-${Date.now()}`,
+            author: currentAuthor || "Gamer",
+            handle: `@${(currentAuthor || "gamer").toLowerCase().replace(/\s+/g, "_")}`,
+            avatar: avatarUrl,
+            content: newCommentText.trim(),
+            timeAgo: "Vừa xong",
+            likes: 0,
+            isLiked: false,
+        };
+        setGuestbookComments((prev) => [newEntry, ...prev]);
+        setNewCommentText("");
         triggerToast();
     };
 
-    // ---- Posts ----
-    const posts = usePostsStore((state) => state.posts);
-    const userPosts = posts.filter((p) => p.author === identity.name || (isOwnProfile && p.author === currentAuthor));
-    const displayPosts = userPosts;
+    const toggleLikeComment = (id: string) => {
+        setGuestbookComments((prev) =>
+            prev.map((c) => {
+                if (c.id !== id) return c;
+                return {
+                    ...c,
+                    likes: c.isLiked ? c.likes - 1 : c.likes + 1,
+                    isLiked: !c.isLiked,
+                };
+            })
+        );
+    };
 
-    const forumRank = getUserRankConfig(identity.name);
+    const triggerToast = () => {
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 2500);
+    };
+
+    const avatarUrl = isOwnProfile && customAvatar ? customAvatar : identity.avatar;
+
+    const rankCfg = getUserRankConfig(identity.level || 1);
     const forumRankNode = (
-        <span className={`text-xs font-extrabold uppercase px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs ${forumRank.classes}`} title="Danh hiệu kiến thức diễn đàn">
-            <FontAwesomeIcon icon={forumRank.icon} />
-            <span>{getRankLabel(forumRank, language)}</span>
-            {forumRank.isVerifiedExpert && <FontAwesomeIcon icon={faCheckCircle} className="text-sky-400 ml-0.5" title="Được Admin/Dev duyệt" />}
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[6px] text-xs font-bold ${rankCfg.badgeBg} ${rankCfg.color}`}>
+            <FontAwesomeIcon icon={rankCfg.icon} />
+            <span>{getRankLabel(identity.level || 1, language)}</span>
         </span>
     );
 
-    // If not logged in and visiting own profile or /profile/me
-    if (!isLoggedIn && (userId === "me" || isOwnProfile || !userId || userId === "demo")) {
-        return (
-            <div className="w-full max-w-lg mx-auto my-16 p-8 rounded-3xl bg-[#0A0C0E] border border-[#1E232F] flex flex-col items-center text-center gap-4 shadow-xl animate-fade-in">
-                <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl">
-                    <FontAwesomeIcon icon={faGamepad} />
-                </div>
-                <h3 className="text-xl font-extrabold text-[#F0F1F2]">Yêu cầu đăng nhập</h3>
-                <p className="text-sm text-[#9A9DA3]">Vui lòng đăng nhập tài khoản để xem thông tin hồ sơ, huy hiệu và dữ liệu gaming của bạn.</p>
-                <button
-                    type="button"
-                    onClick={() => navigate({ to: "/auth" })}
-                    className="mt-3 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-primary/25"
-                >
-                    <FontAwesomeIcon icon={faRightToBracket} />
-                    <span>Đăng nhập ngay</span>
-                </button>
-            </div>
-        );
-    }
-
     if (isLoading) {
         return (
-            <div className="w-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-4xl text-primary" />
-                <p className="text-sm font-bold text-text-muted">Đang tải thông tin hồ sơ...</p>
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-text-muted">
+                <FontAwesomeIcon icon={faSpinner} className="text-3xl animate-spin text-primary" />
+                <span className="text-sm font-semibold">{t("profile.loadingProfile")}</span>
             </div>
         );
     }
@@ -270,45 +273,17 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 pb-20 animate-fade-in">
             {showSuccessToast && (
-                <div className="fixed top-20 right-6 z-50 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-emerald-400/30 flex items-center gap-3 animate-slide-left">
+                <div className="fixed top-20 right-6 z-50 bg-[#24C58A] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left">
                     <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
                     <span className="font-semibold text-sm">{t("profile.editSuccess")}</span>
                 </div>
             )}
 
-            {showEditModal && (
-                <EditProfileModal
-                    identity={identity}
-                    location={profileLocation}
-                    onSave={async (updated, newLoc) => {
-                        setIdentity((prev: ProfileIdentity) => ({ ...prev, ...updated }));
-                        setProfileLocation(newLoc);
-                        setShowEditModal(false);
-                        triggerToast();
-
-                        try {
-                            await updateProfileMutation.mutateAsync({
-                                name: updated.name,
-                                bio: updated.bio,
-                            });
-                        } catch {
-                            // Optimistic update applied
-                        }
-                    }}
-                    onClose={() => setShowEditModal(false)}
-
-                    onSelectAvatarFile={(file) => {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => ev.target?.result && setRawAvatarSrc(ev.target.result as string);
-                        reader.readAsDataURL(file);
-                    }}
-                    onSelectCoverFile={(file) => {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => ev.target?.result && setRawCoverSrc(ev.target.result as string);
-                        reader.readAsDataURL(file);
-                    }}
-                    t={t}
-                />
+            {warnCustomizeToast && (
+                <div className="fixed top-20 right-6 z-50 bg-[#E5A93D] text-black px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-bold text-sm">
+                    <FontAwesomeIcon icon={faLock} className="text-base" />
+                    <span>Đang ở chế độ tùy chỉnh. Hãy nhấn "Xong" ở tab Tổng quan để lưu trước khi chuyển tab!</span>
+                </div>
             )}
 
             {showBadgeSelector && (
@@ -344,7 +319,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 }}
                 onSaveIdentity={triggerToast}
                 onOpenBadgeSelector={() => setShowBadgeSelector(true)}
-                onOpenEditModal={() => setShowEditModal(true)}
                 isCustomizeMode={isCustomizeMode}
                 onToggleCustomizeMode={handleToggleCustomizeMode}
                 onAddFriend={() => toggleFriend(identity.name)}
@@ -382,9 +356,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             {/* Profile Tab Navigation Bar */}
             <ProfileTabBar
                 activeTab={activeTab}
-                onChange={setActiveTab}
+                onChange={handleTabChange}
                 friendsCount={friendsList.length}
                 showBookmarks={showBookmarks}
+                isCustomizeMode={isCustomizeMode}
                 t={t}
             />
 
@@ -394,7 +369,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     <OverviewTab
                         identity={identity}
                         games={LIBRARY_GAMES}
-                        badges={badges}
                         reputations={COMMUNITY_REPUTATIONS}
                         activities={RECENT_ACTIVITIES}
                         gearData={gearData}
@@ -408,7 +382,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
                         onSaveIdentity={triggerToast}
                         onOpenBadgeSelector={() => setShowBadgeSelector(true)}
-                        onOpenEditModal={() => setShowEditModal(true)}
                         t={t}
                     />
                 )}
@@ -416,8 +389,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 {activeTab === "games" && <GamesTab games={LIBRARY_GAMES} t={t} />}
 
                 {activeTab === "communities" && <CommunitiesTab reputations={COMMUNITY_REPUTATIONS} t={t} />}
-
-                {activeTab === "achievements" && <AchievementsTab badges={badges} t={t} />}
 
                 {activeTab === "posts" && <PostsTab posts={displayPosts} t={t} />}
 

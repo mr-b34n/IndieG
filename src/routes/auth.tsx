@@ -63,8 +63,19 @@ const AuthPage = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
     const [isPasswordMatched, setIsPasswordMatched] = useState(true);
 
-    // Error & Success Feedback states
+    // Error, Session Expired & Success Feedback states
     const [serverError, setServerError] = useState<string | null>(null);
+    const [sessionExpired] = useState<boolean>(() => {
+        if (typeof window === "undefined") return false;
+        const hasExpiredFlag =
+            sessionStorage.getItem("indieg_session_expired") === "1" ||
+            new URLSearchParams(window.location.search).get("expired") === "1";
+        if (hasExpiredFlag) {
+            sessionStorage.removeItem("indieg_session_expired");
+            return true;
+        }
+        return false;
+    });
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     // Form inputs
@@ -565,6 +576,17 @@ const AuthPage = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Alert Banner: Session Expired */}
+                            {sessionExpired && (
+                                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-semibold flex items-start gap-2.5 animate-fade-in">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-sm shrink-0 mt-0.5" />
+                                    <div className="flex flex-col gap-0.5">
+                                        <p className="font-bold">{t('auth.sessionExpiredTitle', { defaultValue: 'Phiên đăng nhập đã hết hạn' })}</p>
+                                        <p className="text-[11px] opacity-90">{t('auth.sessionExpiredDesc', { defaultValue: 'Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.' })}</p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Alert Banner: Error State */}
                             {serverError && (

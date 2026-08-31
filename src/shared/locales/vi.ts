@@ -149,7 +149,10 @@ export const vi = {
         msgRegisterSuccess: "Đăng ký thành công! Đã gửi mã xác nhận 6 chữ số tới email của bạn.",
         msgForgotSuccess: "Link & mã khôi phục mật khẩu đã gửi tới {email}. Hãy nhập mã bên dưới!",
         msgVerifySuccess: "Xác thực email thành công! Tài khoản của bạn đã sẵn sàng.",
-        msgResetSuccess: "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới."
+        msgResetSuccess: "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.",
+        sessionExpiredTitle: "Phiên đăng nhập đã hết hạn",
+        sessionExpiredDesc: "Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.",
+        sessionExpiredToast: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
     },
     feed: {
         createPost: "TẠO BÀI VIẾT",
