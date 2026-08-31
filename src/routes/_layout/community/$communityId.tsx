@@ -595,6 +595,8 @@ export function CommunityDetailPage() {
                     {/* VIEW SWITCHER: Display content according to selected destination */}
                     {activeNav === "members" || activeNav === "leaderboard" ? (
                         <CommunityHubMembers
+                            communityId={community.id}
+                            communityName={community.name}
                             contributors={contributorsData}
                             isVi={isVi}
                         />
@@ -626,6 +628,8 @@ export function CommunityDetailPage() {
                             sortMode={sortMode}
                             onSortChange={(mode) => setSortMode(mode)}
                             onPostClick={(postId) => navigate({ to: `/post/${postId}` as string })}
+                            communityId={community.id}
+                            communityName={community.name}
                             isVi={isVi}
                         />
                     )}

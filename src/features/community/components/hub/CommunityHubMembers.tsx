@@ -8,6 +8,8 @@ import {
     faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import type { ContributorItem } from "./CommunityHubRightRail";
+import { useCommunityMembersQuery } from "@/shared/api/useQueries";
+import type { CommunityMemberDto } from "@/shared/api/types";
 
 interface MemberItem {
     id: string;
@@ -21,18 +23,24 @@ interface MemberItem {
 }
 
 interface CommunityHubMembersProps {
+    communityId?: string;
     communityName: string;
     contributors: ContributorItem[];
     isVi: boolean;
 }
 
 export const CommunityHubMembers = ({
+    communityId,
     contributors,
     isVi,
 }: CommunityHubMembersProps) => {
     const [subTab, setSubTab] = useState<"all" | "staff" | "leaderboard">("all");
-
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Query API endpoint GET /communities/{communityId}/members?keyword=...
+    const { data: apiMembersData } = useCommunityMembersQuery(communityId || "", {
+        keyword: searchQuery,
+    });
 
     // Enhanced sample members list based on contributors
     const sampleMembers: MemberItem[] = [
@@ -88,7 +96,31 @@ export const CommunityHubMembers = ({
         },
     ];
 
-    const filteredMembers = sampleMembers.filter((m) => {
+    const apiMappedMembers: MemberItem[] = (() => {
+        if (!apiMembersData) return [];
+        const items: CommunityMemberDto[] = Array.isArray(apiMembersData)
+            ? apiMembersData
+            : apiMembersData.items || [];
+        return items.map((m) => {
+            let roleLabel: MemberItem["role"] = "Member";
+            if (m.role === "owner") roleLabel = "Admin";
+            else if (m.role === "moderator") roleLabel = "Moderator";
+            return {
+                id: m.userId,
+                name: m.user?.name || m.userId,
+                handle: m.user?.username ? `@${m.user.username}` : `@${m.userId}`,
+                avatar: m.user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+                role: roleLabel,
+                points: 100,
+                joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "2025",
+                isOnline: true,
+            };
+        });
+    })();
+
+    const displayMembers = apiMappedMembers.length > 0 ? apiMappedMembers : sampleMembers;
+
+    const filteredMembers = displayMembers.filter((m) => {
         const matchesSearch =
             m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.handle.toLowerCase().includes(searchQuery.toLowerCase());

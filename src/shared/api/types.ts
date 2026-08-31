@@ -105,6 +105,34 @@ export interface UpdateCommunityDto {
     featured?: boolean;
 }
 
+export interface CommunityMemberDto {
+    communityId: string;
+    userId: string;
+    role: "member" | "moderator" | "owner";
+    status: "active" | "pending" | "muted" | "banned" | "left";
+    mutedUntil?: string;
+    joinedAt: string;
+    user?: {
+        id?: string;
+        name?: string;
+        username?: string;
+        avatar?: string;
+    };
+}
+
+export interface GetCommunityMembersParams {
+    keyword?: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface CommunityMembersResponseDto {
+    items: CommunityMemberDto[];
+    total?: number;
+    page?: number;
+    limit?: number;
+}
+
 export interface PostDto {
     id: string;
     authorId: string;

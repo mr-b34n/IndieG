@@ -3,6 +3,7 @@ import {
     postsApi,
     profilesApi,
     communitiesApi,
+    communityMembersApi,
     commentsApi,
     reportsApi,
     authApi,
@@ -11,6 +12,7 @@ import {
 import type {
     CreateCommunityDto,
     UpdateCommunityDto,
+    GetCommunityMembersParams,
     CreatePostDto,
     UpdatePostDto,
     CreateCommentDto,
@@ -36,6 +38,7 @@ export const QUERY_KEYS = {
     communities: (params?: Record<string, unknown>) => ["communities", params || {}] as const,
     communityById: (id: string) => ["communities", "detail", id] as const,
     communitySearch: (params?: Record<string, unknown>) => ["communities", "search", params || {}] as const,
+    communityMembers: (communityId: string, params?: Record<string, unknown>) => ["communities", communityId, "members", params || {}] as const,
 
     // Comments
     comments: (postId: string, params?: Record<string, unknown>) => ["comments", postId, params || {}] as const,
@@ -202,6 +205,36 @@ export function useDeleteCommunityMutation() {
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(id) });
             void queryClient.invalidateQueries({ queryKey: ["communities"] });
         },
+    });
+}
+
+export function useJoinCommunityMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (communityId: string) => communitiesApi.join(communityId),
+        onSuccess: (_data, communityId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(communityId) });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
+        },
+    });
+}
+
+export function useLeaveCommunityMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (communityId: string) => communitiesApi.leave(communityId),
+        onSuccess: (_data, communityId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(communityId) });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
+        },
+    });
+}
+
+export function useCommunityMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityMembers(communityId, params as Record<string, unknown>),
+        queryFn: () => communityMembersApi.findByQuery(communityId, params),
+        enabled: Boolean(communityId),
     });
 }
 

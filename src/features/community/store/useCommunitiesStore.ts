@@ -52,12 +52,12 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     },
 
     toggleJoin: (id) => {
-        const targetComm = get().communities.find((c) => c.id === id);
+        const targetComm = get().communities.find((c) => String(c.id) === String(id));
         const newJoinedState = targetComm ? !targetComm.joined : true;
 
         set((state) => ({
             communities: state.communities.map((c) =>
-                c.id === id
+                String(c.id) === String(id)
                     ? {
                           ...c,
                           joined: !c.joined,
@@ -66,6 +66,19 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
                     : c
             ),
         }));
+
+        // Trigger backend join/leave API (POST /communities/{id}/members or PATCH /communities/{id}/members)
+        if (typeof id === "string" && !id.startsWith("comm_")) {
+            if (newJoinedState) {
+                communitiesApi.join(id).catch(() => {
+                    // Handled gracefully in offline or dev preview
+                });
+            } else {
+                communitiesApi.leave(id).catch(() => {
+                    // Handled gracefully in offline or dev preview
+                });
+            }
+        }
 
         if (targetComm) {
             void notificationApi.createNotification({

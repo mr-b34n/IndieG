@@ -13,6 +13,9 @@ import {
     type CommunityDto,
     type CreateCommunityDto,
     type UpdateCommunityDto,
+    type CommunityMemberDto,
+    type GetCommunityMembersParams,
+    type CommunityMembersResponseDto,
     type PostDto,
     type CreatePostDto,
     type UpdatePostDto,
@@ -343,6 +346,59 @@ export const communitiesApi = {
     delete: (id: string) =>
         apiRequest<{ message?: string }>(`/communities/${id}`, {
             method: "DELETE",
+        }),
+
+    /** Join community - POST /communities/{communityId}/members */
+    join: (communityId: string) =>
+        apiRequest<CommunityMemberDto>(`/communities/${communityId}/members`, {
+            method: "POST",
+        }),
+
+    /** Leave community - PATCH /communities/{communityId}/members */
+    leave: (communityId: string) =>
+        apiRequest<{ message?: string } | void>(`/communities/${communityId}/members`, {
+            method: "PATCH",
+        }),
+
+    /** Get/Search community members - GET /communities/{communityId}/members */
+    getMembers: (communityId: string, params?: GetCommunityMembersParams) => {
+        const query = new URLSearchParams();
+        if (params?.keyword !== undefined) query.set("keyword", params.keyword);
+        if (params?.page !== undefined) query.set("page", String(params.page));
+        if (params?.limit !== undefined) query.set("limit", String(params.limit));
+        const qs = query.toString() ? `?${query.toString()}` : "";
+        return apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${communityId}/members${qs}`
+        );
+    },
+};
+
+/**
+ * 4.1. Community Member Services (CommunityMemberController)
+ */
+export const communityMembersApi = {
+    /** Find members by query - GET /communities/{communityId}/members */
+    findByQuery: (communityId: string, params?: GetCommunityMembersParams) => {
+        const query = new URLSearchParams();
+        if (params?.keyword !== undefined) query.set("keyword", params.keyword);
+        if (params?.page !== undefined) query.set("page", String(params.page));
+        if (params?.limit !== undefined) query.set("limit", String(params.limit));
+        const qs = query.toString() ? `?${query.toString()}` : "";
+        return apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${communityId}/members${qs}`
+        );
+    },
+
+    /** Join a community - POST /communities/{communityId}/members */
+    join: (communityId: string) =>
+        apiRequest<CommunityMemberDto>(`/communities/${communityId}/members`, {
+            method: "POST",
+        }),
+
+    /** Leave a community - PATCH /communities/{communityId}/members */
+    leave: (communityId: string) =>
+        apiRequest<{ message?: string } | void>(`/communities/${communityId}/members`, {
+            method: "PATCH",
         }),
 };
 
