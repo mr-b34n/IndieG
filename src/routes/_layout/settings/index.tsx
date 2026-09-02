@@ -767,22 +767,44 @@ export function SettingsPage() {
 
                                 <div className="divide-y divide-border/40 border border-border/60 bg-surface rounded-md overflow-hidden">
                                     {sessionsLoading && <div className="p-3 text-xs text-text-muted">{t('common.loading', { defaultValue: 'Đang tải...' })}</div>}
-                                    {!sessionsLoading && remoteSessions?.map((s) => (
-                                        <div key={s.id} className="p-3 flex items-center justify-between gap-3 text-xs">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <FontAwesomeIcon icon={s.userAgent?.toLowerCase().includes("mobile") ? faMobileScreen : faLaptop} className="text-primary text-sm shrink-0" />
-                                                <div className="min-w-0">
-                                                    <div className="font-bold text-text flex items-center gap-1.5 truncate">
-                                                        <span>{s.userAgent?.substring(0, 30) || "Unknown Device"}</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-text-muted truncate">
-                                                        IP: {s.ip_address} • 
-                                                        {new Date(s.created_at).toLocaleString()}
+                                    {!sessionsLoading && remoteSessions?.map((s) => {
+                                        const isRevoked = Boolean(s.revoked_at);
+                                        return (
+                                            <div key={s.id} className="p-3 flex items-center justify-between gap-3 text-xs">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <FontAwesomeIcon icon={s.userAgent?.toLowerCase().includes("mobile") ? faMobileScreen : faLaptop} className="text-primary text-sm shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <div className="font-bold text-text flex items-center gap-1.5 truncate">
+                                                            <span>{s.userAgent?.substring(0, 30) || "Unknown Device"}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-text-muted truncate">
+                                                            IP: {s.ip_address} • 
+                                                            {new Date(s.created_at).toLocaleString()}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {isRevoked ? (
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                                                            {t('settings.account.revokedSession', { defaultValue: 'Đã thu hồi' })}
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                                                                {t('settings.account.runningSession', { defaultValue: 'Đang hoạt động' })}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer"
+                                                            >
+                                                                {t('settings.account.revokeSession', { defaultValue: 'Thu hồi' })}
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     {!sessionsLoading && remoteSessions?.length === 0 && (
                                         <div className="p-3 text-xs text-text-muted text-center">{t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}</div>
                                     )}
