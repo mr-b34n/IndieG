@@ -721,7 +721,11 @@ const CommentItem = ({
                                             className="rotate-180 text-[10px] text-text-faint group-hover/expand:text-primary transition-transform"
                                         />
                                     )}
-                                    <span>{t('comment.viewMoreReplies')}</span>
+                                    <span>
+                                        {comment.replyCount && comment.replyCount > 0
+                                            ? (t('comment.viewReplies', { count: comment.replyCount }) || `Xem ${comment.replyCount} câu trả lời`)
+                                            : (t('comment.viewMoreReplies') || "Xem câu trả lời")}
+                                    </span>
                                 </button>
                             ) : (
                                 <>
@@ -788,11 +792,11 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
     const authorObj = typeof c.author === "object" && c.author !== null ? c.author : null;
     const authorName = authorObj
         ? (authorObj.name || authorObj.username || "Thành viên")
-        : (typeof c.author === "string" && c.author.trim() ? c.author : (c.authorId ? `User_${c.authorId.slice(0, 5)}` : "Thành viên"));
+        : (typeof c.author === "string" && c.author.trim() ? c.author : (c.authorId ? `User_${c.authorId.slice(-4)}` : "Thành viên"));
 
     const fallbackAvatar = authorObj?.username
         ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorObj.username)}`
-        : avatarUser;
+        : (c.authorId ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.authorId)}` : avatarUser);
 
     const authorAvatar = authorObj
         ? (authorObj.avatarUrl || authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || fallbackAvatar)
@@ -809,14 +813,14 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
     const mappedReplies = childList.map(mapCommentEntityToCommentData);
 
     let parsedReplyCount = 0;
-    if (Array.isArray(c.children)) {
-        parsedReplyCount = c.children.length;
+    if (Array.isArray(c.replyCount)) {
+        parsedReplyCount = c.replyCount.length;
     } else if (typeof c.replyCount === "number") {
         parsedReplyCount = c.replyCount;
     } else if (typeof c.replyCount === "string") {
         parsedReplyCount = parseInt(c.replyCount, 10) || 0;
-    } else if (Array.isArray(c.replyCount)) {
-        parsedReplyCount = c.replyCount.length;
+    } else if (Array.isArray(c.children)) {
+        parsedReplyCount = c.children.length;
     } else if (typeof (c as { repliesCount?: number }).repliesCount === "number") {
         parsedReplyCount = (c as { repliesCount?: number }).repliesCount!;
     } else if (mappedReplies.length > 0) {
@@ -918,10 +922,12 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         newReply: CommentData
     ): CommentData[] => {
         return list.map((cmt) => {
-            if (cmt.id === parentId) {
+            if (String(cmt.id) === String(parentId)) {
+                const existingReplies = cmt.replies || [];
                 return {
                     ...cmt,
-                    replies: [...(cmt.replies || []), newReply],
+                    replyCount: (cmt.replyCount ?? existingReplies.length) + 1,
+                    replies: [...existingReplies, newReply],
                 };
             }
             if (cmt.replies && cmt.replies.length > 0) {
