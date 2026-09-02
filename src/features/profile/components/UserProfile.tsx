@@ -329,11 +329,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const avatarUrl = isOwnProfile && customAvatar ? customAvatar : identity.avatar;
 
-    const rankCfg = getUserRankConfig(identity.level || 1);
+    const rankCfg = getUserRankConfig(identity.rank || identity.username || identity.name);
     const forumRankNode = (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[6px] text-xs font-bold ${rankCfg.badgeBg} ${rankCfg.color}`}>
             <FontAwesomeIcon icon={rankCfg.icon} />
-            <span>{getRankLabel(identity.level || 1, language)}</span>
+            <span>{getRankLabel(rankCfg, language)}</span>
         </span>
     );
 

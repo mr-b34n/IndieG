@@ -11,9 +11,7 @@ import {
     faEyeSlash,
     faPaperclip,
     faXmark,
-    faLock,
-    faTriangleExclamation,
-    faShieldHalved
+    faLock
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "@tanstack/react-router"
@@ -329,7 +327,6 @@ export const CreatePostBox = ({
     const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
     const customAvatar = useAuthStore((s) => s.customAvatar);
-    const openVerifyModal = useAuthStore((s) => s.openVerifyModal);
     const displayName = user?.name || user?.username || getCurrentAuthor();
     const avatarUrl =
         user?.avatarUrl ||
@@ -557,35 +554,6 @@ export const CreatePostBox = ({
                     className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
                 >
                     {t('authenticate.login') || "Đăng Nhập"} / {t('authenticate.register') || "Đăng Ký"}
-                </button>
-            </div>
-        );
-    }
-
-    if (user.isVerified === false) {
-        return (
-            <div id="create-post" className="w-full my-1 p-4 rounded-xl bg-surface border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0 font-bold">
-                        <FontAwesomeIcon icon={faTriangleExclamation} />
-                    </div>
-                    <div>
-                        <h4 className="text-xs font-black uppercase tracking-wider text-amber-500 flex items-center gap-1.5 justify-center sm:justify-start">
-                            <span>{t('feed.unverifiedEmailTitle') || "Tài khoản chưa xác thực Email"}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">{t('feed.limitedBadge') || "LIMITED"}</span>
-                        </h4>
-                        <p className="text-xs text-text-muted mt-0.5">
-                            {t('feed.unverifiedEmailDesc', { email: user.email }) || `Kích hoạt email ${user.email} để mở khóa tính năng tạo bài viết, bình luận và tạo đội nhóm.`}
-                        </p>
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => openVerifyModal(t('feed.verifyOtpPostPrompt') || "Vui lòng nhập mã OTP để kích hoạt đầy đủ quyền tạo bài viết.")}
-                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition-all shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5"
-                >
-                    <FontAwesomeIcon icon={faShieldHalved} />
-                    <span>{t('feed.verifyNow') || "Xác Thực Ngay"}</span>
                 </button>
             </div>
         );

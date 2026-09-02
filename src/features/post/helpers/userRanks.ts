@@ -155,11 +155,21 @@ const ALL_RANKS_ORDER: UserRank[] = [
     "immortal",
 ];
 
-export const getUserRank = (usernameInput?: string | { name?: string; username?: string; rank?: string } | null): UserRank => {
-    if (!usernameInput) return "rookie";
-    const rankCandidate = typeof usernameInput === "object" && usernameInput !== null ? (usernameInput.rank || usernameInput.name || usernameInput.username || "") : usernameInput;
-    if (!rankCandidate) return "rookie";
-    const cleanName = rankCandidate.replace(/^@/, "").trim();
+export const getUserRank = (usernameInput?: unknown): UserRank => {
+    if (usernameInput === undefined || usernameInput === null) return "rookie";
+    let candidateStr: string;
+    if (typeof usernameInput === "string") {
+        candidateStr = usernameInput;
+    } else if (typeof usernameInput === "number") {
+        candidateStr = String(usernameInput);
+    } else if (typeof usernameInput === "object") {
+        const obj = usernameInput as { rank?: unknown; username?: unknown; name?: unknown; level?: unknown };
+        candidateStr = String(obj.rank || obj.username || obj.name || obj.level || "");
+    } else {
+        candidateStr = String(usernameInput);
+    }
+    if (!candidateStr || candidateStr === "undefined" || candidateStr === "null") return "rookie";
+    const cleanName = candidateStr.replace(/^@/, "").trim();
     if (RANK_CONFIG[cleanName.toLowerCase() as UserRank]) {
         return cleanName.toLowerCase() as UserRank;
     }
@@ -180,16 +190,17 @@ export const getUserRank = (usernameInput?: string | { name?: string; username?:
     return ALL_RANKS_ORDER[idx];
 };
 
-export const getUserRankConfig = (usernameInput?: string | { name?: string; username?: string } | null): UserRankConfig => {
+export const getUserRankConfig = (usernameInput?: unknown): UserRankConfig => {
     const rankKey = getUserRank(usernameInput);
     return RANK_CONFIG[rankKey] || RANK_CONFIG.rookie;
 };
 
-export const getRankLabel = (rank: UserRankConfig, tOrLang?: string | ((key: string) => string)): string => {
+export const getRankLabel = (rank: UserRankConfig | UserRank | string | number | unknown, tOrLang?: string | ((key: string) => string)): string => {
+    const config = typeof rank === 'object' && rank !== null && 'id' in rank ? (rank as UserRankConfig) : getUserRankConfig(rank);
     if (typeof tOrLang === 'function') {
-        return tOrLang(`ranks.${rank.id}`);
+        return tOrLang(`ranks.${config.id}`);
     }
-    if (tOrLang === 'en') return rank.labelEn;
-    return rank.labelVi || rank.label;
+    if (tOrLang === 'en') return config.labelEn;
+    return config.labelVi || config.label;
 };
 
