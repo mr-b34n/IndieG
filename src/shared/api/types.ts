@@ -226,6 +226,29 @@ export interface CommentEntity {
     image?: string;
 }
 
+export interface RootCommentsMeta {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface RootCommentsResponse {
+    data: CommentEntity[];
+    meta: RootCommentsMeta;
+}
+
+export interface ReplyCommentsMeta {
+    limit: number;
+    hasNextPage: boolean;
+    nextCursor: string | null;
+}
+
+export interface ReplyCommentsResponse {
+    data: CommentEntity[];
+    meta: ReplyCommentsMeta;
+}
+
 export interface CreateCommentDto {
     postId: string;
     parentId?: string | null;

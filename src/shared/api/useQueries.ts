@@ -252,11 +252,11 @@ export function useCommentsQuery(postId: string, page = 1, limit = 6) {
 
 export function useReplyCommentsQuery(parentId: string | number, cursor?: string, limit = 5, enabled = false) {
     const parentIdStr = String(parentId ?? "").trim();
-    const isNumericString = parentIdStr.length > 0 && /^\d+$/.test(parentIdStr);
+    const isValidParentId = parentIdStr.length > 0 && !parentIdStr.startsWith("sub-") && parentIdStr !== "undefined" && parentIdStr !== "null";
     return useQuery({
         queryKey: [...QUERY_KEYS.commentReplies(parentIdStr), cursor, limit],
         queryFn: () => commentsApi.getReplyComments({ parentId: parentIdStr, cursor, limit }),
-        enabled: isNumericString && enabled,
+        enabled: isValidParentId && enabled,
         placeholderData: keepPreviousData,
     });
 }

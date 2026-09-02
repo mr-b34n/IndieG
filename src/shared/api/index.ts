@@ -20,6 +20,8 @@ import {
     type CreatePostDto,
     type UpdatePostDto,
     type CommentEntity,
+    type RootCommentsResponse,
+    type ReplyCommentsResponse,
     type CreateCommentDto,
     type ReportDto,
     type CreateReportDto,
@@ -420,12 +422,14 @@ export const postsApi = {
  * 6. Comment Services (/comments/*)
  */
 export const commentsApi = {
-    /** Get root comments for a post - GET /comments?postId=... (max limit 50) */
-    getRootComments: (params: { postId: string; page?: number; limit?: number }) =>
-        apiRequest<CommentEntity[] | { items: CommentEntity[]; total?: number }>("/comments", {
+    /** Get root comments for a post - GET /comments/post/{postId}/root (max limit 50) */
+    getRootComments: (params: { postId: string; page?: number; limit?: number }) => {
+        const { postId, page, limit } = params;
+        return apiRequest<RootCommentsResponse>(`/comments/post/${encodeURIComponent(postId)}/root`, {
             method: "GET",
-            params: sanitizePaginationParams(params, 50),
-        }),
+            params: sanitizePaginationParams({ page, limit }, 50),
+        });
+    },
 
     /** Create a comment - POST /comments */
     create: (data: CreateCommentDto) =>
@@ -456,17 +460,17 @@ export const commentsApi = {
             method: "DELETE",
         }),
 
-    /** Get replies - GET /comments/reply-comments (max limit 5) */
+    /** Get replies - GET /comments/replies (max limit 50) */
     getReplyComments: (params: { parentId: string | number; cursor?: string; limit?: number }) => {
         const parentIdStr = String(params.parentId ?? "").trim();
-        return apiRequest<CommentEntity[] | { items: CommentEntity[] }>("/comments/reply-comments", {
+        return apiRequest<ReplyCommentsResponse>("/comments/replies", {
             method: "GET",
             params: sanitizePaginationParams(
                 {
                     ...params,
                     parentId: parentIdStr,
                 },
-                5
+                50
             ),
         });
     },
