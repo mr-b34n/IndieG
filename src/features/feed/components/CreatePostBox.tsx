@@ -22,7 +22,7 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 import { createAttachmentFromFile, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
 import { useCommunitiesStore, type CommunityData } from "@/features/community";
-import { AttachmentPicker, useDraftsStore } from "@/features/post";
+import { AttachmentPicker, useDraftsStore, getCurrentAuthor } from "@/features/post";
 import { type CreatePostPayload } from "../types";
 export type { CreatePostPayload };
 import { HASHTAG_REGEX, MAX_TEXTAREA_HEIGHT } from "../constants";
@@ -328,8 +328,15 @@ export const CreatePostBox = ({
     const { t } = useTranslation();
     const navigate = useNavigate();
     const user = useAuthStore((s) => s.user);
+    const customAvatar = useAuthStore((s) => s.customAvatar);
     const openVerifyModal = useAuthStore((s) => s.openVerifyModal);
-    const avatarUrl = user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+    const displayName = user?.name || user?.username || getCurrentAuthor();
+    const avatarUrl =
+        user?.avatarUrl ||
+        user?.avatar_url ||
+        customAvatar ||
+        (user?.user_metadata?.avatar_url as string | undefined) ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
 
     const { communities } = useCommunitiesStore();
     const joinedCommunities = useMemo(() => {

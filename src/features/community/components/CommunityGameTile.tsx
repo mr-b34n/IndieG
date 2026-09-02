@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCheck,
-    faArrowRight,
     faShieldHalved,
     faLock,
 } from "@fortawesome/free-solid-svg-icons";
@@ -100,8 +99,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     {/* Hover Quick Cue */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                         <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5 bg-black/75 px-3 py-1 rounded-[4px] border border-white/20">
-                            <span>{community.joined ? t('community.openCommunity', { defaultValue: 'Open community' }) : t('community.exploreCommunity', { defaultValue: 'Explore community' })}</span>
-                            <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                            <span>{t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}</span>
                         </span>
                     </div>
                 </div>
@@ -136,22 +134,15 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     <div className="flex items-center justify-between pt-1 text-xs">
                         {community.joined ? (
                             <>
-                                <button
-                                    type="button"
-                                    onClick={handleJoinClick}
-                                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase tracking-wider py-0.5 px-1 -ml-1 rounded hover:bg-emerald-500/10 cursor-pointer"
-                                    title="Click to toggle membership"
+                                <div
+                                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 uppercase tracking-wider py-0.5 px-1 -ml-1 select-none"
                                 >
                                     <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                    <span>{t('community.joinedBtn', { defaultValue: 'JOINED' })}</span>
-                                </button>
+                                    <span>{t('community.joinedBtn', { defaultValue: 'Đã tham gia' })}</span>
+                                </div>
 
-                                <span className="text-xs font-bold text-text-muted group-hover:text-primary transition-colors flex items-center gap-1">
-                                    <span>{t('community.openBtn', { defaultValue: 'OPEN' })}</span>
-                                    <FontAwesomeIcon
-                                        icon={faArrowRight}
-                                        className="text-[10px] text-text-faint group-hover:text-primary group-hover:translate-x-0.5 transition-transform"
-                                    />
+                                <span className="text-xs font-bold text-text-muted group-hover:text-primary transition-colors">
+                                    {t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}
                                 </span>
                             </>
                         ) : (
@@ -161,15 +152,11 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                                     onClick={handleJoinClick}
                                     className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider py-0.5 px-1 -ml-1 rounded hover:bg-primary/10 cursor-pointer"
                                 >
-                                    <span>{t('community.joinBtn', { defaultValue: 'JOIN' })}</span>
-                                    <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
+                                    <span>{t('community.joinBtn', { defaultValue: 'Tham gia' })}</span>
                                 </button>
 
-                                <span className="text-xs font-semibold text-text-muted group-hover:text-text transition-colors flex items-center gap-1">
-                                    <FontAwesomeIcon
-                                        icon={faArrowRight}
-                                        className="text-[10px] text-text-faint group-hover:text-primary group-hover:translate-x-0.5 transition-transform"
-                                    />
+                                <span className="text-xs font-medium text-text-muted group-hover:text-primary transition-colors">
+                                    {t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}
                                 </span>
                             </>
                         )}

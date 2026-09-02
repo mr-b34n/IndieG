@@ -31,11 +31,18 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
             
             if (Array.isArray(list)) {
                 if (list.length > 0) {
-                    const mappedList: CommunityData[] = list.map((item) => ({
-                        ...mapCommunityDtoToCommunityData(item),
-                        // Preserve local joined state if available
-                        joined: get().communities.find((c) => String(c.id) === String(item.id))?.joined ?? false,
-                    }));
+                    const mappedList: CommunityData[] = list.map((item) => {
+                        const base = mapCommunityDtoToCommunityData(item);
+                        const isJoined = item.joined !== undefined
+                            ? Boolean(item.joined)
+                            : (item.isJoined !== undefined
+                                ? Boolean(item.isJoined)
+                                : (get().communities.find((c) => String(c.id) === String(item.id))?.joined ?? false));
+                        return {
+                            ...base,
+                            joined: isJoined,
+                        };
+                    });
                     set({ communities: mappedList, isLoading: false });
                 } else {
                     // Empty list returned from backend

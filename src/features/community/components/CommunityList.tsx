@@ -50,10 +50,16 @@ export const CommunityList = () => {
             const list = extractCommunityList(rawCommunitiesData);
             if (Array.isArray(list) && list.length > 0) {
                 const mapped: CommunityData[] = list.map((item) => {
+                    const base = mapCommunityDtoToCommunityData(item);
                     const existing = communities.find((c) => String(c.id) === String(item.id));
+                    const isJoined = item.joined !== undefined
+                        ? Boolean(item.joined)
+                        : (item.isJoined !== undefined
+                            ? Boolean(item.isJoined)
+                            : (existing?.joined ?? false));
                     return {
-                        ...mapCommunityDtoToCommunityData(item),
-                        joined: existing?.joined ?? false,
+                        ...base,
+                        joined: isJoined,
                     };
                 });
                 useCommunitiesStore.setState({ communities: mapped, isLoading: false });

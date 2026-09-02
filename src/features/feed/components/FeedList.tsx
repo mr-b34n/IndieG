@@ -107,7 +107,7 @@ export const FeedList = () => {
             const newPost: PostDataWithSettings = {
                 id: Date.now(),
                 author: currentAuthor,
-                authorAvatar: avatarGame,
+                authorAvatar: user?.avatarUrl || user?.avatar_url || avatarGame,
                 gameTag: community?.name ?? "General",
                 timeAgo: t('feed.justNow') || "Vừa xong",
                 title: title || content.slice(0, 80) + (content.length > 80 ? "..." : ""),

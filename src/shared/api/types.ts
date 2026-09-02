@@ -82,8 +82,12 @@ export interface CommunityDto {
     category?: string;
     description?: string;
     onlineNow?: number;
+    members?: number;
+    membersCount?: number;
     tags?: string[];
     featured?: boolean;
+    joined?: boolean;
+    isJoined?: boolean;
     status?: number;
     createdAt?: string;
     updatedAt?: string;
@@ -244,12 +248,12 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
         name: dto.name || "Cộng đồng",
         logo: dto.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150",
         backdrop: dto.backdrop || "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200",
-        category: dto.category || "Gaming",
+        category: dto.category || "Indie",
         description: dto.description || "",
-        members: 1,
+        members: dto.membersCount ?? dto.members ?? 1,
         onlineNow: dto.onlineNow ?? 1,
         tags: dto.tags || [],
-        joined: false,
+        joined: dto.joined === true || dto.isJoined === true,
         featured: dto.featured ?? false,
     };
 }

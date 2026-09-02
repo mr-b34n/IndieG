@@ -362,6 +362,7 @@ export const en = {
         onlineCount: "online",
         openBtn: "OPEN",
         joinBtn: "JOIN",
+        joinedBtn: "JOINED",
         pinnedSection: "PINNED",
         recentDiscussions: "RECENT DISCUSSIONS",
         thread: "thread",

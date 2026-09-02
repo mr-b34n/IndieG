@@ -24,6 +24,7 @@ import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
 import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
+import type { UpdateProfileDto } from "@/shared/api/types";
 
 interface UserProfileProps {
     userId: string;
@@ -139,27 +140,59 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             // Ignore storage error
         }
         if (isOwnProfile) {
-            updateProfileMutation.mutate(
-                {
-                    name: identity.name.trim(),
-                    username: identity.username?.trim().replace(/^@/, ""),
-                    bio: identity.bio?.trim(),
-                },
-                {
-                    onSuccess: (updatedProfile) => {
-                        updateUser({
-                            name: updatedProfile?.name || identity.name.trim(),
-                            username: updatedProfile?.username || identity.username?.trim().replace(/^@/, ""),
-                            bio: updatedProfile?.bio || identity.bio?.trim(),
-                            avatarUrl: updatedProfile?.avatarUrl,
-                        });
-                        triggerToast();
-                    },
-                    onError: () => {
-                        triggerToast();
-                    },
-                }
-            );
+            const payload: UpdateProfileDto = {};
+
+            const trimmedBio = identity.bio !== undefined ? identity.bio.trim() : undefined;
+            const originalBio = snapshotIdentity?.bio !== undefined
+                ? snapshotIdentity.bio.trim()
+                : (remoteProfile?.bio || "").trim();
+
+            if (trimmedBio !== undefined && trimmedBio !== originalBio) {
+                payload.bio = trimmedBio;
+            }
+
+            const trimmedName = identity.name?.trim();
+            const originalName = (snapshotIdentity?.name || remoteProfile?.name || remoteProfile?.username || currentAuthor || "").trim();
+
+            if (trimmedName && trimmedName !== originalName) {
+                payload.name = trimmedName;
+            }
+
+            const cleanUsername = identity.username?.trim().replace(/^@/, "");
+            const originalUsername = (snapshotIdentity?.username || remoteProfile?.username || "").trim().replace(/^@/, "");
+
+            if (cleanUsername && cleanUsername !== originalUsername) {
+                payload.username = cleanUsername;
+            }
+
+            if (identity.avatarUrl && identity.avatarUrl !== snapshotIdentity?.avatarUrl) {
+                payload.avatarUrl = identity.avatarUrl;
+            }
+            if (identity.coverUrl && identity.coverUrl !== snapshotIdentity?.coverUrl) {
+                payload.coverUrl = identity.coverUrl;
+            }
+
+            if (Object.keys(payload).length > 0) {
+                updateProfileMutation.mutate(
+                    payload,
+                    {
+                        onSuccess: (updatedProfile) => {
+                            updateUser({
+                                name: updatedProfile?.name || (payload.name ? identity.name?.trim() : undefined),
+                                username: updatedProfile?.username || (payload.username ? identity.username?.trim().replace(/^@/, "") : undefined),
+                                bio: updatedProfile?.bio ?? (payload.bio !== undefined ? identity.bio?.trim() : undefined),
+                                avatarUrl: updatedProfile?.avatarUrl,
+                            });
+                            triggerToast();
+                        },
+                        onError: () => {
+                            triggerToast();
+                        },
+                    }
+                );
+            } else {
+                triggerToast();
+            }
         } else {
             triggerToast();
         }

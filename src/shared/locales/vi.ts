@@ -362,6 +362,7 @@ export const vi = {
         onlineCount: "online",
         openBtn: "MỞ",
         joinBtn: "THAM GIA",
+        joinedBtn: "ĐÃ THAM GIA",
         pinnedSection: "BÀI GHIM",
         recentDiscussions: "THẢO LUẬN GẦN ĐÂY",
         thread: "bài thảo luận",
