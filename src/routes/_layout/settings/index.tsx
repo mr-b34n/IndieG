@@ -10,6 +10,7 @@ import {
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useGameStore } from '@/features/game';
 import { useAuthStore } from '@/features/auth';
+import { useUserSessionsQuery } from '@/shared/api/useQueries';
 import { INITIAL_GAMES } from '@/features/game/constants';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 
@@ -17,16 +18,6 @@ export const Route = createFileRoute('/_layout/settings/')({
     component: SettingsPage,
 });
 
-interface ActiveSession {
-    id: string;
-    device: string;
-    browser: string;
-    location: string;
-    ip: string;
-    lastActive: string;
-    isCurrent: boolean;
-    icon: typeof faLaptop | typeof faMobileScreen;
-}
 
 interface BlockedUser {
     id: string;
@@ -45,6 +36,8 @@ export function SettingsPage() {
     const [activeTab, setActiveTab] = useState<
         "general" | "quickAccess" | "privacy" | "notifications" | "account" | "blocked" | "feedback" | "danger"
     >(initialTab);
+
+    const { data: remoteSessions, isLoading: sessionsLoading } = useUserSessionsQuery();
 
     const theme = useThemeStore((state) => state.theme);
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
@@ -96,7 +89,7 @@ export function SettingsPage() {
     const [changePwdError, setChangePwdError] = useState<string | null>(null);
     const [changePwdSuccess, setChangePwdSuccess] = useState<string | null>(null);
 
-    const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
+    
 
     // 5. Blocked Users
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -201,13 +194,7 @@ export function SettingsPage() {
         setEmailSuccessMsg(null);
     };
 
-    const handleRevokeSession = (sessionId: string) => {
-        setActiveSessions(activeSessions.filter((s) => s.id !== sessionId));
-    };
 
-    const handleLogoutAllOtherSessions = () => {
-        setActiveSessions(activeSessions.filter((s) => s.isCurrent));
-    };
 
     const handleUnblockUser = (userId: string) => {
         setBlockedUsers(blockedUsers.filter((u) => u.id !== userId));
@@ -775,43 +762,30 @@ export function SettingsPage() {
                             {/* Active Sessions */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-text-muted">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({activeSessions.length}):</span>
-                                    <button
-                                        onClick={handleLogoutAllOtherSessions}
-                                        className="px-2 py-0.5 rounded border border-rose-500/40 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold"
-                                    >
-                                        {t('settings.account.logoutOtherDevices', { defaultValue: 'Đăng xuất thiết bị khác' })}
-                                    </button>
+                                    <span className="font-bold text-text-muted">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({remoteSessions?.length || 0}):</span>
                                 </div>
 
                                 <div className="divide-y divide-border/40 border border-border/60 bg-surface rounded-md overflow-hidden">
-                                    {activeSessions.map((s) => (
+                                    {sessionsLoading && <div className="p-3 text-xs text-text-muted">{t('common.loading', { defaultValue: 'Đang tải...' })}</div>}
+                                    {!sessionsLoading && remoteSessions?.map((s) => (
                                         <div key={s.id} className="p-3 flex items-center justify-between gap-3 text-xs">
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <FontAwesomeIcon icon={s.icon} className="text-primary text-sm shrink-0" />
+                                                <FontAwesomeIcon icon={s.userAgent?.toLowerCase().includes("mobile") ? faMobileScreen : faLaptop} className="text-primary text-sm shrink-0" />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-text flex items-center gap-1.5 truncate">
-                                                        <span>{s.device} ({s.browser})</span>
-                                                        {s.isCurrent && (
-                                                            <span className="bg-emerald-500 text-white text-[8px] px-1 rounded font-extrabold uppercase">{t('settings.account.currentBadge', { defaultValue: 'Hiện tại' })}</span>
-                                                        )}
+                                                        <span>{s.userAgent?.substring(0, 30) || "Unknown Device"}</span>
                                                     </div>
                                                     <div className="text-[10px] text-text-muted truncate">
-                                                        {s.location} • IP: {s.ip}
+                                                        IP: {s.ip_address} • 
+                                                        {new Date(s.created_at).toLocaleString()}
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {!s.isCurrent && (
-                                                <button
-                                                    onClick={() => handleRevokeSession(s.id)}
-                                                    className="px-2 py-1 rounded border border-border/60 hover:border-rose-500 hover:text-rose-500 text-text-muted transition-colors cursor-pointer text-[10px] shrink-0"
-                                                >
-                                                    {t('settings.account.logoutBtn', { defaultValue: 'Đăng xuất' })}
-                                                </button>
-                                            )}
                                         </div>
                                     ))}
+                                    {!sessionsLoading && remoteSessions?.length === 0 && (
+                                        <div className="p-3 text-xs text-text-muted text-center">{t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}</div>
+                                    )}
                                 </div>
                             </div>
                         </div>

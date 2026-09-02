@@ -204,7 +204,7 @@ const AuthPage = () => {
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
-                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : (userProfile.isEmailVerified !== undefined ? Boolean(userProfile.isEmailVerified) : userProfile.status === 'active'),
+                          isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
                     : {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),
@@ -291,7 +291,7 @@ const AuthPage = () => {
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
-                          isVerified: userProfile.isVerified !== undefined ? Boolean(userProfile.isVerified) : (userProfile.isEmailVerified !== undefined ? Boolean(userProfile.isEmailVerified) : userProfile.status === 'active'),
+                          isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
                     : {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),

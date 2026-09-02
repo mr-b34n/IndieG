@@ -60,6 +60,7 @@ export interface UpdateProfileDto {
 export interface UserSessionDto {
     id: string;
     user_id: string;
+    userAgent?: string;
     ip_address: string;
     token_hash: string;
     token_version: number;
