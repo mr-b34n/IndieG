@@ -47,11 +47,13 @@ export const LeftBar = () => {
     const isSettingsActive = pathname.startsWith("/settings");
     const isAdminActive = pathname.startsWith("/admin");
 
-    const displayName = getCurrentAuthor();
+    const displayName = user?.name || user?.username || getCurrentAuthor();
     const avatarUrl =
-        customAvatar ??
-        (user?.user_metadata?.avatar_url as string | undefined) ??
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
+        user?.avatarUrl ||
+        user?.avatar_url ||
+        customAvatar ||
+        (user?.user_metadata?.avatar_url as string | undefined) ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
 
     const handleProfileClick = () => {
         navigate({ to: "/profile/$userId", params: { userId: "me" } });

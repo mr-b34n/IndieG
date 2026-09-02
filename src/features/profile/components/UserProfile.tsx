@@ -32,6 +32,7 @@ interface UserProfileProps {
 export const UserProfile = ({ userId }: UserProfileProps) => {
     const { t, language } = useTranslation();
     const user = useAuthStore((state) => state.user);
+    const updateUser = useAuthStore((state) => state.updateUser);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
     const mockLogin = useAuthStore((state) => state.mockLogin);
@@ -49,6 +50,19 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const { data: myProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(isOwnProfile && isLoggedIn);
     const { data: otherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
     const updateProfileMutation = useUpdateProfileMutation();
+
+    useEffect(() => {
+        if (isOwnProfile && myProfileData) {
+            updateUser({
+                id: myProfileData.id,
+                name: myProfileData.name || myProfileData.username,
+                username: myProfileData.username,
+                avatarUrl: myProfileData.avatarUrl || undefined,
+                avatar_url: myProfileData.avatarUrl || undefined,
+                isVerified: myProfileData.isVerified === true || (myProfileData as { isEmailVerified?: boolean }).isEmailVerified === true,
+            });
+        }
+    }, [isOwnProfile, myProfileData, updateUser]);
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
@@ -128,24 +142,17 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             updateProfileMutation.mutate(
                 {
                     name: identity.name.trim(),
-                    username: identity.username?.trim(),
+                    username: identity.username?.trim().replace(/^@/, ""),
                     bio: identity.bio?.trim(),
                 },
                 {
-                    onSuccess: () => {
-                        try {
-                            const savedUser = localStorage.getItem("indieg_auth_user");
-                            if (savedUser) {
-                                const parsed = JSON.parse(savedUser);
-                                parsed.name = identity.name.trim();
-                                if (identity.username?.trim()) {
-                                    parsed.username = identity.username.trim().replace(/^@/, "");
-                                }
-                                localStorage.setItem("indieg_auth_user", JSON.stringify(parsed));
-                            }
-                        } catch {
-                            // Ignore
-                        }
+                    onSuccess: (updatedProfile) => {
+                        updateUser({
+                            name: updatedProfile?.name || identity.name.trim(),
+                            username: updatedProfile?.username || identity.username?.trim().replace(/^@/, ""),
+                            bio: updatedProfile?.bio || identity.bio?.trim(),
+                            avatarUrl: updatedProfile?.avatarUrl,
+                        });
                         triggerToast();
                     },
                     onError: () => {

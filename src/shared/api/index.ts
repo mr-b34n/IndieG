@@ -187,29 +187,7 @@ export const usersApi = {
         }),
 };
 
-function getLocalFallbackProfile(): UserProfileDto | null {
-    if (typeof window === "undefined") return null;
-    try {
-        const savedUser = localStorage.getItem("indieg_auth_user");
-        if (savedUser) {
-            const user = JSON.parse(savedUser) as { id?: string; username?: string; avatar_url?: string; createdAt?: string };
-            if (user && (user.id || user.username)) {
-                const username = user.username || "Gamer";
-                return {
-                    id: user.id || "me",
-                    username,
-                    name: username,
-                    avatarUrl: user.avatar_url || localStorage.getItem("user_custom_avatar") || undefined,
-                    bio: "",
-                    createdAt: user.createdAt || new Date().toISOString(),
-                };
-            }
-        }
-    } catch {
-        // ignore parse errors
-    }
-    return null;
-}
+let myProfileInFlightPromise: Promise<UserProfileDto> | null = null;
 
 /**
  * 3. Profile Services (/profiles/*)
@@ -223,18 +201,16 @@ export const profilesApi = {
         }),
 
     /** Get current user's profile - GET /profiles/me */
-    getMyProfile: async () => {
-        try {
-            return await apiRequest<UserProfileDto>("/profiles/me", {
-                method: "GET",
-            });
-        } catch (err: unknown) {
-            const fallback = getLocalFallbackProfile();
-            if (fallback) {
-                return fallback;
-            }
-            throw err;
+    getMyProfile: () => {
+        if (myProfileInFlightPromise) {
+            return myProfileInFlightPromise;
         }
+        myProfileInFlightPromise = apiRequest<UserProfileDto>("/profiles/me", {
+            method: "GET",
+        }).finally(() => {
+            myProfileInFlightPromise = null;
+        });
+        return myProfileInFlightPromise;
     },
 
     /** Update current user's profile - PATCH /profiles/me */
@@ -245,24 +221,16 @@ export const profilesApi = {
         }),
 
     /** Get user profile by username - GET /profiles/@{username} */
-    getUserByUsername: async (username: string) => {
+    getUserByUsername: (username: string) => {
         const cleanName = username.replace(/^@/, "");
 
         if (cleanName === "me" || cleanName === "demo") {
             return profilesApi.getMyProfile();
         }
 
-        try {
-            return await apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
-                method: "GET",
-            });
-        } catch (err: unknown) {
-            const fallback = getLocalFallbackProfile();
-            if (fallback && (fallback.username.toLowerCase() === cleanName.toLowerCase() || fallback.id === cleanName)) {
-                return fallback;
-            }
-            throw err;
-        }
+        return apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
+            method: "GET",
+        });
     },
 
     /** Toggle archived status - PATCH /profiles/archived */

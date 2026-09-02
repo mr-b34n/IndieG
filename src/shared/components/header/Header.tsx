@@ -48,11 +48,13 @@ export const Header = () => {
 
     useNotificationPolling(15000);
 
-    const displayName = getCurrentAuthor();
+    const displayName = user?.name || user?.username || getCurrentAuthor();
     const avatarUrl =
-        customAvatar ??
-        (user?.user_metadata?.avatar_url as string | undefined) ??
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
+        user?.avatarUrl ||
+        user?.avatar_url ||
+        customAvatar ||
+        (user?.user_metadata?.avatar_url as string | undefined) ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {

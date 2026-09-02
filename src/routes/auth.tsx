@@ -202,7 +202,9 @@ const AuthPage = () => {
                           id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
                           email: (userProfile.email as string) || formData.email,
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
+                          name: (userProfile.name as string) || (userProfile.username as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
+                          avatarUrl: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
                           isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
@@ -210,6 +212,7 @@ const AuthPage = () => {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
+                          name: formData.email.split("@")[0] || "IndiePlayer",
                           role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
                           isVerified: false,
                       };
@@ -289,7 +292,9 @@ const AuthPage = () => {
                           id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
                           email: (userProfile.email as string) || formData.email,
                           username: (userProfile.username as string) || (userProfile.name as string) || formData.email.split("@")[0] || "IndiePlayer",
+                          name: (userProfile.name as string) || (userProfile.username as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
+                          avatarUrl: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
                           isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
@@ -297,6 +302,7 @@ const AuthPage = () => {
                           id: "usr_" + Math.random().toString(36).substring(2, 9),
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
+                          name: formData.email.split("@")[0] || "IndiePlayer",
                           role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
                           isVerified: false,
                       };

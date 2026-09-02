@@ -2,6 +2,7 @@ export interface AuthUser {
     id: string;
     email: string;
     username: string;
+    name?: string;
     avatar_url?: string;
     avatar?: string;
     avatarUrl?: string;
@@ -23,7 +24,8 @@ export interface AuthState {
     isVerifyModalOpen: boolean;
     verifyModalMessage: string | null;
     setCustomAvatar: (avatar: string | null) => void;
-    initializeAuth: () => void;
+    updateUser: (partial: Partial<AuthUser>) => void;
+    initializeAuth: () => Promise<void>;
     login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => void;
     logout: () => void;
     refreshTokens: () => Promise<boolean>;

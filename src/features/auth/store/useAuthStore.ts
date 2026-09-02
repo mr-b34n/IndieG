@@ -6,9 +6,10 @@ export * from "../types";
 
 const ACCESS_TOKEN_KEY = "indieg_access_token";
 const REFRESH_TOKEN_KEY = "indieg_refresh_token";
-const AUTH_USER_KEY = "indieg_auth_user";
 
 let hasSetupAuthListeners = false;
+let initAuthPromise: Promise<void> | null = null;
+let isInitialized = false;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
@@ -16,21 +17,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     refreshToken: null,
     loading: true,
     mockLogin: false,
-    customAvatar: typeof window !== "undefined" ? localStorage.getItem("user_custom_avatar") : null,
+    customAvatar: null,
 
     setCustomAvatar: (avatar) => {
-        if (typeof window !== "undefined") {
-            if (avatar) {
-                localStorage.setItem("user_custom_avatar", avatar);
-            } else {
-                localStorage.removeItem("user_custom_avatar");
-            }
-        }
         set({ customAvatar: avatar });
+    },
+
+    updateUser: (partial: Partial<AuthUser>) => {
+        const currentUser = get().user;
+        if (currentUser) {
+            set({ user: { ...currentUser, ...partial } });
+        }
     },
 
     initializeAuth: async () => {
         if (typeof window === "undefined") return;
+
+        if (isInitialized && get().user) {
+            return;
+        }
+
+        if (initAuthPromise) {
+            return initAuthPromise;
+        }
 
         if (!hasSetupAuthListeners) {
             hasSetupAuthListeners = true;
@@ -45,57 +54,70 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
         }
 
-        try {
-            const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
-            const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-            const savedUser = localStorage.getItem(AUTH_USER_KEY);
+        initAuthPromise = (async () => {
+            try {
+                const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
+                const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
-            if (savedToken) {
-                let userObj: AuthUser | null = savedUser ? JSON.parse(savedUser) : null;
-                let activeToken: string | null = savedToken;
-
-                // Attempt to fetch fresh profile from backend /profiles/me
+                // Clean up any legacy user data stored in localStorage
                 try {
-                    const profile = await profilesApi.getMyProfile();
-                    if (profile && profile.id) {
-                        userObj = {
-                            id: profile.id,
-                            email: userObj?.email || `${profile.username || "user"}@indieg.com`,
-                            username: profile.username || userObj?.username || "Gamer",
-                            avatar_url: profile.avatarUrl || userObj?.avatar_url,
-                            role: (userObj?.role as 'admin' | 'moderator' | 'user') || (profile.username?.toLowerCase().includes("admin") ? "admin" : "user"),
-                            isVerified: profile.isVerified === true || profile.isEmailVerified === true,
-                            createdAt: profile.createdAt,
-                        };
-                        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userObj));
-                    }
-                } catch (err: unknown) {
-                    const status = (err as { status?: number })?.status;
-                    if (status === 401 && activeToken && !activeToken.startsWith("token_") && !activeToken.startsWith("mock_")) {
-                        // Stale or expired token in localStorage - clear session for real backend tokens
-                        localStorage.removeItem(ACCESS_TOKEN_KEY);
-                        localStorage.removeItem(REFRESH_TOKEN_KEY);
-                        localStorage.removeItem(AUTH_USER_KEY);
-                        localStorage.removeItem("access_token");
-                        userObj = null;
-                        activeToken = null;
-                    }
-                    // If offline or local mock, retain userObj if valid
+                    localStorage.removeItem("indieg_auth_user");
+                    localStorage.removeItem("user_custom_avatar");
+                } catch {
+                    // Ignore storage error
                 }
 
-                set({
-                    user: userObj,
-                    accessToken: activeToken,
-                    refreshToken: activeToken ? (savedRefreshToken || null) : null,
-                    mockLogin: false,
-                    loading: false,
-                });
-            } else {
-                set({ user: null, accessToken: null, refreshToken: null, loading: false, mockLogin: false });
+                if (savedToken) {
+                    let userObj: AuthUser | null = null;
+                    let activeToken: string | null = savedToken;
+
+                    // Fetch fresh profile from backend /profiles/me exactly once
+                    try {
+                        const profile = await profilesApi.getMyProfile();
+                        if (profile && profile.id) {
+                            userObj = {
+                                id: profile.id,
+                                email: (profile as { email?: string }).email || `${profile.username || "user"}@indieg.com`,
+                                username: profile.username || "Gamer",
+                                name: profile.name || profile.username || "Gamer",
+                                avatar_url: profile.avatarUrl || undefined,
+                                avatarUrl: profile.avatarUrl || undefined,
+                                role: (profile.username?.toLowerCase().includes("admin") ? "admin" : "user"),
+                                isVerified: profile.isVerified === true || profile.isEmailVerified === true,
+                                createdAt: profile.createdAt,
+                            };
+                        }
+                    } catch (err: unknown) {
+                        const status = (err as { status?: number })?.status;
+                        if (status === 401 && activeToken && !activeToken.startsWith("token_") && !activeToken.startsWith("mock_")) {
+                            // Stale or expired token - clear session
+                            localStorage.removeItem(ACCESS_TOKEN_KEY);
+                            localStorage.removeItem(REFRESH_TOKEN_KEY);
+                            localStorage.removeItem("access_token");
+                            userObj = null;
+                            activeToken = null;
+                        }
+                    }
+
+                    set({
+                        user: userObj,
+                        accessToken: activeToken,
+                        refreshToken: activeToken ? (savedRefreshToken || null) : null,
+                        mockLogin: false,
+                        loading: false,
+                    });
+                } else {
+                    set({ user: null, accessToken: null, refreshToken: null, loading: false, mockLogin: false });
+                }
+            } catch {
+                set({ user: null, accessToken: null, refreshToken: null, loading: false });
+            } finally {
+                isInitialized = true;
+                initAuthPromise = null;
             }
-        } catch {
-            set({ user: null, accessToken: null, refreshToken: null, loading: false });
-        }
+        })();
+
+        return initAuthPromise;
     },
 
     login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => {
@@ -108,8 +130,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             if (refreshToken) {
                 localStorage.setItem(REFRESH_TOKEN_KEY, refToken);
             }
-            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData));
+            // Ensure no user account information is stored in localStorage
+            localStorage.removeItem("indieg_auth_user");
         }
+
+        isInitialized = true;
 
         set({
             user: userData,
@@ -127,9 +152,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             localStorage.removeItem(ACCESS_TOKEN_KEY);
             localStorage.removeItem("access_token");
             localStorage.removeItem(REFRESH_TOKEN_KEY);
-            localStorage.removeItem(AUTH_USER_KEY);
+            localStorage.removeItem("indieg_auth_user");
+            localStorage.removeItem("user_custom_avatar");
             localStorage.removeItem("indieg_mock_login");
         }
+
+        isInitialized = false;
 
         set({
             user: null,
@@ -165,7 +193,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 id: "usr_gamer_demo_1",
                 email: "gamer@indieg.com",
                 username: "IndieGamer",
+                name: "IndieGamer",
                 avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
+                avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                 isVerified: true,
                 role: "admin",
             };
