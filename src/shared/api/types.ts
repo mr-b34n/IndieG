@@ -182,27 +182,57 @@ export interface UpdatePostDto {
     locked?: boolean;
 }
 
+export interface CommentAuthor {
+    id: string;
+    username?: string;
+    name?: string;
+    avatarUrl?: string;
+    coverUrl?: string;
+    bio?: string;
+    rank?: string;
+    status?: string;
+    archived?: boolean;
+    platformStatus?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    // fallback aliases
+    avatar?: string;
+    avatar_url?: string;
+}
+
 export interface CommentEntity {
     id: string;
     postId: string;
     authorId: string;
-    author?: string | { id: string; username?: string; name?: string; avatar?: string; avatar_url?: string };
-    parentId?: string;
-    children?: CommentEntity[];
+    author?: string | CommentAuthor;
+    parentId?: string | null;
+    parent?: string | CommentEntity | null;
+    children?: (string | CommentEntity)[];
     depth?: number;
     content: string;
+    score?: number;
+    upvotes?: number;
+    downvotes?: number;
+    deletedAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
+
+    // legacy / UI properties
     likes?: number;
     likesCount?: number;
     replyCount?: string[] | number;
     repliesCount?: number;
-    deletedAt?: string;
-    createdAt: string;
-    updatedAt: string;
+    pinned?: boolean;
+    image?: string;
 }
 
 export interface CreateCommentDto {
     postId: string;
-    parentId?: string;
+    parentId?: string | null;
+    content: string;
+}
+
+export interface UpdateCommentDto {
     content: string;
 }
 

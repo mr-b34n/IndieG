@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faCheck,
     faShieldHalved,
     faLock,
 } from "@fortawesome/free-solid-svg-icons";
@@ -99,7 +98,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     {/* Hover Quick Cue */}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                         <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5 bg-black/75 px-3 py-1 rounded-[4px] border border-white/20">
-                            <span>{t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}</span>
+                            <span>{community.joined ? t('community.accessCommunity', { defaultValue: 'Truy cập cộng đồng' }) : t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}</span>
                         </span>
                     </div>
                 </div>
@@ -133,31 +132,22 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     {/* Action & Status Row */}
                     <div className="flex items-center justify-between pt-1 text-xs">
                         {community.joined ? (
-                            <>
-                                <div
-                                    className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 uppercase tracking-wider py-0.5 px-1 -ml-1 select-none"
-                                >
-                                    <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                    <span>{t('community.joinedBtn', { defaultValue: 'Đã tham gia' })}</span>
-                                </div>
-
-                                <span className="text-xs font-bold text-text-muted group-hover:text-primary transition-colors">
-                                    {t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}
-                                </span>
-                            </>
+                            <span className="text-xs font-semibold text-text-muted group-hover:text-primary transition-colors">
+                                {t('community.accessCommunity', { defaultValue: 'Truy cập cộng đồng' })}
+                            </span>
                         ) : (
                             <>
-                                <button
-                                    type="button"
-                                    onClick={handleJoinClick}
-                                    className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider py-0.5 px-1 -ml-1 rounded hover:bg-primary/10 cursor-pointer"
-                                >
-                                    <span>{t('community.joinBtn', { defaultValue: 'Tham gia' })}</span>
-                                </button>
-
                                 <span className="text-xs font-medium text-text-muted group-hover:text-primary transition-colors">
                                     {t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}
                                 </span>
+
+                                <button
+                                    type="button"
+                                    onClick={handleJoinClick}
+                                    className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider py-1 px-2.5 rounded bg-primary/10 hover:bg-primary/20 cursor-pointer"
+                                >
+                                    <span>{t('community.joinBtn', { defaultValue: 'Tham gia' })}</span>
+                                </button>
                             </>
                         )}
                     </div>

@@ -357,6 +357,8 @@ export const vi = {
         filterAll: "Tất cả",
         filterMore: "Thêm",
         openCommunity: "Truy cập cộng đồng",
+        accessCommunity: "Truy cập cộng đồng",
+        accessBtn: "Truy cập",
         exploreCommunity: "Khám phá cộng đồng",
         membersCount: "thành viên",
         onlineCount: "online",

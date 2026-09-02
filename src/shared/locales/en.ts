@@ -357,6 +357,8 @@ export const en = {
         filterAll: "All",
         filterMore: "More",
         openCommunity: "Open community",
+        accessCommunity: "Access community",
+        accessBtn: "Access",
         exploreCommunity: "Explore community",
         membersCount: "members",
         onlineCount: "online",

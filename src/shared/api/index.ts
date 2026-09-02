@@ -440,12 +440,15 @@ export const commentsApi = {
             method: "GET",
         }),
 
-    /** Update comment - PATCH /comments/{id}?content=... */
-    update: (id: string, content: string) =>
-        apiRequest<CommentEntity>(`/comments/${id}`, {
+    /** Update comment - PATCH /comments/{id} */
+    update: (id: string, payload: UpdateCommentDto | string | { content: string }) => {
+        const contentStr = typeof payload === "string" ? payload : payload.content;
+        return apiRequest<CommentEntity>(`/comments/${id}`, {
             method: "PATCH",
-            params: { content },
-        }),
+            body: { content: contentStr },
+            params: { content: contentStr },
+        });
+    },
 
     /** Delete comment - DELETE /comments/{id} */
     delete: (id: string) =>

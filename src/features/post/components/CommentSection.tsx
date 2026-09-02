@@ -25,15 +25,29 @@ const COMMENT_IMAGE_ACCEPT = "image/*";
 
 export interface CommentData {
     id: string | number;
+    postId?: string;
+    authorId?: string;
     author: string;
+    authorUsername?: string;
     authorAvatar: string;
+    authorRank?: string;
+    authorBio?: string;
+    authorStatus?: string;
     content: string;
     timeAgo: string;
+    createdAt?: string;
+    updatedAt?: string;
+    deletedAt?: string | null;
+    score?: number;
+    upvotes?: number;
+    downvotes?: number;
     likes: number;
+    depth?: number;
+    parentId?: string | null;
     image?: string; // URL ảnh đính kèm (nếu có)
-    replies?: CommentData[]; // 👈 Bổ sung danh sách reply con
-    replyCount?: number; // 👈 Tổng số câu trả lời từ backend
-    pinned?: boolean; // 👈 Ghim bình luận
+    replies?: CommentData[]; // Danh sách reply con
+    replyCount?: number; // Tổng số câu trả lời từ backend
+    pinned?: boolean; // Ghim bình luận
 }
 
 interface CommentSectionProps {
@@ -241,8 +255,21 @@ const CommentItem = ({
         return merged;
     }, [comment.replies, remoteRepliesData]);
 
+    const user = useAuthStore((state) => state.user);
     const currentAuthor = getCurrentAuthor();
-    const isAuthor = comment.author === currentAuthor || comment.author === "You";
+    const isAuthor =
+        (user?.id && comment.authorId && String(user.id) === String(comment.authorId)) ||
+        (user?.username && comment.authorUsername && user.username.toLowerCase() === comment.authorUsername.toLowerCase()) ||
+        comment.author === currentAuthor ||
+        comment.author === "You";
+
+    const handleAuthorClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const profileTarget = comment.authorUsername || comment.authorId || comment.author;
+        if (profileTarget && profileTarget !== "Thành viên" && profileTarget !== "You") {
+            navigate({ to: "/profile/$userId", params: { userId: profileTarget } });
+        }
+    };
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
@@ -356,17 +383,20 @@ const CommentItem = ({
                 <img
                     src={comment.authorAvatar}
                     alt={comment.author}
-                    className={`${avatarSize} rounded-full object-cover shrink-0 mt-0.5`}
+                    onClick={handleAuthorClick}
+                    className={`${avatarSize} rounded-full object-cover shrink-0 mt-0.5 cursor-pointer hover:opacity-90 transition-opacity`}
                 />
 
                 <div className="flex flex-col flex-1 gap-1 min-w-0">
                     <div className="flex flex-col">
                         <div className="flex flex-row items-center justify-between gap-2">
                             <div className="flex flex-row items-center gap-2 flex-wrap">
-                                <p className={`font-bold text-[14px] hover:underline cursor-pointer ${
+                                <p 
+                                    onClick={handleAuthorClick}
+                                    className={`font-bold text-[14px] hover:underline cursor-pointer ${
                                     (comment.author.toLowerCase().includes("admin") || comment.author.toLowerCase().includes("quản trị"))
                                         ? "text-rose-500 font-extrabold"
-                                        : getUserRankConfig(comment.author).textColor
+                                        : getUserRankConfig(comment.authorRank || comment.author).textColor
                                 }`}>
                                     {comment.author}
                                 </p>
@@ -376,9 +406,9 @@ const CommentItem = ({
                                         <span>ADMIN</span>
                                     </span>
                                 ) : (
-                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.author).classes}`}>
-                                        <FontAwesomeIcon icon={getUserRankConfig(comment.author).icon} className="mr-1" />
-                                        {getRankLabel(getUserRankConfig(comment.author))}
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.authorRank || comment.author).classes}`}>
+                                        <FontAwesomeIcon icon={getUserRankConfig(comment.authorRank || comment.author).icon} className="mr-1" />
+                                        {getRankLabel(getUserRankConfig(comment.authorRank || comment.author))}
                                     </span>
                                 )}
                                 <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
@@ -759,34 +789,70 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
     const authorName = authorObj
         ? (authorObj.name || authorObj.username || "Thành viên")
         : (typeof c.author === "string" && c.author.trim() ? c.author : (c.authorId ? `User_${c.authorId.slice(0, 5)}` : "Thành viên"));
-    const authorAvatar = authorObj
-        ? (authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || (authorObj as { avatarUrl?: string }).avatarUrl || avatarUser)
+
+    const fallbackAvatar = authorObj?.username
+        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorObj.username)}`
         : avatarUser;
 
-    const childList = c.children || (c as { replies?: CommentEntity[] }).replies || [];
+    const authorAvatar = authorObj
+        ? (authorObj.avatarUrl || authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || fallbackAvatar)
+        : fallbackAvatar;
+
+    // Children can be an array of CommentEntity objects or an array of ID strings
+    const isChildObject = (item: unknown): item is CommentEntity =>
+        typeof item === "object" && item !== null && "id" in item && "content" in item;
+
+    const childList = Array.isArray(c.children)
+        ? (c.children.filter(isChildObject) as CommentEntity[])
+        : ((c as { replies?: CommentEntity[] }).replies || []);
+
     const mappedReplies = childList.map(mapCommentEntityToCommentData);
 
     let parsedReplyCount = 0;
-    if (Array.isArray(c.replyCount)) {
-        parsedReplyCount = c.replyCount.length;
+    if (Array.isArray(c.children)) {
+        parsedReplyCount = c.children.length;
     } else if (typeof c.replyCount === "number") {
         parsedReplyCount = c.replyCount;
     } else if (typeof c.replyCount === "string") {
         parsedReplyCount = parseInt(c.replyCount, 10) || 0;
+    } else if (Array.isArray(c.replyCount)) {
+        parsedReplyCount = c.replyCount.length;
     } else if (typeof (c as { repliesCount?: number }).repliesCount === "number") {
         parsedReplyCount = (c as { repliesCount?: number }).repliesCount!;
     } else if (mappedReplies.length > 0) {
         parsedReplyCount = mappedReplies.length;
     }
 
+    const calculatedScore =
+        c.score !== undefined
+            ? c.score
+            : c.upvotes !== undefined
+            ? c.upvotes - (c.downvotes || 0)
+            : (c.likesCount ?? c.likes ?? 0);
+
     return {
         id: c.id,
+        postId: c.postId,
+        authorId: c.authorId || authorObj?.id,
         author: authorName,
+        authorUsername: authorObj?.username,
         authorAvatar: authorAvatar,
+        authorRank: authorObj?.rank,
+        authorBio: authorObj?.bio,
+        authorStatus: authorObj?.status,
+        parentId: c.parentId ?? (typeof c.parent === "string" ? c.parent : (c.parent?.id ?? null)),
+        depth: c.depth ?? 0,
         content: c.content || "",
         timeAgo: c.createdAt ? formatTimeAgo(c.createdAt) : "Vừa xong",
-        likes: c.likesCount ?? c.likes ?? 0,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        deletedAt: c.deletedAt,
+        score: calculatedScore,
+        upvotes: c.upvotes ?? c.likesCount ?? c.likes ?? 0,
+        downvotes: c.downvotes ?? 0,
+        likes: calculatedScore,
         pinned: !!c.pinned,
+        image: c.image,
         replies: mappedReplies.length > 0 ? mappedReplies : undefined,
         replyCount: parsedReplyCount,
     };
@@ -876,13 +942,28 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         if (!commentText.trim() && !mainImage.previewUrl) return;
         const textContent = commentText.trim();
         const imageDataUrl = await mainImage.toDataUrl();
+        const authorName = user?.name || user?.username || getCurrentAuthor() || "You";
+        const authorAvatar =
+            user?.avatarUrl ||
+            user?.avatar_url ||
+            (user?.user_metadata?.avatar_url as string | undefined) ||
+            (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
+
         const newComment: CommentData = {
             id: `${postId}-${Date.now()}`,
-            author: getCurrentAuthor(),
-            authorAvatar: avatarUser,
+            postId: String(postId),
+            authorId: user?.id ? String(user.id) : undefined,
+            author: authorName,
+            authorUsername: user?.username,
+            authorAvatar: authorAvatar,
+            authorRank: (user as { rank?: string })?.rank,
             content: textContent,
             timeAgo: "Vừa xong",
+            score: 0,
+            upvotes: 0,
+            downvotes: 0,
             likes: 0,
+            depth: 0,
             image: imageDataUrl,
         };
         setComments((prev) => [...prev, newComment]);
@@ -910,13 +991,29 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
 
     
     const handleAddSubReply = async (parentId: string | number, text: string, image?: string) => {
+        const authorName = user?.name || user?.username || getCurrentAuthor() || "You";
+        const authorAvatar =
+            user?.avatarUrl ||
+            user?.avatar_url ||
+            (user?.user_metadata?.avatar_url as string | undefined) ||
+            (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
+
         const newSubReply: CommentData = {
             id: `sub-${Date.now()}`,
-            author: getCurrentAuthor(),
-            authorAvatar: avatarUser,
+            postId: String(postId),
+            parentId: String(parentId),
+            authorId: user?.id ? String(user.id) : undefined,
+            author: authorName,
+            authorUsername: user?.username,
+            authorAvatar: authorAvatar,
+            authorRank: (user as { rank?: string })?.rank,
             content: text,
             timeAgo: "Vừa xong",
+            score: 0,
+            upvotes: 0,
+            downvotes: 0,
             likes: 0,
+            depth: 1,
             image,
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));
