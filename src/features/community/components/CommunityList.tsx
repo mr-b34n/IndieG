@@ -158,7 +158,7 @@ export const CommunityList = () => {
                 totalMembers={totalMembers}
                 canCreateCommunity={canCreateCommunity}
                 onCreateCommunity={() => {
-                    if (!isAdmin) {
+                    if (!canCreateCommunity) {
                         return;
                     }
                     if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;

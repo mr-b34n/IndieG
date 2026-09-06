@@ -82,15 +82,9 @@ export const LeftBar = () => {
                     <div className="flex flex-col leading-tight min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 min-w-0">
                             <p className="font-bold text-xs sm:text-sm text-text truncate">{displayName}</p>
-                            {isAdmin && (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-xs border border-rose-400/50">
-                                    <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
-                                    <span>ADMIN</span>
-                                </span>
-                            )}
                         </div>
                         <p className="text-[11px] text-text-faint">
-                            {isAdmin ? t('common.systemAdmin', { defaultValue: "Quản trị viên hệ thống" }) : user ? t('common.viewProfile') : t('common.signedInDemo')}
+                            {user ? t('common.viewProfile') : t('common.signedInDemo')}
                         </p>
                     </div>
 
