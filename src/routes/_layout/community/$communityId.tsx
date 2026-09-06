@@ -39,6 +39,14 @@ import {
 import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
 import type { CategoryItem } from '@/features/community/components/hub/CommunityHubCategories';
 
+// Community Admin Management Views
+import { CommunityManageOverview } from '@/features/community/components/hub/CommunityManageOverview';
+import { CommunityManageModeration } from '@/features/community/components/hub/CommunityManageModeration';
+import { CommunityManageReports } from '@/features/community/components/hub/CommunityManageReports';
+import { CommunityManageMembers } from '@/features/community/components/hub/CommunityManageMembers';
+import { CommunityManageRules } from '@/features/community/components/hub/CommunityManageRules';
+import { CommunityManageSettings } from '@/features/community/components/hub/CommunityManageSettings';
+
 export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetailPage,
 });
@@ -141,13 +149,16 @@ export function CommunityDetailPage() {
         };
     }, [communityId, communities, communityDto]);
 
-    // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about
+    // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about, manage-*
     const [activeNav, setActiveNav] = useState("home");
     const [activeFilter, setActiveFilter] = useState("all");
     const [sortMode, setSortMode] = useState<"hot" | "new" | "unanswered" | "top">("hot");
     const [searchQuery, setSearchQuery] = useState("");
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+    // Community Role State (Admin / Owner by default, allows previewing Moderator & Normal Member views)
+    const [userRole, setUserRole] = useState<"owner" | "moderator" | "member">("owner");
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -459,11 +470,31 @@ export function CommunityDetailPage() {
         setActiveFilter("all");
     };
 
+    const isManageView = activeNav.startsWith("manage-");
+    const getManageBreadcrumbTitle = (nav: string) => {
+        switch (nav) {
+            case "manage-overview":
+                return isVi ? "TỔNG QUAN" : "OVERVIEW";
+            case "manage-moderation":
+                return isVi ? "KIỂM DUYỆT" : "MODERATION";
+            case "manage-reports":
+                return isVi ? "BÁO CÁO" : "REPORTS";
+            case "manage-members":
+                return isVi ? "THÀNH VIÊN" : "MEMBERS";
+            case "manage-rules":
+                return isVi ? "QUY TẮC" : "RULES";
+            case "manage-settings":
+                return isVi ? "CÀI ĐẶT" : "SETTINGS";
+            default:
+                return "";
+        }
+    };
+
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 font-sans text-text animate-fade-in pb-16">
-            {/* 1. TOP BREADCRUMB / SEARCH BAR */}
-            <div className="w-full flex items-center justify-between gap-4 border-b border-divider-primary/40 pb-2.5 select-none">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider">
+            {/* 1. TOP BREADCRUMB / SEARCH BAR / ROLE TOGGLE */}
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-divider-primary/40 pb-2.5 select-none">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider flex-wrap">
                     <button
                         type="button"
                         onClick={() => navigate({ to: "/community" })}
@@ -475,11 +506,17 @@ export function CommunityDetailPage() {
                     <div className="relative">
                         <button
                             type="button"
-                            onClick={() => setShowCommunitySwitcher(!showCommunitySwitcher)}
+                            onClick={() => {
+                                if (isManageView) {
+                                    handleNavChange("home");
+                                } else {
+                                    setShowCommunitySwitcher(!showCommunitySwitcher);
+                                }
+                            }}
                             className="text-primary hover:underline cursor-pointer flex items-center gap-1.5 uppercase font-bold"
                         >
                             <span>{community.name}</span>
-                            <FontAwesomeIcon icon={faChevronDown} className="text-[8px]" />
+                            {!isManageView && <FontAwesomeIcon icon={faChevronDown} className="text-[8px]" />}
                         </button>
 
                         {showCommunitySwitcher && (
@@ -518,30 +555,71 @@ export function CommunityDetailPage() {
                             </>
                         )}
                     </div>
+
+                    {/* Manage Sub-Breadcrumb */}
+                    {isManageView && (
+                        <>
+                            <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
+                            <button
+                                type="button"
+                                onClick={() => handleNavChange("manage-overview")}
+                                className="text-text-muted hover:text-text cursor-pointer transition-colors"
+                            >
+                                MANAGE
+                            </button>
+                            <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
+                            <span className="text-primary uppercase font-bold">
+                                {getManageBreadcrumbTitle(activeNav)}
+                            </span>
+                        </>
+                    )}
                 </div>
 
-                {/* Right: Search Input */}
-                <div className="relative w-44 sm:w-60">
-                    <FontAwesomeIcon
-                        icon={faMagnifyingGlass}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint text-xs"
-                    />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={`Search in ${community.name}...`}
-                        className="w-full h-7.5 pl-8 pr-7 bg-surface-inner hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/50 focus:border-primary rounded-[4px] text-xs font-medium text-text placeholder:text-text-faint focus:outline-none transition-colors"
-                    />
-                    {searchQuery && (
-                        <button
-                            type="button"
-                            onClick={() => setSearchQuery("")}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-text cursor-pointer"
+                {/* Right controls: Role Selector + Search Input */}
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                    {/* Role perspective selector to test different view capabilities */}
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-surface-inner border border-divider-primary/50 text-[11px] font-mono">
+                        <span className="text-text-faint uppercase text-[10px]">Role:</span>
+                        <select
+                            value={userRole}
+                            onChange={(e) => {
+                                const newRole = e.target.value as "owner" | "moderator" | "member";
+                                setUserRole(newRole);
+                                if (newRole === "member" && isManageView) {
+                                    handleNavChange("home");
+                                }
+                            }}
+                            className="bg-transparent text-text font-bold focus:outline-none cursor-pointer text-[11px]"
                         >
-                            <FontAwesomeIcon icon={faXmark} className="text-xs" />
-                        </button>
-                    )}
+                            <option value="owner" className="bg-surface text-text">Admin / Owner</option>
+                            <option value="moderator" className="bg-surface text-text">Moderator</option>
+                            <option value="member" className="bg-surface text-text">Member</option>
+                        </select>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="relative w-36 sm:w-56">
+                        <FontAwesomeIcon
+                            icon={faMagnifyingGlass}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint text-xs"
+                        />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={`Search in ${community.name}...`}
+                            className="w-full h-7.5 pl-8 pr-7 bg-surface-inner hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/50 focus:border-primary rounded-[4px] text-xs font-medium text-text placeholder:text-text-faint focus:outline-none transition-colors"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-text cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -559,6 +637,7 @@ export function CommunityDetailPage() {
                         isCollapsed={isSidebarCollapsed}
                         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                         isVi={isVi}
+                        userRole={userRole}
                     />
                 </div>
 
@@ -585,10 +664,48 @@ export function CommunityDetailPage() {
                         isLocked={community.isLocked}
                         announcement={community.announcement}
                         featured={community.featured}
+                        userRole={userRole}
+                        onManageClick={() => handleNavChange("manage-overview")}
                     />
 
                     {/* VIEW SWITCHER: Display content according to selected destination */}
-                    {activeNav === "members" || activeNav === "leaderboard" ? (
+                    {activeNav === "manage-overview" ? (
+                        <CommunityManageOverview
+                            communityName={community.name}
+                            isVi={isVi}
+                            onNavigate={handleNavChange}
+                        />
+                    ) : activeNav === "manage-moderation" ? (
+                        <CommunityManageModeration
+                            communityName={community.name}
+                            initialTab="requests"
+                            isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
+                        />
+                    ) : activeNav === "manage-reports" ? (
+                        <CommunityManageReports
+                            communityName={community.name}
+                            isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
+                        />
+                    ) : activeNav === "manage-members" ? (
+                        <CommunityManageMembers
+                            communityName={community.name}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "manage-rules" ? (
+                        <CommunityManageRules
+                            communityName={community.name}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "manage-settings" ? (
+                        <CommunityManageSettings
+                            communityName={community.name}
+                            communityDescription={community.description}
+                            communitySlug={community.slug || community.id}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "members" || activeNav === "leaderboard" ? (
                         <CommunityHubMembers
                             communityId={community.id}
                             communityName={community.name}
@@ -641,6 +758,7 @@ export function CommunityDetailPage() {
                         nextEvent={upcomingEventsData[0]}
                         onNavigateNav={handleNavChange}
                         isVi={isVi}
+                        userRole={userRole}
                     />
                 </div>
             </div>

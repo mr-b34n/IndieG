@@ -43,14 +43,15 @@ export const CommunityList = () => {
     const storeLoading = useCommunitiesStore((state) => state.isLoading);
     const isLoading = isQueryLoading || storeLoading;
     
-    // Sync query results to global store if needed
+    // Sync query results to global store by merging without overwriting other pages/data
     useEffect(() => {
         if (rawCommunitiesData) {
             const list = extractCommunityList(rawCommunitiesData);
             if (Array.isArray(list) && list.length > 0) {
+                const currentCommunities = useCommunitiesStore.getState().communities;
                 const mapped: CommunityData[] = list.map((item) => {
                     const base = mapCommunityDtoToCommunityData(item);
-                    const existing = communities.find((c) => String(c.id) === String(item.id));
+                    const existing = currentCommunities.find((c) => String(c.id) === String(item.id));
                     const isJoined = item.joined !== undefined
                         ? Boolean(item.joined)
                         : (item.isJoined !== undefined
@@ -61,7 +62,22 @@ export const CommunityList = () => {
                         joined: isJoined,
                     };
                 });
-                useCommunitiesStore.setState({ communities: mapped, isLoading: false });
+
+                useCommunitiesStore.setState((state) => {
+                    const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
+                    mapped.forEach((item) => {
+                        const prev = existingMap.get(String(item.id));
+                        existingMap.set(String(item.id), {
+                            ...prev,
+                            ...item,
+                            joined: item.joined !== undefined ? item.joined : (prev?.joined ?? false),
+                        });
+                    });
+                    return {
+                        communities: Array.from(existingMap.values()),
+                        isLoading: false,
+                    };
+                });
             }
         }
     }, [rawCommunitiesData]);
@@ -124,16 +140,33 @@ export const CommunityList = () => {
 
     const totalItems = isFilteredLocally
         ? filtered.length
-        : apiMeta.total || filtered.length;
+        : (apiMeta.total || filtered.length);
+
+    const currentPageApiItems = useMemo(() => {
+        const list = extractCommunityList(rawCommunitiesData);
+        if (!list || list.length === 0) return null;
+        return list.map((item) => {
+            const base = mapCommunityDtoToCommunityData(item);
+            const storeItem = communities.find((c) => String(c.id) === String(item.id));
+            const isJoined = item.joined !== undefined
+                ? Boolean(item.joined)
+                : (item.isJoined !== undefined
+                    ? Boolean(item.isJoined)
+                    : (storeItem?.joined ?? false));
+            return {
+                ...base,
+                joined: isJoined,
+            };
+        });
+    }, [rawCommunitiesData, communities]);
 
     const paginatedCommunities = useMemo(() => {
-        const rawList = extractCommunityList(rawCommunitiesData);
-        if (!isFilteredLocally && rawList.length > 0 && rawList.length <= ITEMS_PER_PAGE && apiMeta.total > ITEMS_PER_PAGE) {
-            return filtered.slice(0, ITEMS_PER_PAGE);
+        if (!isFilteredLocally && currentPageApiItems && currentPageApiItems.length > 0) {
+            return currentPageApiItems;
         }
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         return filtered.slice(start, start + ITEMS_PER_PAGE);
-    }, [filtered, currentPage, rawCommunitiesData, isFilteredLocally, apiMeta.total]);
+    }, [filtered, currentPage, isFilteredLocally, currentPageApiItems]);
 
     const handleTabChange = (tab: CommunityTabKey) => {
         setActiveTab(tab);
@@ -153,7 +186,7 @@ export const CommunityList = () => {
 
             {/* 1. Header with Title + Typography-based Stats + Create Action */}
             <CommunityHeader
-                communityCount={communities.length}
+                communityCount={isFilteredLocally ? filtered.length : (apiMeta.total || communities.length)}
                 totalOnline={totalOnline}
                 totalMembers={totalMembers}
                 canCreateCommunity={canCreateCommunity}

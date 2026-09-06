@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { type CommunitiesState, type CommunityData } from "../types";
 import { INITIAL_COMMUNITIES } from "../constants";
-import { notificationApi } from "@/features/notification";
 import { communitiesApi, mapCommunityDtoToCommunityData, type CommunityDto, type CreateCommunityDto } from "@/shared/api";
 
 export * from "../types";
@@ -85,19 +84,6 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
                     // Handled gracefully in offline or dev preview
                 });
             }
-        }
-
-        if (targetComm) {
-            void notificationApi.createNotification({
-                type: "community",
-                referenceId: String(id),
-                title: "Thành viên Cộng đồng",
-                message: newJoinedState
-                    ? `Bạn đã gia nhập cộng đồng "${targetComm.name}"`
-                    : `Bạn đã rời khỏi cộng đồng "${targetComm.name}"`,
-                link: `/community/${id}`,
-                avatarUrl: targetComm.logo,
-            });
         }
     },
 

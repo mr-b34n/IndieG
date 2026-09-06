@@ -22,7 +22,6 @@ import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useAuthStore } from "@/features/auth"
-import { notificationApi } from "@/features/notification"
 import { formatFileSize } from "../helpers/postAttachmentLimits"
 import { Lightbox } from "@/shared/components/ui/Lightbox"
 import { ReportModal } from "@/features/report"
@@ -183,16 +182,6 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             setIsDownvoted(false);
         }
         likeMutation.mutate(nextLiked);
-
-        if (nextLiked) {
-            void notificationApi.createNotification({
-                type: "like",
-                referenceId: String(post.id),
-                title: "Upvote bài viết",
-                message: `Bạn đã upvote bài viết: "${post.title}"`,
-                link: `/post/${post.id}`,
-            });
-        }
     };
 
     const handleDownvote = (e: React.MouseEvent) => {

@@ -119,4 +119,29 @@ Decision:
 7. **Clean Tab Layout**: Adjacent tabs (Game Mastery, Communities, Posts, Friends) use concise, high-density layouts without redundant description blocks.
 8. **Reputation Default**: Default reputation is set to 0%.
 
+---
+
+## Decision: Community Admin & Steward Experience
+
+Status: Active
+
+Date: 2026-09-06
+
+Decision:
+
+The Community Admin/Owner role is treated as an in-context *Steward* rather than a generic SaaS platform administrator.
+
+Why:
+
+Platform administration belongs strictly to `admin.abc.com`. Turning the community page into a generic analytics/admin dashboard breaks community identity and disrupts context. 80–90% of the UI remains identical to the member view, opening management capabilities smoothly in-place.
+
+Implications:
+
+1. **Contextual Continuity**: Retains the 3-column layout (Sidebar, Center Column, Right Rail), breadcrumbs, search, and game identity.
+2. **Left Sidebar "MANAGE" Section**: Rendered conditionally for Owner, Admin, and Moderator roles with direct entry points to Overview, Moderation, Members, Reports, Rules, and Settings.
+3. **Right Rail "COMMUNITY STATUS"**: Displays lightweight operational status (pending requests, unhandled reports, active moderators count) instead of platform-level analytics.
+4. **Header Stewardship Indicator**: Subtle "Admin / Owner" / "Moderator" badge and direct "Quản lý" / "Manage" button.
+5. **Role Perspective Toggle**: Top-bar test switcher enables previewing Member, Moderator, and Admin experiences seamlessly.
+
+
 

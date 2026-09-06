@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faArrowRight,
     faCircle,
+    faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
@@ -33,6 +34,7 @@ interface CommunityHubRightRailProps {
     nextEvent?: UpcomingEventTimelineItem;
     onNavigateNav: (navId: string) => void;
     isVi: boolean;
+    userRole?: "owner" | "admin" | "moderator" | "member";
 }
 
 export const CommunityHubRightRail = ({
@@ -46,16 +48,68 @@ export const CommunityHubRightRail = ({
     nextEvent,
     onNavigateNav,
     isVi,
+    userRole = "owner",
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
+    const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     return (
         <aside className="w-full flex flex-col gap-6 text-text select-none py-1">
+            {/* COMMUNITY STATUS MODULE (Compact, for Admin / Moderator) */}
+            {hasManagePermission && (
+                <div className="flex flex-col gap-2.5 p-3 rounded-[6px] bg-surface-inner/80 border border-divider-primary/60 text-xs">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-text-faint flex items-center gap-1.5">
+                            <FontAwesomeIcon icon={faShieldHalved} className="text-[10px] text-primary" />
+                            <span>COMMUNITY STATUS</span>
+                        </span>
+                        <span className="flex items-center gap-1 text-emerald-400 font-mono text-[11px] font-bold">
+                            <FontAwesomeIcon icon={faCircle} className="text-[5px] animate-pulse" />
+                            <span>Active · Healthy</span>
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 py-0.5 text-center font-mono">
+                        <div
+                            onClick={() => onNavigateNav("manage-moderation")}
+                            className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
+                        >
+                            <span className="text-sm font-bold text-amber-400 block">12</span>
+                            <span className="text-[9px] text-text-faint uppercase block truncate">Pending</span>
+                        </div>
+                        <div
+                            onClick={() => onNavigateNav("manage-reports")}
+                            className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
+                        >
+                            <span className="text-sm font-bold text-rose-400 block">7</span>
+                            <span className="text-[9px] text-text-faint uppercase block truncate">Reports</span>
+                        </div>
+                        <div
+                            onClick={() => onNavigateNav("manage-members")}
+                            className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
+                        >
+                            <span className="text-sm font-bold text-primary block">3</span>
+                            <span className="text-[9px] text-text-faint uppercase block truncate">Mods</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => onNavigateNav("manage-overview")}
+                        className="w-full py-1.5 rounded-[4px] bg-surface-hover hover:bg-surface border border-divider-primary text-xs font-semibold text-text flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        <span>{isVi ? "Quản lý" : "Manage"}</span>
+                        <FontAwesomeIcon icon={faArrowRight} className="text-[9px] text-text-faint" />
+                    </button>
+                </div>
+            )}
+
             {/* 1. ABOUT MODULE */}
             <div className="flex flex-col gap-2 pb-5 border-b border-divider-primary/40">
                 <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-text-faint">
                     ABOUT
                 </span>
+
 
                 <p className="text-xs text-text-muted leading-relaxed line-clamp-3">
                     {description || `Farm layouts, mods & community discussions for ${communityName}.`}

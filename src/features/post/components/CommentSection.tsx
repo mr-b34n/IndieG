@@ -13,7 +13,6 @@ import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
-import { notificationApi } from "@/features/notification";
 import { useCommentsQuery, useReplyCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
 import type { CommentEntity } from "@/shared/api/types";
 import { faComments as faCommentsIcon } from "@fortawesome/free-solid-svg-icons";
@@ -977,14 +976,6 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         } catch {
             // Local optimistic state is already applied
         }
-
-        void notificationApi.createNotification({
-            type: "comment",
-            referenceId: String(postId),
-            title: "Bình luận mới trên bài viết",
-            message: textContent ? `Bạn đã đăng bình luận: "${textContent.slice(0, 40)}${textContent.length > 40 ? "..." : ""}"` : "Bạn đã đính kèm ảnh trong bình luận",
-            link: `/post/${postId}`,
-        });
     };
 
     
@@ -1025,14 +1016,6 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         } catch {
             // Local optimistic state is applied
         }
-
-        void notificationApi.createNotification({
-            type: "reply",
-            referenceId: String(postId),
-            title: "Phản hồi mới cho bình luận",
-            message: `Bạn đã trả lời: "${text.slice(0, 40)}${text.length > 40 ? "..." : ""}"`,
-            link: `/post/${postId}`,
-        });
     };
 
 

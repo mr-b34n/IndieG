@@ -6,7 +6,6 @@ import {
     DEFAULT_AVATAR as avatarDefault
 } from "@/shared/constants/images";
 import { getCurrentAuthor } from "@/features/post/helpers/getCurrentAuthor";
-import { useNotificationStore } from "@/features/notification/store/useNotificationStore";
 import { type Squad, type SquadMember, type SquadStatus, type SquadState } from "../types";
 import { INITIAL_SQUADS } from "../constants";
 
@@ -55,26 +54,16 @@ export const useSquadStore = create<SquadState>((set) => ({
             squads: [newSquad, ...state.squads],
             activeTab: "my-squads",
         }));
-
-        useNotificationStore.getState().addNotification({
-            type: "system",
-            title: "Tạo tổ đội thành công!",
-            message: `Bạn đã tạo tổ đội "${newSquad.name}" và đang tuyển thành viên.`,
-            timestamp: "Vừa xong",
-            link: "/squad",
-        });
     },
 
     joinSquad: (squadId) => {
         const currentAuthor = getCurrentAuthor();
-        let joinedName = "";
 
         set((state) => {
             const updatedSquads: Squad[] = state.squads.map((sq) => {
                 if (sq.id !== squadId) return sq;
                 if (sq.isMySquad || sq.currentMembers >= sq.maxMembers) return sq;
 
-                joinedName = sq.name;
                 const newMember: SquadMember = {
                     id: `m-${Date.now()}`,
                     username: currentAuthor,
@@ -96,16 +85,6 @@ export const useSquadStore = create<SquadState>((set) => ({
             });
             return { squads: updatedSquads };
         });
-
-        if (joinedName) {
-            useNotificationStore.getState().addNotification({
-                type: "system",
-                title: "Tham gia tổ đội thành công!",
-                message: `Chào mừng bạn gia nhập tổ đội "${joinedName}". Hãy kết nối voice chat cùng đồng đội!`,
-                timestamp: "Vừa xong",
-                link: "/squad",
-            });
-        }
     },
 
     leaveSquad: (squadId) => {
@@ -144,35 +123,12 @@ export const useSquadStore = create<SquadState>((set) => ({
             });
             return { squads: updatedSquads };
         });
-
-        useNotificationStore.getState().addNotification({
-            type: "system",
-            title: "Đã trục xuất thành viên",
-            message: `Bạn đã kick @${memberUsername} ra khỏi tổ đội.`,
-            timestamp: "Vừa xong",
-            link: "/squad",
-        });
     },
 
     deleteSquad: (squadId) => {
-        let deletedName = "";
-        set((state) => {
-            const sq = state.squads.find((s) => s.id === squadId);
-            if (sq) deletedName = sq.name;
-            return {
-                squads: state.squads.filter((s) => s.id !== squadId),
-            };
-        });
-
-        if (deletedName) {
-            useNotificationStore.getState().addNotification({
-                type: "system",
-                title: "Đã giải tán tổ đội",
-                message: `Tổ đội "${deletedName}" đã được giải tán thành công.`,
-                timestamp: "Vừa xong",
-                link: "/squad",
-            });
-        }
+        set((state) => ({
+            squads: state.squads.filter((s) => s.id !== squadId),
+        }));
     },
 
     toggleSquadStatus: (squadId) => {

@@ -15,6 +15,10 @@ import {
     faLink,
     faShieldHalved,
     faCircleInfo,
+    faGavel,
+    faFlag,
+    faGear,
+    faSliders,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface CommunityHubSidebarProps {
@@ -23,6 +27,7 @@ interface CommunityHubSidebarProps {
     isCollapsed: boolean;
     onToggleCollapse: () => void;
     isVi: boolean;
+    userRole?: "owner" | "admin" | "moderator" | "member";
 }
 
 export const CommunityHubSidebar = ({
@@ -31,9 +36,12 @@ export const CommunityHubSidebar = ({
     isCollapsed,
     onToggleCollapse,
     isVi,
+    userRole = "owner",
 }: CommunityHubSidebarProps) => {
     const [isMoreOpen, setIsMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
+
+    const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     // Primary community navigation items
     const primaryNavItems = [
@@ -52,6 +60,17 @@ export const CommunityHubSidebar = ({
         { id: "links", labelVi: "Liên kết cộng đồng", labelEn: "Links", icon: faLink },
         { id: "rules", labelVi: "Quy tắc cộng đồng", labelEn: "Rules", icon: faShieldHalved },
         { id: "about", labelVi: "Về chúng tôi", labelEn: "About", icon: faCircleInfo },
+    ];
+
+    // Management navigation items (prompt exact items)
+    const manageNavItems = [
+        { id: "manage-overview", labelVi: "Tổng quan", labelEn: "Overview", icon: faSliders },
+        { id: "manage-moderation", labelVi: "Kiểm duyệt", labelEn: "Moderation", icon: faGavel, badge: "12" },
+        { id: "manage-members", labelVi: "Thành viên", labelEn: "Members", icon: faUsers },
+        { id: "manage-reports", labelVi: "Báo cáo", labelEn: "Reports", icon: faFlag, badge: "7" },
+        ...(userRole === "owner" || userRole === "admin"
+            ? [{ id: "manage-settings", labelVi: "Cài đặt", labelEn: "Settings", icon: faGear }]
+            : []),
     ];
 
     // Close "More" dropdown when clicking outside
@@ -232,7 +251,78 @@ export const CommunityHubSidebar = ({
                         )}
                     </div>
                 </nav>
+
+                {/* MANAGE SECTION (Only shown to users with management permission) */}
+                {hasManagePermission && (
+                    <div className="w-full flex flex-col gap-1 pt-2 border-t border-divider-primary/40 mt-1">
+                        {!isCollapsed && (
+                            <div className="flex items-center gap-1.5 px-2 py-1 text-text-faint">
+                                <FontAwesomeIcon icon={faShieldHalved} className="text-[10px] text-primary" />
+                                <span className="text-[11px] font-mono font-bold tracking-widest text-text-faint uppercase">
+                                    MANAGE
+                                </span>
+                            </div>
+                        )}
+
+                        <nav className="w-full flex flex-col gap-1">
+                            {manageNavItems.map((item) => {
+                                const isActive = activeNav === item.id;
+                                const label = isVi ? item.labelVi : item.labelEn;
+
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onNavChange(item.id);
+                                            setIsMoreOpen(false);
+                                        }}
+                                        title={isCollapsed ? label : undefined}
+                                        className={`group relative flex items-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer ${
+                                            isCollapsed
+                                                ? "w-10 h-10 justify-center mx-auto"
+                                                : "w-full px-3 py-2 gap-3 text-left"
+                                        } ${
+                                            isActive
+                                                ? "bg-surface-hover text-text font-bold"
+                                                : "text-text-muted hover:text-text hover:bg-surface-hover/50"
+                                        }`}
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={item.icon}
+                                            className={`text-sm shrink-0 transition-colors ${
+                                                isActive ? "text-primary" : "text-text-faint group-hover:text-text"
+                                            }`}
+                                        />
+
+                                        {!isCollapsed && (
+                                            <span className="truncate">{label}</span>
+                                        )}
+
+                                        {!isCollapsed && item.badge && (
+                                            <span className="ml-auto px-1.5 py-0.2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-[9px] font-bold">
+                                                {item.badge}
+                                            </span>
+                                        )}
+
+                                        {isActive && !isCollapsed && !item.badge && (
+                                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                                        )}
+
+                                        {/* Collapsed Tooltip */}
+                                        {isCollapsed && (
+                                            <div className="absolute left-full ml-3 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                                {label}
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+                )}
             </div>
         </aside>
     );
 };
+

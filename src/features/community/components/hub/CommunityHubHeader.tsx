@@ -6,6 +6,8 @@ import {
     faLock,
     faStar,
     faBullhorn,
+    faShieldHalved,
+    faCrown,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatCompactNumber } from "../../constants";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -24,6 +26,8 @@ interface CommunityHubHeaderProps {
     isLocked?: boolean;
     announcement?: string;
     featured?: boolean;
+    userRole?: "owner" | "admin" | "moderator" | "member";
+    onManageClick?: () => void;
 }
 
 export const CommunityHubHeader = ({
@@ -40,8 +44,11 @@ export const CommunityHubHeader = ({
     announcement,
     featured,
     isVi,
+    userRole = "owner",
+    onManageClick,
 }: CommunityHubHeaderProps) => {
     const { t } = useTranslation();
+    const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     return (
         <div className="w-full flex flex-col gap-3 select-none">
@@ -79,6 +86,20 @@ export const CommunityHubHeader = ({
                             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-text uppercase leading-none truncate">
                                 {name}
                             </h1>
+
+                            {userRole === "owner" && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[9px] font-mono uppercase flex items-center gap-1">
+                                    <FontAwesomeIcon icon={faCrown} className="text-[8px]" />
+                                    <span>{isVi ? "Trưởng nhóm" : "Owner"}</span>
+                                </span>
+                            )}
+
+                            {userRole === "moderator" && (
+                                <span className="px-1.5 py-0.5 rounded bg-primary/15 border border-primary/30 text-primary font-bold text-[9px] font-mono uppercase flex items-center gap-1">
+                                    <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
+                                    <span>Mod</span>
+                                </span>
+                            )}
 
                             {featured && (
                                 <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[10px] uppercase flex items-center gap-1">
@@ -140,8 +161,20 @@ export const CommunityHubHeader = ({
                     </div>
                 </div>
 
-                {/* Right: Primary Action CTA (+ Create) */}
+                {/* Right: Contextual Management + Primary Action CTA */}
                 <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+                    {/* Small contextual control near Create button for Admin / Owner */}
+                    {hasManagePermission && onManageClick && (
+                        <button
+                            type="button"
+                            onClick={onManageClick}
+                            className="px-3 py-2 rounded-[6px] text-xs font-semibold bg-surface-inner hover:bg-surface-hover border border-divider-primary text-text flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        >
+                            <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary" />
+                            <span>{isVi ? "Quản lý" : "Manage"}</span>
+                        </button>
+                    )}
+
                     <button
                         type="button"
                         onClick={onStartDiscussion}
@@ -160,3 +193,4 @@ export const CommunityHubHeader = ({
         </div>
     );
 };
+
