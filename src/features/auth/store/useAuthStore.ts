@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                                 name: profile.name || profile.username || "Gamer",
                                 avatar_url: profile.avatarUrl || undefined,
                                 avatarUrl: profile.avatarUrl || undefined,
-                                role: (profile.username?.toLowerCase().includes("admin") ? "admin" : "user"),
+                                role: (profile as { role?: "admin" | "moderator" | "user" }).role || "user",
                                 isVerified: profile.isVerified === true || profile.isEmailVerified === true,
                                 createdAt: profile.createdAt,
                             };
@@ -197,7 +197,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                 avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
                 isVerified: true,
-                role: "admin",
+                role: "user",
             };
             get().login(demoUser);
         } else {

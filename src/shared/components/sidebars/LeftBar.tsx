@@ -1,6 +1,6 @@
 import {
     faUsers, faHouse,
-    faGear, faShieldHalved,
+    faGear,
     faCompass, faPlus,
     faRightFromBracket
 } from "@fortawesome/free-solid-svg-icons"
@@ -39,13 +39,11 @@ export const LeftBar = () => {
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
-    const isAdmin = user?.role === "admin";
 
     const isHomeActive = pathname === "/" || pathname.startsWith("/post");
     const isExploreActive = pathname.startsWith("/explore");
     const isCommunityActive = pathname.startsWith("/community");
     const isSettingsActive = pathname.startsWith("/settings");
-    const isAdminActive = pathname.startsWith("/admin");
 
     const displayName = user?.name || user?.username || getCurrentAuthor();
     const avatarUrl =
@@ -220,17 +218,6 @@ export const LeftBar = () => {
 
             {/* SYSTEM SETTINGS */}
             <div className="border-t border-[#1C1F22] pt-3 mt-2 px-1 flex flex-col gap-0.5">
-                {isAdmin && (
-                    <button
-                        type="button"
-                        onClick={() => navigate({ to: "/admin" })}
-                        className={`${isAdminActive ? navItemActive : navItem}`}
-                    >
-                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 shrink-0 text-amber-500" />
-                        <span>{t('common.adminUi', { defaultValue: 'Quản trị hệ thống' })}</span>
-                    </button>
-                )}
-
                 <button
                     type="button"
                     onClick={() => navigate({to: "/settings"})}

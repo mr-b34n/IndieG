@@ -6,10 +6,9 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
-import { adminApi } from "../api/adminApi";
 import { useCreateReportMutation } from "@/shared/api/useQueries";
 
-export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
+export const ReportModal = ({ postId, onClose }: ReportModalProps) => {
     const { t } = useTranslation();
     const [selectedReason, setSelectedReason] = useState<string>("");
     const [details, setDetails] = useState("");
@@ -26,14 +25,8 @@ export const ReportModal = ({ postId, author, onClose }: ReportModalProps) => {
                 reason: `${selectedReason}${details ? `: ${details}` : ""}`,
             });
         } catch {
-            // Local report fallback
-            await adminApi.createReport({
-                targetType: "post",
-                targetId: String(postId),
-                reason: selectedReason,
-                description: details,
-                targetAuthor: author,
-            });
+            // Log error
+            console.warn("Report submission failed on backend");
         }
 
         setIsSubmitted(true);

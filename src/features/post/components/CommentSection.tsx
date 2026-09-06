@@ -394,23 +394,15 @@ const CommentItem = ({
                                 <p 
                                     onClick={handleAuthorClick}
                                     className={`font-bold text-[14px] hover:underline cursor-pointer ${
-                                    (comment.author.toLowerCase().includes("admin") || comment.author.toLowerCase().includes("quản trị"))
-                                        ? "text-rose-500 font-extrabold"
-                                        : getUserRankConfig(comment.authorRank || comment.author).textColor
-                                }`}>
+                                        getUserRankConfig(comment.authorRank || comment.author).textColor
+                                    }`}
+                                >
                                     {comment.author}
                                 </p>
-                                {(comment.author.toLowerCase().includes("admin") || comment.author.toLowerCase().includes("quản trị")) ? (
-                                    <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-400/50">
-                                        <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
-                                        <span>ADMIN</span>
-                                    </span>
-                                ) : (
-                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.authorRank || comment.author).classes}`}>
-                                        <FontAwesomeIcon icon={getUserRankConfig(comment.authorRank || comment.author).icon} className="mr-1" />
-                                        {getRankLabel(getUserRankConfig(comment.authorRank || comment.author))}
-                                    </span>
-                                )}
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.authorRank || comment.author).classes}`}>
+                                    <FontAwesomeIcon icon={getUserRankConfig(comment.authorRank || comment.author).icon} className="mr-1" />
+                                    {getRankLabel(getUserRankConfig(comment.authorRank || comment.author))}
+                                </span>
                                 <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 

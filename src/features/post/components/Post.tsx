@@ -17,7 +17,6 @@ import {
     faFile,
     faDownload,
     faLock,
-    faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons"
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons"
 import { useState } from "react"
@@ -329,20 +328,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                             <span
                                 onClick={handleAuthorClick}
                                 className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${
-                                    (authorName.toLowerCase().includes("admin") || authorName.toLowerCase().includes("quản trị"))
-                                        ? "text-rose-500 font-extrabold"
-                                        : rank?.textColor || "text-text"
+                                    rank?.textColor || "text-text"
                                 }`}
                             >
                                 {authorName}
                             </span>
 
-                            {(authorName.toLowerCase().includes("admin") || authorName.toLowerCase().includes("quản trị")) ? (
-                                <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-xs border border-rose-400/50">
-                                    <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
-                                    <span>ADMIN</span>
-                                </span>
-                            ) : rank && (
+                            {rank && (
                                 <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${rank.classes}`}>
                                     {getRankLabel(rank, language)}
                                 </span>

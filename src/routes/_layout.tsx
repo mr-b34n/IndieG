@@ -92,7 +92,6 @@ function MainLayout() {
         pathname.startsWith('/settings') || 
         pathname.startsWith('/profile') || 
         pathname.startsWith('/game') ||
-        pathname.startsWith('/admin') ||
         (pathname.startsWith('/community') && pathname !== '/community')
 
     return (

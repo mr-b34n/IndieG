@@ -44,7 +44,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         "1. Tôn trọng tất cả các thành viên trong cộng đồng.\n2. Không đả kích, toxic hoặc xúc phạm cá nhân.\n3. Không đăng bài quảng cáo rác (spam)."
     );
 
-    const canCreate = user?.role === 'admin';
+    const canCreate = !!user;
     
     React.useEffect(() => {
         if (!canCreate) {

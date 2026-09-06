@@ -5,7 +5,6 @@ import {
     faCircle,
     faLock,
     faStar,
-    faShieldHalved,
     faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatCompactNumber } from "../../constants";
@@ -22,8 +21,6 @@ interface CommunityHubHeaderProps {
     onToggleJoin: () => void;
     onStartDiscussion: () => void;
     isVi: boolean;
-    isAdmin?: boolean;
-    onOpenAdminController?: () => void;
     isLocked?: boolean;
     announcement?: string;
     featured?: boolean;
@@ -39,8 +36,6 @@ export const CommunityHubHeader = ({
     isJoined,
     onToggleJoin,
     onStartDiscussion,
-    isAdmin,
-    onOpenAdminController,
     isLocked,
     announcement,
     featured,
@@ -57,15 +52,6 @@ export const CommunityHubHeader = ({
                         <FontAwesomeIcon icon={faBullhorn} className="text-rose-400 text-xs shrink-0" />
                         <span className="truncate">{announcement}</span>
                     </div>
-                    {isAdmin && onOpenAdminController && (
-                        <button
-                            type="button"
-                            onClick={onOpenAdminController}
-                            className="text-[11px] font-bold text-rose-300 hover:text-white underline shrink-0 cursor-pointer"
-                        >
-                            {isVi ? "Sửa" : "Edit"}
-                        </button>
-                    )}
                 </div>
             )}
 
@@ -154,25 +140,14 @@ export const CommunityHubHeader = ({
                     </div>
                 </div>
 
-                {/* Right: Primary Action CTA (+ Create) & Admin if applicable */}
+                {/* Right: Primary Action CTA (+ Create) */}
                 <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                    {isAdmin && (
-                        <button
-                            type="button"
-                            onClick={onOpenAdminController}
-                            title="Admin Settings"
-                            className="p-2 rounded-[6px] bg-surface-inner hover:bg-surface-hover text-text-muted hover:text-text border border-divider-primary transition-colors cursor-pointer text-xs"
-                        >
-                            <FontAwesomeIcon icon={faShieldHalved} />
-                        </button>
-                    )}
-
                     <button
                         type="button"
                         onClick={onStartDiscussion}
-                        disabled={isLocked && !isAdmin}
+                        disabled={isLocked}
                         className={`px-4 py-2 rounded-[6px] text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
-                            isLocked && !isAdmin
+                            isLocked
                                 ? "bg-surface-inner text-text-faint cursor-not-allowed border border-divider-primary"
                                 : "bg-primary hover:bg-primary/90 text-white cursor-pointer hover:shadow-md active:scale-[0.98]"
                         }`}

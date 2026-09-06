@@ -28,8 +28,7 @@ function extractCommunityList(res: unknown): CommunityDto[] {
 export const CommunityList = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
-    const isAdmin = user?.role === "admin";
-    const canCreateCommunity = isAdmin;
+    const canCreateCommunity = !!user;
 
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 9;

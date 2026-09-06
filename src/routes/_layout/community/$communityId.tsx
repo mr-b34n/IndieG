@@ -37,7 +37,6 @@ import {
     type UpcomingEventTimelineItem,
 } from '@/features/community/components/hub/CommunityHubRightRail';
 import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
-import { AdminCommunityControllerModal } from '@/features/community';
 import type { CategoryItem } from '@/features/community/components/hub/CommunityHubCategories';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
@@ -95,7 +94,6 @@ export function CommunityDetailPage() {
     const isVi = language === "vi";
 
     const user = useAuthStore((state) => state.user);
-    const isAdmin = user?.role === "admin";
 
     // TanStack Query for Community Detail & Posts & Profiles
     const { data: communityDto } = useCommunityDetailQuery(communityId);
@@ -153,7 +151,6 @@ export function CommunityDetailPage() {
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isAdminControllerOpen, setIsAdminControllerOpen] = useState(false);
 
     // Categories definition for creation modal
     const categoriesData: CategoryItem[] = [
@@ -585,8 +582,6 @@ export function CommunityDetailPage() {
                             setIsCreateModalOpen(true);
                         }}
                         isVi={isVi}
-                        isAdmin={isAdmin}
-                        onOpenAdminController={() => setIsAdminControllerOpen(true)}
                         isLocked={community.isLocked}
                         announcement={community.announcement}
                         featured={community.featured}
@@ -659,14 +654,6 @@ export function CommunityDetailPage() {
                 communityName={community.name}
                 isVi={isVi}
             />
-
-            {/* ADMIN CONTROLLER MODAL */}
-            {isAdminControllerOpen && (
-                <AdminCommunityControllerModal
-                    community={community}
-                    onClose={() => setIsAdminControllerOpen(false)}
-                />
-            )}
         </div>
     );
 }

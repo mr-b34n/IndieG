@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCheck, faXmark, faCamera, faPen,
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
-    faImage, faSliders, faArrowLeft, faMessage, faShieldHalved,
+    faImage, faSliders, faArrowLeft, faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
@@ -253,12 +253,6 @@ export const ProfileHero = ({
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                                        {(user?.role === "admin" || identity.name.toLowerCase().includes("admin") || identity.username.toLowerCase().includes("admin")) && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[6px] text-xs font-bold bg-[#E05252]/20 text-[#FF6B6B] uppercase tracking-wider">
-                                                <FontAwesomeIcon icon={faShieldHalved} />
-                                                <span>Admin</span>
-                                            </span>
-                                        )}
                                         {forumRankNode}
                                     </div>
                                 </>

@@ -184,11 +184,8 @@ const AuthPage = () => {
                         }
                     }
                 } catch (apiErr: unknown) {
-                    // Check if demo account simulation is requested
                     const emailLower = formData.email.toLowerCase();
-                    if (emailLower.includes("admin") && formData.password !== "error") {
-                        userProfile = TEST_ACCOUNTS.admin as unknown as Record<string, unknown>;
-                    } else if (emailLower.includes("unverified") && formData.password !== "error") {
+                    if (emailLower.includes("unverified") && formData.password !== "error") {
                         userProfile = TEST_ACCOUNTS.unverifiedUser as unknown as Record<string, unknown>;
                     } else {
                         // Throw real API error to user
@@ -196,7 +193,6 @@ const AuthPage = () => {
                     }
                 }
 
-                const emailLower = formData.email.toLowerCase();
                 const userObj = userProfile
                     ? {
                           id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
@@ -205,7 +201,7 @@ const AuthPage = () => {
                           name: (userProfile.name as string) || (userProfile.username as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           avatarUrl: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
-                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
+                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || "user"),
                           isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
                     : {
@@ -213,7 +209,7 @@ const AuthPage = () => {
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
                           name: formData.email.split("@")[0] || "IndiePlayer",
-                          role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
+                          role: "user" as const,
                           isVerified: false,
                       };
 
@@ -286,7 +282,6 @@ const AuthPage = () => {
                     // Fallback to local session
                 }
 
-                const emailLower = formData.email.toLowerCase();
                 const userObj = userProfile
                     ? {
                           id: (userProfile.id as string) || "usr_" + Math.random().toString(36).substring(2, 9),
@@ -295,7 +290,7 @@ const AuthPage = () => {
                           name: (userProfile.name as string) || (userProfile.username as string) || formData.email.split("@")[0] || "IndiePlayer",
                           avatar_url: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
                           avatarUrl: (userProfile.avatarUrl as string) || (userProfile.avatar_url as string),
-                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || (emailLower.includes("admin") ? "admin" : "user")),
+                          role: ((userProfile.role as 'admin' | 'moderator' | 'user') || "user"),
                           isVerified: userProfile.isVerified === true || userProfile.isEmailVerified === true,
                       }
                     : {
@@ -303,7 +298,7 @@ const AuthPage = () => {
                           email: formData.email,
                           username: formData.email.split("@")[0] || "IndiePlayer",
                           name: formData.email.split("@")[0] || "IndiePlayer",
-                          role: emailLower.includes("admin") ? ("admin" as const) : ("user" as const),
+                          role: "user" as const,
                           isVerified: false,
                       };
 

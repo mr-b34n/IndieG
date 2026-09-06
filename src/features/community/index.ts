@@ -6,6 +6,5 @@ export { CommunityNavigator } from "./components/CommunityNavigator";
 export { CommunityGameTile } from "./components/CommunityGameTile";
 export { CreateCommunityModal } from "./components/CreateCommunityModal";
 export { EditCommunityModal } from "./components/EditCommunityModal";
-export { AdminCommunityControllerModal } from "./components/AdminCommunityControllerModal";
 export { MemberListModal } from "./components/MemberListModal";
 export { useCommunitiesStore } from "./store/useCommunitiesStore";

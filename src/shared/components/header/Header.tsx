@@ -12,7 +12,6 @@ import {
     faHouse,
     faUser,
     faGear,
-    faShieldHalved,
     faRightFromBracket,
     faChevronDown
 } from "@fortawesome/free-solid-svg-icons";
@@ -26,7 +25,6 @@ export const Header = () => {
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
-    const isAdmin = user?.role === "admin";
     const navigate = useNavigate();
 
     const toggleLeft = useSidebarStore((state) => state.toggleLeft);
@@ -217,20 +215,6 @@ export const Header = () => {
                                                 <FontAwesomeIcon icon={faGear} className="w-3.5 text-[#8B9097]" />
                                                 <span>{t('common.settings', { defaultValue: 'Cài đặt' })}</span>
                                             </button>
-
-                                            {isAdmin && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setShowUserMenu(false);
-                                                        navigate({ to: "/admin" });
-                                                    }}
-                                                    className="w-full px-4 py-2 text-xs font-medium text-amber-400 hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
-                                                >
-                                                    <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 text-amber-500" />
-                                                    <span>{t('common.adminUi', { defaultValue: 'Quản trị hệ thống' })}</span>
-                                                </button>
-                                            )}
                                         </div>
 
                                         <div className="border-t border-[#23272C]/80 pt-1 mt-1">
