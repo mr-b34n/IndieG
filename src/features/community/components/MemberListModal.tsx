@@ -100,9 +100,9 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
             const role: CommunityMember["role"] =
                 roleLower === "owner" ? "owner" : roleLower === "admin" ? "admin" : roleLower === "moderator" || roleLower === "mod" ? "mod" : "member";
             return {
-                username: m.user?.username || profile?.username || `user_${uid.slice(0, 6)}`,
-                displayName: m.user?.name || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`,
-                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${uid}`,
+                username: m.user?.username || m.user?.name || profile?.username || `user_${uid.slice(0, 6)}`,
+                displayName: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`,
+                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`,
                 role,
                 joinedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "Thành viên",
             };

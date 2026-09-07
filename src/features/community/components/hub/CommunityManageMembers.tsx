@@ -123,9 +123,9 @@ export const CommunityManageMembers = ({
             const uid = m.userId || String(idx);
             const profile = profilesMap.get(uid);
 
-            const username = m.user?.name || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
-            const handle = m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
-            const avatar = m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${uid}`;
+            const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
+            const handle = m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
+            const avatar = m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`;
             const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
             const activitySummary = m.mutedUntil
                 ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)

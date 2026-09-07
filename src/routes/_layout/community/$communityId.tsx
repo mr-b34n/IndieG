@@ -17,7 +17,7 @@ import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
 import { useCommunityDetailQuery, usePostsQuery, useCreatePostMutation, useProfilesListQuery, useCommunityMemberMeQuery } from '@/shared/api/useQueries';
-import { mapCommunityDtoToCommunityData, type PostDto, type ProfileEntity } from '@/shared/api';
+import { mapCommunityDtoToCommunityData, extractPostList, type PostDto, type ProfileEntity } from '@/shared/api';
 import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
@@ -51,30 +51,23 @@ export const Route = createFileRoute('/_layout/community/$communityId')({
     component: CommunityDetailPage,
 });
 
-function extractPostList(res: unknown): PostDto[] {
-    if (!res) return [];
-    if (Array.isArray(res)) return res as PostDto[];
-    if (typeof res === "object") {
-        const obj = res as Record<string, unknown>;
-        if (Array.isArray(obj.items)) return obj.items as PostDto[];
-        if (Array.isArray(obj.data)) return obj.data as PostDto[];
-        if (Array.isArray(obj.posts)) return obj.posts as PostDto[];
-    }
-    return [];
-}
-
 function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
     const rawType = (dto.tags?.find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t)) || "discussion") as PostType;
     const upvotes = dto.upvotes ?? dto.likes ?? 0;
     const downvotes = dto.downvotes ?? 0;
+
+    const authorName = dto.user?.name || dto.user?.displayName || dto.user?.username || (dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên");
+    const authorHandle = dto.user?.username ? `@${dto.user.username}` : dto.user?.name ? `@${dto.user.name}` : (dto.authorId ? `@user_${dto.authorId.slice(0, 5)}` : "@member");
+    const authorAvatar = dto.user?.avatar || dto.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(dto.user?.username || dto.user?.name || dto.authorId || dto.id)}`;
+
     return {
         id: String(dto.id),
         type: rawType,
         title: dto.title || "Bài viết",
         content: dto.content || "",
-        authorName: dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên",
-        authorHandle: dto.authorId ? `@user_${dto.authorId.slice(0, 5)}` : "@member",
-        authorAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${dto.authorId || dto.id}`,
+        authorName,
+        authorHandle,
+        authorAvatar,
         authorRank: "Member",
         isPinned: !!dto.pinned,
         createdAt: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",

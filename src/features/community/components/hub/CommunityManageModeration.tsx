@@ -129,9 +129,9 @@ export const CommunityManageModeration = ({
             const profile = profilesMap.get(m.userId);
             return {
                 id: m.userId,
-                username: m.user?.name || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
-                handle: m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
-                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+                username: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+                handle: m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
+                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || m.userId)}`,
                 note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
                 playtime: "—",
                 appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Gần đây" : "Recent"),
@@ -214,9 +214,9 @@ export const CommunityManageModeration = ({
             const profile = profilesMap.get(m.userId);
             return {
                 id: m.userId,
-                name: m.user?.name || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
-                handle: m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
-                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+                name: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+                handle: m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
+                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || m.userId)}`,
                 role: (m.role === "owner" || m.role === "admin") ? ("Owner" as const) : ("Moderator" as const),
                 assignedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "2026",
                 actionsCount: 0,

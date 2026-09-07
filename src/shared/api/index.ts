@@ -128,6 +128,25 @@ export function extractMemberList(res: unknown): CommunityMemberDto[] {
     return [];
 }
 
+/** Safely extract PostDto array from various API response shapes */
+export function extractPostList(res: unknown): PostDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as PostDto[];
+    if (typeof res === "object" && res !== null) {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as PostDto[];
+        if (Array.isArray(obj.items)) return obj.items as PostDto[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as PostDto[];
+            if (Array.isArray(nested.items)) return nested.items as PostDto[];
+        }
+        if (Array.isArray(obj.posts)) return obj.posts as PostDto[];
+        if (Array.isArray(obj.result)) return obj.result as PostDto[];
+    }
+    return [];
+}
+
 /**
  * 1. Authentication Services (/auth/*)
  */

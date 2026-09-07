@@ -22,19 +22,7 @@ import { CommunitySwitcherRail } from "./CommunitySwitcherRail";
 import { type FeedSortOption } from "./FeedSortDropdown";
 import { type PostDataWithSettings } from "../types";
 import { usePostsQuery, useCreatePostMutation } from "@/shared/api/useQueries";
-import { mapPostDtoToPostData, type PostDto } from "@/shared/api";
-
-function extractPostList(res: unknown): PostDto[] {
-    if (!res) return [];
-    if (Array.isArray(res)) return res as PostDto[];
-    if (typeof res === "object") {
-        const obj = res as Record<string, unknown>;
-        if (Array.isArray(obj.items)) return obj.items as PostDto[];
-        if (Array.isArray(obj.data)) return obj.data as PostDto[];
-        if (Array.isArray(obj.posts)) return obj.posts as PostDto[];
-    }
-    return [];
-}
+import { mapPostDtoToPostData, extractPostList } from "@/shared/api";
 
 export const FeedList = () => {
     const { t } = useTranslation();
