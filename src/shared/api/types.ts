@@ -128,9 +128,21 @@ export interface CommunityMemberDto {
 }
 
 export interface GetCommunityMembersParams {
-    keyword?: string;
     page?: number;
     limit?: number;
+    keyword?: string;
+}
+
+export interface SearchCommunityMembersParams {
+    keyword: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface CommunityMemberActionDto {
+    userId?: string;
+    duration?: string;
+    reason?: string;
 }
 
 export interface CommunityMembersResponseDto {
@@ -270,6 +282,53 @@ export interface ReportDto {
 export interface CreateReportDto {
     postId: string;
     reason: string;
+}
+
+export interface UpdateReportDto {
+    reason: string;
+}
+
+export interface GetReportsParams {
+    postId?: string;
+    reporterId?: string;
+    reason?: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface GetPostsParams {
+    authorId?: string;
+    communityId?: string;
+    title?: string;
+    content?: string;
+    tags?: string[];
+    page?: number;
+    limit?: number;
+}
+
+export interface CommunitySearchParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    featured?: boolean;
+}
+
+export interface VoteDto {
+    id?: string;
+    postId?: string;
+    commentId?: string;
+    userId?: string;
+    type?: "up" | "down" | number;
+    createdAt?: string;
+    [key: string]: unknown;
+}
+
+export interface VoteResponse {
+    success?: boolean;
+    message?: string;
+    data?: VoteDto | VoteDto[];
+    [key: string]: unknown;
 }
 
 /**

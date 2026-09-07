@@ -8,16 +8,20 @@ import {
     reportsApi,
     authApi,
     usersApi,
+    votesApi,
 } from "./index";
 import type {
     CreateCommunityDto,
     UpdateCommunityDto,
     GetCommunityMembersParams,
+    SearchCommunityMembersParams,
+    CommunityMemberActionDto,
     CreatePostDto,
     UpdatePostDto,
     CreateCommentDto,
     CreateReportDto,
     UpdateProfileDto,
+    ChangePasswordDto,
 } from "./types";
 
 
@@ -39,6 +43,9 @@ export const QUERY_KEYS = {
     communityById: (id: string) => ["communities", "detail", id] as const,
     communitySearch: (params?: Record<string, unknown>) => ["communities", "search", params || {}] as const,
     communityMembers: (communityId: string, params?: Record<string, unknown>) => ["communities", communityId, "members", params || {}] as const,
+    communityMemberMe: (communityId: string) => ["communities", communityId, "members", "me"] as const,
+    communityMembersSearch: (communityId: string, keyword: string, params?: Record<string, unknown>) =>
+        ["communities", communityId, "members", "search", keyword, params || {}] as const,
 
     // Comments
     comments: (postId: string, params?: Record<string, unknown>) => ["comments", postId, params || {}] as const,
@@ -47,6 +54,11 @@ export const QUERY_KEYS = {
     // Reports
     reports: (params?: Record<string, unknown>) => ["reports", params || {}] as const,
     reportById: (id: string) => ["reports", "detail", id] as const,
+
+    // Votes
+    votesList: ["votes", "list"] as const,
+    postVote: (postId: string | number) => ["votes", "post", String(postId)] as const,
+    commentVote: (commentId: string | number) => ["votes", "comment", String(commentId)] as const,
 };
 
 // -------------------------------------------------------------
@@ -233,8 +245,69 @@ export function useLeaveCommunityMutation() {
 export function useCommunityMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
     return useQuery({
         queryKey: QUERY_KEYS.communityMembers(communityId, params as Record<string, unknown>),
-        queryFn: () => communityMembersApi.findByQuery(communityId, params),
+        queryFn: () => communityMembersApi.getMembers(communityId, params),
         enabled: Boolean(communityId),
+    });
+}
+
+export function useCommunityMemberMeQuery(communityId: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityMemberMe(communityId),
+        queryFn: () => communityMembersApi.me(communityId),
+        enabled: Boolean(communityId),
+    });
+}
+
+export function useSearchCommunityMembersQuery(communityId: string, params: SearchCommunityMembersParams) {
+    const keyword = params.keyword.trim();
+    return useQuery({
+        queryKey: QUERY_KEYS.communityMembersSearch(communityId, keyword, params),
+        queryFn: () => communityMembersApi.search(communityId, params),
+        enabled: Boolean(communityId) && keyword.length >= 3,
+    });
+}
+
+export function useApproveJoinRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.approveJoinRequest(communityId, data),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useRejectJoinRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.rejectJoinRequest(communityId, data),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useMuteMemberMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.muteMember(communityId, data),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useBanMemberMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.banMember(communityId, data),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
     });
 }
 
@@ -335,12 +408,104 @@ export function useUserSessionsQuery() {
     });
 }
 
+export function useRevokeSessionMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (sessionId: string) => usersApi.revokeSession(sessionId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userSessions });
+        },
+    });
+}
+
 export function useChangePasswordMutation() {
     return useMutation({
         mutationFn: (data: ChangePasswordDto) => usersApi.changePassword(data),
     });
 }
 
+// -------------------------------------------------------------
+// 7. Hooks for Votes (VoteController)
+// -------------------------------------------------------------
+export function useVotesListQuery() {
+    return useQuery({
+        queryKey: QUERY_KEYS.votesList,
+        queryFn: () => votesApi.getAll(),
+    });
+}
+
+export function usePostVoteQuery(postId: string | number) {
+    const id = String(postId);
+    return useQuery({
+        queryKey: QUERY_KEYS.postVote(id),
+        queryFn: () => votesApi.getByPost(id),
+        enabled: Boolean(id),
+    });
+}
+
+export function useUpVotePostMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (postId: string | number) => votesApi.upVotePost(postId),
+        onSuccess: (_data, postId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
+            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
+export function useDeleteVotePostMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (postId: string | number) => votesApi.deleteVotePost(postId),
+        onSuccess: (_data, postId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
+            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
+export function useCommentVoteQuery(commentId: string | number) {
+    const id = String(commentId);
+    return useQuery({
+        queryKey: QUERY_KEYS.commentVote(id),
+        queryFn: () => votesApi.getByComment(id),
+        enabled: Boolean(id),
+    });
+}
+
+export function useUpVoteCommentMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (commentId: string | number) => votesApi.upVoteComment(commentId),
+        onSuccess: (_data, commentId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.commentVote(commentId) });
+            void queryClient.invalidateQueries({ queryKey: ["comments"] });
+        },
+    });
+}
+
+export function useDeleteVoteCommentMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (commentId: string | number) => votesApi.deleteVoteComment(commentId),
+        onSuccess: (_data, commentId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.commentVote(commentId) });
+            void queryClient.invalidateQueries({ queryKey: ["comments"] });
+        },
+    });
+}
+
 // Export API modules & query client
-export { postsApi, profilesApi, communitiesApi, commentsApi, reportsApi, authApi, usersApi };
+export {
+    postsApi,
+    profilesApi,
+    communitiesApi,
+    communityMembersApi,
+    commentsApi,
+    reportsApi,
+    authApi,
+    usersApi,
+    votesApi,
+};
 

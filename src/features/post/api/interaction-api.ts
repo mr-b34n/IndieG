@@ -1,20 +1,29 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { votesApi } from '@/shared/api';
 
 export const useLikeInteraction = (postId: string | number) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (liked: boolean) => {
-      // Mock API call
-      console.log(`Post ${postId} liked: ${liked}`);
+      try {
+        if (liked) {
+          await votesApi.upVotePost(postId);
+        } else {
+          await votesApi.deleteVotePost(postId);
+        }
+      } catch (err) {
+        // Log error while maintaining graceful local state responsiveness
+        console.warn(`Vote API call failed for post ${postId}`, err);
+      }
       return liked;
     },
     onMutate: async (liked) => {
-      // Optimistic update logic could go here if posts were also in React Query
       return { liked };
     },
     onSuccess: () => {
-      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['votes', 'post', String(postId)] });
     },
   });
 };

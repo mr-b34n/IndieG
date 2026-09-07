@@ -25,6 +25,9 @@ import {
     type CreateCommentDto,
     type ReportDto,
     type CreateReportDto,
+    type SearchCommunityMembersParams,
+    type CommunityMemberActionDto,
+    type VoteDto,
 } from "./types";
 
 export * from "./client";
@@ -187,6 +190,12 @@ export const usersApi = {
         apiRequest<UserSessionDto[]>("/users/sessions", {
             method: "GET",
         }),
+
+    /** Revoke a specific session - PATCH /users/revoke-session/{id} */
+    revokeSession: (id: string) =>
+        apiRequest<{ message?: string }>(`/users/revoke-session/${encodeURIComponent(id)}`, {
+            method: "PATCH",
+        }),
 };
 
 let myProfileInFlightPromise: Promise<UserProfileDto> | null = null;
@@ -347,28 +356,82 @@ export const communitiesApi = {
  * 4.1. Community Member Services (CommunityMemberController)
  */
 export const communityMembersApi = {
-    /** Find members by query - GET /communities/{communityId}/members */
+    /** Get community members list - GET /communities/{communityId}/members */
+    getMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Search community members by keyword - GET /communities/{communityId}/members/search */
+    search: (communityId: string, params: SearchCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/search`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Backward-compatible alias for finding members by query */
     findByQuery: (communityId: string, params?: GetCommunityMembersParams) => {
-        const query = new URLSearchParams();
-        if (params?.keyword !== undefined) query.set("keyword", params.keyword);
-        if (params?.page !== undefined) query.set("page", String(params.page));
-        if (params?.limit !== undefined) query.set("limit", String(params.limit));
-        const qs = query.toString() ? `?${query.toString()}` : "";
-        return apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
-            `/communities/${communityId}/members${qs}`
-        );
+        if (params?.keyword && params.keyword.trim().length >= 3) {
+            return communityMembersApi.search(communityId, {
+                keyword: params.keyword.trim(),
+                page: params.page,
+                limit: params.limit,
+            });
+        }
+        return communityMembersApi.getMembers(communityId, params);
     },
 
     /** Join a community - POST /communities/{communityId}/members */
     join: (communityId: string) =>
-        apiRequest<CommunityMemberDto>(`/communities/${communityId}/members`, {
+        apiRequest<CommunityMemberDto>(`/communities/${encodeURIComponent(communityId)}/members`, {
             method: "POST",
         }),
 
     /** Leave a community - PATCH /communities/{communityId}/members */
     leave: (communityId: string) =>
-        apiRequest<{ message?: string } | void>(`/communities/${communityId}/members`, {
+        apiRequest<{ message?: string } | void>(`/communities/${encodeURIComponent(communityId)}/members`, {
             method: "PATCH",
+        }),
+
+    /** Get current user's membership status in community - GET /communities/{communityId}/members/me */
+    me: (communityId: string) =>
+        apiRequest<CommunityMemberDto>(`/communities/${encodeURIComponent(communityId)}/members/me`, {
+            method: "GET",
+        }),
+
+    /** Approve member join request - PATCH /communities/{communityId}/members/approve */
+    approveJoinRequest: (communityId: string, data?: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/approve`, {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Reject member join request - PATCH /communities/{communityId}/members/reject */
+    rejectJoinRequest: (communityId: string, data?: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/reject`, {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Mute a member - PATCH /communities/{communityId}/members/mute */
+    muteMember: (communityId: string, data?: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/mute`, {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Ban a member - PATCH /communities/{communityId}/members/ban */
+    banMember: (communityId: string, data?: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/ban`, {
+            method: "PATCH",
+            body: data,
         }),
 };
 
@@ -518,5 +581,70 @@ export const reportsApi = {
         apiRequest<{ message?: string }>(`/reports/${id}`, {
             method: "DELETE",
         }),
+};
+
+/**
+ * 8. Vote Services (/votes/*) (VoteController)
+ */
+export const votesApi = {
+    /** Get all votes - GET /votes */
+    getAll: () =>
+        apiRequest<VoteDto[]>("/votes", {
+            method: "GET",
+        }),
+
+    /** Get vote status for a post - GET /votes/post/{postId} */
+    getByPost: (postId: string | number) =>
+        apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(
+            `/votes/post/${encodeURIComponent(postId)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Upvote a post - POST /votes/post/{postId} */
+    upVotePost: (postId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/votes/post/${encodeURIComponent(postId)}`,
+            {
+                method: "POST",
+            }
+        ),
+
+    /** Delete vote for a post - DELETE /votes/{postId}/post */
+    deleteVotePost: (postId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/votes/${encodeURIComponent(postId)}/post`,
+            {
+                method: "DELETE",
+            }
+        ),
+
+    /** Get vote status for a comment - GET /votes/comment/{commentId} */
+    getByComment: (commentId: string | number) =>
+        apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(
+            `/votes/comment/${encodeURIComponent(commentId)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Upvote a comment - POST /votes/comment/{commentId} */
+    upVoteComment: (commentId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/votes/comment/${encodeURIComponent(commentId)}`,
+            {
+                method: "POST",
+            }
+        ),
+
+    /** Delete vote for a comment - DELETE /votes/{commentId}/comment */
+    deleteVoteComment: (commentId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/votes/${encodeURIComponent(commentId)}/comment`,
+            {
+                method: "DELETE",
+            }
+        ),
 };
 
