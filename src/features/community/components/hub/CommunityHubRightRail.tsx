@@ -35,13 +35,16 @@ interface CommunityHubRightRailProps {
     onNavigateNav: (navId: string) => void;
     isVi: boolean;
     userRole?: "owner" | "admin" | "moderator" | "member";
+    pendingCount?: number;
+    reportsCount?: number;
+    modsCount?: number;
 }
 
 export const CommunityHubRightRail = ({
     communityName,
     description,
-    officialWebsiteUrl = "https://raft-game.com",
-    steamStoreUrl = "https://store.steampowered.com",
+    officialWebsiteUrl,
+    steamStoreUrl,
     membersCount,
     onlineCount,
     contributors,
@@ -49,6 +52,9 @@ export const CommunityHubRightRail = ({
     onNavigateNav,
     isVi,
     userRole = "owner",
+    pendingCount = 0,
+    reportsCount = 0,
+    modsCount = 1,
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
     const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
@@ -74,21 +80,21 @@ export const CommunityHubRightRail = ({
                             onClick={() => onNavigateNav("manage-moderation")}
                             className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
                         >
-                            <span className="text-sm font-bold text-amber-400 block">12</span>
+                            <span className="text-sm font-bold text-amber-400 block">{pendingCount}</span>
                             <span className="text-[9px] text-text-faint uppercase block truncate">Pending</span>
                         </div>
                         <div
                             onClick={() => onNavigateNav("manage-reports")}
                             className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
                         >
-                            <span className="text-sm font-bold text-rose-400 block">7</span>
+                            <span className="text-sm font-bold text-rose-400 block">{reportsCount}</span>
                             <span className="text-[9px] text-text-faint uppercase block truncate">Reports</span>
                         </div>
                         <div
                             onClick={() => onNavigateNav("manage-members")}
                             className="p-1.5 rounded bg-surface border border-divider-primary/40 hover:border-divider-primary cursor-pointer transition-colors"
                         >
-                            <span className="text-sm font-bold text-primary block">3</span>
+                            <span className="text-sm font-bold text-primary block">{modsCount}</span>
                             <span className="text-[9px] text-text-faint uppercase block truncate">Mods</span>
                         </div>
                     </div>
@@ -110,9 +116,8 @@ export const CommunityHubRightRail = ({
                     ABOUT
                 </span>
 
-
                 <p className="text-xs text-text-muted leading-relaxed line-clamp-3">
-                    {description || `Farm layouts, mods & community discussions for ${communityName}.`}
+                    {description || (isVi ? `Thảo luận, chia sẻ kinh nghiệm và hướng dẫn cho cộng đồng ${communityName}.` : `Discussions, guides and tips for ${communityName}.`)}
                 </p>
 
                 {/* Compact Status */}
@@ -133,26 +138,34 @@ export const CommunityHubRightRail = ({
                     </span>
                 </div>
 
-                {/* Concise Links: Website · Steam */}
-                <div className="flex items-center gap-2 text-xs font-medium pt-1 text-primary">
-                    <a
-                        href={officialWebsiteUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="hover:underline transition-colors"
-                    >
-                        Website
-                    </a>
-                    <span className="text-divider-primary font-normal">·</span>
-                    <a
-                        href={steamStoreUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="hover:underline transition-colors"
-                    >
-                        Steam
-                    </a>
-                </div>
+                {/* Optional Links: Website · Steam */}
+                {(officialWebsiteUrl || steamStoreUrl) && (
+                    <div className="flex items-center gap-2 text-xs font-medium pt-1 text-primary">
+                        {officialWebsiteUrl && (
+                            <a
+                                href={officialWebsiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:underline transition-colors"
+                            >
+                                Website
+                            </a>
+                        )}
+                        {officialWebsiteUrl && steamStoreUrl && (
+                            <span className="text-divider-primary font-normal">·</span>
+                        )}
+                        {steamStoreUrl && (
+                            <a
+                                href={steamStoreUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:underline transition-colors"
+                            >
+                                Steam
+                            </a>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* 2. COMMUNITY DESTINATIONS MODULE */}

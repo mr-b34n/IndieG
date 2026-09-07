@@ -80,19 +80,19 @@ export const CommunityHubAboutView = ({
         {
             title: "Official Game Website",
             desc: "Trang chủ chính thức của nhà phát triển",
-            url: "https://raft-game.com",
+            url: "#",
             icon: faGlobe,
         },
         {
             title: "Steam Community Hub",
             desc: "Trung tâm cộng đồng Steam & Workshop",
-            url: "https://store.steampowered.com",
+            url: "#",
             icon: faGamepad,
         },
         {
             title: "Official Discord Server",
             desc: "Kênh Discord toàn cầu để tìm đồng đội",
-            url: "https://discord.com",
+            url: "#",
             icon: faLink,
         },
     ];

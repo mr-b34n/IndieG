@@ -639,9 +639,9 @@ export const CommunityManageSettings = ({
                                 onChange={(e) => setTransferTargetUser(e.target.value)}
                                 className="h-8 px-2.5 rounded-[4px] bg-surface-inner border border-divider-primary text-xs text-text focus:outline-none"
                             >
-                                <option value="Minh Quân (@shark_hunter99)">Minh Quân (@shark_hunter99) - Moderator</option>
-                                <option value="Thùy Trang (@raft_architect)">Thùy Trang (@raft_architect) - Moderator</option>
-                                <option value="Bảo Nam (@baonam_survivor)">Bảo Nam (@baonam_survivor) - Member</option>
+                                <option value="Moderator 1">Moderator 1</option>
+                                <option value="Moderator 2">Moderator 2</option>
+                                <option value="Member 1">Member 1</option>
                             </select>
                         </div>
 

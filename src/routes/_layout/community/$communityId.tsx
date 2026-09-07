@@ -141,10 +141,10 @@ export function CommunityDetailPage() {
             avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
             backdrop: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
             logo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
-            members: 24540,
-            onlineNow: 416,
+            members: 1,
+            onlineNow: 1,
             joined: true,
-            featured: true,
+            featured: false,
             rules: [
                 "Tôn trọng các thành viên khác trong cộng đồng",
                 "Không đăng tải thông tin sai sự thật hoặc lừa đảo",
@@ -176,7 +176,7 @@ export function CommunityDetailPage() {
             titleEn: "General Discussion",
             descVi: "Trò chuyện, hỏi đáp và trao đổi tự do",
             descEn: "General chat, Q&A, and discussions",
-            threadsCount: "1.2K",
+            threadsCount: "0",
             icon: faComments,
         },
         {
@@ -185,7 +185,7 @@ export function CommunityDetailPage() {
             titleEn: "Guides & Tips",
             descVi: "Chia sẻ bí quyết, mẹo sinh tồn & cẩm nang",
             descEn: "Survival secrets, guides & walkthroughs",
-            threadsCount: "850",
+            threadsCount: "0",
             icon: faBook,
         },
         {
@@ -194,7 +194,7 @@ export function CommunityDetailPage() {
             titleEn: "Base Building",
             descVi: "Ý tưởng thiết kế căn cứ & trang trí",
             descEn: "Base design ideas and decoration",
-            threadsCount: "620",
+            threadsCount: "0",
             icon: faHouse,
         },
         {
@@ -203,7 +203,7 @@ export function CommunityDetailPage() {
             titleEn: "Gameplay Help",
             descVi: "Giải đáp thắc mắc nhiệm vụ & lỗi game",
             descEn: "Quest help, troubleshooting, and gameplay Q&A",
-            threadsCount: "980",
+            threadsCount: "0",
             icon: faCircleQuestion,
         },
         {
@@ -212,7 +212,7 @@ export function CommunityDetailPage() {
             titleEn: "Showcase",
             descVi: "Khoe thành quả, hình ảnh & video đẹp",
             descEn: "Share creations, screenshots & artwork",
-            threadsCount: "430",
+            threadsCount: "0",
             icon: faImages,
         },
     ];
@@ -220,58 +220,21 @@ export function CommunityDetailPage() {
     // Contributors
     const contributorsData: ContributorItem[] = useMemo(() => {
         if (!profilesData) {
-            return [
-                {
-                    id: "c-1",
-                    name: "Hải Đăng",
-                    handle: "@haidang_craft",
-                    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-                    points: 2450,
-                },
-                {
-                    id: "c-2",
-                    name: "Minh Quân",
-                    handle: "@shark_hunter99",
-                    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-                    points: 1820,
-                },
-            ];
+            return [];
         }
         const rawList = Array.isArray(profilesData)
             ? (profilesData as ProfileEntity[])
             : (profilesData as { items?: ProfileEntity[]; data?: ProfileEntity[] })?.items ||
               (profilesData as { data?: ProfileEntity[] })?.data ||
               [];
-        if (rawList.length === 0) {
-            return [
-                {
-                    id: "c-1",
-                    name: "Hải Đăng",
-                    handle: "@haidang_craft",
-                    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-                    points: 2450,
-                },
-            ];
-        }
         return rawList.slice(0, 5).map((p, idx) => ({
             id: p.id || `c-${idx}`,
             name: p.displayName || p.username || "Thành viên",
             handle: `@${p.username || "member"}`,
             avatar: p.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username || idx}`,
-            points: (idx + 1) * 350 + 500,
+            points: (idx + 1) * 100,
         }));
     }, [profilesData]);
-
-    // Upcoming Events
-    const upcomingEventsData: UpcomingEventTimelineItem[] = [
-        {
-            id: "ev-1",
-            title: isVi ? "Giải đấu Custom 5v5 - Tranh tài vô địch" : "Community Farm Tour & Showcase",
-            dateMonth: "MAR 22",
-            time: "20:00 GMT+7",
-            attendees: 38,
-        },
-    ];
 
     // Local user created posts
     const [userCreatedPosts, setUserCreatedPosts] = useState<CommunityFeedPost[]>([]);
@@ -291,58 +254,20 @@ export function CommunityDetailPage() {
             return merged;
         }
 
-        // Fallback default sample posts when no remote posts yet
-        const defaults: CommunityFeedPost[] = [
-            {
-                id: "post-1",
-                type: "guide",
-                title: isVi
-                    ? "Tổng hợp mẹo sinh tồn 100 ngày đầu & cách tối ưu hóa thu hoạch nước ngọt"
-                    : "Comprehensive 100-Day Survival Guide & Infinite Fresh Water Setup",
-                content: isVi
-                    ? "Chia sẻ chi tiết kinh nghiệm từ việc chế tạo máy lọc nước nâng cao, bố trí lưới bắt rác tự động đến cách đối phó với cá mập mà không tốn nhiều tài nguyên kim loại quý..."
-                    : "Step-by-step breakdown on automating purifier grids, collection nets placement, and preserving metal ingots during early-game shark encounters...",
-                authorName: "Hải Đăng",
-                authorHandle: "@haidang_craft",
-                authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-                authorRank: "Legendary Pioneer",
-                isPinned: true,
-                createdAt: "3h",
-                repliesCount: 42,
-                viewsCount: 1850,
-                likesCount: 215,
-                repostsCount: 18,
-                isLiked: false,
-                tags: ["survival", "guide", "automation"],
-            },
-            {
-                id: "post-2",
-                type: "showcase",
-                title: isVi
-                    ? "Showcase căn cứ bè nổi 3 tầng đầy đủ trang bị sau 60 giờ cày cuốc"
-                    : "Base Showcase: 3-Story Autonomous Floating Sanctuary after 60 Hours",
-                content: isVi
-                    ? "Cuối cùng cũng hoàn thiện khu vườn sinh thái trên tầng thượng và hệ thống pin năng lượng mặt trời. Mời mọi người vào đánh giá và góp ý thêm góc thư giãn nhé!"
-                    : "Finished the rooftop botanical garden and solar array. Welcome any tips on aesthetic decoration and fuel pipe routing!",
-                images: [
-                    "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-                ],
-                authorName: "Thùy Trang",
-                authorHandle: "@raft_architect",
-                authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-                authorRank: "Master Architect",
-                createdAt: "5h",
-                repliesCount: 19,
-                viewsCount: 940,
-                likesCount: 128,
-                repostsCount: 12,
-                isLiked: true,
-                tags: ["showcase", "architecture"],
-            },
-        ];
+        return userCreatedPosts;
+    }, [remotePostsData, userCreatedPosts]);
 
-        return [...userCreatedPosts, ...defaults];
-    }, [remotePostsData, userCreatedPosts, isVi]);
+    // Upcoming Events extracted from real posts
+    const upcomingEventsData: UpcomingEventTimelineItem[] = useMemo(() => {
+        const eventPosts = allFeedPosts.filter((p) => p.type === "event");
+        return eventPosts.map((ep, idx) => ({
+            id: ep.id || `ev-${idx}`,
+            title: ep.title,
+            dateMonth: ep.createdAt || "UPCOMING",
+            time: "20:00 GMT+7",
+            attendees: ep.likesCount + 1,
+        }));
+    }, [allFeedPosts]);
 
     // Media Items for Media Gallery extracted from real posts
     const mediaGalleryData: MediaItem[] = useMemo(() => {
@@ -362,19 +287,6 @@ export function CommunityDetailPage() {
                 });
             }
         });
-        if (list.length === 0) {
-            return [
-                {
-                    id: "med-1",
-                    title: "Căn cứ bè gỗ 3 tầng phong cách Nhật Bản",
-                    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
-                    authorName: "Thùy Trang",
-                    authorHandle: "@raft_architect",
-                    likesCount: 142,
-                    repliesCount: 28,
-                },
-            ];
-        }
         return list;
     }, [allFeedPosts]);
 
@@ -643,6 +555,8 @@ export function CommunityDetailPage() {
                         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                         isVi={isVi}
                         userRole={userRole}
+                        pendingCount={0}
+                        reportsCount={0}
                     />
                 </div>
 
@@ -654,8 +568,8 @@ export function CommunityDetailPage() {
                         description={community.description}
                         coverUrl={community.backdrop || community.bannerUrl || community.logo}
                         iconUrl={community.logo || community.avatarUrl}
-                        membersCount={community.members || 24540}
-                        onlineCount={community.onlineNow || 416}
+                        membersCount={community.members ?? 1}
+                        onlineCount={community.onlineNow ?? 1}
                         isJoined={!!community.joined}
                         onToggleJoin={() => {
                             if (!requireVerifiedEmail("tham gia cộng đồng")) return;
@@ -770,13 +684,16 @@ export function CommunityDetailPage() {
                     <CommunityHubRightRail
                         communityName={community.name}
                         description={community.description}
-                        membersCount={community.members || 24540}
-                        onlineCount={community.onlineNow || 416}
+                        membersCount={community.members ?? 1}
+                        onlineCount={community.onlineNow ?? 1}
                         contributors={contributorsData}
                         nextEvent={upcomingEventsData[0]}
                         onNavigateNav={handleNavChange}
                         isVi={isVi}
                         userRole={userRole}
+                        pendingCount={0}
+                        reportsCount={0}
+                        modsCount={1}
                     />
                 </div>
             </div>

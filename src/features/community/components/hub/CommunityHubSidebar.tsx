@@ -28,6 +28,8 @@ interface CommunityHubSidebarProps {
     onToggleCollapse: () => void;
     isVi: boolean;
     userRole?: "owner" | "admin" | "moderator" | "member";
+    pendingCount?: number;
+    reportsCount?: number;
 }
 
 export const CommunityHubSidebar = ({
@@ -37,6 +39,8 @@ export const CommunityHubSidebar = ({
     onToggleCollapse,
     isVi,
     userRole = "owner",
+    pendingCount,
+    reportsCount,
 }: CommunityHubSidebarProps) => {
     const [isMoreOpen, setIsMoreOpen] = useState(false);
     const moreRef = useRef<HTMLDivElement>(null);
@@ -62,12 +66,24 @@ export const CommunityHubSidebar = ({
         { id: "about", labelVi: "Về chúng tôi", labelEn: "About", icon: faCircleInfo },
     ];
 
-    // Management navigation items (prompt exact items)
+    // Management navigation items
     const manageNavItems = [
         { id: "manage-overview", labelVi: "Tổng quan", labelEn: "Overview", icon: faSliders },
-        { id: "manage-moderation", labelVi: "Kiểm duyệt", labelEn: "Moderation", icon: faGavel, badge: "12" },
+        { 
+            id: "manage-moderation", 
+            labelVi: "Kiểm duyệt", 
+            labelEn: "Moderation", 
+            icon: faGavel, 
+            badge: pendingCount && pendingCount > 0 ? String(pendingCount) : undefined 
+        },
         { id: "manage-members", labelVi: "Thành viên", labelEn: "Members", icon: faUsers },
-        { id: "manage-reports", labelVi: "Báo cáo", labelEn: "Reports", icon: faFlag, badge: "7" },
+        { 
+            id: "manage-reports", 
+            labelVi: "Báo cáo", 
+            labelEn: "Reports", 
+            icon: faFlag, 
+            badge: reportsCount && reportsCount > 0 ? String(reportsCount) : undefined 
+        },
         ...(userRole === "owner" || userRole === "admin"
             ? [{ id: "manage-settings", labelVi: "Cài đặt", labelEn: "Settings", icon: faGear }]
             : []),
