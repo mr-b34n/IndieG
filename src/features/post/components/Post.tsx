@@ -159,7 +159,8 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const [isLiked, setIsLiked] = useState(false);
     const [isDownvoted, setIsDownvoted] = useState(false);
-    const [likeCount, setLikeCount] = useState(post.likes);
+    const [upvoteCount, setUpvoteCount] = useState(post.upvotes ?? post.likes ?? 0);
+    const [downvoteCount, setDownvoteCount] = useState(post.downvotes ?? 0);
 
     const navigate = useNavigate();
     const likeMutation = useLikeInteraction(post.id);
@@ -175,13 +176,19 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         }
         if (!requireVerifiedEmail("upvote bài viết")) return;
 
-        const nextLiked = !isLiked;
-        setIsLiked(nextLiked);
-        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-        if (nextLiked && isDownvoted) {
-            setIsDownvoted(false);
+        if (isLiked) {
+            setIsLiked(false);
+            setUpvoteCount((prev) => Math.max(0, prev - 1));
+            likeMutation.mutate(false);
+        } else {
+            setIsLiked(true);
+            setUpvoteCount((prev) => prev + 1);
+            if (isDownvoted) {
+                setIsDownvoted(false);
+                setDownvoteCount((prev) => Math.max(0, prev - 1));
+            }
+            likeMutation.mutate(true);
         }
-        likeMutation.mutate(nextLiked);
     };
 
     const handleDownvote = (e: React.MouseEvent) => {
@@ -194,11 +201,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
         if (isDownvoted) {
             setIsDownvoted(false);
+            setDownvoteCount((prev) => Math.max(0, prev - 1));
         } else {
             setIsDownvoted(true);
+            setDownvoteCount((prev) => prev + 1);
             if (isLiked) {
                 setIsLiked(false);
-                setLikeCount((prev) => Math.max(0, prev - 1));
+                setUpvoteCount((prev) => Math.max(0, prev - 1));
                 likeMutation.mutate(false);
             }
         }
@@ -503,7 +512,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                         title={isLiked ? "Đã upvote" : "Upvote"}
                     >
                         <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
-                        <span>{likeCount}</span>
+                        <span>{upvoteCount}</span>
                     </button>
 
                     <button
@@ -517,6 +526,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                         title={isDownvoted ? "Đã downvote" : "Downvote"}
                     >
                         <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                        <span>{downvoteCount}</span>
                     </button>
                 </div>
 

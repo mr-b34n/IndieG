@@ -24,6 +24,9 @@ export interface CommunityFeedPost {
     repliesCount: number;
     viewsCount?: number;
     likesCount: number;
+    upvotes?: number;
+    downvotes?: number;
+    score?: number;
     repostsCount?: number;
     isLiked?: boolean;
     isReposted?: boolean;
@@ -63,6 +66,10 @@ function mapFeedPostToPostData(
     communityId?: string,
     communityName?: string
 ): PostData {
+    const upvotes = p.upvotes ?? p.likesCount ?? 0;
+    const downvotes = p.downvotes ?? 0;
+    const score = p.score ?? (upvotes - downvotes);
+
     return {
         id: p.id,
         author: {
@@ -77,7 +84,10 @@ function mapFeedPostToPostData(
         content: p.content || "",
         images: p.images,
         tags: p.tags,
-        likes: p.likesCount,
+        likes: upvotes,
+        upvotes: upvotes,
+        downvotes: downvotes,
+        score: score,
         comments: p.repliesCount,
         commentsCount: p.repliesCount,
         pinned: p.isPinned,

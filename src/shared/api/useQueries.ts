@@ -391,6 +391,16 @@ export function useCreateReportMutation() {
     });
 }
 
+export function useDeleteReportMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => reportsApi.delete(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.reports() });
+        },
+    });
+}
+
 // -------------------------------------------------------------
 // 6. Hooks for Users & Admin
 // -------------------------------------------------------------

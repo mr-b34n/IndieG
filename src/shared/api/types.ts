@@ -162,6 +162,10 @@ export interface PostDto {
     tags?: string[];
     gameTag?: string;
     likes?: number;
+    upvotes?: number;
+    downvotes?: number;
+    score?: number;
+    status?: string;
     commentsCount?: number;
     visibility?: number;
     pinned?: boolean;
@@ -169,7 +173,7 @@ export interface PostDto {
     allowComments?: boolean;
     createdAt: string;
     updatedAt: string;
-    deletedAt?: string;
+    deletedAt?: string | null;
 }
 
 export interface CreatePostDto {
@@ -336,6 +340,10 @@ export interface VoteResponse {
  * handling all optional / missing fields gracefully without runtime errors.
  */
 export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorAvatar = "") {
+    const upvotes = dto.upvotes ?? dto.likes ?? 0;
+    const downvotes = dto.downvotes ?? 0;
+    const score = dto.score ?? (upvotes - downvotes);
+
     return {
         id: dto.id,
         author: authorName || "Gamer",
@@ -345,8 +353,12 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
         images: dto.images || [],
         tags: dto.tags || [],
         gameTag: dto.gameTag,
-        likes: dto.likes ?? 0,
+        likes: upvotes,
+        upvotes: upvotes,
+        downvotes: downvotes,
+        score: score,
         comments: dto.commentsCount ?? 0,
+        commentsCount: dto.commentsCount ?? 0,
         pinned: dto.pinned ?? false,
         allowComments: dto.allowComments ?? true,
         timeAgo: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",

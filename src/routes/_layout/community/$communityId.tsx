@@ -65,6 +65,8 @@ function extractPostList(res: unknown): PostDto[] {
 
 function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
     const rawType = (dto.tags?.find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t)) || "discussion") as PostType;
+    const upvotes = dto.upvotes ?? dto.likes ?? 0;
+    const downvotes = dto.downvotes ?? 0;
     return {
         id: String(dto.id),
         type: rawType,
@@ -78,7 +80,10 @@ function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
         createdAt: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
         repliesCount: dto.commentsCount ?? 0,
         viewsCount: 1,
-        likesCount: dto.likes ?? 0,
+        likesCount: upvotes,
+        upvotes: upvotes,
+        downvotes: downvotes,
+        score: dto.score ?? (upvotes - downvotes),
         repostsCount: 0,
         isLiked: false,
         images: dto.images && dto.images.length > 0 ? dto.images : undefined,
@@ -671,38 +676,51 @@ export function CommunityDetailPage() {
                     {/* VIEW SWITCHER: Display content according to selected destination */}
                     {activeNav === "manage-overview" ? (
                         <CommunityManageOverview
+                            communityId={community.id}
                             communityName={community.name}
+                            totalMembers={community.members}
+                            userRole={userRole}
                             isVi={isVi}
                             onNavigate={handleNavChange}
                         />
                     ) : activeNav === "manage-moderation" ? (
                         <CommunityManageModeration
+                            communityId={community.id}
                             communityName={community.name}
                             initialTab="requests"
+                            userRole={userRole}
                             isVi={isVi}
                             onNavigateRules={() => handleNavChange("manage-rules")}
                         />
                     ) : activeNav === "manage-reports" ? (
                         <CommunityManageReports
+                            communityId={community.id}
                             communityName={community.name}
+                            userRole={userRole}
                             isVi={isVi}
                             onNavigateRules={() => handleNavChange("manage-rules")}
                         />
                     ) : activeNav === "manage-members" ? (
                         <CommunityManageMembers
+                            communityId={community.id}
                             communityName={community.name}
+                            userRole={userRole}
                             isVi={isVi}
                         />
                     ) : activeNav === "manage-rules" ? (
                         <CommunityManageRules
+                            communityId={community.id}
                             communityName={community.name}
+                            userRole={userRole}
                             isVi={isVi}
                         />
                     ) : activeNav === "manage-settings" ? (
                         <CommunityManageSettings
+                            communityId={community.id}
                             communityName={community.name}
                             communityDescription={community.description}
                             communitySlug={community.slug || community.id}
+                            userRole={userRole}
                             isVi={isVi}
                         />
                     ) : activeNav === "members" || activeNav === "leaderboard" ? (

@@ -42,60 +42,6 @@ export const CommunityHubMembers = ({
         keyword: searchQuery,
     });
 
-    // Enhanced sample members list based on contributors
-    const sampleMembers: MemberItem[] = [
-        {
-            id: "m-1",
-            name: "Hải Đăng (Admin)",
-            handle: "@haidang_craft",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            role: "Admin",
-            points: 2450,
-            joinedDate: "12/2024",
-            isOnline: true,
-        },
-        {
-            id: "m-2",
-            name: "Minh Quân",
-            handle: "@shark_hunter99",
-            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            role: "Moderator",
-            points: 1820,
-            joinedDate: "01/2025",
-            isOnline: true,
-        },
-        {
-            id: "m-3",
-            name: "Thùy Trang",
-            handle: "@raft_architect",
-            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            role: "VIP",
-            points: 1240,
-            joinedDate: "02/2025",
-            isOnline: false,
-        },
-        {
-            id: "m-4",
-            name: "Tuấn Kiệt",
-            handle: "@tuan_kiet_dota",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            points: 980,
-            joinedDate: "02/2025",
-            isOnline: true,
-        },
-        {
-            id: "m-5",
-            name: "Hoàng Long",
-            handle: "@long_survival",
-            avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            points: 750,
-            joinedDate: "03/2025",
-            isOnline: false,
-        },
-    ];
-
     const apiMappedMembers: MemberItem[] = (() => {
         if (!apiMembersData) return [];
         const items: CommunityMemberDto[] = Array.isArray(apiMembersData)
@@ -109,7 +55,7 @@ export const CommunityHubMembers = ({
                 id: m.userId,
                 name: m.user?.name || m.userId,
                 handle: m.user?.username ? `@${m.user.username}` : `@${m.userId}`,
-                avatar: m.user?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
+                avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
                 role: roleLabel,
                 points: 100,
                 joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "2025",
@@ -118,7 +64,7 @@ export const CommunityHubMembers = ({
         });
     })();
 
-    const displayMembers = apiMappedMembers.length > 0 ? apiMappedMembers : sampleMembers;
+    const displayMembers = apiMappedMembers;
 
     const filteredMembers = displayMembers.filter((m) => {
         const matchesSearch =
@@ -264,44 +210,52 @@ export const CommunityHubMembers = ({
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {filteredMembers.map((member) => (
-                        <div
-                            key={member.id}
-                            className="p-3 rounded-[4px] bg-surface/70 border border-divider-primary/60 hover:border-divider-primary transition-all flex items-center justify-between gap-3"
-                        >
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="relative">
-                                    <img
-                                        src={member.avatar}
-                                        alt={member.name}
-                                        className="w-10 h-10 rounded-full object-cover border border-divider-primary shrink-0"
-                                    />
-                                    {member.isOnline && (
-                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
-                                    )}
+                filteredMembers.length === 0 ? (
+                    <div className="w-full py-12 flex flex-col items-center justify-center text-center p-6 bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
+                        <span className="text-xs text-text-muted">
+                            {isVi ? "Không tìm thấy thành viên phù hợp." : "No community members found."}
+                        </span>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {filteredMembers.map((member) => (
+                            <div
+                                key={member.id}
+                                className="p-3 rounded-[4px] bg-surface/70 border border-divider-primary/60 hover:border-divider-primary transition-all flex items-center justify-between gap-3"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="relative">
+                                        <img
+                                            src={member.avatar}
+                                            alt={member.name}
+                                            className="w-10 h-10 rounded-full object-cover border border-divider-primary shrink-0"
+                                        />
+                                        {member.isOnline && (
+                                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col min-w-0">
+                                        <div className="flex items-center gap-1.5 truncate">
+                                            <span className="font-bold text-xs text-text truncate">{member.name}</span>
+                                        </div>
+                                        <span className="text-[11px] font-mono text-text-muted truncate">{member.handle}</span>
+                                        <span className="text-[10px] font-mono text-text-faint pt-0.5">
+                                            {isVi ? "Gia nhập:" : "Joined:"} {member.joinedDate}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <div className="flex flex-col min-w-0">
-                                    <div className="flex items-center gap-1.5 truncate">
-                                        <span className="font-bold text-xs text-text truncate">{member.name}</span>
-                                    </div>
-                                    <span className="text-[11px] font-mono text-text-muted truncate">{member.handle}</span>
-                                    <span className="text-[10px] font-mono text-text-faint pt-0.5">
-                                        {isVi ? "Gia nhập:" : "Joined:"} {member.joinedDate}
+                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                    {getRoleBadge(member.role)}
+                                    <span className="text-[11px] font-mono font-bold text-text-muted">
+                                        {member.points} pts
                                     </span>
                                 </div>
                             </div>
-
-                            <div className="flex flex-col items-end gap-1 shrink-0">
-                                {getRoleBadge(member.role)}
-                                <span className="text-[11px] font-mono font-bold text-text-muted">
-                                    {member.points} pts
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )
             )}
         </div>
     );

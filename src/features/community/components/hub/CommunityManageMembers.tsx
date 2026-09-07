@@ -14,7 +14,14 @@ import {
     faTriangleExclamation,
     faCircleCheck,
     faXmark,
+    faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+    useCommunityMembersQuery,
+    useMuteMemberMutation,
+    useBanMemberMutation,
+} from "@/shared/api/useQueries";
+import type { CommunityMemberDto } from "@/shared/api/types";
 
 export interface ManagedMemberItem {
     id: string;
@@ -29,21 +36,29 @@ export interface ManagedMemberItem {
 }
 
 interface CommunityManageMembersProps {
+    communityId?: string;
     communityName: string;
     isVi: boolean;
+    userRole?: "owner" | "admin" | "moderator" | "member";
     onViewProfile?: (userId: string) => void;
 }
 
 export const CommunityManageMembers = ({
+    communityId,
     communityName,
     isVi,
+    userRole = "owner",
     onViewProfile,
 }: CommunityManageMembersProps) => {
+    const isOwner = userRole === "owner" || userRole === "admin";
+    const isModerator = userRole === "moderator";
+
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState<"all" | "members" | "moderators" | "banned" | "muted" | "pending">("all");
     const [activeMenuMemberId, setActiveMenuMemberId] = useState<string | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [ownerProtectedNotice, setOwnerProtectedNotice] = useState(false);
+    const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<ManagedMemberItem>>>({});
 
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -63,158 +78,143 @@ export const CommunityManageMembers = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Initial Member Directory data
-    const [members, setMembers] = useState<ManagedMemberItem[]>([
-        {
-            id: "u-1",
-            username: "Hải Đăng",
-            handle: "@haidang_craft",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            role: "Owner",
-            status: "Active",
-            joinedDate: "12/2024",
-            activitySummary: "42 posts · 15m ago",
-            isOnline: true,
-        },
-        {
-            id: "u-2",
-            username: "Minh Quân",
-            handle: "@shark_hunter99",
-            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            role: "Moderator",
-            status: "Active",
-            joinedDate: "01/2025",
-            activitySummary: "28 posts · 1h ago",
-            isOnline: true,
-        },
-        {
-            id: "u-3",
-            username: "Thùy Trang",
-            handle: "@raft_architect",
-            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            role: "Moderator",
-            status: "Active",
-            joinedDate: "02/2025",
-            activitySummary: "19 posts · 3h ago",
-            isOnline: false,
-        },
-        {
-            id: "u-4",
-            username: "Bảo Nam",
-            handle: "@baonam_survivor",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            status: "Active",
-            joinedDate: "02/2025",
-            activitySummary: "8 posts · 1d ago",
-            isOnline: true,
-        },
-        {
-            id: "u-5",
-            username: "ToxicFisher",
-            handle: "@toxic_fisher",
-            avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            status: "Muted",
-            joinedDate: "02/2025",
-            activitySummary: "2 posts · Muted 24h",
-            isOnline: false,
-        },
-        {
-            id: "u-6",
-            username: "Gamer_Anonymous",
-            handle: "@anon_cheat",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            status: "Banned",
-            joinedDate: "03/2025",
-            activitySummary: "1 post · Banned",
-            isOnline: false,
-        },
-        {
-            id: "u-7",
-            username: "Thành Đạt",
-            handle: "@thanhdat_gamer",
-            avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            status: "Pending",
-            joinedDate: "Chờ duyệt",
-            activitySummary: "Applied 25m ago",
-            isOnline: false,
-        },
-        {
-            id: "u-8",
-            username: "Hoàng Long",
-            handle: "@long_pioneer",
-            avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80",
-            role: "Member",
-            status: "Pending",
-            joinedDate: "Chờ duyệt",
-            activitySummary: "Applied 3h ago",
-            isOnline: false,
-        },
-    ]);
+    // Real API Query & Mutations
+    const { data: membersQueryData, isLoading: isLoadingMembers } = useCommunityMembersQuery(communityId || "", {
+        limit: 100,
+    });
+    const muteMutation = useMuteMemberMutation();
+    const banMutation = useBanMemberMutation();
+
+    const apiMembers = useMemo<ManagedMemberItem[]>(() => {
+        if (!membersQueryData) return [];
+        const list: CommunityMemberDto[] = Array.isArray(membersQueryData)
+            ? membersQueryData
+            : (membersQueryData as { items?: CommunityMemberDto[] })?.items || [];
+
+        return list.map((m, idx) => {
+            const roleLower = (m.role || "member").toLowerCase();
+            const role: "Owner" | "Moderator" | "Member" =
+                roleLower === "owner" ? "Owner" : roleLower === "moderator" ? "Moderator" : "Member";
+            const statusLower = (m.status || "active").toLowerCase();
+            const status: "Active" | "Muted" | "Banned" | "Pending" =
+                statusLower === "muted" ? "Muted" : statusLower === "banned" ? "Banned" : statusLower === "pending" ? "Pending" : "Active";
+            const username = m.user?.name || m.user?.username || `Member #${idx + 1}`;
+            const handle = m.user?.username ? `@${m.user.username}` : `@member_${m.userId?.slice(0, 6) || idx}`;
+            const avatar = m.user?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${m.userId || idx}`;
+            const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
+            const activitySummary = m.mutedUntil
+                ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
+                : status === "Banned"
+                ? (isVi ? "Đã bị cấm" : "Banned")
+                : (isVi ? "Đang hoạt động" : "Active");
+
+            return {
+                id: m.userId || String(idx),
+                username,
+                handle,
+                avatar,
+                role,
+                status,
+                joinedDate,
+                activitySummary,
+                isOnline: false,
+            };
+        });
+    }, [membersQueryData, isVi]);
+
+    // Merge API members with local optimistic updates
+    const members = useMemo(() => {
+        return apiMembers.map((m) => {
+            if (localOverrides[m.id]) {
+                return { ...m, ...localOverrides[m.id] };
+            }
+            return m;
+        });
+    }, [apiMembers, localOverrides]);
 
     // Action Handlers
-    const handleToggleMute = (id: string, currentStatus: string, name: string) => {
-        setMembers((prev) =>
-            prev.map((m) => {
-                if (m.id === id) {
-                    const newStatus = currentStatus === "Muted" ? "Active" : "Muted";
-                    return {
-                        ...m,
-                        status: newStatus,
-                        activitySummary: newStatus === "Muted" ? "Muted by admin" : "Active now",
-                    };
-                }
-                return m;
-            })
-        );
+    const handleToggleMute = async (id: string, currentStatus: string, name: string) => {
+        const isMuted = currentStatus === "Muted";
+        const newStatus = isMuted ? "Active" : "Muted";
+        setLocalOverrides((prev) => ({
+            ...prev,
+            [id]: {
+                status: newStatus,
+                activitySummary: newStatus === "Muted" ? (isVi ? "Bị tắt tiếng 24h" : "Muted 24h") : (isVi ? "Đang hoạt động" : "Active"),
+            },
+        }));
         setActiveMenuMemberId(null);
+        if (communityId) {
+            try {
+                await muteMutation.mutateAsync({
+                    communityId,
+                    data: {
+                        userId: id,
+                        duration: isMuted ? "0" : "24h",
+                        reason: isMuted ? "Unmuted" : "Muted 24h",
+                    },
+                });
+            } catch {
+                // query will re-sync
+            }
+        }
         showToast(
-            currentStatus === "Muted"
+            isMuted
                 ? (isVi ? `Đã bỏ tắt tiếng ${name}.` : `Unmuted ${name}.`)
                 : (isVi ? `Đã tắt tiếng ${name} trong 24 giờ.` : `Muted ${name} for 24 hours.`)
         );
     };
 
-    const handleToggleBan = (id: string, currentStatus: string, name: string) => {
-        setMembers((prev) =>
-            prev.map((m) => {
-                if (m.id === id) {
-                    const newStatus = currentStatus === "Banned" ? "Active" : "Banned";
-                    return {
-                        ...m,
-                        status: newStatus,
-                        activitySummary: newStatus === "Banned" ? "Banned by admin" : "Active now",
-                    };
-                }
-                return m;
-            })
-        );
+    const handleToggleBan = async (id: string, currentStatus: string, name: string) => {
+        const isBanned = currentStatus === "Banned";
+        const newStatus = isBanned ? "Active" : "Banned";
+        setLocalOverrides((prev) => ({
+            ...prev,
+            [id]: {
+                status: newStatus,
+                activitySummary: newStatus === "Banned" ? (isVi ? "Đã bị cấm" : "Banned") : (isVi ? "Đang hoạt động" : "Active"),
+            },
+        }));
         setActiveMenuMemberId(null);
+        if (communityId) {
+            try {
+                await banMutation.mutateAsync({
+                    communityId,
+                    data: {
+                        userId: id,
+                        reason: isBanned ? "Unbanned" : "Banned by moderation",
+                    },
+                });
+            } catch {
+                // query will re-sync
+            }
+        }
         showToast(
-            currentStatus === "Banned"
+            isBanned
                 ? (isVi ? `Đã gỡ cấm ${name} khỏi cộng đồng.` : `Unbanned ${name}.`)
                 : (isVi ? `Đã cấm ${name} khỏi cộng đồng này.` : `Banned ${name} from this community.`)
         );
     };
 
     const handlePromoteToModerator = (id: string, name: string) => {
-        setMembers((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, role: "Moderator" as const } : m))
-        );
+        if (!isOwner) return;
+        setLocalOverrides((prev) => ({
+            ...prev,
+            [id]: { role: "Moderator" as const },
+        }));
         setActiveMenuMemberId(null);
         showToast(isVi ? `Đã thăng cấp ${name} làm Điều hành viên!` : `Promoted ${name} to Moderator.`);
     };
 
     const handleRemoveModerator = (id: string, name: string) => {
+        if (!isOwner) return;
         if (!window.confirm(isVi ? `Hạ cấp ${name} xuống thành viên thông thường?` : `Remove ${name} from Moderator role?`)) {
             return;
         }
-        setMembers((prev) =>
-            prev.map((m) => (m.id === id ? { ...m, role: "Member" as const } : m))
-        );
+        setLocalOverrides((prev) => ({
+            ...prev,
+            [id]: { role: "Member" as const },
+        }));
         setActiveMenuMemberId(null);
         showToast(isVi ? `Đã chuyển ${name} về Thành viên.` : `Demoted ${name} to Member.`);
     };
@@ -246,6 +246,25 @@ export const CommunityManageMembers = ({
             pending: members.filter((m) => m.status === "Pending").length,
         };
     }, [members]);
+
+    // Member view restriction
+    if (!isOwner && !isModerator) {
+        return (
+            <div className="w-full p-8 rounded-[6px] border border-divider-primary/50 bg-surface-inner flex flex-col items-center justify-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center text-text-faint text-lg">
+                    <FontAwesomeIcon icon={faShieldHalved} />
+                </div>
+                <h3 className="text-sm font-bold text-text">
+                    {isVi ? "Quyền truy cập bị giới hạn" : "Access Restricted"}
+                </h3>
+                <p className="text-xs text-text-muted max-w-md">
+                    {isVi
+                        ? "Chỉ Trưởng nhóm và Điều hành viên mới có quyền xem danh sách quản lý thành viên."
+                        : "Only Community Owners and Moderators have permission to view member management."}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex flex-col gap-5 animate-fade-in text-text select-none">
@@ -544,46 +563,55 @@ export const CommunityManageMembers = ({
                                                             className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40 font-bold"
                                                         >
                                                             <FontAwesomeIcon icon={faCrown} className="text-xs text-amber-400 w-4" />
-                                                            <span>{isVi ? "Trưởng cộng đồng" : "Owner"}</span>
+                                                            <span>{isVi ? "Trưởng cộng đồng (Bảo vệ)" : "Owner (Protected)"}</span>
                                                         </button>
                                                     ) : member.role === "Moderator" ? (
-                                                        <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveModerator(member.id, member.username)}
-                                                                className="w-full px-3 py-2 text-text-muted hover:text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40"
-                                                            >
-                                                                <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-text-faint w-4" />
-                                                                <span>{isVi ? "Gỡ quyền Điều hành" : "Remove Moderator"}</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleToggleMute(member.id, member.status, member.username)}
-                                                                className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
-                                                            >
-                                                                <FontAwesomeIcon icon={member.status === "Muted" ? faVolumeHigh : faVolumeXmark} className="text-xs w-4" />
-                                                                <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng 24h" : "Mute")}</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleToggleBan(member.id, member.status, member.username)}
-                                                                className="w-full px-3 py-2 text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
-                                                            >
-                                                                <FontAwesomeIcon icon={member.status === "Banned" ? faUnlock : faBan} className="text-xs w-4" />
-                                                                <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm thành viên" : "Ban")}</span>
-                                                            </button>
-                                                        </>
+                                                        isOwner ? (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveModerator(member.id, member.username)}
+                                                                    className="w-full px-3 py-2 text-text-muted hover:text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-text-faint w-4" />
+                                                                    <span>{isVi ? "Gỡ quyền Điều hành" : "Remove Moderator"}</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleToggleMute(member.id, member.status, member.username)}
+                                                                    className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
+                                                                >
+                                                                    <FontAwesomeIcon icon={member.status === "Muted" ? faVolumeHigh : faVolumeXmark} className="text-xs w-4" />
+                                                                    <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng 24h" : "Mute")}</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleToggleBan(member.id, member.status, member.username)}
+                                                                    className="w-full px-3 py-2 text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
+                                                                >
+                                                                    <FontAwesomeIcon icon={member.status === "Banned" ? faUnlock : faBan} className="text-xs w-4" />
+                                                                    <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm thành viên" : "Ban")}</span>
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <div className="px-3 py-2 text-[11px] text-text-faint italic border-t border-divider-primary/40 flex items-center gap-1.5">
+                                                                <FontAwesomeIcon icon={faShieldHalved} className="text-[10px] text-primary" />
+                                                                <span>{isVi ? "Được bảo vệ bởi vai trò Mod" : "Protected Mod role"}</span>
+                                                            </div>
+                                                        )
                                                     ) : (
                                                         /* Normal Member */
                                                         <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handlePromoteToModerator(member.id, member.username)}
-                                                                className="w-full px-3 py-2 text-primary hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40 font-semibold"
-                                                            >
-                                                                <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary w-4" />
-                                                                <span>{isVi ? "Thăng cấp Điều hành viên" : "Promote to Moderator"}</span>
-                                                            </button>
+                                                            {isOwner && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handlePromoteToModerator(member.id, member.username)}
+                                                                    className="w-full px-3 py-2 text-primary hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40 font-semibold"
+                                                                >
+                                                                    <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary w-4" />
+                                                                    <span>{isVi ? "Thăng cấp Điều hành viên" : "Promote to Moderator"}</span>
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleToggleMute(member.id, member.status, member.username)}
@@ -611,6 +639,22 @@ export const CommunityManageMembers = ({
                         })}
                     </tbody>
                 </table>
+
+                {isLoadingMembers && (
+                    <div className="py-12 flex flex-col items-center justify-center gap-2 text-text-faint">
+                        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-lg text-primary" />
+                        <span className="text-xs">{isVi ? "Đang tải danh sách thành viên..." : "Loading member directory..."}</span>
+                    </div>
+                )}
+
+                {!isLoadingMembers && filteredMembers.length === 0 && (
+                    <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
+                        <FontAwesomeIcon icon={faUser} className="text-2xl text-text-faint/60" />
+                        <p className="text-xs text-text-muted">
+                            {isVi ? "Không tìm thấy thành viên nào phù hợp với bộ lọc." : "No members found matching the filter."}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

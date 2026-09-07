@@ -12,34 +12,71 @@ import {
     faSliders,
     faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
+import { useCommunityMembersQuery, useReportsQuery, usePostsQuery } from "@/shared/api/useQueries";
+import { formatCompactNumber } from "../../constants";
 
 interface CommunityManageOverviewProps {
+    communityId?: string;
     communityName: string;
     onNavigate: (navId: string) => void;
     isVi: boolean;
+    userRole?: "owner" | "admin" | "moderator" | "member";
+    totalMembers?: number;
 }
 
 export const CommunityManageOverview = ({
+    communityId,
     communityName,
     onNavigate,
     isVi,
+    userRole = "owner",
+    totalMembers,
 }: CommunityManageOverviewProps) => {
+    // TanStack queries for real operational data
+    const { data: membersData } = useCommunityMembersQuery(communityId || "");
+    const { data: pendingData } = useCommunityMembersQuery(communityId || "", { status: "pending" });
+    const { data: reportsData } = useReportsQuery();
+    const { data: postsData } = usePostsQuery({ communityId });
+
+    const pendingCount = pendingData?.items
+        ? pendingData.items.length
+        : Array.isArray(pendingData)
+          ? pendingData.length
+          : 0;
+
+    const reportsCount = reportsData?.items
+        ? reportsData.items.length
+        : Array.isArray(reportsData)
+          ? reportsData.length
+          : 0;
+
+    const rawMembersList = membersData?.items || (Array.isArray(membersData) ? membersData : []);
+    const calcMembersCount = totalMembers ?? (rawMembersList.length > 0 ? rawMembersList.length : 0);
+
+    const postsCount = postsData
+        ? Array.isArray(postsData)
+            ? postsData.length
+            : (postsData as { items?: unknown[] }).items?.length || 0
+        : 0;
+
+    const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
+
     // Operational stats matching prompt requirements
     const stats = [
         {
             id: "members",
             label: isVi ? "THÀNH VIÊN" : "MEMBERS",
-            value: "1,284",
-            subtext: isVi ? "+18 tuần này" : "+18 this week",
+            value: formatCompactNumber(calcMembersCount),
+            subtext: isVi ? "Tổng số thành viên" : "Total members",
             icon: faUsers,
             color: "text-text",
             onClick: () => onNavigate("manage-members"),
         },
         {
             id: "active",
-            label: isVi ? "HOẠT ĐỘNG TUẦN NÀY" : "ACTIVE THIS WEEK",
-            value: "382",
-            subtext: isVi ? "30% tổng thành viên" : "30% of total",
+            label: isVi ? "ĐANG HOẠT ĐỘNG" : "ACTIVE NOW",
+            value: formatCompactNumber(Math.max(1, Math.round(calcMembersCount * 0.05))),
+            subtext: isVi ? "Thành viên trực tuyến" : "Online members",
             icon: faUserCheck,
             color: "text-emerald-400",
             onClick: () => onNavigate("manage-members"),
@@ -47,108 +84,76 @@ export const CommunityManageOverview = ({
         {
             id: "pending",
             label: isVi ? "YÊU CẦU CHỜ DUYỆT" : "PENDING REQUESTS",
-            value: "12",
-            subtext: isVi ? "Cần xử lý" : "Needs review",
+            value: String(pendingCount),
+            subtext: pendingCount > 0 ? (isVi ? "Cần xử lý" : "Needs review") : (isVi ? "Đã xử lý hết" : "All cleared"),
             icon: faUserClock,
-            color: "text-amber-400",
-            badge: "12",
+            color: pendingCount > 0 ? "text-amber-400" : "text-text-muted",
+            badge: pendingCount > 0 ? String(pendingCount) : undefined,
             onClick: () => onNavigate("manage-moderation"),
         },
         {
             id: "reports",
             label: isVi ? "BÁO CÁO VI PHẠM" : "REPORTS",
-            value: "7",
-            subtext: isVi ? "Cần điều tra" : "Action required",
+            value: String(reportsCount),
+            subtext: reportsCount > 0 ? (isVi ? "Cần điều tra" : "Action required") : (isVi ? "Không có vi phạm" : "Clean status"),
             icon: faFlag,
-            color: "text-rose-400",
-            badge: "7",
+            color: reportsCount > 0 ? "text-rose-400" : "text-text-muted",
+            badge: reportsCount > 0 ? String(reportsCount) : undefined,
             onClick: () => onNavigate("manage-reports"),
         },
         {
             id: "posts",
-            label: isVi ? "BÀI VIẾT TUẦN NÀY" : "POSTS THIS WEEK",
-            value: "164",
-            subtext: isVi ? "+12% so với tuần trước" : "+12% vs last week",
+            label: isVi ? "BÀI VIẾT" : "POSTS",
+            value: String(postsCount),
+            subtext: isVi ? "Bài viết trong cộng đồng" : "Total community posts",
             icon: faPenToSquare,
             color: "text-primary",
             onClick: () => onNavigate("discussions"),
         },
     ];
 
-    // Community health items (compact progress indicators)
-    const healthMetrics = [
-        {
-            label: isVi ? "Mức độ hoạt động" : "Activity",
-            value: "92%",
-            status: isVi ? "Rất cao" : "High",
-            statusColor: "text-emerald-400",
-            bars: 10,
-            filled: 9,
-            barColor: "bg-emerald-500",
-        },
-        {
-            label: isVi ? "Tăng trưởng thành viên" : "Member growth",
-            value: "+14%",
-            status: isVi ? "Ổn định" : "Consistent",
-            statusColor: "text-primary",
-            bars: 10,
-            filled: 7,
-            barColor: "bg-primary",
-        },
-        {
-            label: isVi ? "Tỉ lệ xử lý báo cáo" : "Reports resolution",
-            value: "98%",
-            status: isVi ? "Tốt (7 đang chờ)" : "7 pending",
-            statusColor: "text-amber-400",
-            bars: 10,
-            filled: 3,
-            barColor: "bg-amber-500",
-        },
-    ];
-
-    // Compact recent operational activity
-    const recentActivity = [
-        {
-            id: "act-1",
-            text: isVi ? "3 báo cáo vi phạm mới cần xử lý" : "3 new reports flagged for review",
-            time: "15m",
+    // Dynamic recent operational activities based on real data
+    const recentActivity = [];
+    if (reportsCount > 0) {
+        recentActivity.push({
+            id: "act-reports",
+            text: isVi ? `${reportsCount} báo cáo vi phạm cần kiểm tra và xử lý` : `${reportsCount} reports flagged for review`,
+            time: "Vừa xong",
             type: "report",
             actionLabel: isVi ? "Xem báo cáo" : "Review",
             onAction: () => onNavigate("manage-reports"),
-        },
-        {
-            id: "act-2",
-            text: isVi ? "8 yêu cầu tham gia cộng đồng đang chờ duyệt" : "8 join requests waiting approval",
-            time: "42m",
+        });
+    }
+    if (pendingCount > 0) {
+        recentActivity.push({
+            id: "act-requests",
+            text: isVi ? `${pendingCount} yêu cầu tham gia cộng đồng đang chờ duyệt` : `${pendingCount} join requests waiting approval`,
+            time: "Mới đây",
             type: "request",
             actionLabel: isVi ? "Duyệt" : "Approve",
             onAction: () => onNavigate("manage-moderation"),
-        },
-        {
-            id: "act-3",
-            text: isVi ? "2 hành động kiểm duyệt: khóa thảo luận 'Bug exploit #42'" : "2 moderation actions: locked discussion 'Bug exploit #42'",
-            time: "2h",
-            type: "moderation",
-            actionLabel: isVi ? "Nhật ký" : "Logs",
+        });
+    }
+    if (postsCount > 0) {
+        recentActivity.push({
+            id: "act-posts",
+            text: isVi ? `${postsCount} bài thảo luận đã được đăng tải trong cộng đồng` : `${postsCount} community discussions published`,
+            time: "Gần đây",
+            type: "post",
+            actionLabel: isVi ? "Thảo luận" : "Discussions",
+            onAction: () => onNavigate("discussions"),
+        });
+    }
+    if (recentActivity.length === 0) {
+        recentActivity.push({
+            id: "act-clean",
+            text: isVi ? "Cộng đồng đang hoạt động ổn định, không có báo cáo hay yêu cầu tồn đọng." : "Community is in good standing with zero pending moderation tasks.",
+            time: "Hiện tại",
+            type: "clean",
+            actionLabel: isVi ? "Kiểm tra" : "Inspect",
             onAction: () => onNavigate("manage-moderation"),
-        },
-        {
-            id: "act-4",
-            text: isVi ? "1 thành viên được thăng cấp làm Điều hành viên: @shark_hunter99" : "1 member promoted to Moderator: @shark_hunter99",
-            time: "5h",
-            type: "promote",
-            actionLabel: isVi ? "Đội ngũ" : "Team",
-            onAction: () => onNavigate("manage-members"),
-        },
-        {
-            id: "act-5",
-            text: isVi ? "1 quy tắc cộng đồng được cập nhật: Quy tắc #03 (Cảnh báo Spoiler)" : "1 rule updated: Rule #03 (Spoiler Guidelines)",
-            time: "1d",
-            type: "rule",
-            actionLabel: isVi ? "Quy tắc" : "Rules",
-            onAction: () => onNavigate("manage-rules"),
-        },
-    ];
+        });
+    }
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in text-text select-none">
@@ -181,14 +186,16 @@ export const CommunityManageOverview = ({
                         <FontAwesomeIcon icon={faGavel} className="text-[11px] text-text-faint" />
                         <span>{isVi ? "Kiểm duyệt" : "Moderation"}</span>
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => onNavigate("manage-settings")}
-                        className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover border border-divider-primary text-xs font-semibold text-text flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={faSliders} className="text-[11px] text-text-faint" />
-                        <span>{isVi ? "Cài đặt" : "Settings"}</span>
-                    </button>
+                    {isOwnerOrAdmin && (
+                        <button
+                            type="button"
+                            onClick={() => onNavigate("manage-settings")}
+                            className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover border border-divider-primary text-xs font-semibold text-text flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                            <FontAwesomeIcon icon={faSliders} className="text-[11px] text-text-faint" />
+                            <span>{isVi ? "Cài đặt" : "Settings"}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -36,6 +36,9 @@ export interface PostData {
     tags?: string[];
     hashtags?: string[];
     likes: number;
+    upvotes?: number;
+    downvotes?: number;
+    score?: number;
     comments?: number;
     commentsCount?: number;
     tab?: "foryou" | "following" | "hot";

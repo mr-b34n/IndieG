@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faUserCheck,
@@ -13,6 +13,14 @@ import {
     faCircleCheck,
     faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+    useCommunityMembersQuery,
+    useApproveJoinRequestMutation,
+    useRejectJoinRequestMutation,
+    useReportsQuery,
+    useDeleteReportMutation,
+} from "@/shared/api/useQueries";
+import type { CommunityMemberDto, ReportDto } from "@/shared/api/types";
 
 interface JoinRequestItem {
     id: string;
@@ -58,221 +66,179 @@ interface ModeratorItem {
 }
 
 interface CommunityManageModerationProps {
+    communityId?: string;
     communityName: string;
     initialTab?: "requests" | "reports" | "history" | "moderators";
     isVi: boolean;
     onNavigateRules: () => void;
+    userRole?: "owner" | "admin" | "moderator" | "member";
 }
 
 export const CommunityManageModeration = ({
+    communityId,
     communityName,
     initialTab = "requests",
     isVi,
     onNavigateRules,
+    userRole = "owner",
 }: CommunityManageModerationProps) => {
     const [subTab, setSubTab] = useState<"requests" | "reports" | "moderators" | "history">(initialTab);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+    const isOwner = userRole === "owner" || userRole === "admin";
 
     const showToast = (msg: string) => {
         setToastMessage(msg);
         setTimeout(() => setToastMessage(null), 3500);
     };
 
-    // 1. Pending Join Requests State
-    const [joinRequests, setJoinRequests] = useState<JoinRequestItem[]>([
-        {
-            id: "req-1",
-            username: "Thành Đạt",
-            handle: "@thanhdat_gamer",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            note: isVi ? "Chơi Raft được 120h, muốn tìm team sinh tồn dài ngày." : "120+ hrs in Raft, seeking survival group.",
-            playtime: "120h",
-            appliedAt: "25m ago",
-            status: "pending",
-        },
-        {
-            id: "req-2",
-            username: "Linh Đan",
-            handle: "@linhdan_sea",
-            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            note: isVi ? "Muốn học hỏi cách xây bè tự động và trang trí đẹp." : "Interested in automated farm setups and design.",
-            playtime: "45h",
-            appliedAt: "1h ago",
-            status: "pending",
-        },
-        {
-            id: "req-3",
-            username: "Hoàng Long",
-            handle: "@long_pioneer",
-            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            note: isVi ? "Streamer/Creator muốn đăng tải video hướng dẫn cho newbie." : "Content creator sharing beginner guides.",
-            playtime: "310h",
-            appliedAt: "3h ago",
-            status: "pending",
-        },
-    ]);
+    // 1. Pending Join Requests Query & Mutations
+    const { data: pendingMembersData, refetch: refetchPending } = useCommunityMembersQuery(communityId || "", {
+        status: "pending",
+    });
+    const approveMutation = useApproveJoinRequestMutation(communityId || "");
+    const rejectMutation = useRejectJoinRequestMutation(communityId || "");
 
-    const handleApproveRequest = (id: string, name: string) => {
-        setJoinRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: "approved" as const } : r))
-        );
-        showToast(isVi ? `Đã phê duyệt ${name} vào cộng đồng!` : `Approved ${name}'s join request.`);
+    const joinRequests: JoinRequestItem[] = useMemo(() => {
+        if (!pendingMembersData) return [];
+        const items: CommunityMemberDto[] = Array.isArray(pendingMembersData)
+            ? pendingMembersData
+            : (pendingMembersData as { items?: CommunityMemberDto[] }).items || [];
+        return items.map((m) => ({
+            id: m.userId,
+            username: m.user?.name || m.user?.username || m.userId,
+            handle: m.user?.username ? `@${m.user.username}` : `@${m.userId.slice(0, 6)}`,
+            avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+            note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
+            playtime: "—",
+            appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : (isVi ? "Gần đây" : "Recent"),
+            status: "pending" as const,
+        }));
+    }, [pendingMembersData, isVi]);
+
+    const handleApproveRequest = async (_id: string, name: string) => {
+        try {
+            await approveMutation.mutateAsync();
+            refetchPending();
+            showToast(isVi ? `Đã phê duyệt ${name} vào cộng đồng!` : `Approved ${name}'s join request.`);
+        } catch {
+            showToast(isVi ? `Lỗi khi phê duyệt ${name}` : `Failed to approve ${name}`);
+        }
     };
 
-    const handleRejectRequest = (id: string, name: string) => {
-        setJoinRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: "rejected" as const } : r))
-        );
-        showToast(isVi ? `Đã từ chối yêu cầu của ${name}.` : `Rejected ${name}'s request.`);
+    const handleRejectRequest = async (_id: string, name: string) => {
+        try {
+            await rejectMutation.mutateAsync();
+            refetchPending();
+            showToast(isVi ? `Đã từ chối yêu cầu của ${name}.` : `Rejected ${name}'s request.`);
+        } catch {
+            showToast(isVi ? `Lỗi khi từ chối yêu cầu của ${name}` : `Failed to reject ${name}`);
+        }
     };
 
-    // 2. Reports State
-    const [reports, setReports] = useState<ReportItem[]>([
-        {
-            id: "rep-1",
-            targetType: "post",
-            targetTitle: "Tải bản mod cheat bất tử tài nguyên & full blueprint",
-            targetExcerpt: "Link download bản crack kèm bypass anti-cheat tại website xyz...",
-            authorName: "Gamer_Anonymous",
-            authorHandle: "@anon_cheat",
-            reporterName: "@haidang_craft",
-            reason: isVi ? "Chia sẻ phần mềm gian lận / lừa đảo (Vi phạm quy tắc #03)" : "Cheating / Malware exploit (Rule #03)",
-            createdAt: "30m ago",
-            status: "pending",
-        },
-        {
-            id: "rep-2",
-            targetType: "comment",
-            targetTitle: "Bình luận tại bài viết 'Showcase căn cứ bè nổi 3 tầng'",
-            targetExcerpt: "Xây xấu như rác thế này mà cũng khoe, nghỉ chơi game đi em ơi...",
-            authorName: "ToxicFisher",
-            authorHandle: "@toxic_fisher",
-            reporterName: "@raft_architect",
-            reason: isVi ? "Ngôn từ độc hại, quấy rối (Vi phạm quy tắc #01)" : "Harassment / Toxicity (Rule #01)",
-            createdAt: "2h ago",
-            status: "pending",
-        },
-        {
-            id: "rep-3",
-            targetType: "post",
-            targetTitle: "Ending bí mật ở hòn đảo Utopia cuối cùng!",
-            targetExcerpt: "Tiết lộ toàn bộ kết thúc câu chuyện mà không đặt tag spoiler...",
-            authorName: "FastSpoiler",
-            authorHandle: "@fast_spoiler",
-            reporterName: "@shark_hunter99",
-            reason: isVi ? "Tiết lộ cốt truyện không gắn thẻ Spoiler (Vi phạm quy tắc #04)" : "Unmarked story spoiler (Rule #04)",
-            createdAt: "4h ago",
-            status: "pending",
-        },
-    ]);
+    // 2. Reports Query & Mutations
+    const { data: reportsData, refetch: refetchReports } = useReportsQuery();
+    const deleteReportMutation = useDeleteReportMutation();
 
-    const handleResolveReport = (id: string, actionDesc: string) => {
-        setReports((prev) =>
-            prev.map((rep) => (rep.id === id ? { ...rep, status: "resolved" as const } : rep))
-        );
-        showToast(isVi ? `Đã giải quyết báo cáo (${actionDesc})` : `Report resolved (${actionDesc})`);
+    const reports: ReportItem[] = useMemo(() => {
+        if (!reportsData) return [];
+        const items: ReportDto[] = Array.isArray(reportsData)
+            ? reportsData
+            : (reportsData as { items?: ReportDto[] }).items || [];
+        return items.map((r) => ({
+            id: r.id,
+            targetType: (r.postId ? "post" : "comment") as "post" | "comment" | "user",
+            targetTitle: r.post?.title || (r.postId ? `Post #${r.postId.slice(0, 8)}` : `Report #${r.id.slice(0, 6)}`),
+            targetExcerpt: r.post?.content?.slice(0, 100) || r.reason || "Nội dung bị báo cáo",
+            authorName: r.reporter?.name || r.reporter?.username || "Người dùng",
+            authorHandle: r.reporter?.username ? `@${r.reporter.username}` : `@user`,
+            reporterName: r.reporter?.username ? `@${r.reporter.username}` : `@reporter`,
+            reason: r.reason || (isVi ? "Vi phạm quy tắc ứng xử" : "Community rule violation"),
+            createdAt: r.createdAt ? new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Gần đây" : "Recent"),
+            status: "pending" as const,
+        }));
+    }, [reportsData, isVi]);
+
+    const handleResolveReport = async (id: string, actionDesc: string) => {
+        try {
+            await deleteReportMutation.mutateAsync(id);
+            refetchReports();
+            showToast(isVi ? `Đã giải quyết báo cáo (${actionDesc})` : `Report resolved (${actionDesc})`);
+        } catch {
+            showToast(isVi ? "Không thể cập nhật báo cáo" : "Failed to resolve report");
+        }
     };
 
-    const handleDismissReport = (id: string) => {
-        setReports((prev) =>
-            prev.map((rep) => (rep.id === id ? { ...rep, status: "dismissed" as const } : rep))
-        );
-        showToast(isVi ? "Đã bác bỏ báo cáo hợp lệ." : "Report dismissed.");
+    const handleDismissReport = async (id: string) => {
+        try {
+            await deleteReportMutation.mutateAsync(id);
+            refetchReports();
+            showToast(isVi ? "Đã bác bỏ báo cáo." : "Report dismissed.");
+        } catch {
+            showToast(isVi ? "Không thể bác bỏ báo cáo" : "Failed to dismiss report");
+        }
     };
 
-    // 3. Moderators Team State
-    const [moderators, setModerators] = useState<ModeratorItem[]>([
-        {
-            id: "mod-1",
-            name: "Hải Đăng",
-            handle: "@haidang_craft",
-            avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-            role: "Owner",
-            assignedAt: "12/2024",
-            actionsCount: 148,
-        },
-        {
-            id: "mod-2",
-            name: "Minh Quân",
-            handle: "@shark_hunter99",
-            avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-            role: "Moderator",
-            assignedAt: "01/2025",
-            actionsCount: 64,
-        },
-        {
-            id: "mod-3",
-            name: "Thùy Trang",
-            handle: "@raft_architect",
-            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            role: "Moderator",
-            assignedAt: "02/2025",
-            actionsCount: 37,
-        },
-    ]);
+    // 3. Moderators Team Query
+    const { data: allMembersData } = useCommunityMembersQuery(communityId || "");
+    const [localPromotedMods, setLocalPromotedMods] = useState<ModeratorItem[]>([]);
+
+    const moderators: ModeratorItem[] = useMemo(() => {
+        if (!allMembersData) return localPromotedMods;
+        const items: CommunityMemberDto[] = Array.isArray(allMembersData)
+            ? allMembersData
+            : (allMembersData as { items?: CommunityMemberDto[] }).items || [];
+        const staff = items.filter((m) => m.role === "owner" || m.role === "moderator");
+        const mapped = staff.map((m) => ({
+            id: m.userId,
+            name: m.user?.name || m.user?.username || m.userId,
+            handle: m.user?.username ? `@${m.user.username}` : `@${m.userId.slice(0, 6)}`,
+            avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+            role: m.role === "owner" ? ("Owner" as const) : ("Moderator" as const),
+            assignedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "2025",
+            actionsCount: 0,
+        }));
+        return [...mapped, ...localPromotedMods.filter(l => !mapped.some(m => m.id === l.id))];
+    }, [allMembersData, localPromotedMods]);
 
     const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
     const [promoteCandidateHandle, setPromoteCandidateHandle] = useState("");
 
     const handleDemoteModerator = (id: string, name: string) => {
+        if (!isOwner) {
+            showToast(isVi ? "Chỉ Trưởng nhóm (Owner) mới có quyền gỡ Điều hành viên." : "Only Owner can remove Moderators.");
+            return;
+        }
         if (!window.confirm(isVi ? `Xác nhận gỡ quyền Điều hành viên của ${name}?` : `Demote ${name} from Moderator?`)) {
             return;
         }
-        setModerators((prev) => prev.filter((m) => m.id !== id));
+        setLocalPromotedMods((prev) => prev.filter((m) => m.id !== id));
         showToast(isVi ? `Đã gỡ quyền Điều hành viên của ${name}.` : `Removed ${name} from Moderator team.`);
     };
 
     const handlePromoteCandidate = () => {
+        if (!isOwner) {
+            showToast(isVi ? "Chỉ Trưởng nhóm (Owner) mới có quyền chỉ định Điều hành viên." : "Only Owner can promote Moderators.");
+            return;
+        }
         if (!promoteCandidateHandle.trim()) return;
         const newMod: ModeratorItem = {
             id: `mod-${Date.now()}`,
             name: promoteCandidateHandle.replace("@", ""),
             handle: promoteCandidateHandle.startsWith("@") ? promoteCandidateHandle : `@${promoteCandidateHandle}`,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${promoteCandidateHandle}`,
+            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${promoteCandidateHandle}`,
             role: "Moderator",
-            assignedAt: "Just now",
+            assignedAt: isVi ? "Vừa xong" : "Just now",
             actionsCount: 0,
         };
-        setModerators((prev) => [...prev, newMod]);
+        setLocalPromotedMods((prev) => [...prev, newMod]);
         setPromoteCandidateHandle("");
         setIsPromoteModalOpen(false);
         showToast(isVi ? `Đã thăng cấp ${newMod.name} làm Điều hành viên!` : `Promoted ${newMod.name} to Moderator.`);
     };
 
-    // 4. Moderation History Log
-    const modHistory: ModHistoryItem[] = [
-        {
-            id: "hist-1",
-            actor: "Hải Đăng (Owner)",
-            action: isVi ? "Khóa thảo luận" : "Locked discussion",
-            target: "'Bug exploit #42'",
-            timestamp: "2h ago",
-            reason: isVi ? "Chờ nhà phát triển phát hành bản vá" : "Awaiting patch from developer",
-        },
-        {
-            id: "hist-2",
-            actor: "Minh Quân (Mod)",
-            action: isVi ? "Tắt tiếng 24h" : "Muted for 24h",
-            target: "@toxic_fisher",
-            timestamp: "3h ago",
-            reason: isVi ? "Vi phạm quy tắc ứng xử lịch sự" : "Toxicity in comment thread",
-        },
-        {
-            id: "hist-3",
-            actor: "Thùy Trang (Mod)",
-            action: isVi ? "Gỡ bài viết" : "Removed post",
-            target: "'Free steam wallet keys scam'",
-            timestamp: "6h ago",
-            reason: isVi ? "Lừa đảo liên kết độc hại" : "Phishing link scam",
-        },
-        {
-            id: "hist-4",
-            actor: "Hải Đăng (Owner)",
-            action: isVi ? "Phê duyệt 8 yêu cầu gia nhập" : "Approved 8 join requests",
-            target: "Batch approval",
-            timestamp: "1d ago",
-        },
-    ];
+    // 4. Moderation History Audit Log (Generated dynamically or empty)
+    const modHistory: ModHistoryItem[] = [];
 
     const pendingRequestsCount = joinRequests.filter((r) => r.status === "pending").length;
     const pendingReportsCount = reports.filter((r) => r.status === "pending").length;
@@ -397,75 +363,81 @@ export const CommunityManageModeration = ({
                         <span className="text-text-faint text-[11px]">{isVi ? "Chế độ phê duyệt: Thủ công" : "Membership Mode: Approval Required"}</span>
                     </div>
 
-                    <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden">
-                        {joinRequests.map((req) => (
-                            <div
-                                key={req.id}
-                                className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
-                            >
-                                <div className="flex items-start gap-3 min-w-0">
-                                    <img
-                                        src={req.avatar}
-                                        alt={req.username}
-                                        className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
-                                    />
-                                    <div className="flex flex-col min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-bold text-text truncate">
-                                                {req.username}
-                                            </span>
-                                            <span className="text-[11px] font-mono text-text-muted">
-                                                {req.handle}
-                                            </span>
-                                            <span className="px-1.5 py-0.2 rounded bg-surface border border-divider-primary text-[10px] font-mono text-text-muted">
-                                                {req.playtime}
-                                            </span>
-                                            <span className="text-text-faint text-[10px] font-mono">
-                                                · {req.appliedAt}
-                                            </span>
-                                        </div>
+                    {joinRequests.length === 0 ? (
+                        <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
+                            <p className="text-xs text-text-muted">{isVi ? "Không có yêu cầu tham gia nào đang chờ duyệt." : "No pending join requests."}</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden">
+                            {joinRequests.map((req) => (
+                                <div
+                                    key={req.id}
+                                    className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
+                                >
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <img
+                                            src={req.avatar}
+                                            alt={req.username}
+                                            className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
+                                        />
+                                        <div className="flex flex-col min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-bold text-text truncate">
+                                                    {req.username}
+                                                </span>
+                                                <span className="text-[11px] font-mono text-text-muted">
+                                                    {req.handle}
+                                                </span>
+                                                <span className="px-1.5 py-0.2 rounded bg-surface border border-divider-primary text-[10px] font-mono text-text-muted">
+                                                    {req.playtime}
+                                                </span>
+                                                <span className="text-text-faint text-[10px] font-mono">
+                                                    · {req.appliedAt}
+                                                </span>
+                                            </div>
 
-                                        <p className="text-xs text-text-muted mt-1 italic">
-                                            "{req.note}"
-                                        </p>
+                                            <p className="text-xs text-text-muted mt-1 italic">
+                                                "{req.note}"
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                        {req.status === "pending" ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRejectRequest(req.id, req.username)}
+                                                    className="px-2.5 py-1.5 rounded-[4px] bg-surface hover:bg-rose-500/10 hover:border-rose-500/40 border border-divider-primary text-xs font-semibold text-rose-400 transition-colors cursor-pointer flex items-center gap-1.5"
+                                                >
+                                                    <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                                                    <span>{isVi ? "Từ chối" : "Reject"}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApproveRequest(req.id, req.username)}
+                                                    className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                                >
+                                                    <FontAwesomeIcon icon={faCheck} className="text-xs" />
+                                                    <span>{isVi ? "Phê duyệt" : "Approve"}</span>
+                                                </button>
+                                            </>
+                                        ) : req.status === "approved" ? (
+                                            <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded">
+                                                <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
+                                                <span>{isVi ? "Đã duyệt" : "Approved"}</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs font-mono font-bold text-text-faint flex items-center gap-1 px-2 py-1 bg-surface-hover rounded">
+                                                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                                                <span>{isVi ? "Đã từ chối" : "Rejected"}</span>
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                    {req.status === "pending" ? (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRejectRequest(req.id, req.username)}
-                                                className="px-2.5 py-1.5 rounded-[4px] bg-surface hover:bg-rose-500/10 hover:border-rose-500/40 border border-divider-primary text-xs font-semibold text-rose-400 transition-colors cursor-pointer flex items-center gap-1.5"
-                                            >
-                                                <FontAwesomeIcon icon={faXmark} className="text-xs" />
-                                                <span>{isVi ? "Từ chối" : "Reject"}</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleApproveRequest(req.id, req.username)}
-                                                className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-                                            >
-                                                <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                                <span>{isVi ? "Phê duyệt" : "Approve"}</span>
-                                            </button>
-                                        </>
-                                    ) : req.status === "approved" ? (
-                                        <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded">
-                                            <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                                            <span>{isVi ? "Đã duyệt" : "Approved"}</span>
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs font-mono font-bold text-text-faint flex items-center gap-1 px-2 py-1 bg-surface-hover rounded">
-                                            <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
-                                            <span>{isVi ? "Đã từ chối" : "Rejected"}</span>
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -477,78 +449,84 @@ export const CommunityManageModeration = ({
                         <span className="text-text-faint text-[11px]">{isVi ? "Ngưỡng tự động ẩn: 3 báo cáo" : "Auto-flag threshold: 3 reports"}</span>
                     </div>
 
-                    <div className="flex flex-col gap-3">
-                        {reports.map((rep) => (
-                            <div
-                                key={rep.id}
-                                className={`p-4 rounded-[6px] border transition-all flex flex-col gap-3 ${
-                                    rep.status === "pending"
-                                        ? "bg-surface-inner/60 border-divider-primary/60"
-                                        : "bg-surface-inner/20 border-divider-primary/20 opacity-60"
-                                }`}
-                            >
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-2 py-0.5 rounded-[3px] bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold uppercase">
-                                            {rep.targetType}
+                    {reports.length === 0 ? (
+                        <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
+                            <p className="text-xs text-text-muted">{isVi ? "Không có báo cáo vi phạm nào cần xử lý." : "No pending reports."}</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {reports.map((rep) => (
+                                <div
+                                    key={rep.id}
+                                    className={`p-4 rounded-[6px] border transition-all flex flex-col gap-3 ${
+                                        rep.status === "pending"
+                                            ? "bg-surface-inner/60 border-divider-primary/60"
+                                            : "bg-surface-inner/20 border-divider-primary/20 opacity-60"
+                                    }`}
+                                >
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-0.5 rounded-[3px] bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold uppercase">
+                                                {rep.targetType}
+                                            </span>
+                                            <h4 className="text-xs font-bold text-text truncate">
+                                                {rep.targetTitle}
+                                            </h4>
+                                        </div>
+                                        <span className="text-[11px] font-mono text-text-faint">
+                                            {rep.createdAt}
                                         </span>
-                                        <h4 className="text-xs font-bold text-text truncate">
-                                            {rep.targetTitle}
-                                        </h4>
                                     </div>
-                                    <span className="text-[11px] font-mono text-text-faint">
-                                        {rep.createdAt}
-                                    </span>
-                                </div>
 
-                                <div className="p-2.5 rounded bg-surface border border-divider-primary/40 text-xs text-text-muted">
-                                    <p className="line-clamp-2">"{rep.targetExcerpt}"</p>
-                                    <div className="flex items-center gap-2 mt-1.5 text-[11px] font-mono text-text-faint">
-                                        <span>Author: {rep.authorHandle}</span>
-                                        <span>·</span>
-                                        <span>Reported by: {rep.reporterName}</span>
+                                    <div className="p-2.5 rounded bg-surface border border-divider-primary/40 text-xs text-text-muted">
+                                        <p className="line-clamp-2">"{rep.targetExcerpt}"</p>
+                                        <div className="flex items-center gap-2 mt-1.5 text-[11px] font-mono text-text-faint">
+                                            <span>Author: {rep.authorHandle}</span>
+                                            <span>·</span>
+                                            <span>Reported by: {rep.reporterName}</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-2 text-xs text-amber-400 font-medium bg-amber-500/10 px-2.5 py-1.5 rounded border border-amber-500/20">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs shrink-0" />
-                                    <span>{rep.reason}</span>
-                                </div>
+                                    <div className="flex items-center gap-2 text-xs text-amber-400 font-medium bg-amber-500/10 px-2.5 py-1.5 rounded border border-amber-500/20">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs shrink-0" />
+                                        <span>{rep.reason}</span>
+                                    </div>
 
-                                {rep.status === "pending" ? (
-                                    <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDismissReport(rep.id)}
-                                            className="px-2.5 py-1.5 rounded-[4px] bg-surface hover:bg-surface-hover border border-divider-primary text-xs font-medium text-text-muted hover:text-text cursor-pointer transition-colors"
-                                        >
-                                            {isVi ? "Bác bỏ" : "Dismiss"}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleResolveReport(rep.id, isVi ? "Tắt tiếng tác giả 24h" : "Muted author 24h")}
-                                            className="px-2.5 py-1.5 rounded-[4px] bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs font-semibold text-amber-400 cursor-pointer transition-colors flex items-center gap-1.5"
-                                        >
-                                            <FontAwesomeIcon icon={faVolumeXmark} className="text-[11px]" />
-                                            <span>{isVi ? "Tắt tiếng tác giả" : "Mute Author"}</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleResolveReport(rep.id, isVi ? "Đã gỡ bài viết" : "Removed content")}
-                                            className="px-3 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm"
-                                        >
-                                            <FontAwesomeIcon icon={faTrashCan} className="text-[11px]" />
-                                            <span>{isVi ? "Gỡ nội dung" : "Remove Content"}</span>
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="text-right text-xs font-mono text-emerald-400 font-bold">
-                                        ✓ {rep.status === "resolved" ? (isVi ? "Đã xử lý" : "Resolved") : (isVi ? "Đã bác bỏ" : "Dismissed")}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                    {rep.status === "pending" ? (
+                                        <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDismissReport(rep.id)}
+                                                className="px-2.5 py-1.5 rounded-[4px] bg-surface hover:bg-surface-hover border border-divider-primary text-xs font-medium text-text-muted hover:text-text cursor-pointer transition-colors"
+                                            >
+                                                {isVi ? "Bác bỏ" : "Dismiss"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleResolveReport(rep.id, isVi ? "Tắt tiếng tác giả 24h" : "Muted author 24h")}
+                                                className="px-2.5 py-1.5 rounded-[4px] bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs font-semibold text-amber-400 cursor-pointer transition-colors flex items-center gap-1.5"
+                                            >
+                                                <FontAwesomeIcon icon={faVolumeXmark} className="text-[11px]" />
+                                                <span>{isVi ? "Tắt tiếng tác giả" : "Mute Author"}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleResolveReport(rep.id, isVi ? "Đã gỡ bài viết" : "Removed content")}
+                                                className="px-3 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm"
+                                            >
+                                                <FontAwesomeIcon icon={faTrashCan} className="text-[11px]" />
+                                                <span>{isVi ? "Gỡ nội dung" : "Remove Content"}</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-right text-xs font-mono text-emerald-400 font-bold">
+                                            ✓ {rep.status === "resolved" ? (isVi ? "Đã xử lý" : "Resolved") : (isVi ? "Đã bác bỏ" : "Dismissed")}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -567,71 +545,85 @@ export const CommunityManageModeration = ({
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => setIsPromoteModalOpen(true)}
-                            className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                            <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
-                            <span>{isVi ? "+ Thêm Điều hành viên" : "+ Add Moderator"}</span>
-                        </button>
+                        {isOwner && (
+                            <button
+                                type="button"
+                                onClick={() => setIsPromoteModalOpen(true)}
+                                className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
+                                <span>{isVi ? "+ Thêm Điều hành viên" : "+ Add Moderator"}</span>
+                            </button>
+                        )}
                     </div>
 
-                    <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden">
-                        {moderators.map((mod) => (
-                            <div
-                                key={mod.id}
-                                className="p-3.5 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
-                            >
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <img
-                                        src={mod.avatar}
-                                        alt={mod.name}
-                                        className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
-                                    />
-                                    <div className="flex flex-col min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-text truncate">
-                                                {mod.name}
-                                            </span>
-                                            <span className="text-[11px] font-mono text-text-muted">
-                                                {mod.handle}
-                                            </span>
-                                            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
-                                                mod.role === "Owner"
-                                                    ? "bg-amber-500/15 border border-amber-500/30 text-amber-400"
-                                                    : "bg-primary/15 border border-primary/30 text-primary"
-                                            }`}>
-                                                {mod.role}
+                    {moderators.length === 0 ? (
+                        <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
+                            <p className="text-xs text-text-muted">{isVi ? "Chưa có Điều hành viên nào được chỉ định." : "No moderators appointed yet."}</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden">
+                            {moderators.map((mod) => (
+                                <div
+                                    key={mod.id}
+                                    className="p-3.5 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <img
+                                            src={mod.avatar}
+                                            alt={mod.name}
+                                            className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
+                                        />
+                                        <div className="flex flex-col min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-text truncate">
+                                                    {mod.name}
+                                                </span>
+                                                <span className="text-[11px] font-mono text-text-muted">
+                                                    {mod.handle}
+                                                </span>
+                                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+                                                    mod.role === "Owner"
+                                                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-400"
+                                                        : "bg-primary/15 border border-primary/30 text-primary"
+                                                }`}>
+                                                    {mod.role}
+                                                </span>
+                                            </div>
+                                            <span className="text-[11px] font-mono text-text-faint mt-0.5">
+                                                {isVi ? `Bổ nhiệm từ ${mod.assignedAt} · ${mod.actionsCount} hành động` : `Appointed ${mod.assignedAt} · ${mod.actionsCount} actions`}
                                             </span>
                                         </div>
-                                        <span className="text-[11px] font-mono text-text-faint mt-0.5">
-                                            {isVi ? `Bổ nhiệm từ ${mod.assignedAt} · ${mod.actionsCount} hành động` : `Appointed ${mod.assignedAt} · ${mod.actionsCount} actions`}
-                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        {mod.role !== "Owner" ? (
+                                            isOwner ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDemoteModerator(mod.id, mod.name)}
+                                                    className="px-2.5 py-1 rounded bg-surface hover:bg-rose-500/10 hover:border-rose-500/30 border border-divider-primary text-[11px] font-semibold text-rose-400 transition-colors cursor-pointer"
+                                                >
+                                                    {isVi ? "Gỡ quyền" : "Demote"}
+                                                </button>
+                                            ) : (
+                                                <span className="text-[11px] font-mono text-text-faint px-2">
+                                                    {isVi ? "Điều hành viên" : "Moderator"}
+                                                </span>
+                                            )
+                                        ) : (
+                                            <span className="text-[11px] font-mono text-text-faint italic px-2">
+                                                {isVi ? "Trưởng cộng đồng" : "Primary Steward"}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                    {mod.role !== "Owner" ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDemoteModerator(mod.id, mod.name)}
-                                            className="px-2.5 py-1 rounded bg-surface hover:bg-rose-500/10 hover:border-rose-500/30 border border-divider-primary text-[11px] font-semibold text-rose-400 transition-colors cursor-pointer"
-                                        >
-                                            {isVi ? "Gỡ quyền" : "Demote"}
-                                        </button>
-                                    ) : (
-                                        <span className="text-[11px] font-mono text-text-faint italic px-2">
-                                            {isVi ? "Trưởng cộng đồng" : "Primary Steward"}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Inline Promote Modal */}
-                    {isPromoteModalOpen && (
+                    {isPromoteModalOpen && isOwner && (
                         <div className="p-4 rounded-[6px] border border-primary/40 bg-surface-inner flex flex-col gap-3 animate-fade-in">
                             <span className="text-xs font-bold text-text">
                                 {isVi ? "Thăng cấp thành viên làm Điều hành viên" : "Promote Member to Moderator"}
@@ -677,29 +669,35 @@ export const CommunityManageModeration = ({
                         <span className="text-text-faint text-[11px]">{isVi ? "Lưu giữ 90 ngày" : "Retained for 90 days"}</span>
                     </div>
 
-                    <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden text-xs">
-                        {modHistory.map((item) => (
-                            <div
-                                key={item.id}
-                                className="p-3 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
-                            >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="font-bold text-text">{item.actor}</span>
-                                        <span className="text-text-muted">{item.action}</span>
-                                        <span className="font-mono text-primary">{item.target}</span>
-                                        {item.reason && (
-                                            <span className="text-text-faint text-[11px]">({item.reason})</span>
-                                        )}
+                    {modHistory.length === 0 ? (
+                        <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
+                            <p className="text-xs text-text-muted">{isVi ? "Chưa có nhật ký kiểm duyệt nào được ghi nhận." : "No moderation history recorded yet."}</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden text-xs">
+                            {modHistory.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="p-3 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="font-bold text-text">{item.actor}</span>
+                                            <span className="text-text-muted">{item.action}</span>
+                                            <span className="font-mono text-primary">{item.target}</span>
+                                            {item.reason && (
+                                                <span className="text-text-faint text-[11px]">({item.reason})</span>
+                                            )}
+                                        </div>
                                     </div>
+                                    <span className="font-mono text-text-faint text-[11px] shrink-0">
+                                        {item.timestamp}
+                                    </span>
                                 </div>
-                                <span className="font-mono text-text-faint text-[11px] shrink-0">
-                                    {item.timestamp}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

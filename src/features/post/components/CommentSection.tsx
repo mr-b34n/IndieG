@@ -213,7 +213,9 @@ const CommentItem = ({
 }: CommentItemProps) => {
     const [liked, setLiked] = useState(false);
     const [downvoted, setDownvoted] = useState(false);
-    const [likeCount, setLikeCount] = useState(comment.likes);
+    const [likeCount, setLikeCount] = useState(comment.upvotes ?? comment.likes ?? 0);
+    const [downvoteCount, setDownvoteCount] = useState(comment.downvotes ?? 0);
+
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
     const [showSubEmoji, setShowSubEmoji] = useState(false);
@@ -286,6 +288,7 @@ const CommentItem = ({
             setLikeCount((prev) => prev + 1);
             if (downvoted) {
                 setDownvoted(false);
+                setDownvoteCount((prev) => Math.max(0, prev - 1));
             }
         }
     };
@@ -298,8 +301,10 @@ const CommentItem = ({
         if (!requireVerifiedEmail("downvote bình luận")) return;
         if (downvoted) {
             setDownvoted(false);
+            setDownvoteCount((prev) => Math.max(0, prev - 1));
         } else {
             setDownvoted(true);
+            setDownvoteCount((prev) => prev + 1);
             if (liked) {
                 setLiked(false);
                 setLikeCount((prev) => Math.max(0, prev - 1));
@@ -558,6 +563,7 @@ const CommentItem = ({
                             title={downvoted ? "Đã downvote" : "Downvote"}
                         >
                             <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                            <span>{downvoteCount > 0 ? downvoteCount : ""}</span>
                         </button>
 
                         {isCommentsAllowed && (
@@ -594,32 +600,34 @@ const CommentItem = ({
                             )}
 
                             <div className="flex flex-row items-center justify-between gap-2 pt-2 border-t border-border/60">
-                                <button
-                                    type="button"
-                                    onClick={replyImage.openPicker}
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
-                                    title={t('comment.attachImage')}
-                                >
-                                    <FontAwesomeIcon icon={faImage} className="text-sm" />
-                                </button>
-
-                                <div className="relative">
-                                    <button 
+                                <div className="flex flex-row items-center gap-1">
+                                    <button
                                         type="button"
-                                        onClick={() => setShowSubEmoji((prev) => !prev)}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
-                                        title="Add emoji"
+                                        onClick={replyImage.openPicker}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors"
+                                        title={t('comment.attachImage')}
                                     >
-                                        <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                        <FontAwesomeIcon icon={faImage} className="text-sm" />
                                     </button>
-                                    <EmojiBox
-                                        isOpen={showSubEmoji}
-                                        onClose={() => setShowSubEmoji(false)}
-                                        onSelect={(_id, char) => {
-                                            setReplyText((prev) => prev + char);
-                                            setShowSubEmoji(false);
-                                        }}
-                                    />
+
+                                    <div className="relative">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowSubEmoji((prev) => !prev)}
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-primary transition-colors" 
+                                            title="Add emoji"
+                                        >
+                                            <FontAwesomeIcon icon={faFaceSmile} className="text-sm" />
+                                        </button>
+                                        <EmojiBox
+                                            isOpen={showSubEmoji}
+                                            onClose={() => setShowSubEmoji(false)}
+                                            onSelect={(_id, char) => {
+                                                setReplyText((prev) => prev + char);
+                                                setShowSubEmoji(false);
+                                            }}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-row gap-2">
