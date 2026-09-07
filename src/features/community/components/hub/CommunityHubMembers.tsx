@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faSearch,
@@ -8,8 +8,8 @@ import {
     faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import type { ContributorItem } from "./CommunityHubRightRail";
-import { useCommunityMembersQuery } from "@/shared/api/useQueries";
-import type { CommunityMemberDto } from "@/shared/api/types";
+import { useCommunityMembersQuery, useProfilesListQuery } from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
 
 interface MemberItem {
     id: string;
@@ -29,6 +29,32 @@ interface CommunityHubMembersProps {
     isVi: boolean;
 }
 
+interface GenericMemberObj {
+    userId?: string;
+    id?: string;
+    role?: string;
+    userRole?: string;
+    status?: string;
+    isOnline?: boolean;
+    joinedAt?: string;
+    createdAt?: string;
+    points?: number;
+    displayName?: string;
+    name?: string;
+    username?: string;
+    email?: string;
+    avatar?: string;
+    avatarUrl?: string;
+    user?: {
+        id?: string;
+        displayName?: string;
+        name?: string;
+        username?: string;
+        avatar?: string;
+        avatarUrl?: string;
+    };
+}
+
 export const CommunityHubMembers = ({
     communityId,
     contributors,
@@ -41,39 +67,102 @@ export const CommunityHubMembers = ({
     const { data: apiMembersData } = useCommunityMembersQuery(communityId || "", {
         keyword: searchQuery,
     });
+    const { data: profilesData } = useProfilesListQuery();
 
-    const apiMappedMembers: MemberItem[] = (() => {
-        if (!apiMembersData) return [];
-        const items: CommunityMemberDto[] = Array.isArray(apiMembersData)
-            ? apiMembersData
-            : apiMembersData.items || [];
-        return items.map((m) => {
+    const profilesMap = useMemo(() => {
+        const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
+        if (!profilesData) return map;
+        const rawProfiles = Array.isArray(profilesData)
+            ? profilesData
+            : (profilesData as { data?: unknown[]; items?: unknown[] })?.data ||
+              (profilesData as { items?: unknown[] })?.items ||
+              [];
+        for (const p of rawProfiles as Record<string, unknown>[]) {
+            const uid = String(p.id || p.userId || "");
+            if (uid) {
+                map.set(uid, {
+                    name: String(p.displayName || p.name || p.username || ""),
+                    username: String(p.username || p.name || ""),
+                    avatar: String(p.avatarUrl || p.avatar || ""),
+                });
+            }
+        }
+        return map;
+    }, [profilesData]);
+
+    const apiMappedMembers: MemberItem[] = useMemo(() => {
+        const extracted = extractMemberList(apiMembersData);
+        if (!extracted.length) return [];
+
+        return extracted.map((m: GenericMemberObj, idx) => {
             let roleLabel: MemberItem["role"] = "Member";
-            if (m.role === "owner") roleLabel = "Admin";
-            else if (m.role === "moderator") roleLabel = "Moderator";
+            const roleLower = String(m.role || m.userRole || "").toLowerCase();
+            if (roleLower === "owner" || roleLower === "admin") roleLabel = "Admin";
+            else if (roleLower === "moderator" || roleLower === "mod") roleLabel = "Moderator";
+
+            const uid = String(m.userId || m.id || m.user?.id || "");
+            const profile = uid ? profilesMap.get(uid) : undefined;
+
+            const name =
+                m.user?.displayName ||
+                m.user?.name ||
+                m.user?.username ||
+                m.displayName ||
+                m.name ||
+                m.username ||
+                profile?.name ||
+                m.email ||
+                (uid ? `Thành viên (${uid.slice(0, 6)})` : `Member #${idx + 1}`);
+
+            const handleRaw =
+                m.user?.username ||
+                m.username ||
+                profile?.username ||
+                m.user?.name ||
+                m.name ||
+                uid ||
+                `user_${idx}`;
+            const handle = String(handleRaw).startsWith("@") ? String(handleRaw) : `@${handleRaw}`;
+
+            const avatar =
+                m.user?.avatar ||
+                m.user?.avatarUrl ||
+                m.avatar ||
+                m.avatarUrl ||
+                profile?.avatar ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(handleRaw)}`;
+
+            const joinedDate = m.joinedAt || m.createdAt
+                ? new Date(m.joinedAt || m.createdAt).toLocaleDateString("vi-VN")
+                : "2026";
+
             return {
-                id: m.userId,
-                name: m.user?.name || m.userId,
-                handle: m.user?.username ? `@${m.user.username}` : `@${m.userId}`,
-                avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+                id: uid || String(idx),
+                name: String(name),
+                handle,
+                avatar,
                 role: roleLabel,
-                points: 100,
-                joinedDate: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "2025",
-                isOnline: true,
+                points: typeof m.points === "number" ? m.points : (idx + 1) * 100,
+                joinedDate,
+                isOnline: m.status === "active" || m.isOnline !== false,
             };
         });
-    })();
+    }, [apiMembersData, profilesMap]);
 
     const displayMembers = apiMappedMembers;
 
-    const filteredMembers = displayMembers.filter((m) => {
-        const matchesSearch =
-            m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            m.handle.toLowerCase().includes(searchQuery.toLowerCase());
-        if (!matchesSearch) return false;
-        if (subTab === "staff") return m.role === "Admin" || m.role === "Moderator";
-        return true;
-    });
+    const filteredMembers = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        return displayMembers.filter((m) => {
+            const matchesSearch =
+                !query ||
+                m.name.toLowerCase().includes(query) ||
+                m.handle.toLowerCase().includes(query);
+            if (!matchesSearch) return false;
+            if (subTab === "staff") return m.role === "Admin" || m.role === "Moderator";
+            return true;
+        });
+    }, [displayMembers, searchQuery, subTab]);
 
     const getRoleBadge = (role: MemberItem["role"]) => {
         switch (role) {

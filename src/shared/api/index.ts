@@ -109,6 +109,25 @@ export function extractPaginationMeta(
     };
 }
 
+/** Safely extract CommunityMemberDto array from various API response shapes */
+export function extractMemberList(res: unknown): CommunityMemberDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as CommunityMemberDto[];
+    if (typeof res === "object" && res !== null) {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as CommunityMemberDto[];
+        if (Array.isArray(obj.items)) return obj.items as CommunityMemberDto[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as CommunityMemberDto[];
+            if (Array.isArray(nested.items)) return nested.items as CommunityMemberDto[];
+        }
+        if (Array.isArray(obj.members)) return obj.members as CommunityMemberDto[];
+        if (Array.isArray(obj.result)) return obj.result as CommunityMemberDto[];
+    }
+    return [];
+}
+
 /**
  * 1. Authentication Services (/auth/*)
  */

@@ -18,9 +18,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import {
     useCommunityMembersQuery,
+    useProfilesListQuery,
     useMuteMemberMutation,
     useBanMemberMutation,
 } from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
 import type { CommunityMemberDto } from "@/shared/api/types";
 
 export interface ManagedMemberItem {
@@ -82,14 +84,33 @@ export const CommunityManageMembers = ({
     const { data: membersQueryData, isLoading: isLoadingMembers } = useCommunityMembersQuery(communityId || "", {
         limit: 100,
     });
+    const { data: profilesData } = useProfilesListQuery();
     const muteMutation = useMuteMemberMutation();
     const banMutation = useBanMemberMutation();
 
+    const profilesMap = useMemo(() => {
+        const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
+        if (!profilesData) return map;
+        const rawProfiles = Array.isArray(profilesData)
+            ? profilesData
+            : (profilesData as { data?: unknown[]; items?: unknown[] })?.data ||
+              (profilesData as { items?: unknown[] })?.items ||
+              [];
+        for (const p of rawProfiles as Record<string, unknown>[]) {
+            const uid = String(p.id || p.userId || "");
+            if (uid) {
+                map.set(uid, {
+                    name: String(p.displayName || p.name || p.username || ""),
+                    username: String(p.username || p.name || ""),
+                    avatar: String(p.avatarUrl || p.avatar || ""),
+                });
+            }
+        }
+        return map;
+    }, [profilesData]);
+
     const apiMembers = useMemo<ManagedMemberItem[]>(() => {
-        if (!membersQueryData) return [];
-        const list: CommunityMemberDto[] = Array.isArray(membersQueryData)
-            ? membersQueryData
-            : (membersQueryData as { items?: CommunityMemberDto[] })?.items || [];
+        const list: CommunityMemberDto[] = extractMemberList(membersQueryData);
 
         return list.map((m, idx) => {
             const roleLower = (m.role || "member").toLowerCase();
@@ -98,9 +119,13 @@ export const CommunityManageMembers = ({
             const statusLower = (m.status || "active").toLowerCase();
             const status: "Active" | "Muted" | "Banned" | "Pending" =
                 statusLower === "muted" ? "Muted" : statusLower === "banned" ? "Banned" : statusLower === "pending" ? "Pending" : "Active";
-            const username = m.user?.name || m.user?.username || `Member #${idx + 1}`;
-            const handle = m.user?.username ? `@${m.user.username}` : `@member_${m.userId?.slice(0, 6) || idx}`;
-            const avatar = m.user?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${m.userId || idx}`;
+
+            const uid = m.userId || String(idx);
+            const profile = profilesMap.get(uid);
+
+            const username = m.user?.name || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
+            const handle = m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
+            const avatar = m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${uid}`;
             const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
             const activitySummary = m.mutedUntil
                 ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
@@ -109,7 +134,7 @@ export const CommunityManageMembers = ({
                 : (isVi ? "Đang hoạt động" : "Active");
 
             return {
-                id: m.userId || String(idx),
+                id: uid,
                 username,
                 handle,
                 avatar,
@@ -120,7 +145,7 @@ export const CommunityManageMembers = ({
                 isOnline: false,
             };
         });
-    }, [membersQueryData, isVi]);
+    }, [membersQueryData, profilesMap, isVi]);
 
     // Merge API members with local optimistic updates
     const members = useMemo(() => {

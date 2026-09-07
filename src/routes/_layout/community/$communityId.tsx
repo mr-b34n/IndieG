@@ -16,7 +16,7 @@ import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
-import { useCommunityDetailQuery, usePostsQuery, useCreatePostMutation, useProfilesListQuery } from '@/shared/api/useQueries';
+import { useCommunityDetailQuery, usePostsQuery, useCreatePostMutation, useProfilesListQuery, useCommunityMemberMeQuery } from '@/shared/api/useQueries';
 import { mapCommunityDtoToCommunityData, type PostDto, type ProfileEntity } from '@/shared/api';
 import type { CommunityData } from '@/features/community/types';
 
@@ -162,8 +162,23 @@ export function CommunityDetailPage() {
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // Community Role State (Admin / Owner by default, allows previewing Moderator & Normal Member views)
-    const [userRole, setUserRole] = useState<"owner" | "moderator" | "member">("owner");
+    // Fetch current user membership in community
+    const { data: meMembershipData } = useCommunityMemberMeQuery(community.id);
+
+    // Derived Community Role State based on /members/me response
+    const userRole = useMemo<"owner" | "moderator" | "member">( () => {
+        if (!meMembershipData) return "member";
+        const raw = meMembershipData as unknown as Record<string, unknown>;
+        const obj = (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? raw.data
+            : Array.isArray(raw.data) && raw.data[0]
+            ? raw.data[0]
+            : raw) as Record<string, unknown>;
+        const roleLower = String(obj.role || raw.role || "").toLowerCase();
+        if (roleLower === "owner" || roleLower === "admin") return "owner";
+        if (roleLower === "moderator" || roleLower === "mod") return "moderator";
+        return "member";
+    }, [meMembershipData]);
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -492,28 +507,8 @@ export function CommunityDetailPage() {
                     )}
                 </div>
 
-                {/* Right controls: Role Selector + Search Input */}
+                {/* Right controls: Search Input */}
                 <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                    {/* Role perspective selector to test different view capabilities */}
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-surface-inner border border-divider-primary/50 text-[11px] font-mono">
-                        <span className="text-text-faint uppercase text-[10px]">Role:</span>
-                        <select
-                            value={userRole}
-                            onChange={(e) => {
-                                const newRole = e.target.value as "owner" | "moderator" | "member";
-                                setUserRole(newRole);
-                                if (newRole === "member" && isManageView) {
-                                    handleNavChange("home");
-                                }
-                            }}
-                            className="bg-transparent text-text font-bold focus:outline-none cursor-pointer text-[11px]"
-                        >
-                            <option value="owner" className="bg-surface text-text">Admin / Owner</option>
-                            <option value="moderator" className="bg-surface text-text">Moderator</option>
-                            <option value="member" className="bg-surface text-text">Member</option>
-                        </select>
-                    </div>
-
                     {/* Search Input */}
                     <div className="relative w-36 sm:w-56">
                         <FontAwesomeIcon

@@ -15,11 +15,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import {
     useCommunityMembersQuery,
+    useProfilesListQuery,
     useApproveJoinRequestMutation,
     useRejectJoinRequestMutation,
     useReportsQuery,
     useDeleteReportMutation,
 } from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
 import type { CommunityMemberDto, ReportDto } from "@/shared/api/types";
 
 interface JoinRequestItem {
@@ -96,25 +98,47 @@ export const CommunityManageModeration = ({
     const { data: pendingMembersData, refetch: refetchPending } = useCommunityMembersQuery(communityId || "", {
         status: "pending",
     });
+    const { data: profilesData } = useProfilesListQuery();
     const approveMutation = useApproveJoinRequestMutation(communityId || "");
     const rejectMutation = useRejectJoinRequestMutation(communityId || "");
 
+    const profilesMap = useMemo(() => {
+        const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
+        if (!profilesData) return map;
+        const rawProfiles = Array.isArray(profilesData)
+            ? profilesData
+            : (profilesData as { data?: unknown[]; items?: unknown[] })?.data ||
+              (profilesData as { items?: unknown[] })?.items ||
+              [];
+        for (const p of rawProfiles as Record<string, unknown>[]) {
+            const uid = String(p.id || p.userId || "");
+            if (uid) {
+                map.set(uid, {
+                    name: String(p.displayName || p.name || p.username || ""),
+                    username: String(p.username || p.name || ""),
+                    avatar: String(p.avatarUrl || p.avatar || ""),
+                });
+            }
+        }
+        return map;
+    }, [profilesData]);
+
     const joinRequests: JoinRequestItem[] = useMemo(() => {
-        if (!pendingMembersData) return [];
-        const items: CommunityMemberDto[] = Array.isArray(pendingMembersData)
-            ? pendingMembersData
-            : (pendingMembersData as { items?: CommunityMemberDto[] }).items || [];
-        return items.map((m) => ({
-            id: m.userId,
-            username: m.user?.name || m.user?.username || m.userId,
-            handle: m.user?.username ? `@${m.user.username}` : `@${m.userId.slice(0, 6)}`,
-            avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
-            note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
-            playtime: "—",
-            appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : (isVi ? "Gần đây" : "Recent"),
-            status: "pending" as const,
-        }));
-    }, [pendingMembersData, isVi]);
+        const items: CommunityMemberDto[] = extractMemberList(pendingMembersData);
+        return items.map((m) => {
+            const profile = profilesMap.get(m.userId);
+            return {
+                id: m.userId,
+                username: m.user?.name || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+                handle: m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
+                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+                note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
+                playtime: "—",
+                appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Gần đây" : "Recent"),
+                status: "pending" as const,
+            };
+        });
+    }, [pendingMembersData, profilesMap, isVi]);
 
     const handleApproveRequest = async (_id: string, name: string) => {
         try {
@@ -184,22 +208,22 @@ export const CommunityManageModeration = ({
     const [localPromotedMods, setLocalPromotedMods] = useState<ModeratorItem[]>([]);
 
     const moderators: ModeratorItem[] = useMemo(() => {
-        if (!allMembersData) return localPromotedMods;
-        const items: CommunityMemberDto[] = Array.isArray(allMembersData)
-            ? allMembersData
-            : (allMembersData as { items?: CommunityMemberDto[] }).items || [];
-        const staff = items.filter((m) => m.role === "owner" || m.role === "moderator");
-        const mapped = staff.map((m) => ({
-            id: m.userId,
-            name: m.user?.name || m.user?.username || m.userId,
-            handle: m.user?.username ? `@${m.user.username}` : `@${m.userId.slice(0, 6)}`,
-            avatar: m.user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
-            role: m.role === "owner" ? ("Owner" as const) : ("Moderator" as const),
-            assignedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "2025",
-            actionsCount: 0,
-        }));
+        const items: CommunityMemberDto[] = extractMemberList(allMembersData);
+        const staff = items.filter((m) => m.role === "owner" || m.role === "admin" || m.role === "moderator");
+        const mapped = staff.map((m) => {
+            const profile = profilesMap.get(m.userId);
+            return {
+                id: m.userId,
+                name: m.user?.name || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+                handle: m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
+                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.userId}`,
+                role: (m.role === "owner" || m.role === "admin") ? ("Owner" as const) : ("Moderator" as const),
+                assignedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "2026",
+                actionsCount: 0,
+            };
+        });
         return [...mapped, ...localPromotedMods.filter(l => !mapped.some(m => m.id === l.id))];
-    }, [allMembersData, localPromotedMods]);
+    }, [allMembersData, localPromotedMods, profilesMap]);
 
     const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
     const [promoteCandidateHandle, setPromoteCandidateHandle] = useState("");

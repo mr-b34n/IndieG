@@ -13,6 +13,7 @@ import {
     faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCommunityMembersQuery, useReportsQuery, usePostsQuery } from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
 import { formatCompactNumber } from "../../constants";
 
 interface CommunityManageOverviewProps {
@@ -38,19 +39,18 @@ export const CommunityManageOverview = ({
     const { data: reportsData } = useReportsQuery();
     const { data: postsData } = usePostsQuery({ communityId });
 
-    const pendingCount = pendingData?.items
-        ? pendingData.items.length
-        : Array.isArray(pendingData)
-          ? pendingData.length
-          : 0;
+    const pendingList = extractMemberList(pendingData);
+    const pendingCount = pendingList.length;
 
     const reportsCount = reportsData?.items
         ? reportsData.items.length
         : Array.isArray(reportsData)
           ? reportsData.length
+          : Array.isArray((reportsData as { data?: unknown[] })?.data)
+          ? (reportsData as { data: unknown[] }).data.length
           : 0;
 
-    const rawMembersList = membersData?.items || (Array.isArray(membersData) ? membersData : []);
+    const rawMembersList = extractMemberList(membersData);
     const calcMembersCount = totalMembers ?? (rawMembersList.length > 0 ? rawMembersList.length : 0);
 
     const postsCount = postsData

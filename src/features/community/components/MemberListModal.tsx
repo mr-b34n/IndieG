@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faSearch, faCrown, faShieldHalved, faUserCheck, faUser, faUserMinus, faUserShield } from "@fortawesome/free-solid-svg-icons";
 import type { CommunityData, CommunityMember } from "../types";
 import { getCurrentAuthor } from "@/features/post";
 import { useAuthStore } from "@/features/auth";
+import { useCommunityMembersQuery, useProfilesListQuery } from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
 
 interface MemberListModalProps {
     community: CommunityData;
@@ -64,7 +66,53 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState<"all" | "staff" | "member">("all");
 
-    const [members, setMembers] = useState<CommunityMember[]>(() => {
+    const { data: apiMembersData } = useCommunityMembersQuery(community.id || "", { limit: 100 });
+    const { data: profilesData } = useProfilesListQuery();
+
+    const profilesMap = useMemo(() => {
+        const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
+        if (!profilesData) return map;
+        const rawProfiles = Array.isArray(profilesData)
+            ? profilesData
+            : (profilesData as { data?: unknown[]; items?: unknown[] })?.data ||
+              (profilesData as { items?: unknown[] })?.items ||
+              [];
+        for (const p of rawProfiles as Record<string, unknown>[]) {
+            const uid = String(p.id || p.userId || "");
+            if (uid) {
+                map.set(uid, {
+                    name: String(p.displayName || p.name || p.username || ""),
+                    username: String(p.username || p.name || ""),
+                    avatar: String(p.avatarUrl || p.avatar || ""),
+                });
+            }
+        }
+        return map;
+    }, [profilesData]);
+
+    const apiMembers = useMemo<CommunityMember[]>(() => {
+        const extracted = extractMemberList(apiMembersData);
+        if (!extracted.length) return [];
+        return extracted.map((m, idx) => {
+            const uid = m.userId || String(idx);
+            const profile = profilesMap.get(uid);
+            const roleLower = (m.role || "member").toLowerCase();
+            const role: CommunityMember["role"] =
+                roleLower === "owner" ? "owner" : roleLower === "admin" ? "admin" : roleLower === "moderator" || roleLower === "mod" ? "mod" : "member";
+            return {
+                username: m.user?.username || profile?.username || `user_${uid.slice(0, 6)}`,
+                displayName: m.user?.name || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`,
+                avatar: m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${uid}`,
+                role,
+                joinedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "Thành viên",
+            };
+        });
+    }, [apiMembersData, profilesMap]);
+
+    const [localOverrides, setLocalOverrides] = useState<CommunityMember[] | null>(null);
+
+    const baseMembers = useMemo<CommunityMember[]>(() => {
+        if (apiMembers.length > 0) return apiMembers;
         if (community.memberList && community.memberList.length > 0) {
             return community.memberList.map((m) => ({
                 username: m.username || "anonymous",
@@ -74,7 +122,6 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                 joinedAt: m.joinedAt || "Gần đây",
             }));
         }
-        // Include current user if joined
         const base = [...DEFAULT_MEMBERS];
         if (community.joined && !base.some((m) => m.username === authorUsername)) {
             base.unshift({
@@ -86,17 +133,19 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
             });
         }
         return base;
-    });
+    }, [apiMembers, community, authorUsername, currentDisplayName, currentAvatar]);
+
+    const members = localOverrides ?? baseMembers;
 
     const handleRoleChange = (targetUsername: string, newRole: "admin" | "mod" | "member") => {
         const updated = members.map((m) => (m.username === targetUsername ? { ...m, role: newRole } : m));
-        setMembers(updated);
+        setLocalOverrides(updated);
         if (onUpdateMembers) onUpdateMembers(updated);
     };
 
     const handleKickMember = (targetUsername: string) => {
         const updated = members.filter((m) => m.username !== targetUsername);
-        setMembers(updated);
+        setLocalOverrides(updated);
         if (onUpdateMembers) onUpdateMembers(updated);
     };
 
