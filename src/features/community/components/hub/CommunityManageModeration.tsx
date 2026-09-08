@@ -14,6 +14,7 @@ import {
     faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import {
+    useCommunityMembersQuery,
     usePendingMembersQuery,
     useProfilesListQuery,
     useApproveJoinRequestMutation,

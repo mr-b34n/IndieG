@@ -31,12 +31,17 @@ export const CommunityList = () => {
     const canCreateCommunity = !!user;
 
     const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const ITEMS_PER_PAGE = 9;
 
     // 1. TanStack Query for communities
     const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
+        type: activeTab === "joined" ? "joined" : "all",
     });
 
     const communities = useCommunitiesStore((state) => state.communities);
@@ -81,11 +86,6 @@ export const CommunityList = () => {
             }
         }
     }, [rawCommunitiesData]);
-    
-    const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
-    const [activeCategory, setActiveCategory] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const categories = useMemo(
         () => Array.from(new Set(communities.map((c) => c.category))),
@@ -128,7 +128,7 @@ export const CommunityList = () => {
         return list;
     }, [communities, activeTab, activeCategory, search]);
 
-    const isFilteredLocally = Boolean(search.trim() || activeCategory || activeTab !== "discover");
+    const isFilteredLocally = Boolean(search.trim() || activeCategory || activeTab === "trending");
 
     const apiMeta = useMemo(() => {
         return extractPaginationMeta(rawCommunitiesData, filtered.length, ITEMS_PER_PAGE, currentPage);

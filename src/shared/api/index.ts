@@ -128,6 +128,25 @@ export function extractMemberList(res: unknown): CommunityMemberDto[] {
     return [];
 }
 
+/** Safely extract CommunityDto array from various API response shapes */
+export function extractCommunityList(res: unknown): CommunityDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as CommunityDto[];
+    if (typeof res === "object" && res !== null) {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as CommunityDto[];
+        if (Array.isArray(obj.items)) return obj.items as CommunityDto[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as CommunityDto[];
+            if (Array.isArray(nested.items)) return nested.items as CommunityDto[];
+        }
+        if (Array.isArray(obj.communities)) return obj.communities as CommunityDto[];
+        if (Array.isArray(obj.result)) return obj.result as CommunityDto[];
+    }
+    return [];
+}
+
 /** Safely extract PostDto array from various API response shapes */
 export function extractPostList(res: unknown): PostDto[] {
     if (!res) return [];
@@ -318,11 +337,16 @@ export const profilesApi = {
  * 4. Community Services (/communities/*)
  */
 export const communitiesApi = {
-    /** Get all communities - GET /communities?page=...&limit=... (max limit 50) */
-    getAll: (params?: { page?: number; limit?: number }) =>
-        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>("/communities", {
+    /** Get all communities - GET /communities?type=...&page=...&limit=... (max limit 50) */
+    getAll: (params?: GetCommunitiesParams) =>
+        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number; data?: CommunityDto[] }>("/communities", {
             method: "GET",
-            params: sanitizePaginationParams(params, 50),
+            params: params
+                ? {
+                      ...(params.type ? { type: params.type } : {}),
+                      ...sanitizePaginationParams({ page: params.page, limit: params.limit }, 50),
+                  }
+                : undefined,
         }),
 
     /** Create a new community - POST /communities (supports query parameters per OpenAPI and body) */

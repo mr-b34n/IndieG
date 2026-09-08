@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
     faUsers, faHouse,
     faGear,
@@ -9,8 +10,10 @@ import { useNavigate, useLocation } from "@tanstack/react-router"
 
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor } from "@/features/post";
-import { useCommunitiesStore } from "@/features/community";
+import { useCommunitiesStore, type CommunityData } from "@/features/community";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useCommunitiesQuery } from "@/shared/api/useQueries";
+import { extractCommunityList, mapCommunityDtoToCommunityData } from "@/shared/api";
 
 const navItem = `
     w-full flex flex-row items-center gap-3 px-3 py-2
@@ -39,6 +42,39 @@ export const LeftBar = () => {
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
+
+    // Automatically fetch joined communities for the current user
+    const { data: rawJoinedData } = useCommunitiesQuery({ type: "joined" });
+
+    useEffect(() => {
+        if (rawJoinedData) {
+            const list = extractCommunityList(rawJoinedData);
+            if (Array.isArray(list)) {
+                const mapped: CommunityData[] = list.map((item) => {
+                    const base = mapCommunityDtoToCommunityData(item);
+                    return {
+                        ...base,
+                        joined: true,
+                    };
+                });
+
+                useCommunitiesStore.setState((state) => {
+                    const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
+                    mapped.forEach((item) => {
+                        const prev = existingMap.get(String(item.id));
+                        existingMap.set(String(item.id), {
+                            ...prev,
+                            ...item,
+                            joined: true,
+                        });
+                    });
+                    return {
+                        communities: Array.from(existingMap.values()),
+                    };
+                });
+            }
+        }
+    }, [rawJoinedData]);
 
     const isHomeActive = pathname === "/" || pathname.startsWith("/post");
     const isExploreActive = pathname.startsWith("/explore");
@@ -198,13 +234,13 @@ export const LeftBar = () => {
                                     onClick={() => navigate({ to: "/community" })}
                                     className="w-full text-left px-3 py-1.5 text-[11px] font-bold text-[#1688E8] hover:underline cursor-pointer transition-colors"
                                 >
-                                    {t('common.seeAllCommunities', { defaultValue: `Xem tất cả (${joinedCommunities.length})` })}
+                                    {t('common.seeAllCommunities', { defaultValue: `Xem tất cả` })} ({joinedCommunities.length})
                                 </button>
                             )}
                         </>
                     ) : (
                         <div className="px-3 py-2 text-xs text-[#5F646B]">
-                            {t('community.noCommunitiesJoined', { defaultValue: 'Chưa tham gia cộng đồng nào' })}
+                            {t('common.noCommunitiesJoined', { defaultValue: 'Chưa tham gia cộng đồng nào' })}
                         </div>
                     )}
                 </div>

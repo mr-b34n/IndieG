@@ -54,7 +54,10 @@ export const vi = {
         noUpcomingEvents: "Chưa có sự kiện sắp diễn ra",
         replies: "phản hồi",
         results: "kết quả",
-        backToHome: "Quay lại Trang chủ"
+        backToHome: "Quay lại Trang chủ",
+        yourShortcuts: "Lối tắt của bạn",
+        seeAllCommunities: "Xem tất cả",
+        noCommunitiesJoined: "Chưa tham gia cộng đồng nào",
     },
     authenticate: {
         login: "Đăng nhập",

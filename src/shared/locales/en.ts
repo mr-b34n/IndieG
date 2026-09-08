@@ -54,7 +54,10 @@ export const en = {
         noUpcomingEvents: "No upcoming events yet",
         replies: "replies",
         results: "results",
-        backToHome: "Back to Home"
+        backToHome: "Back to Home",
+        yourShortcuts: "Your Shortcuts",
+        seeAllCommunities: "See all",
+        noCommunitiesJoined: "No communities joined yet",
     },
     authenticate: {
         login: "Log in",

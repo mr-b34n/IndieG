@@ -38,11 +38,13 @@ export interface CommunityData {
     memberList?: CommunityMember[];
 }
 
+import type { GetCommunitiesParams } from "@/shared/api";
+
 export interface CommunitiesState {
     communities: CommunityData[];
     isLoading: boolean;
     error: string | null;
-    fetchCommunities: () => Promise<void>;
+    fetchCommunities: (params?: GetCommunitiesParams) => Promise<void>;
     toggleJoin: (id: string | number) => void;
     toggleJoinCommunity: (id: string | number) => void;
     getCommunityById: (id: string | number) => CommunityData | undefined;

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { type CommunitiesState, type CommunityData } from "../types";
 import { INITIAL_COMMUNITIES } from "../constants";
-import { communitiesApi, mapCommunityDtoToCommunityData, type CommunityDto, type CreateCommunityDto } from "@/shared/api";
+import { communitiesApi, mapCommunityDtoToCommunityData, type CommunityDto, type CreateCommunityDto, type GetCommunitiesParams } from "@/shared/api";
 
 export * from "../types";
 
@@ -22,10 +22,10 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     isLoading: false,
     error: null,
 
-    fetchCommunities: async () => {
+    fetchCommunities: async (params?: GetCommunitiesParams) => {
         set({ isLoading: true, error: null });
         try {
-            const res = await communitiesApi.getAll();
+            const res = await communitiesApi.getAll(params || { limit: 9 });
             const list = extractCommunityList(res);
             
             if (Array.isArray(list)) {

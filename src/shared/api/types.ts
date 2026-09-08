@@ -112,6 +112,12 @@ export interface UpdateCommunityDto {
     featured?: boolean;
 }
 
+export interface GetCommunitiesParams {
+    type?: "all" | "joined";
+    page?: number;
+    limit?: number;
+}
+
 export interface CommunityMemberDto {
     communityId: string;
     userId: string;
