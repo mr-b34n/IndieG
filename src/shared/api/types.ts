@@ -295,10 +295,22 @@ export interface UpdateCommentDto {
 
 export interface ReportDto {
     id: string;
-    postId: string;
-    reporterId: string;
-    reason: string;
-    createdAt: string;
+    postId?: string;
+    reporterId?: string;
+    reason?: string;
+    createdAt?: string;
+    reporter?: {
+        id?: string;
+        username?: string;
+        name?: string;
+        avatarUrl?: string;
+        avatar?: string;
+    };
+    post?: {
+        id?: string;
+        title?: string;
+        content?: string;
+    };
 }
 
 export interface CreateReportDto {

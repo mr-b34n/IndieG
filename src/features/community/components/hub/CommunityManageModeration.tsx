@@ -14,14 +14,14 @@ import {
     faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import {
-    useCommunityMembersQuery,
+    usePendingMembersQuery,
     useProfilesListQuery,
     useApproveJoinRequestMutation,
     useRejectJoinRequestMutation,
     useReportsQuery,
     useDeleteReportMutation,
 } from "@/shared/api/useQueries";
-import { extractMemberList } from "@/shared/api";
+import { extractMemberList, extractReportList } from "@/shared/api";
 import type { CommunityMemberDto, ReportDto } from "@/shared/api/types";
 
 interface JoinRequestItem {
@@ -95,12 +95,10 @@ export const CommunityManageModeration = ({
     };
 
     // 1. Pending Join Requests Query & Mutations
-    const { data: pendingMembersData, refetch: refetchPending } = useCommunityMembersQuery(communityId || "", {
-        status: "pending",
-    });
+    const { data: pendingMembersData, refetch: refetchPending } = usePendingMembersQuery(communityId || "");
     const { data: profilesData } = useProfilesListQuery();
-    const approveMutation = useApproveJoinRequestMutation(communityId || "");
-    const rejectMutation = useRejectJoinRequestMutation(communityId || "");
+    const approveMutation = useApproveJoinRequestMutation();
+    const rejectMutation = useRejectJoinRequestMutation();
 
     const profilesMap = useMemo(() => {
         const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
@@ -127,11 +125,16 @@ export const CommunityManageModeration = ({
         const items: CommunityMemberDto[] = extractMemberList(pendingMembersData);
         return items.map((m) => {
             const profile = profilesMap.get(m.userId);
+            const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : "Thành viên");
+            const handleRaw = m.user?.username || m.user?.name || profile?.username || m.userId;
+            const handle = handleRaw ? (String(handleRaw).startsWith("@") ? String(handleRaw) : `@${handleRaw}`) : `@${m.userId.slice(0, 6)}`;
+            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(String(handleRaw || m.userId))}`;
+
             return {
                 id: m.userId,
-                username: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
-                handle: m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
-                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || m.userId)}`,
+                username,
+                handle,
+                avatar,
                 note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
                 playtime: "—",
                 appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Gần đây" : "Recent"),
@@ -140,9 +143,9 @@ export const CommunityManageModeration = ({
         });
     }, [pendingMembersData, profilesMap, isVi]);
 
-    const handleApproveRequest = async (_id: string, name: string) => {
+    const handleApproveRequest = async (id: string, name: string) => {
         try {
-            await approveMutation.mutateAsync();
+            await approveMutation.mutateAsync({ communityId: communityId || "" });
             refetchPending();
             showToast(isVi ? `Đã phê duyệt ${name} vào cộng đồng!` : `Approved ${name}'s join request.`);
         } catch {
@@ -150,9 +153,9 @@ export const CommunityManageModeration = ({
         }
     };
 
-    const handleRejectRequest = async (_id: string, name: string) => {
+    const handleRejectRequest = async (id: string, name: string) => {
         try {
-            await rejectMutation.mutateAsync();
+            await rejectMutation.mutateAsync({ communityId: communityId || "" });
             refetchPending();
             showToast(isVi ? `Đã từ chối yêu cầu của ${name}.` : `Rejected ${name}'s request.`);
         } catch {
@@ -165,23 +168,26 @@ export const CommunityManageModeration = ({
     const deleteReportMutation = useDeleteReportMutation();
 
     const reports: ReportItem[] = useMemo(() => {
-        if (!reportsData) return [];
-        const items: ReportDto[] = Array.isArray(reportsData)
-            ? reportsData
-            : (reportsData as { items?: ReportDto[] }).items || [];
-        return items.map((r) => ({
-            id: r.id,
-            targetType: (r.postId ? "post" : "comment") as "post" | "comment" | "user",
-            targetTitle: r.post?.title || (r.postId ? `Post #${r.postId.slice(0, 8)}` : `Report #${r.id.slice(0, 6)}`),
-            targetExcerpt: r.post?.content?.slice(0, 100) || r.reason || "Nội dung bị báo cáo",
-            authorName: r.reporter?.name || r.reporter?.username || "Người dùng",
-            authorHandle: r.reporter?.username ? `@${r.reporter.username}` : `@user`,
-            reporterName: r.reporter?.username ? `@${r.reporter.username}` : `@reporter`,
-            reason: r.reason || (isVi ? "Vi phạm quy tắc ứng xử" : "Community rule violation"),
-            createdAt: r.createdAt ? new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Gần đây" : "Recent"),
-            status: "pending" as const,
-        }));
-    }, [reportsData, isVi]);
+        const items: ReportDto[] = extractReportList(reportsData);
+        return items.map((r) => {
+            const reporterProfile = r.reporterId ? profilesMap.get(r.reporterId) : undefined;
+            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
+            const reporterHandle = r.reporter?.username ? `@${r.reporter.username}` : reporterProfile?.username ? `@${reporterProfile.username}` : (r.reporterId ? `@user_${r.reporterId.slice(0, 6)}` : "@reporter");
+
+            return {
+                id: r.id,
+                targetType: (r.postId ? "post" : "comment") as "post" | "comment" | "user",
+                targetTitle: r.post?.title || (r.postId ? `Post #${r.postId.slice(0, 8)}` : `Report #${r.id.slice(0, 6)}`),
+                targetExcerpt: r.post?.content?.slice(0, 100) || r.reason || (isVi ? "Nội dung bị báo cáo" : "Reported content"),
+                authorName: reporterName,
+                authorHandle: reporterHandle,
+                reporterName: reporterHandle,
+                reason: r.reason || (isVi ? "Vi phạm quy tắc ứng xử" : "Community rule violation"),
+                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Gần đây" : "Recent"),
+                status: "pending" as const,
+            };
+        });
+    }, [reportsData, profilesMap, isVi]);
 
     const handleResolveReport = async (id: string, actionDesc: string) => {
         try {

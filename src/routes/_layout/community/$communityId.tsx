@@ -23,11 +23,14 @@ import {
     useProfilesListQuery,
     useCommunityMemberMeQuery,
     useCommunityMembersQuery,
+    usePendingMembersQuery,
+    useReportsQuery,
 } from '@/shared/api/useQueries';
 import {
     mapCommunityDtoToCommunityData,
     extractPostList,
     extractMemberList,
+    extractReportList,
     type PostDto,
     type ProfileEntity,
     type CommunityMemberDto,
@@ -195,6 +198,24 @@ export function CommunityDetailPage() {
         if (roleLower === "moderator" || roleLower === "mod") return "moderator";
         return "member";
     }, [meMembership]);
+
+    const isStaff = userRole === "owner" || userRole === "moderator";
+
+    // Fetch pending members for staff (GET /communities/{id}/members/pending)
+    const { data: pendingMembersQueryData } = usePendingMembersQuery(community.id, undefined, { enabled: isStaff });
+
+    // Fetch reports for staff (GET /reports)
+    const { data: reportsQueryData } = useReportsQuery(undefined, { enabled: isStaff });
+
+    const pendingCount = useMemo(() => {
+        if (!isStaff) return 0;
+        return extractMemberList(pendingMembersQueryData).length;
+    }, [isStaff, pendingMembersQueryData]);
+
+    const reportsCount = useMemo(() => {
+        if (!isStaff) return 0;
+        return extractReportList(reportsQueryData).length;
+    }, [isStaff, reportsQueryData]);
 
     // Derived Joined State based on /members/me response
     const isUserJoined = useMemo(() => {
@@ -657,8 +678,8 @@ export function CommunityDetailPage() {
                         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                         isVi={isVi}
                         userRole={userRole}
-                        pendingCount={0}
-                        reportsCount={0}
+                        pendingCount={pendingCount}
+                        reportsCount={reportsCount}
                     />
                 </div>
 
@@ -793,8 +814,8 @@ export function CommunityDetailPage() {
                         onNavigateNav={handleNavChange}
                         isVi={isVi}
                         userRole={userRole}
-                        pendingCount={0}
-                        reportsCount={0}
+                        pendingCount={pendingCount}
+                        reportsCount={reportsCount}
                         modsCount={modsCount}
                     />
                 </div>

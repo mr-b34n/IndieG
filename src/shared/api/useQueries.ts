@@ -250,6 +250,14 @@ export function useCommunityMembersQuery(communityId: string, params?: GetCommun
     });
 }
 
+export function usePendingMembersQuery(communityId: string, params?: GetCommunityMembersParams, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: ["communities", communityId, "members", "pending", params || {}],
+        queryFn: () => communityMembersApi.getPendingMembers(communityId, params),
+        enabled: (options?.enabled ?? true) && Boolean(communityId),
+    });
+}
+
 export function useCommunityMemberMeQuery(communityId: string) {
     return useQuery({
         queryKey: QUERY_KEYS.communityMemberMe(communityId),
@@ -368,16 +376,20 @@ export function useDeleteCommentMutation() {
 // -------------------------------------------------------------
 // 5. Hooks for Reports
 // -------------------------------------------------------------
-export function useReportsQuery(params?: {
-    postId?: string;
-    reporterId?: string;
-    reason?: string;
-    page?: number;
-    limit?: number;
-}) {
+export function useReportsQuery(
+    params?: {
+        postId?: string;
+        reporterId?: string;
+        reason?: string;
+        page?: number;
+        limit?: number;
+    },
+    options?: { enabled?: boolean }
+) {
     return useQuery({
         queryKey: QUERY_KEYS.reports(params),
         queryFn: () => reportsApi.getAll(params),
+        enabled: options?.enabled ?? true,
     });
 }
 

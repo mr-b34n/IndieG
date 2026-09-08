@@ -147,6 +147,25 @@ export function extractPostList(res: unknown): PostDto[] {
     return [];
 }
 
+/** Safely extract ReportDto array from various API response shapes */
+export function extractReportList(res: unknown): ReportDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as ReportDto[];
+    if (typeof res === "object" && res !== null) {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as ReportDto[];
+        if (Array.isArray(obj.items)) return obj.items as ReportDto[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as ReportDto[];
+            if (Array.isArray(nested.items)) return nested.items as ReportDto[];
+        }
+        if (Array.isArray(obj.reports)) return obj.reports as ReportDto[];
+        if (Array.isArray(obj.result)) return obj.result as ReportDto[];
+    }
+    return [];
+}
+
 /**
  * 1. Authentication Services (/auth/*)
  */
@@ -398,6 +417,16 @@ export const communityMembersApi = {
     getMembers: (communityId: string, params?: GetCommunityMembersParams) =>
         apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
             `/communities/${encodeURIComponent(communityId)}/members`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Get pending community members list - GET /communities/{communityId}/members/pending */
+    getPendingMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/pending`,
             {
                 method: "GET",
                 params: sanitizePaginationParams(params, 50),

@@ -18,6 +18,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import {
     useCommunityMembersQuery,
+    usePendingMembersQuery,
     useProfilesListQuery,
     useMuteMemberMutation,
     useBanMemberMutation,
@@ -84,6 +85,7 @@ export const CommunityManageMembers = ({
     const { data: membersQueryData, isLoading: isLoadingMembers } = useCommunityMembersQuery(communityId || "", {
         limit: 100,
     });
+    const { data: pendingMembersData } = usePendingMembersQuery(communityId || "");
     const { data: profilesData } = useProfilesListQuery();
     const muteMutation = useMuteMemberMutation();
     const banMutation = useBanMemberMutation();
@@ -111,8 +113,18 @@ export const CommunityManageMembers = ({
 
     const apiMembers = useMemo<ManagedMemberItem[]>(() => {
         const list: CommunityMemberDto[] = extractMemberList(membersQueryData);
+        const pendingList: CommunityMemberDto[] = extractMemberList(pendingMembersData);
 
-        return list.map((m, idx) => {
+        // Merge list avoiding duplicates
+        const existingIds = new Set(list.map((m) => m.userId));
+        const combined = [...list];
+        for (const pm of pendingList) {
+            if (pm.userId && !existingIds.has(pm.userId)) {
+                combined.push({ ...pm, status: "pending" as const });
+            }
+        }
+
+        return combined.map((m, idx) => {
             const roleLower = (m.role || "member").toLowerCase();
             const role: "Owner" | "Moderator" | "Member" =
                 roleLower === "owner" ? "Owner" : roleLower === "moderator" ? "Moderator" : "Member";
@@ -125,12 +137,14 @@ export const CommunityManageMembers = ({
 
             const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
             const handle = m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
-            const avatar = m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`;
+            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`;
             const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
             const activitySummary = m.mutedUntil
                 ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
                 : status === "Banned"
                 ? (isVi ? "Đã bị cấm" : "Banned")
+                : status === "Pending"
+                ? (isVi ? "Đang chờ duyệt" : "Pending approval")
                 : (isVi ? "Đang hoạt động" : "Active");
 
             return {
@@ -145,7 +159,7 @@ export const CommunityManageMembers = ({
                 isOnline: false,
             };
         });
-    }, [membersQueryData, profilesMap, isVi]);
+    }, [membersQueryData, pendingMembersData, profilesMap, isVi]);
 
     // Merge API members with local optimistic updates
     const members = useMemo(() => {
