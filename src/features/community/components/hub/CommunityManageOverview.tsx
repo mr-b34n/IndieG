@@ -12,7 +12,7 @@ import {
     faSliders,
     faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
-import { useCommunityMembersQuery, useReportsQuery, usePostsQuery } from "@/shared/api/useQueries";
+import { useCommunityMembersQuery, usePendingMembersQuery, useReportsQuery, usePostsQuery } from "@/shared/api/useQueries";
 import { extractMemberList } from "@/shared/api";
 import { formatCompactNumber } from "../../constants";
 
@@ -35,7 +35,7 @@ export const CommunityManageOverview = ({
 }: CommunityManageOverviewProps) => {
     // TanStack queries for real operational data
     const { data: membersData } = useCommunityMembersQuery(communityId || "");
-    const { data: pendingData } = useCommunityMembersQuery(communityId || "", { status: "pending" });
+    const { data: pendingData } = usePendingMembersQuery(communityId || "");
     const { data: reportsData } = useReportsQuery();
     const { data: postsData } = usePostsQuery({ communityId });
 
