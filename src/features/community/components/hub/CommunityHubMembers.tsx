@@ -149,7 +149,13 @@ export const CommunityHubMembers = ({
         });
     }, [apiMembersData, profilesMap]);
 
-    const displayMembers = apiMappedMembers;
+    const displayMembers = useMemo(() => {
+        return [...apiMappedMembers].sort((a, b) => {
+            const priorityA = a.role === "Admin" ? 1 : a.role === "Moderator" ? 2 : 3;
+            const priorityB = b.role === "Admin" ? 1 : b.role === "Moderator" ? 2 : 3;
+            return priorityA - priorityB;
+        });
+    }, [apiMappedMembers]);
 
     const filteredMembers = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();

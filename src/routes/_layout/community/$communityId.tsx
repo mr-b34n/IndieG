@@ -16,8 +16,22 @@ import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
-import { useCommunityDetailQuery, usePostsQuery, useCreatePostMutation, useProfilesListQuery, useCommunityMemberMeQuery } from '@/shared/api/useQueries';
-import { mapCommunityDtoToCommunityData, extractPostList, type PostDto, type ProfileEntity } from '@/shared/api';
+import {
+    useCommunityDetailQuery,
+    usePostsQuery,
+    useCreatePostMutation,
+    useProfilesListQuery,
+    useCommunityMemberMeQuery,
+    useCommunityMembersQuery,
+} from '@/shared/api/useQueries';
+import {
+    mapCommunityDtoToCommunityData,
+    extractPostList,
+    extractMemberList,
+    type PostDto,
+    type ProfileEntity,
+    type CommunityMemberDto,
+} from '@/shared/api';
 import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
@@ -155,23 +169,106 @@ export function CommunityDetailPage() {
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // Fetch current user membership in community
+    // Fetch current user membership in community (GET /communities/{id}/members/me)
     const { data: meMembershipData } = useCommunityMemberMeQuery(community.id);
 
-    // Derived Community Role State based on /members/me response
-    const userRole = useMemo<"owner" | "moderator" | "member">( () => {
-        if (!meMembershipData) return "member";
+    // Fetch real list of community members (GET /communities/{id}/members)
+    const { data: membersQueryData } = useCommunityMembersQuery(community.id);
+
+    // Parse meMembership
+    const meMembership = useMemo(() => {
+        if (!meMembershipData) return null;
         const raw = meMembershipData as unknown as Record<string, unknown>;
         const obj = (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
             ? raw.data
             : Array.isArray(raw.data) && raw.data[0]
             ? raw.data[0]
             : raw) as Record<string, unknown>;
-        const roleLower = String(obj.role || raw.role || "").toLowerCase();
+        return obj;
+    }, [meMembershipData]);
+
+    // Derived Community Role State based on /members/me response
+    const userRole = useMemo<"owner" | "moderator" | "member">(() => {
+        if (!meMembership) return "member";
+        const roleLower = String(meMembership.role || "").toLowerCase();
         if (roleLower === "owner" || roleLower === "admin") return "owner";
         if (roleLower === "moderator" || roleLower === "mod") return "moderator";
         return "member";
-    }, [meMembershipData]);
+    }, [meMembership]);
+
+    // Derived Joined State based on /members/me response
+    const isUserJoined = useMemo(() => {
+        if (!meMembership) return community.joined;
+        if (meMembership.role || meMembership.userId || meMembership.communityId || meMembership.status) {
+            return meMembership.status === "active" || meMembership.status === "pending" || meMembership.status === undefined;
+        }
+        return community.joined;
+    }, [meMembership, community.joined]);
+
+    // Process real community members list (sorted: Admin/Moderator first, then Member)
+    const realMembersList = useMemo(() => {
+        const rawMembers: CommunityMemberDto[] = extractMemberList(membersQueryData);
+        if (!rawMembers.length) return [];
+
+        const rawProfiles = Array.isArray(profilesData)
+            ? (profilesData as ProfileEntity[])
+            : (profilesData as { items?: ProfileEntity[]; data?: ProfileEntity[] })?.items ||
+              (profilesData as { data?: ProfileEntity[] })?.data ||
+              [];
+        const profilesMap = new Map<string, ProfileEntity>();
+        rawProfiles.forEach((p) => {
+            if (p.id) profilesMap.set(p.id, p);
+        });
+
+        const mapped = rawMembers.map((m, idx) => {
+            const profile = profilesMap.get(m.userId);
+            const roleLower = String(m.role || "").toLowerCase();
+            let roleCategory: "admin" | "moderator" | "member" = "member";
+            let rolePriority = 3;
+
+            if (roleLower === "owner" || roleLower === "admin") {
+                roleCategory = "admin";
+                rolePriority = 1;
+            } else if (roleLower === "moderator" || roleLower === "mod") {
+                roleCategory = "moderator";
+                rolePriority = 2;
+            }
+
+            const name =
+                m.user?.displayName ||
+                m.user?.name ||
+                m.user?.username ||
+                profile?.displayName ||
+                profile?.username ||
+                (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : `Member #${idx + 1}`);
+
+            const handleRaw =
+                m.user?.username ||
+                m.user?.name ||
+                profile?.username ||
+                m.userId ||
+                `user_${idx}`;
+            const handle = String(handleRaw).startsWith("@") ? String(handleRaw) : `@${handleRaw}`;
+
+            const avatar =
+                m.user?.avatar ||
+                m.user?.avatarUrl ||
+                profile?.avatarUrl ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(String(handleRaw))}`;
+
+            return {
+                id: m.userId || `m-${idx}`,
+                name: String(name),
+                handle,
+                avatar,
+                role: roleCategory,
+                rolePriority,
+                points: (idx + 1) * 100,
+            };
+        });
+
+        return mapped.sort((a, b) => a.rolePriority - b.rolePriority);
+    }, [membersQueryData, profilesData]);
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -225,8 +322,17 @@ export function CommunityDetailPage() {
         },
     ];
 
-    // Contributors
+    // Contributors (Member avatars in Right Rail) - Admin/Moderators first, then Members
     const contributorsData: ContributorItem[] = useMemo(() => {
+        if (realMembersList.length > 0) {
+            return realMembersList.map((m) => ({
+                id: m.id,
+                name: m.name,
+                handle: m.handle,
+                avatar: m.avatar,
+                points: m.points,
+            }));
+        }
         if (!profilesData) {
             return [];
         }
@@ -242,7 +348,15 @@ export function CommunityDetailPage() {
             avatar: p.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username || idx}`,
             points: (idx + 1) * 100,
         }));
-    }, [profilesData]);
+    }, [realMembersList, profilesData]);
+
+    const displayMembersCount = realMembersList.length > 0 ? realMembersList.length : (community.members ?? 1);
+    const modsCount = useMemo(() => {
+        if (realMembersList.length > 0) {
+            return realMembersList.filter((m) => m.role === "admin" || m.role === "moderator").length || 1;
+        }
+        return 1;
+    }, [realMembersList]);
 
     // Local user created posts
     const [userCreatedPosts, setUserCreatedPosts] = useState<CommunityFeedPost[]>([]);
@@ -556,9 +670,9 @@ export function CommunityDetailPage() {
                         description={community.description}
                         coverUrl={community.backdrop || community.bannerUrl || community.logo}
                         iconUrl={community.logo || community.avatarUrl}
-                        membersCount={community.members ?? 1}
+                        membersCount={displayMembersCount}
                         onlineCount={community.onlineNow ?? 1}
-                        isJoined={!!community.joined}
+                        isJoined={isUserJoined}
                         onToggleJoin={() => {
                             if (!requireVerifiedEmail("tham gia cộng đồng")) return;
                             toggleJoin(community.id);
@@ -672,7 +786,7 @@ export function CommunityDetailPage() {
                     <CommunityHubRightRail
                         communityName={community.name}
                         description={community.description}
-                        membersCount={community.members ?? 1}
+                        membersCount={displayMembersCount}
                         onlineCount={community.onlineNow ?? 1}
                         contributors={contributorsData}
                         nextEvent={upcomingEventsData[0]}
@@ -681,7 +795,7 @@ export function CommunityDetailPage() {
                         userRole={userRole}
                         pendingCount={0}
                         reportsCount={0}
-                        modsCount={1}
+                        modsCount={modsCount}
                     />
                 </div>
             </div>

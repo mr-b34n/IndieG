@@ -155,6 +155,36 @@ export const CommunityManageOverview = ({
         });
     }
 
+    const healthMetrics = [
+        {
+            label: isVi ? "Mức độ tương tác" : "Engagement Level",
+            value: "92%",
+            status: isVi ? "Tốt" : "High",
+            statusColor: "text-emerald-400",
+            bars: 10,
+            filled: 9,
+            barColor: "bg-emerald-500",
+        },
+        {
+            label: isVi ? "Tỷ lệ tăng trưởng" : "Growth Rate",
+            value: "+14%/w",
+            status: isVi ? "Ổn định" : "Steady",
+            statusColor: "text-emerald-400",
+            bars: 10,
+            filled: 7,
+            barColor: "bg-emerald-500",
+        },
+        {
+            label: isVi ? "Thời gian phản hồi" : "Response Time",
+            value: "< 15m",
+            status: isVi ? "Nhanh" : "Fast",
+            statusColor: "text-emerald-400",
+            bars: 10,
+            filled: 8,
+            barColor: "bg-emerald-500",
+        },
+    ];
+
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in text-text select-none">
             {/* 1. HEADER & BOUNDARY CLARIFICATION */}
