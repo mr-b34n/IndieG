@@ -228,8 +228,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const postUrl = `${window.location.origin}/post/${post.id}`;
 
-    const authorName = typeof post.author === "string" ? post.author : (post.author?.name || post.author?.username || "Thành viên");
-    const authorAvatar = typeof post.author === "object" && post.author !== null ? (post.author.avatar || post.author.avatarUrl || post.authorAvatar) : post.authorAvatar;
+    const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
+    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : "Thành viên");
+    const authorUsername = authorObj?.username || (typeof post.author === "object" ? (post.author as { handle?: string })?.handle : undefined);
+    const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl || post.authorAvatar) : post.authorAvatar;
 
     const handleNavigate = () => {
         if (isDetailView) return;
@@ -339,12 +341,21 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                         <div className="flex flex-row items-center gap-1.5 flex-wrap">
                             <span
                                 onClick={handleAuthorClick}
-                                className={`font-bold text-xs sm:text-sm uppercase tracking-wide hover:underline cursor-pointer ${
+                                className={`font-bold text-xs sm:text-sm tracking-wide hover:underline cursor-pointer ${
                                     rank?.textColor || "text-text"
                                 }`}
                             >
                                 {authorName}
                             </span>
+
+                            {authorUsername && (
+                                <span
+                                    onClick={handleAuthorClick}
+                                    className="text-xs text-text-faint font-medium hover:underline cursor-pointer"
+                                >
+                                    @{authorUsername.replace(/^@/, "")}
+                                </span>
+                            )}
 
                             {rank && (
                                 <span className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider ${rank.classes}`}>

@@ -376,9 +376,12 @@ export interface VoteResponse {
  * handling all optional / missing fields gracefully without runtime errors.
  */
 export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorAvatar = "") {
-    const userObj = dto.user;
-    const resolvedName = userObj?.name || userObj?.displayName || userObj?.username || authorName || "Gamer";
-    const resolvedAvatar = userObj?.avatar || userObj?.avatarUrl || authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userObj?.username || userObj?.name || dto.authorId || dto.id)}`;
+    const rawAuthor = (dto as { author?: unknown }).author;
+    const userObj = dto.user || (typeof rawAuthor === "object" && rawAuthor !== null ? (rawAuthor as { id?: string; username?: string; name?: string; displayName?: string; avatar?: string; avatarUrl?: string; avatar_url?: string; handle?: string }) : null) || (dto as { authorInfo?: { id?: string; username?: string; name?: string; avatar?: string } }).authorInfo;
+
+    const resolvedName = userObj?.name || userObj?.displayName || userObj?.username || (typeof rawAuthor === "string" ? rawAuthor : authorName) || "Gamer";
+    const resolvedUsername = userObj?.username || userObj?.handle || (dto as { username?: string }).username;
+    const resolvedAvatar = userObj?.avatar || userObj?.avatarUrl || userObj?.avatar_url || authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(resolvedUsername || resolvedName || dto.authorId || dto.id)}`;
 
     const upvotes = dto.upvotes ?? dto.likes ?? 0;
     const downvotes = dto.downvotes ?? 0;
@@ -386,15 +389,13 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
 
     return {
         id: dto.id,
-        author: userObj
-            ? {
-                  id: userObj.id || dto.authorId,
-                  name: resolvedName,
-                  username: userObj.username || userObj.name,
-                  avatar: resolvedAvatar,
-                  avatarUrl: resolvedAvatar,
-              }
-            : resolvedName,
+        author: {
+            id: userObj?.id || dto.authorId,
+            name: resolvedName,
+            username: resolvedUsername,
+            avatar: resolvedAvatar,
+            avatarUrl: resolvedAvatar,
+        },
         authorAvatar: resolvedAvatar,
         title: dto.title || "",
         content: dto.content || "",

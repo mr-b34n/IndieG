@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
