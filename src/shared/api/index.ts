@@ -780,3 +780,18 @@ export const votesApi = {
         ),
 };
 
+export const storageApi = {
+    /** Get presigned URL for upload - POST /storage/presigned-url */
+    getPresignedUrl: (data: { type: import("../utils/image-processor").UploadType; originalSize: number; originalMimeType: string; postId?: string }) =>
+        apiRequest<{ presignedUrl: string; fileKey: string }>("/storage/presigned-url", {
+            method: "POST",
+            body: data,
+        }),
+    /** Direct R2 upload helper */
+    uploadImageToR2: (options: import("../services/upload-service").UploadOptions) =>
+        import("../services/upload-service").then((m) => m.uploadImageToR2(options)),
+};
+
+export { uploadImageToR2, type UploadOptions, type UploadImageResult } from "../services/upload-service";
+export { processImagePipeline, type UploadType, type ProcessedImageResult, MAX_IMAGE_SIZES, ALLOWED_IMAGE_MIMES, validateImageFile } from "../utils/image-processor";
+
