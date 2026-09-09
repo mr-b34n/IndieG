@@ -73,6 +73,9 @@ export interface ProfileIdentity {
     bio: string;
     status: ProfileStatus;
     rank?: string | null;
+    avatarUrl?: string;
+    coverUrl?: string;
+    createdAt?: string;
     level?: number;
     currentXp?: number;
     maxXp?: number;

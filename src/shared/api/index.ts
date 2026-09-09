@@ -292,32 +292,72 @@ export const profilesApi = {
         if (myProfileInFlightPromise) {
             return myProfileInFlightPromise;
         }
-        myProfileInFlightPromise = apiRequest<UserProfileDto>("/profiles/me", {
-            method: "GET",
-        }).finally(() => {
+        myProfileInFlightPromise = (async () => {
+            const res = await apiRequest<UserProfileDto | { success?: boolean; user?: UserProfileDto; profile?: UserProfileDto; data?: UserProfileDto }>("/profiles/me", {
+                method: "GET",
+            });
+            if (res && typeof res === "object") {
+                if ("user" in res && res.user && typeof res.user === "object") {
+                    return res.user as UserProfileDto;
+                }
+                if ("profile" in res && res.profile && typeof res.profile === "object") {
+                    return res.profile as UserProfileDto;
+                }
+                if ("data" in res && res.data && typeof res.data === "object") {
+                    return res.data as UserProfileDto;
+                }
+            }
+            return res as UserProfileDto;
+        })().finally(() => {
             myProfileInFlightPromise = null;
         });
         return myProfileInFlightPromise;
     },
 
     /** Update current user's profile - PATCH /profiles/me */
-    updateMyProfile: (data: UpdateProfileDto) =>
-        apiRequest<UserProfileDto>("/profiles/me", {
+    updateMyProfile: async (data: UpdateProfileDto) => {
+        const res = await apiRequest<UserProfileDto | { success?: boolean; user?: UserProfileDto; profile?: UserProfileDto; data?: UserProfileDto }>("/profiles/me", {
             method: "PATCH",
             body: data,
-        }),
+        });
+        if (res && typeof res === "object") {
+            if ("user" in res && res.user && typeof res.user === "object") {
+                return res.user as UserProfileDto;
+            }
+            if ("profile" in res && res.profile && typeof res.profile === "object") {
+                return res.profile as UserProfileDto;
+            }
+            if ("data" in res && res.data && typeof res.data === "object") {
+                return res.data as UserProfileDto;
+            }
+        }
+        return res as UserProfileDto;
+    },
 
     /** Get user profile by username - GET /profiles/@{username} */
-    getUserByUsername: (username: string) => {
+    getUserByUsername: async (username: string) => {
         const cleanName = username.replace(/^@/, "");
 
         if (cleanName === "me" || cleanName === "demo") {
             return profilesApi.getMyProfile();
         }
 
-        return apiRequest<UserProfileDto>(`/profiles/@${encodeURIComponent(cleanName)}`, {
+        const res = await apiRequest<UserProfileDto | { success?: boolean; user?: UserProfileDto; profile?: UserProfileDto; data?: UserProfileDto }>(`/profiles/@${encodeURIComponent(cleanName)}`, {
             method: "GET",
         });
+
+        if (res && typeof res === "object") {
+            if ("user" in res && res.user && typeof res.user === "object") {
+                return res.user as UserProfileDto;
+            }
+            if ("profile" in res && res.profile && typeof res.profile === "object") {
+                return res.profile as UserProfileDto;
+            }
+            if ("data" in res && res.data && typeof res.data === "object") {
+                return res.data as UserProfileDto;
+            }
+        }
+        return res as UserProfileDto;
     },
 
     /** Toggle archived status - PATCH /profiles/archived */

@@ -15,6 +15,16 @@ interface UseProfileIdentityArgs {
  */
 export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remoteProfile }: UseProfileIdentityArgs) {
     const initial = useMemo<ProfileIdentity>(() => {
+        const resolvedAvatarUrl =
+            remoteProfile?.avatarUrl ||
+            (remoteProfile as Record<string, unknown> | null)?.avatar_url as string | undefined ||
+            (remoteProfile as Record<string, unknown> | null)?.avatar as string | undefined;
+
+        const resolvedCoverUrl =
+            remoteProfile?.coverUrl ||
+            (remoteProfile as Record<string, unknown> | null)?.cover_url as string | undefined ||
+            (remoteProfile as Record<string, unknown> | null)?.cover as string | undefined;
+
         if (isOwnProfile) {
             return {
                 name: remoteProfile?.name || remoteProfile?.username || currentAuthor,
@@ -24,8 +34,8 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                 bio: remoteProfile?.bio || "",
                 status: "online",
                 rank: remoteProfile?.rank ?? null,
-                avatarUrl: remoteProfile?.avatarUrl,
-                coverUrl: remoteProfile?.coverUrl,
+                avatarUrl: resolvedAvatarUrl,
+                coverUrl: resolvedCoverUrl,
                 createdAt: remoteProfile?.createdAt,
             };
         }
@@ -36,8 +46,8 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                 : (userId?.startsWith("@") ? userId : `@${userId || "gamer"}`),
             bio: remoteProfile?.bio || "",
             status: "online",
-            avatarUrl: remoteProfile?.avatarUrl,
-            coverUrl: remoteProfile?.coverUrl,
+            avatarUrl: resolvedAvatarUrl,
+            coverUrl: resolvedCoverUrl,
             createdAt: remoteProfile?.createdAt,
         };
     }, [userId, isOwnProfile, currentAuthor, remoteProfile]);

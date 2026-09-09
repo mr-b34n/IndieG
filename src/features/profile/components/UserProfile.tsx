@@ -330,7 +330,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         setTimeout(() => setShowSuccessToast(false), 2500);
     };
 
-    const avatarUrl = isOwnProfile && customAvatar ? customAvatar : identity.avatar;
+    const avatarUrl = (isOwnProfile && customAvatar) ? customAvatar : (identity.avatarUrl || (identity as Record<string, unknown>).avatar as string | undefined);
 
     const rankCfg = getRankConfigIfPresent((remoteProfile as Record<string, unknown>)?.rank ?? identity.rank);
     const forumRankNode = rankCfg ? (
