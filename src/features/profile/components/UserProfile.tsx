@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
-import { getUserRankConfig, getRankLabel } from "@/features/post/helpers/userRanks";
+import { getRankLabel, getRankConfigIfPresent } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
@@ -332,13 +332,13 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const avatarUrl = isOwnProfile && customAvatar ? customAvatar : identity.avatar;
 
-    const rankCfg = getUserRankConfig(identity.rank || identity.username || identity.name);
-    const forumRankNode = (
+    const rankCfg = getRankConfigIfPresent((remoteProfile as Record<string, unknown>)?.rank ?? identity.rank);
+    const forumRankNode = rankCfg ? (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[6px] text-xs font-bold ${rankCfg.badgeBg} ${rankCfg.color}`}>
             <FontAwesomeIcon icon={rankCfg.icon} />
             <span>{getRankLabel(rankCfg, language)}</span>
         </span>
-    );
+    ) : null;
 
     if (isLoading) {
         return (

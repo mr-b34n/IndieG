@@ -44,7 +44,7 @@ export const LeftBar = () => {
     const isLoggedIn = !!user || mockLogin;
 
     // Automatically fetch joined communities for the current user
-    const { data: rawJoinedData } = useCommunitiesQuery({ type: "joined" });
+    const { data: rawJoinedData } = useCommunitiesQuery({ type: "joined", page: 1, limit: 50 });
 
     useEffect(() => {
         if (rawJoinedData) {

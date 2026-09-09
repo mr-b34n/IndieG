@@ -23,6 +23,7 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                     : `@${currentAuthor}`,
                 bio: remoteProfile?.bio || "",
                 status: "online",
+                rank: remoteProfile?.rank ?? null,
                 avatarUrl: remoteProfile?.avatarUrl,
                 coverUrl: remoteProfile?.coverUrl,
                 createdAt: remoteProfile?.createdAt,

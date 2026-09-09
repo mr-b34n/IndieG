@@ -10,7 +10,7 @@ import { useAuthStore } from "@/features/auth";
 import { usePostsStore } from "../store/usePostsStore";
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
-import { getUserRankConfig, getRankLabel } from "../helpers/userRanks";
+import { getRankLabel, getRankConfigIfPresent } from "../helpers/userRanks";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
 import { useCommentsQuery, useReplyCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
@@ -380,6 +380,7 @@ const CommentItem = ({
     };
 
     const avatarSize = depth === 0 ? "w-9 h-9" : "w-7 h-7";
+    const commentRank = getRankConfigIfPresent(comment.authorRank);
 
     return (
         <div className={`flex flex-col w-full animate-fade-in group ${showMenu ? "relative z-[100]" : "relative has-[.menu-dropdown]:z-[100]"}`}>
@@ -398,15 +399,17 @@ const CommentItem = ({
                                 <p 
                                     onClick={handleAuthorClick}
                                     className={`font-bold text-[14px] hover:underline cursor-pointer ${
-                                        getUserRankConfig(comment.authorRank || comment.author).textColor
+                                        commentRank?.textColor || "text-text"
                                     }`}
                                 >
                                     {comment.author}
                                 </p>
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${getUserRankConfig(comment.authorRank || comment.author).classes}`}>
-                                    <FontAwesomeIcon icon={getUserRankConfig(comment.authorRank || comment.author).icon} className="mr-1" />
-                                    {getRankLabel(getUserRankConfig(comment.authorRank || comment.author))}
-                                </span>
+                                {commentRank && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${commentRank.classes}`}>
+                                        <FontAwesomeIcon icon={commentRank.icon} className="mr-1" />
+                                        {getRankLabel(commentRank, t)}
+                                    </span>
+                                )}
                                 <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 

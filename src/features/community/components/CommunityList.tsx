@@ -37,15 +37,32 @@ export const CommunityList = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const ITEMS_PER_PAGE = 9;
 
-    // 1. TanStack Query for communities
-    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery({
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-        type: activeTab === "joined" ? "joined" : "all",
-    });
-
     const communities = useCommunitiesStore((state) => state.communities);
     const storeLoading = useCommunitiesStore((state) => state.isLoading);
+
+    const hasJoinedInStore = useMemo(
+        () => communities.some((c) => c.joined),
+        [communities]
+    );
+
+    // Disable duplicate initial query for joined tab if already fetched on app load
+    const isQueryEnabled = useMemo(() => {
+        if (activeTab === "joined" && currentPage === 1 && hasJoinedInStore) {
+            return false;
+        }
+        return true;
+    }, [activeTab, currentPage, hasJoinedInStore]);
+
+    // 1. TanStack Query for communities
+    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery(
+        {
+            page: currentPage,
+            limit: ITEMS_PER_PAGE,
+            type: activeTab === "joined" ? "joined" : "all",
+        },
+        { enabled: isQueryEnabled }
+    );
+
     const isLoading = isQueryLoading || storeLoading;
     
     // Sync query results to global store by merging without overwriting other pages/data

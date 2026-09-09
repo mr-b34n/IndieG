@@ -27,7 +27,7 @@ import { Lightbox } from "@/shared/components/ui/Lightbox"
 import { ReportModal } from "@/features/report"
 import { useBookmarksStore } from "@/features/bookmark"
 import { EditPostModal } from ".."
-import { RANK_CONFIG, getUserRankConfig, getRankLabel } from "../helpers/userRanks"
+import { getRankLabel, getRankConfigIfPresent } from "../helpers/userRanks"
 import { useCommunitiesStore } from "@/features/community";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor"
 import { useTranslation } from "@/shared/hooks/useTranslate"
@@ -307,7 +307,8 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     };
 
     const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
-    const rank = post.authorRank ? (RANK_CONFIG[post.authorRank] || getUserRankConfig(authorName)) : getUserRankConfig(authorName);
+    const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
+    const rank = getRankConfigIfPresent(rawRank);
 
     return (
         <article

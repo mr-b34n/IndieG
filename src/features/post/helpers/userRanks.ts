@@ -190,7 +190,31 @@ export const getUserRank = (usernameInput?: unknown): UserRank => {
     return ALL_RANKS_ORDER[idx];
 };
 
+export const getRankConfigIfPresent = (rankInput?: unknown): UserRankConfig | null => {
+    if (rankInput === undefined || rankInput === null) return null;
+    let candidateStr: string;
+    if (typeof rankInput === "string") {
+        candidateStr = rankInput.trim();
+    } else if (typeof rankInput === "number") {
+        candidateStr = String(rankInput);
+    } else if (typeof rankInput === "object" && rankInput !== null) {
+        const obj = rankInput as { rank?: unknown };
+        if (obj.rank === undefined || obj.rank === null) return null;
+        candidateStr = String(obj.rank).trim();
+    } else {
+        candidateStr = String(rankInput).trim();
+    }
+    if (!candidateStr || candidateStr === "undefined" || candidateStr === "null" || candidateStr === "none") return null;
+    const cleanName = candidateStr.replace(/^@/, "").trim().toLowerCase();
+    if (RANK_CONFIG[cleanName as UserRank]) {
+        return RANK_CONFIG[cleanName as UserRank];
+    }
+    return null;
+};
+
 export const getUserRankConfig = (usernameInput?: unknown): UserRankConfig => {
+    const present = getRankConfigIfPresent(usernameInput);
+    if (present) return present;
     const rankKey = getUserRank(usernameInput);
     return RANK_CONFIG[rankKey] || RANK_CONFIG.rookie;
 };

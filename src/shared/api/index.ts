@@ -338,16 +338,17 @@ export const profilesApi = {
  */
 export const communitiesApi = {
     /** Get all communities - GET /communities?type=...&page=...&limit=... (max limit 50) */
-    getAll: (params?: GetCommunitiesParams) =>
-        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number; data?: CommunityDto[] }>("/communities", {
+    getAll: (params?: GetCommunitiesParams) => {
+        const page = params?.page ?? 1;
+        const limit = params?.limit ?? 20;
+        return apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number; data?: CommunityDto[] }>("/communities", {
             method: "GET",
-            params: params
-                ? {
-                      ...(params.type ? { type: params.type } : {}),
-                      ...sanitizePaginationParams({ page: params.page, limit: params.limit }, 50),
-                  }
-                : undefined,
-        }),
+            params: {
+                ...(params?.type ? { type: params.type } : {}),
+                ...sanitizePaginationParams({ page, limit }, 50),
+            },
+        });
+    },
 
     /** Create a new community - POST /communities (supports query parameters per OpenAPI and body) */
     create: (data: CreateCommunityDto) =>

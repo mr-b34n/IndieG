@@ -159,10 +159,11 @@ export function useUpdateProfileMutation() {
 // -------------------------------------------------------------
 // 3. Hooks for Communities
 // -------------------------------------------------------------
-export function useCommunitiesQuery(params?: GetCommunitiesParams) {
+export function useCommunitiesQuery(params?: GetCommunitiesParams, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: QUERY_KEYS.communities(params),
         queryFn: () => communitiesApi.getAll(params),
+        ...options,
     });
 }
 

@@ -17,7 +17,7 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { useSquadStore } from "../store/useSquadStore";
 import { type Squad } from "../types";
-import { getUserRankConfig } from "@/features/post/helpers/userRanks";
+import { getRankConfigIfPresent } from "@/features/post/helpers/userRanks";
 import { getCurrentAuthor } from "@/features/post/helpers/getCurrentAuthor";
 
 interface SquadCardProps {
@@ -167,7 +167,7 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                 {/* Member Avatars & Usernames Row */}
                 <div className="flex items-center gap-3 overflow-x-auto py-1 scrollbar-none">
                     {squad.members.map((m) => {
-                        const rankConf = getUserRankConfig(m.username);
+                        const rankConf = getRankConfigIfPresent((m as { rank?: string }).rank);
                         const isSelf = m.username === currentAuthor;
 
                         return (
@@ -189,7 +189,7 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
                                     ) : null}
                                 </div>
 
-                                <span className={`font-semibold truncate max-w-[90px] ${isSelf ? "text-primary font-bold" : rankConf.textColor}`}>
+                                <span className={`font-semibold truncate max-w-[90px] ${isSelf ? "text-primary font-bold" : (rankConf?.textColor || "text-text")}`}>
                                     {isSelf ? "You" : m.username}
                                 </span>
 

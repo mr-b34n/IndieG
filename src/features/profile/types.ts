@@ -72,6 +72,7 @@ export interface ProfileIdentity {
     username: string;
     bio: string;
     status: ProfileStatus;
+    rank?: string | null;
     level?: number;
     currentXp?: number;
     maxXp?: number;
