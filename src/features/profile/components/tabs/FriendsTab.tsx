@@ -119,7 +119,7 @@ export const FriendsTab = ({ friends, requests, onToggleFriend, onBlockFriend, o
                         visibleFriends.map((f) => (
                             <div key={f.name} className="bg-[#0A0C0E] rounded-[12px] p-4 flex items-center justify-between gap-4 shadow-xs hover:bg-[#13161C] transition-all group relative">
                                 <div
-                                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${f.name.toLowerCase().replace(/\s+/g, "_")}` } })}
+                                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: f.handle || `@${f.name}` } })}
                                     className="flex items-center gap-3.5 min-w-0 cursor-pointer flex-1"
                                 >
                                     <div className="relative shrink-0">
@@ -129,7 +129,7 @@ export const FriendsTab = ({ friends, requests, onToggleFriend, onBlockFriend, o
                                     <div className="flex flex-col min-w-0">
                                         <h4 className="font-bold text-[#F0F1F2] text-sm truncate group-hover:text-[#1688E8] transition-colors">{f.name}</h4>
                                         <span className="text-xs font-medium text-[#9A9DA3] truncate mt-0.5">{f.game || (f.status === "online" ? t("profile.statusOnline") : t("profile.statusOffline"))}</span>
-                                        <span className="text-[10px] text-[#666A71] mt-0.5">ID: @{f.name.toLowerCase()}</span>
+                                        <span className="text-[10px] text-[#666A71] mt-0.5">ID: {f.handle || `@${f.name}`}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 relative">

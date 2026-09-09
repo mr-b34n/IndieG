@@ -20,7 +20,7 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                 name: remoteProfile?.name || remoteProfile?.username || currentAuthor,
                 username: remoteProfile?.username
                     ? `@${remoteProfile.username}`
-                    : `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}`,
+                    : `@${currentAuthor}`,
                 bio: remoteProfile?.bio || "",
                 status: "online",
                 avatarUrl: remoteProfile?.avatarUrl,

@@ -36,7 +36,7 @@ export const RightBar = () => {
                             onlineFriends.map((m) => (
                                 <div
                                     key={m.name}
-                                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name.toLowerCase().replace(/\s+/g, "_")}` } })}
+                                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name}` } })}
                                     className="flex flex-col gap-0.5 px-1 py-1 rounded hover:bg-surface-hover/50 transition-colors cursor-pointer group"
                                 >
                                     <div className="flex items-center justify-between gap-2">

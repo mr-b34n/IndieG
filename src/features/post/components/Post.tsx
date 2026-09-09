@@ -238,8 +238,22 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const isMe = authorName === getCurrentAuthor();
-        navigate({ to: "/profile/$userId", params: { userId: isMe ? "me" : `@${authorName.toLowerCase().replace(/\s+/g, "_")}` } });
+        const authorObj = typeof post.author === "object" ? post.author : null;
+        const authorUsername = authorObj?.username;
+        const authorId = authorObj?.id;
+        const isMe = authorName === getCurrentAuthor() || (authorUsername && authorUsername === getCurrentAuthor());
+
+        let targetUserId = "me";
+        if (!isMe) {
+            if (authorUsername) {
+                targetUserId = authorUsername.startsWith("@") ? authorUsername : `@${authorUsername}`;
+            } else if (authorId) {
+                targetUserId = authorId;
+            } else {
+                targetUserId = authorName.startsWith("@") ? authorName : `@${authorName}`;
+            }
+        }
+        navigate({ to: "/profile/$userId", params: { userId: targetUserId } });
     };
 
     const handleCopyLink = async (e: React.MouseEvent) => {

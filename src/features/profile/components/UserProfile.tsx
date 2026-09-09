@@ -43,8 +43,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isOwnProfile =
         isLoggedIn &&
         (!userId || userId === "demo" || userId === "me" || userId === user?.id ||
-        userId === currentAuthor || userId === `@${currentAuthor.toLowerCase().replace(/\s+/g, "_")}` ||
-        (user?.username && userId === `@${user.username.toLowerCase().replace(/\s+/g, "_")}`));
+        userId === currentAuthor || userId === `@${currentAuthor}` ||
+        (user?.username && (userId === `@${user.username}` || userId === user.username)));
 
     // TanStack Query hooks for profile data
     const cleanUsername = userId?.replace(/^@/, "");
@@ -83,26 +83,17 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isLoading = (isOwnProfile && isMyProfileLoading) || (!isOwnProfile && isOtherProfileLoading);
     const isError = userId === "error" || userId === "not-found";
 
-    // Start with empty gear setup by default (no mock presets)
-    const [gearData, setGearData] = useState<Record<string, string>>(() => {
-        try {
-            const saved = localStorage.getItem(`profile_gear_${userId || "me"}`);
-            return saved ? JSON.parse(saved) : {};
-        } catch {
-            return {};
-        }
-    });
+    // Computer specs / gear data loaded exclusively from API (remoteProfile)
+    const remoteGear = useMemo(() => {
+        const raw = (remoteProfile as Record<string, unknown>)?.specs || (remoteProfile as Record<string, unknown>)?.gear || (remoteProfile as Record<string, unknown>)?.hardware;
+        return (raw && typeof raw === "object") ? (raw as Record<string, string>) : {};
+    }, [remoteProfile]);
+
+    const [customGear, setCustomGear] = useState<Record<string, string> | null>(null);
+    const gearData = customGear ?? remoteGear;
 
     const handleGearChange = (key: string, val: string) => {
-        setGearData((prev) => {
-            const next = { ...prev, [key]: val };
-            try {
-                localStorage.setItem(`profile_gear_${userId || "me"}`, JSON.stringify(next));
-            } catch {
-                // Ignore storage error
-            }
-            return next;
-        });
+        setCustomGear((prev) => ({ ...(prev ?? remoteGear), [key]: val }));
     };
 
     // Hidden sections configuration for customize mode
@@ -129,11 +120,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleSaveEdit = () => {
-        try {
-            localStorage.setItem(`profile_gear_${userId || "me"}`, JSON.stringify(gearData));
-        } catch {
-            // Ignore storage error
-        }
         try {
             localStorage.setItem(`profile_hidden_sections_${userId || "me"}`, JSON.stringify(hiddenSections));
         } catch {
@@ -244,11 +230,28 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     // User's posts
     const allPosts = usePostsStore((state) => state.posts);
     const displayPosts = allPosts.filter((p) => {
+        const pName = typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "");
+        const pUsername = typeof p.author === "object" ? p.author?.username : "";
+        const pId = typeof p.author === "object" ? p.author?.id : "";
+
         if (isOwnProfile) {
-            return p.author === identity.name || p.author === "Bạn" || p.author === currentAuthor;
+            if (pName === identity.name || pName === "Bạn" || pName === currentAuthor) return true;
+            if (user?.id && pId === user.id) return true;
+            if (user?.username && (pUsername === user.username || pName === user.username)) return true;
+            return false;
         }
-        return p.author.toLowerCase() === identity.name.toLowerCase() ||
-               p.author.toLowerCase() === cleanUsername?.toLowerCase();
+
+        const targetName = identity.name;
+        const targetUsername = cleanUsername || "";
+
+        if (pId && (pId === cleanUsername || pId === userId)) return true;
+        if (pName && (pName === targetName || pName === targetUsername)) return true;
+        if (pUsername && (pUsername === targetUsername || pUsername === targetName)) return true;
+
+        if (pName && targetName && pName.toLowerCase() === targetName.toLowerCase()) return true;
+        if (pUsername && targetUsername && pUsername.toLowerCase() === targetUsername.toLowerCase()) return true;
+
+        return false;
     });
 
     // Friends list state
@@ -296,7 +299,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             {
                 id: `gb-${prev.length + 1}-${Math.random().toString(36).substring(2, 7)}`,
                 author: currentAuthor || "Gamer",
-                handle: `@${(currentAuthor || "gamer").toLowerCase().replace(/\s+/g, "_")}`,
+                handle: `@${currentAuthor || user?.username || "gamer"}`,
                 avatar: avatarUrl,
                 content: commentContent,
                 timeAgo: "Vừa xong",
