@@ -1,5 +1,5 @@
 import { processImagePipeline, type UploadType, type ProcessedImageResult } from '../utils/image-processor';
-import { getApiBaseUrl } from '../api/client';
+import { getApiBaseUrl, buildSafeApiUrl } from '../api/client';
 
 export interface UploadOptions {
     file: File;
@@ -47,9 +47,7 @@ export function getStoredToken(): string | null {
  * Ghép URL endpoint an toàn với Backend Base URL, tránh double slash
  */
 function buildBackendUrl(endpointPath: string): string {
-    const cleanPath = endpointPath.replace(/^\/+/, '');
-    const baseUrl = getApiBaseUrl().replace(/\/+$/, '');
-    return baseUrl ? `${baseUrl}/${cleanPath}` : `/${cleanPath}`;
+    return buildSafeApiUrl(endpointPath);
 }
 
 /**

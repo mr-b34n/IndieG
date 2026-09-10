@@ -6,18 +6,42 @@
 export const getApiBaseUrl = (): string => {
     if (typeof window !== "undefined") {
         const customUrl = localStorage.getItem("indieg_custom_api_url");
-        if (customUrl && customUrl.trim() && customUrl.trim() !== "/" && customUrl.trim() !== "//") {
-            return customUrl.trim().replace(/\/+$/, "");
+        if (customUrl && customUrl.trim()) {
+            const trimmed = customUrl.trim().replace(/\/+$/, "");
+            if (trimmed && trimmed !== "/" && trimmed !== "//") {
+                return trimmed;
+            }
         }
     }
     const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
-    if (envUrl && envUrl !== "/" && envUrl !== "//") {
-        return envUrl.replace(/\/+$/, "");
+    if (envUrl) {
+        const trimmedEnv = envUrl.replace(/\/+$/, "");
+        if (trimmedEnv && trimmedEnv !== "/" && trimmedEnv !== "//") {
+            return trimmedEnv;
+        }
     }
     return "http://localhost:3636";
 };
 
 export const API_BASE_URL = getApiBaseUrl();
+
+/**
+ * Builds a clean, safe API URL guaranteed to avoid double slashes (//endpoint)
+ */
+export function buildSafeApiUrl(
+    endpoint: string,
+    params?: Record<string, string | number | boolean | string[] | undefined | null>
+): string {
+    const rawBase = getApiBaseUrl().trim();
+    const cleanBase = rawBase.replace(/\/+$/, "");
+    const cleanEndpoint = endpoint.replace(/^\/+/, "").replace(/\/+/g, "/");
+    const queryString = buildQueryString(params);
+
+    if (cleanBase && cleanBase !== "/" && cleanBase !== "//") {
+        return `${cleanBase}/${cleanEndpoint}${queryString}`;
+    }
+    return `/${cleanEndpoint}${queryString}`;
+}
 
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
     body?: BodyInit | Record<string, unknown> | null;
@@ -71,7 +95,7 @@ async function performTokenRefresh(): Promise<string | null> {
 
     refreshPromise = (async () => {
         try {
-            const refreshUrl = `${API_BASE_URL}/auth/refresh`;
+            const refreshUrl = buildSafeApiUrl("auth/refresh");
             const savedRefreshToken =
                 typeof window !== "undefined" ? localStorage.getItem("indieg_refresh_token") : null;
 
@@ -197,11 +221,9 @@ export async function apiRequest<T = unknown>(
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const queryString = buildQueryString(params);
-    const cleanEndpoint = endpoint.replace(/^\/+/, "");
+    const cleanEndpoint = endpoint.replace(/^\/+/, "").replace(/\/+/g, "/");
     const normalizedEndpoint = `/${cleanEndpoint}`;
-    const baseUrl = getApiBaseUrl().replace(/\/+$/, "");
-    const url = baseUrl ? `${baseUrl}/${cleanEndpoint}${queryString}` : `/${cleanEndpoint}${queryString}`;
+    const url = buildSafeApiUrl(endpoint, params);
 
     const response = await fetch(url, {
         ...customOptions,
