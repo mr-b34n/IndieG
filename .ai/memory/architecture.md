@@ -85,3 +85,27 @@ Implications:
 - Post-upload profile confirmation targets `PATCH /profiles/me` with a fully qualified public URL (via `getPublicStorageUrl` using `VITE_R2_PUBLIC_URL` or presigned domain) to satisfy backend `@IsUrl()` validation.
 - All API endpoints must normalize leading and trailing slashes through `getApiBaseUrl()` and strip extra slashes to avoid double-slash (`//endpoint`) routing errors.
 - SPA frontend routes (such as `/auth`) are handled directly by Vite dev server (`index.html`), while backend API calls use direct absolute URLs from `getApiBaseUrl()` (pointing to `http://localhost:3636` or `VITE_API_BASE_URL`).
+
+---
+
+## Decision: Centralized API Client & OpenAPI Endpoint Synchronization
+
+Status: Active
+
+Date: 2026-09-10
+
+Decision:
+
+All backend HTTP requests MUST use the centralized `apiRequest` utility in `src/shared/api/client.ts` rather than ad-hoc `fetch` calls. The API client uses `buildSafeApiUrl` to guarantee clean URL path construction with no accidental double slashes (e.g. `//auth/login`), automatically injects JWT tokens, and handles token refresh flows.
+
+In addition, all backend OpenAPI endpoints for Games (`/games/*`, `/games/{appid}/guides/*`, `/games/{appid}/reviews/*`, `/games/{appid}/patch-notes/*`) are centralized in `src/shared/api/index.ts` with corresponding typed React Query hooks in `src/shared/api/useQueries.ts`.
+
+Why:
+
+Prevents fragmented network request logic, inconsistent error formatting, broken authentication token attaching, and NestJS strict URL matching 404 errors.
+
+Implications:
+
+- Do not call native `fetch()` for backend API requests.
+- Add new endpoints to `src/shared/api/index.ts` and React Query hooks to `src/shared/api/useQueries.ts`.
+- The only acceptable uses of native `fetch` are in `apiRequest` itself, direct PUT to Cloudflare R2 bucket via pre-signed URL, and reading local browser `blob:` URLs.

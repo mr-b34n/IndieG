@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faCheck, faXmark, faCamera, faPen,
     faUserPlus, faUserCheck, faChevronDown, faUserXmark, faEllipsisV, faBan,
-    faImage, faSliders, faArrowLeft, faMessage,
+    faImage, faSliders, faArrowLeft, faMessage, faClock, faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
@@ -21,6 +21,11 @@ interface ProfileHeroProps {
     forumRankNode: React.ReactNode;
     isFriend: boolean;
     isBlocked: boolean;
+    isPendingOutgoing?: boolean;
+    isPendingIncoming?: boolean;
+    onCancelRequest?: () => void;
+    onAcceptRequest?: () => void;
+    isFriendActionLoading?: boolean;
     onSelectCoverFile: (file: File) => void;
     onSelectAvatarFile: (file: File) => void;
     onSaveIdentity?: () => void;
@@ -56,7 +61,9 @@ const statusCfg = (s: ProfileStatus) =>
 
 export const ProfileHero = ({
     coverSrc, avatarUrl, isOwnProfile, identity, onIdentityChange, forumRankNode,
-    isFriend, isBlocked, onSelectCoverFile, onSelectAvatarFile,
+    isFriend, isBlocked, isPendingOutgoing = false, isPendingIncoming = false,
+    onCancelRequest, onAcceptRequest, isFriendActionLoading = false,
+    onSelectCoverFile, onSelectAvatarFile,
     isCustomizeMode, onToggleCustomizeMode,
     isEditMode = false, onStartEditMode, onSaveEdit, onDiscardEdit,
     onAddFriend, onUnfriend, onBlock, onUnblock, location,
@@ -326,7 +333,16 @@ export const ProfileHero = ({
                                     <span>Nhắn tin</span>
                                 </button>
 
-                                {isFriend ? (
+                                {isFriendActionLoading ? (
+                                    <button
+                                        type="button"
+                                        disabled
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] text-[#9A9DA3] text-xs font-semibold"
+                                    >
+                                        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
+                                        <span>Đang xử lý...</span>
+                                    </button>
+                                ) : isFriend ? (
                                     <button
                                         type="button"
                                         onClick={() => handleProtectedAction("quản lý bạn bè", () => setShowFriendMenu((v) => !v))}
@@ -335,6 +351,25 @@ export const ProfileHero = ({
                                         <FontAwesomeIcon icon={faUserCheck} />
                                         <span>{t("profile.friendAdded")}</span>
                                         <FontAwesomeIcon icon={faChevronDown} className={`text-[10px] transition-transform ${showFriendMenu ? "rotate-180" : ""}`} />
+                                    </button>
+                                ) : isPendingIncoming ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleProtectedAction("chấp nhận kết bạn", () => onAcceptRequest?.())}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A] hover:bg-[#1fa976] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                    >
+                                        <FontAwesomeIcon icon={faUserCheck} />
+                                        <span>{t("profile.accept")}</span>
+                                    </button>
+                                ) : isPendingOutgoing ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleProtectedAction("hủy lời mời", () => onCancelRequest?.())}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer"
+                                        title="Nhấn để hủy lời mời"
+                                    >
+                                        <FontAwesomeIcon icon={faClock} />
+                                        <span>Đã gửi lời mời</span>
                                     </button>
                                 ) : (
                                     <button

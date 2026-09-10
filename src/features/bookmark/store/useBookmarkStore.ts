@@ -31,4 +31,7 @@ export const useBookmarksStore = create<BookmarksState>((set, get) => ({
         set((state) => ({
             bookmarkedIds: state.bookmarkedIds.filter((b) => b.toString() !== id.toString()),
         })),
+
+    setBookmarkedIds: (ids) =>
+        set({ bookmarkedIds: ids }),
 }));

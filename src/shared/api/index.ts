@@ -28,6 +28,34 @@ import {
     type SearchCommunityMembersParams,
     type CommunityMemberActionDto,
     type VoteDto,
+    type GameDto,
+    type CreateGameDto,
+    type UpdateGameDto,
+    type GetGamesParams,
+    type GameGuideDto,
+    type CreateGameGuideDto,
+    type UpdateGameGuideDto,
+    type GetGameGuidesParams,
+    type GameReviewDto,
+    type CreateGameReviewDto,
+    type UpdateGameReviewDto,
+    type GetGameReviewsParams,
+    type GamePatchNoteDto,
+    type CreateGamePatchNoteDto,
+    type UpdateGamePatchNoteDto,
+    type GetGamePatchNotesParams,
+    type GuestbookCommentDto,
+    type CreateGuestbookCommentDto,
+    type BookmarkDto,
+    type CreateBookmarkDto,
+    type GetBookmarksParams,
+    type CheckBookmarkParams,
+    type BookmarkTargetType,
+    type LibraryGameDto,
+    type CreateLibraryGameDto,
+    type UpdateLibraryGameDto,
+    type FriendshipDto,
+    type CreateFriendshipRequestDto,
 } from "./types";
 
 export * from "./client";
@@ -552,12 +580,16 @@ export const communityMembersApi = {
             body: data,
         }),
 
-    /** Mute a member - PATCH /communities/{communityId}/members/mute */
-    muteMember: (communityId: string, data?: CommunityMemberActionDto) =>
-        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/mute`, {
+    /** Toggle mute a member - PATCH /communities/{communityId}/members/toggle-mute */
+    toggleMute: (communityId: string, data?: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/toggle-mute`, {
             method: "PATCH",
             body: data,
         }),
+
+    /** Backward-compatible alias for toggleMute */
+    muteMember: (communityId: string, data?: CommunityMemberActionDto) =>
+        communityMembersApi.toggleMute(communityId, data),
 
     /** Ban a member - PATCH /communities/{communityId}/members/ban */
     banMember: (communityId: string, data?: CommunityMemberActionDto) =>
@@ -655,7 +687,7 @@ export const commentsApi = {
             method: "DELETE",
         }),
 
-    /** Get replies - GET /comments/replies (max limit 50) */
+    /** Get replies - GET /comments/replies (limit min 1, max 5 per OpenAPI) */
     getReplyComments: (params: { parentId: string | number; cursor?: string; limit?: number }) => {
         const parentIdStr = String(params.parentId ?? "").trim();
         return apiRequest<ReplyCommentsResponse>("/comments/replies", {
@@ -665,7 +697,7 @@ export const commentsApi = {
                     ...params,
                     parentId: parentIdStr,
                 },
-                50
+                5
             ),
         });
     },
@@ -778,6 +810,384 @@ export const votesApi = {
                 method: "DELETE",
             }
         ),
+};
+
+/**
+ * 9. Games Services (/games/*)
+ */
+export const gamesApi = {
+    /** Create game - POST /games */
+    create: (data: CreateGameDto) =>
+        apiRequest<GameDto>("/games", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get games list - GET /games */
+    getAll: (params?: GetGamesParams) =>
+        apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", {
+            method: "GET",
+            params: params ? sanitizePaginationParams(params, 50) : undefined,
+        }),
+
+    /** Get game by slug - GET /games/slug/{slug} */
+    getBySlug: (slug: string) =>
+        apiRequest<GameDto>(`/games/slug/${encodeURIComponent(slug)}`, {
+            method: "GET",
+        }),
+
+    /** Get game by appid - GET /games/{appid} */
+    getByAppid: (appid: number | string) =>
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}`, {
+            method: "GET",
+        }),
+
+    /** Update game - PATCH /games/{appid} */
+    update: (appid: number | string, data: UpdateGameDto) =>
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}`, {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Delete game - DELETE /games/{appid} */
+    delete: (appid: number | string) =>
+        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}`, {
+            method: "DELETE",
+        }),
+};
+
+/**
+ * 10. Game Guides Services (/games/{appid}/guides/*)
+ */
+export const gameGuidesApi = {
+    /** Get game guides - GET /games/{appid}/guides */
+    getAll: (appid: number | string, params?: GetGameGuidesParams) =>
+        apiRequest<GameGuideDto[] | { items: GameGuideDto[]; total?: number }>(
+            `/games/${encodeURIComponent(String(appid))}/guides`,
+            {
+                method: "GET",
+                params: params ? sanitizePaginationParams(params, 50) : undefined,
+            }
+        ),
+
+    /** Create game guide - POST /games/{appid}/guides */
+    create: (appid: number | string, data: CreateGameGuideDto) =>
+        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides`, {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get game guide by ID - GET /games/{appid}/guides/{id} */
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GameGuideDto>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Update game guide - PATCH /games/{appid}/guides/{id} */
+    update: (appid: number | string, id: string, data: UpdateGameGuideDto) =>
+        apiRequest<GameGuideDto>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`,
+            {
+                method: "PATCH",
+                body: data,
+            }
+        ),
+
+    /** Delete game guide - DELETE /games/{appid}/guides/{id} */
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`,
+            {
+                method: "DELETE",
+            }
+        ),
+
+    /** Like/unlike game guide - PATCH /games/{appid}/guides/{id}/like */
+    like: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`,
+            {
+                method: "PATCH",
+            }
+        ),
+};
+
+/**
+ * 11. Game Reviews Services (/games/{appid}/reviews/*)
+ */
+export const gameReviewsApi = {
+    /** Get game reviews - GET /games/{appid}/reviews */
+    getAll: (appid: number | string, params?: GetGameReviewsParams) =>
+        apiRequest<GameReviewDto[] | { items: GameReviewDto[]; total?: number }>(
+            `/games/${encodeURIComponent(String(appid))}/reviews`,
+            {
+                method: "GET",
+                params: params ? sanitizePaginationParams(params, 50) : undefined,
+            }
+        ),
+
+    /** Create game review - POST /games/{appid}/reviews */
+    create: (appid: number | string, data: CreateGameReviewDto) =>
+        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews`, {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get game review by ID - GET /games/{appid}/reviews/{id} */
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GameReviewDto>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Update game review - PATCH /games/{appid}/reviews/{id} */
+    update: (appid: number | string, id: string, data: UpdateGameReviewDto) =>
+        apiRequest<GameReviewDto>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`,
+            {
+                method: "PATCH",
+                body: data,
+            }
+        ),
+
+    /** Delete game review - DELETE /games/{appid}/reviews/{id} */
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`,
+            {
+                method: "DELETE",
+            }
+        ),
+
+    /** Like/unlike game review - PATCH /games/{appid}/reviews/{id}/like */
+    like: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`,
+            {
+                method: "PATCH",
+            }
+        ),
+};
+
+/**
+ * 12. Game Patch Notes Services (/games/{appid}/patch-notes/*)
+ */
+export const gamePatchNotesApi = {
+    /** Get game patch notes - GET /games/{appid}/patch-notes */
+    getAll: (appid: number | string, params?: GetGamePatchNotesParams) =>
+        apiRequest<GamePatchNoteDto[] | { items: GamePatchNoteDto[]; total?: number }>(
+            `/games/${encodeURIComponent(String(appid))}/patch-notes`,
+            {
+                method: "GET",
+                params: params ? sanitizePaginationParams(params, 50) : undefined,
+            }
+        ),
+
+    /** Create game patch note - POST /games/{appid}/patch-notes */
+    create: (appid: number | string, data: CreateGamePatchNoteDto) =>
+        apiRequest<GamePatchNoteDto>(`/games/${encodeURIComponent(String(appid))}/patch-notes`, {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get game patch note by ID - GET /games/{appid}/patch-notes/{id} */
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GamePatchNoteDto>(
+            `/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Update game patch note - PATCH /games/{appid}/patch-notes/{id} */
+    update: (appid: number | string, id: string, data: UpdateGamePatchNoteDto) =>
+        apiRequest<GamePatchNoteDto>(
+            `/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`,
+            {
+                method: "PATCH",
+                body: data,
+            }
+        ),
+
+    /** Delete game patch note - DELETE /games/{appid}/patch-notes/{id} */
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(
+            `/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`,
+            {
+                method: "DELETE",
+            }
+        ),
+};
+
+/**
+ * 12. Guestbook Comments Services (/profiles/{profileId}/guestbook-comments/*)
+ */
+export const guestbookCommentsApi = {
+    /** Get guestbook comments by profile ID - GET /profiles/{profileId}/guestbook-comments */
+    getByProfileId: (profileId: string) =>
+        apiRequest<GuestbookCommentDto[]>(
+            `/profiles/${encodeURIComponent(profileId)}/guestbook-comments`
+        ),
+
+    /** Create guestbook comment - POST /profiles/{profileId}/guestbook-comments */
+    create: (profileId: string, data: CreateGuestbookCommentDto) =>
+        apiRequest<GuestbookCommentDto>(
+            `/profiles/${encodeURIComponent(profileId)}/guestbook-comments`,
+            {
+                method: "POST",
+                body: data,
+            }
+        ),
+
+    /** Delete guestbook comment - DELETE /profiles/{profileId}/guestbook-comments/{id} */
+    delete: (profileId: string, id: string) =>
+        apiRequest<void>(
+            `/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}`,
+            {
+                method: "DELETE",
+            }
+        ),
+};
+
+/**
+ * 13. Bookmarks Services (/bookmarks/*)
+ */
+export const bookmarksApi = {
+    /** Create a bookmark - POST /bookmarks */
+    create: (data: CreateBookmarkDto) =>
+        apiRequest<BookmarkDto>("/bookmarks", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get user bookmarks - GET /bookmarks */
+    getAll: (params?: GetBookmarksParams) =>
+        apiRequest<BookmarkDto[]>("/bookmarks", {
+            params,
+        }),
+
+    /** Check if target is bookmarked - GET /bookmarks/check */
+    check: (params: CheckBookmarkParams) =>
+        apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/check", {
+            params,
+        }),
+
+    /** Toggle bookmark - POST /bookmarks/toggle */
+    toggle: (data?: { targetType?: string; targetId?: string }) =>
+        apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/toggle", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Delete bookmark by target - DELETE /bookmarks/{targetType}/{targetId} */
+    delete: (targetType: BookmarkTargetType, targetId: string) =>
+        apiRequest<void>(
+            `/bookmarks/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}`,
+            {
+                method: "DELETE",
+            }
+        ),
+};
+
+/**
+ * 14. Library Games Services (/library-games/*, /users/{userId}/library-games)
+ */
+export const libraryGamesApi = {
+    /** Get user library games - GET /users/{userId}/library-games */
+    getByUserId: (userId: string) =>
+        apiRequest<LibraryGameDto[]>(
+            `/users/${encodeURIComponent(userId)}/library-games`
+        ),
+
+    /** Add game to library - POST /library-games */
+    create: (data: CreateLibraryGameDto) =>
+        apiRequest<LibraryGameDto>("/library-games", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Sync library games - POST /library-games/sync */
+    sync: (data?: Record<string, unknown>) =>
+        apiRequest<unknown>("/library-games/sync", {
+            method: "POST",
+            body: data || {},
+        }),
+
+    /** Update library game entry - PATCH /library-games/{id} */
+    update: (id: string, data: UpdateLibraryGameDto) =>
+        apiRequest<LibraryGameDto>(`/library-games/${encodeURIComponent(id)}`, {
+            method: "PATCH",
+            body: data,
+        }),
+
+    /** Delete library game entry - DELETE /library-games/{id} */
+    delete: (id: string) =>
+        apiRequest<void>(`/library-games/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+        }),
+};
+
+/**
+ * 15. Friendships Services (/friendships/*)
+ */
+export const friendshipsApi = {
+    /** Send friend request - POST /friendships/requests */
+    sendRequest: (data: CreateFriendshipRequestDto) =>
+        apiRequest<FriendshipDto>("/friendships/requests", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Accept friend request - PATCH /friendships/{id}/accept */
+    acceptRequest: (id: string) =>
+        apiRequest<FriendshipDto>(`/friendships/${encodeURIComponent(id)}/accept`, {
+            method: "PATCH",
+        }),
+
+    /** Cancel friend request - DELETE /friendships/{id}/request */
+    cancelRequest: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/request`, {
+            method: "DELETE",
+        }),
+
+    /** Unfriend - DELETE /friendships/{id}/unfriend */
+    unfriend: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/unfriend`, {
+            method: "DELETE",
+        }),
+
+    /** Block user - POST /friendships/block/{targetUserId} */
+    block: (targetUserId: string) =>
+        apiRequest<FriendshipDto>(`/friendships/block/${encodeURIComponent(targetUserId)}`, {
+            method: "POST",
+        }),
+
+    /** Unblock user - DELETE /friendships/{id}/unblock */
+    unblock: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/unblock`, {
+            method: "DELETE",
+        }),
+
+    /** Get friends list - GET /friendships/friends */
+    getFriends: () =>
+        apiRequest<FriendshipDto[] | UserProfileDto[]>("/friendships/friends"),
+
+    /** Get incoming requests - GET /friendships/requests/incoming */
+    getIncomingRequests: () =>
+        apiRequest<FriendshipDto[]>("/friendships/requests/incoming"),
+
+    /** Get outgoing requests - GET /friendships/requests/outgoing */
+    getOutgoingRequests: () =>
+        apiRequest<FriendshipDto[]>("/friendships/requests/outgoing"),
+
+    /** Get blocked list - GET /friendships/blocked */
+    getBlocked: () =>
+        apiRequest<FriendshipDto[]>("/friendships/blocked"),
 };
 
 export const storageApi = {

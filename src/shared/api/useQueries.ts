@@ -9,6 +9,14 @@ import {
     authApi,
     usersApi,
     votesApi,
+    gamesApi,
+    gameGuidesApi,
+    gameReviewsApi,
+    gamePatchNotesApi,
+    guestbookCommentsApi,
+    bookmarksApi,
+    libraryGamesApi,
+    friendshipsApi,
 } from "./index";
 import type {
     CreateCommunityDto,
@@ -22,6 +30,26 @@ import type {
     CreateReportDto,
     UpdateProfileDto,
     ChangePasswordDto,
+    CreateGameDto,
+    UpdateGameDto,
+    GetGamesParams,
+    CreateGameGuideDto,
+    UpdateGameGuideDto,
+    GetGameGuidesParams,
+    CreateGameReviewDto,
+    UpdateGameReviewDto,
+    GetGameReviewsParams,
+    CreateGamePatchNoteDto,
+    UpdateGamePatchNoteDto,
+    GetGamePatchNotesParams,
+    CreateGuestbookCommentDto,
+    CreateBookmarkDto,
+    GetBookmarksParams,
+    CheckBookmarkParams,
+    BookmarkTargetType,
+    CreateLibraryGameDto,
+    UpdateLibraryGameDto,
+    CreateFriendshipRequestDto,
 } from "./types";
 
 
@@ -59,6 +87,39 @@ export const QUERY_KEYS = {
     votesList: ["votes", "list"] as const,
     postVote: (postId: string | number) => ["votes", "post", String(postId)] as const,
     commentVote: (commentId: string | number) => ["votes", "comment", String(commentId)] as const,
+
+    // Games
+    games: (params?: Record<string, unknown>) => ["games", params || {}] as const,
+    gameBySlug: (slug: string) => ["games", "slug", slug] as const,
+    gameByAppid: (appid: number | string) => ["games", "appid", String(appid)] as const,
+
+    // Game Guides
+    gameGuides: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "guides", params || {}] as const,
+    gameGuideById: (appid: number | string, id: string) => ["games", String(appid), "guides", "detail", id] as const,
+
+    // Game Reviews
+    gameReviews: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "reviews", params || {}] as const,
+    gameReviewById: (appid: number | string, id: string) => ["games", String(appid), "reviews", "detail", id] as const,
+
+    // Game Patch Notes
+    gamePatchNotes: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "patch-notes", params || {}] as const,
+    gamePatchNoteById: (appid: number | string, id: string) => ["games", String(appid), "patch-notes", "detail", id] as const,
+
+    // Guestbook
+    guestbookComments: (profileId: string) => ["guestbook", profileId] as const,
+
+    // Bookmarks
+    bookmarks: (params?: Record<string, unknown>) => ["bookmarks", params || {}] as const,
+    bookmarkCheck: (targetType: string, targetId: string) => ["bookmarks", "check", targetType, targetId] as const,
+
+    // Library Games
+    libraryGames: (userId: string) => ["library-games", userId] as const,
+
+    // Friendships
+    friends: ["friendships", "friends"] as const,
+    friendRequestsIncoming: ["friendships", "requests", "incoming"] as const,
+    friendRequestsOutgoing: ["friendships", "requests", "outgoing"] as const,
+    friendshipsBlocked: ["friendships", "blocked"] as const,
 };
 
 // -------------------------------------------------------------
@@ -519,6 +580,475 @@ export function useDeleteVoteCommentMutation() {
     });
 }
 
+// -------------------------------------------------------------
+// 8. Hooks for Games (/games/*)
+// -------------------------------------------------------------
+export function useGamesQuery(params?: GetGamesParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.games(params as Record<string, unknown>),
+        queryFn: () => gamesApi.getAll(params),
+    });
+}
+
+export function useGameDetailBySlugQuery(slug: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameBySlug(slug),
+        queryFn: () => gamesApi.getBySlug(slug),
+        enabled: Boolean(slug),
+    });
+}
+
+export function useGameDetailByAppidQuery(appid: number | string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameByAppid(appid),
+        queryFn: () => gamesApi.getByAppid(appid),
+        enabled: Boolean(appid),
+    });
+}
+
+export function useCreateGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (dto: CreateGameDto) => gamesApi.create(dto),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["games"] });
+        },
+    });
+}
+
+export function useUpdateGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, dto }: { appid: number | string; dto: UpdateGameDto }) =>
+            gamesApi.update(appid, dto),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: ["games"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameByAppid(appid) });
+        },
+    });
+}
+
+export function useDeleteGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (appid: number | string) => gamesApi.delete(appid),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["games"] });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 9. Hooks for Game Guides (/games/{appid}/guides/*)
+// -------------------------------------------------------------
+export function useGameGuidesQuery(appid: number | string, params?: GetGameGuidesParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameGuides(appid, params as Record<string, unknown>),
+        queryFn: () => gameGuidesApi.getAll(appid, params),
+        enabled: Boolean(appid),
+    });
+}
+
+export function useGameGuideDetailQuery(appid: number | string, id: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameGuideById(appid, id),
+        queryFn: () => gameGuidesApi.getById(appid, id),
+        enabled: Boolean(appid && id),
+    });
+}
+
+export function useCreateGameGuideMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, dto }: { appid: number | string; dto: CreateGameGuideDto }) =>
+            gameGuidesApi.create(appid, dto),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
+        },
+    });
+}
+
+export function useUpdateGameGuideMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id, dto }: { appid: number | string; id: string; dto: UpdateGameGuideDto }) =>
+            gameGuidesApi.update(appid, id, dto),
+        onSuccess: (_data, { appid, id }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuideById(appid, id) });
+        },
+    });
+}
+
+export function useDeleteGameGuideMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
+            gameGuidesApi.delete(appid, id),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
+        },
+    });
+}
+
+export function useLikeGameGuideMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
+            gameGuidesApi.like(appid, id),
+        onSuccess: (_data, { appid, id }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuideById(appid, id) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 10. Hooks for Game Reviews (/games/{appid}/reviews/*)
+// -------------------------------------------------------------
+export function useGameReviewsQuery(appid: number | string, params?: GetGameReviewsParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameReviews(appid, params as Record<string, unknown>),
+        queryFn: () => gameReviewsApi.getAll(appid, params),
+        enabled: Boolean(appid),
+    });
+}
+
+export function useGameReviewDetailQuery(appid: number | string, id: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameReviewById(appid, id),
+        queryFn: () => gameReviewsApi.getById(appid, id),
+        enabled: Boolean(appid && id),
+    });
+}
+
+export function useCreateGameReviewMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, dto }: { appid: number | string; dto: CreateGameReviewDto }) =>
+            gameReviewsApi.create(appid, dto),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
+        },
+    });
+}
+
+export function useUpdateGameReviewMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id, dto }: { appid: number | string; id: string; dto: UpdateGameReviewDto }) =>
+            gameReviewsApi.update(appid, id, dto),
+        onSuccess: (_data, { appid, id }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviewById(appid, id) });
+        },
+    });
+}
+
+export function useDeleteGameReviewMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
+            gameReviewsApi.delete(appid, id),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
+        },
+    });
+}
+
+export function useLikeGameReviewMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
+            gameReviewsApi.like(appid, id),
+        onSuccess: (_data, { appid, id }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviewById(appid, id) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 11. Hooks for Game Patch Notes (/games/{appid}/patch-notes/*)
+// -------------------------------------------------------------
+export function useGamePatchNotesQuery(appid: number | string, params?: GetGamePatchNotesParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gamePatchNotes(appid, params as Record<string, unknown>),
+        queryFn: () => gamePatchNotesApi.getAll(appid, params),
+        enabled: Boolean(appid),
+    });
+}
+
+export function useGamePatchNoteDetailQuery(appid: number | string, id: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gamePatchNoteById(appid, id),
+        queryFn: () => gamePatchNotesApi.getById(appid, id),
+        enabled: Boolean(appid && id),
+    });
+}
+
+export function useCreateGamePatchNoteMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, dto }: { appid: number | string; dto: CreateGamePatchNoteDto }) =>
+            gamePatchNotesApi.create(appid, dto),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gamePatchNotes(appid) });
+        },
+    });
+}
+
+export function useUpdateGamePatchNoteMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id, dto }: { appid: number | string; id: string; dto: UpdateGamePatchNoteDto }) =>
+            gamePatchNotesApi.update(appid, id, dto),
+        onSuccess: (_data, { appid, id }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gamePatchNotes(appid) });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gamePatchNoteById(appid, id) });
+        },
+    });
+}
+
+export function useDeleteGamePatchNoteMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
+            gamePatchNotesApi.delete(appid, id),
+        onSuccess: (_data, { appid }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gamePatchNotes(appid) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 10. Hooks for Guestbook Comments
+// -------------------------------------------------------------
+export function useGuestbookCommentsQuery(profileId: string, enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.guestbookComments(profileId),
+        queryFn: () => guestbookCommentsApi.getByProfileId(profileId),
+        enabled: !!profileId && enabled,
+    });
+}
+
+export function useCreateGuestbookCommentMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ profileId, data }: { profileId: string; data: CreateGuestbookCommentDto }) =>
+            guestbookCommentsApi.create(profileId, data),
+        onSuccess: (_data, { profileId }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.guestbookComments(profileId) });
+        },
+    });
+}
+
+export function useDeleteGuestbookCommentMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ profileId, id }: { profileId: string; id: string }) =>
+            guestbookCommentsApi.delete(profileId, id),
+        onSuccess: (_data, { profileId }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.guestbookComments(profileId) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 11. Hooks for Bookmarks
+// -------------------------------------------------------------
+export function useBookmarksQuery(params?: GetBookmarksParams, enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.bookmarks(params as Record<string, unknown>),
+        queryFn: () => bookmarksApi.getAll(params),
+        enabled,
+    });
+}
+
+export function useCheckBookmarkQuery(params: CheckBookmarkParams, enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.bookmarkCheck(params.targetType, params.targetId),
+        queryFn: () => bookmarksApi.check(params),
+        enabled: enabled && !!params.targetType && !!params.targetId,
+    });
+}
+
+export function useCreateBookmarkMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreateBookmarkDto) => bookmarksApi.create(data),
+        onSuccess: (_data, vars) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarks() });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarkCheck(vars.targetType, vars.targetId) });
+        },
+    });
+}
+
+export function useDeleteBookmarkMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ targetType, targetId }: { targetType: BookmarkTargetType; targetId: string }) =>
+            bookmarksApi.delete(targetType, targetId),
+        onSuccess: (_data, { targetType, targetId }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarks() });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarkCheck(targetType, targetId) });
+        },
+    });
+}
+
+export function useToggleBookmarkMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data?: { targetType?: string; targetId?: string }) => bookmarksApi.toggle(data),
+        onSuccess: (_data, vars) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarks() });
+            if (vars?.targetType && vars?.targetId) {
+                void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bookmarkCheck(vars.targetType, vars.targetId) });
+            }
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 12. Hooks for Library Games
+// -------------------------------------------------------------
+export function useLibraryGamesQuery(userId: string, enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.libraryGames(userId),
+        queryFn: () => libraryGamesApi.getByUserId(userId),
+        enabled: !!userId && enabled,
+    });
+}
+
+export function useCreateLibraryGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreateLibraryGameDto) => libraryGamesApi.create(data),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["library-games"] });
+        },
+    });
+}
+
+export function useUpdateLibraryGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: UpdateLibraryGameDto }) =>
+            libraryGamesApi.update(id, data),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["library-games"] });
+        },
+    });
+}
+
+export function useDeleteLibraryGameMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => libraryGamesApi.delete(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["library-games"] });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 13. Hooks for Friendships
+// -------------------------------------------------------------
+export function useFriendsQuery(enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.friends,
+        queryFn: () => friendshipsApi.getFriends(),
+        enabled,
+    });
+}
+
+export function useIncomingFriendRequestsQuery(enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.friendRequestsIncoming,
+        queryFn: () => friendshipsApi.getIncomingRequests(),
+        enabled,
+    });
+}
+
+export function useOutgoingFriendRequestsQuery(enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.friendRequestsOutgoing,
+        queryFn: () => friendshipsApi.getOutgoingRequests(),
+        enabled,
+    });
+}
+
+export function useBlockedUsersQuery(enabled = true) {
+    return useQuery({
+        queryKey: QUERY_KEYS.friendshipsBlocked,
+        queryFn: () => friendshipsApi.getBlocked(),
+        enabled,
+    });
+}
+
+export function useSendFriendRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreateFriendshipRequestDto) => friendshipsApi.sendRequest(data),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendRequestsOutgoing });
+        },
+    });
+}
+
+export function useAcceptFriendRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => friendshipsApi.acceptRequest(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friends });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendRequestsIncoming });
+        },
+    });
+}
+
+export function useCancelFriendRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => friendshipsApi.cancelRequest(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendRequestsOutgoing });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendRequestsIncoming });
+        },
+    });
+}
+
+export function useUnfriendMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => friendshipsApi.unfriend(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friends });
+        },
+    });
+}
+
+export function useBlockUserMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (targetUserId: string) => friendshipsApi.block(targetUserId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friends });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendshipsBlocked });
+        },
+    });
+}
+
+export function useUnblockUserMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => friendshipsApi.unblock(id),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendshipsBlocked });
+        },
+    });
+}
+
 // Export API modules & query client
 export {
     postsApi,
@@ -530,5 +1060,13 @@ export {
     authApi,
     usersApi,
     votesApi,
+    gamesApi,
+    gameGuidesApi,
+    gameReviewsApi,
+    gamePatchNotesApi,
+    guestbookCommentsApi,
+    bookmarksApi,
+    libraryGamesApi,
+    friendshipsApi,
 };
 

@@ -4,4 +4,5 @@ export interface BookmarksState {
     toggleBookmark: (id: string | number) => void;
     addBookmark: (id: string | number) => void;
     removeBookmark: (id: string | number) => void;
+    setBookmarkedIds: (ids: (string | number)[]) => void;
 }

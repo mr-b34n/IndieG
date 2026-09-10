@@ -42,7 +42,12 @@ export interface LibraryGame {
 }
 
 export interface FriendEntry {
+    id?: string;
+    userId?: string;
+    friendshipId?: string;
     name: string;
+    handle?: string;
+    avatar?: string;
     game: string | null;
     logo: string | null;
     status: ProfileStatus | "offline";
@@ -51,7 +56,10 @@ export interface FriendEntry {
 
 export interface FriendRequest {
     id: string;
+    userId?: string;
     name: string;
+    handle?: string;
+    avatar?: string;
     game: string | null;
     logo: string | null;
     time: string;
@@ -65,6 +73,8 @@ export interface GuestbookComment {
     content: string;
     likes: number;
     isLiked: boolean;
+    authorId?: string;
+    canDelete?: boolean;
 }
 
 export interface ProfileIdentity {

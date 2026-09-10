@@ -80,6 +80,27 @@ Use containers when they provide meaningful grouping or interaction.
 
 ---
 
+## Decision: Profile Generic Feedback Notifications & Hidden Featured Showcase
+
+Status: Active
+
+Date: 2026-09-10
+
+Decision:
+
+Profile upload and update feedback toasts use generic, localized notification text ("Upload successful" / "Upload failed" and "Update successful" / "Update failed") in both English and Vietnamese. The Featured Game / Game Mastery section on the Profile Overview tab is temporarily hidden.
+
+Why:
+
+Keeps feedback notifications clean, concise, and standard across all languages, while hiding the unselected featured game showcase on the profile page per product request.
+
+Implications:
+
+- Notification strings for profile avatar/cover upload and profile edits must consume `t("profile.uploadSuccess")`, `t("profile.uploadFailed")`, `t("profile.updateSuccess")`, and `t("profile.updateFailed")`.
+- `showGameMastery` in `OverviewTab.tsx` is set to `false`.
+
+---
+
 ## Decision: Editorial Social Forum Design Language
 
 Status: Active

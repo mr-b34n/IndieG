@@ -57,6 +57,7 @@ export interface GamePatchNote {
 
 export interface GameData {
     slug: string; // The primary slug e.g. "counter-strike-2"
+    appid?: number; // Steam / Backend AppID
     id?: string; // Optional backwards compatibility (usually same as slug or community id)
     aliases?: string[]; // E.g. ["cs2", "counter_strike_2"]
     name: string; // E.g. "Counter Strike 2"

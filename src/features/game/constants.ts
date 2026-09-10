@@ -20,8 +20,22 @@ export const STEAM_URL_MAP: Record<string, string> = {
     "gtav": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/"
 };
 
+export const GAME_APPID_MAP: Record<string, number> = {
+    "counter-strike-2": 730,
+    "cs2": 730,
+    "raft": 648800,
+    "red-dead-redemption-2": 1174180,
+    "rdr2": 1174180,
+    "cyberpunk-2077": 1091500,
+    "elden-ring": 1245620,
+    "black-myth-wukong": 2358720,
+    "grand-theft-auto-v": 271590,
+    "gtav": 271590,
+};
+
 export const getGameBySlug = (slug: string): GameData => {
     const cleanSlug = (slug || "game").trim().toLowerCase();
+    const resolvedAppid = GAME_APPID_MAP[cleanSlug] || (!Number.isNaN(Number(cleanSlug)) ? Number(cleanSlug) : undefined);
     const found = INITIAL_GAMES.find(g => 
         g.slug === cleanSlug || 
         g.id === cleanSlug || 
@@ -31,6 +45,7 @@ export const getGameBySlug = (slug: string): GameData => {
     if (found) {
         return {
             ...found,
+            appid: found.appid || resolvedAppid,
             steamUrl: found.steamUrl || STEAM_URL_MAP[found.slug.toLowerCase()] || STEAM_URL_MAP[found.communityId?.toLowerCase() || ""] || `https://store.steampowered.com/search/?term=${encodeURIComponent(found.name)}`
         };
     }
@@ -44,6 +59,7 @@ export const getGameBySlug = (slug: string): GameData => {
     return {
         slug: cleanSlug,
         id: cleanSlug,
+        appid: resolvedAppid,
         name: titleName,
         tag: titleName,
         steamUrl: STEAM_URL_MAP[cleanSlug] || `https://store.steampowered.com/search/?term=${encodeURIComponent(titleName)}`,

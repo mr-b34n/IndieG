@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { votesApi } from '@/shared/api';
+import { votesApi, bookmarksApi } from '@/shared/api';
 
 export const useLikeInteraction = (postId: string | number) => {
   const queryClient = useQueryClient();
@@ -32,12 +32,22 @@ export const useBookmarkInteraction = (postId: string | number) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (bookmarked: boolean) => {
-      // Mock API call
-      console.log(`Post ${postId} bookmarked: ${bookmarked}`);
+      const targetId = String(postId);
+      try {
+        if (bookmarked) {
+          await bookmarksApi.create({ targetType: 'post', targetId });
+        } else {
+          await bookmarksApi.delete('post', targetId);
+        }
+      } catch (err) {
+        console.warn(`Bookmark API call failed for post ${postId}`, err);
+        throw err;
+      }
       return bookmarked;
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      void queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      void queryClient.invalidateQueries({ queryKey: ['bookmarks', 'check', 'post', String(postId)] });
     },
   });
 };

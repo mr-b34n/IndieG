@@ -1,5 +1,5 @@
 import { processImagePipeline, type UploadType, type ProcessedImageResult } from '../utils/image-processor';
-import { getApiBaseUrl, buildSafeApiUrl } from '../api/client';
+import { getApiBaseUrl, buildSafeApiUrl, apiRequest } from '../api/client';
 
 export interface UploadOptions {
     file: File;
@@ -53,6 +53,21 @@ function buildBackendUrl(endpointPath: string): string {
 /**
  * BƯỚC 1: Xin Presigned URL từ NestJS Backend (POST /storage/presigned-url)
  */
+interface PresignedUrlBackendResponse {
+    presignedUrl?: string;
+    url?: string;
+    uploadUrl?: string;
+    fileKey?: string;
+    key?: string;
+    data?: {
+        presignedUrl?: string;
+        url?: string;
+        fileKey?: string;
+        key?: string;
+    };
+    [key: string]: unknown;
+}
+
 export async function requestPresignedUrl(
     payload: PresignedUrlPayload,
     token?: string | null
@@ -66,13 +81,6 @@ export async function requestPresignedUrl(
     console.log('Token:', activeToken ? `${activeToken.substring(0, 15)}...` : '(Không có)');
     console.groupEnd();
 
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-    if (activeToken) {
-        headers['Authorization'] = `Bearer ${activeToken}`;
-    }
-
     const requestBody: Record<string, unknown> = {
         type: payload.type,
         originalSize: payload.originalSize,
@@ -82,35 +90,22 @@ export async function requestPresignedUrl(
         requestBody.postId = payload.postId;
     }
 
-    let presignedRes: Response;
+    let presignedData: PresignedUrlBackendResponse;
     try {
-        presignedRes = await fetch(endpoint, {
+        presignedData = await apiRequest<PresignedUrlBackendResponse>('/storage/presigned-url', {
             method: 'POST',
-            headers,
-            body: JSON.stringify(requestBody),
+            token: activeToken || undefined,
+            body: requestBody,
         });
     } catch (fetchError: unknown) {
-        console.error('[Storage Pipeline] ❌ Lỗi kết nối mạng tới', endpoint, fetchError);
+        console.error('[Storage Pipeline] ❌ Lỗi kết nối tới /storage/presigned-url:', fetchError);
         const errDetails = fetchError instanceof Error ? fetchError.message : String(fetchError);
         throw new Error(
-            `Không thể kết nối đến Backend (${endpoint}). Nguyên nhân có thể do Backend chưa bật, bị chặn CORS, hoặc trình duyệt chặn kết nối (Mixed Content: HTTPS sang HTTP localhost). Chi tiết: ${errDetails}`,
+            `Không thể kết nối đến Backend để xin URL tải lên: ${errDetails}`,
             { cause: fetchError }
         );
     }
 
-    if (!presignedRes.ok) {
-        let errorMessage = `Lỗi máy chủ (${presignedRes.status})`;
-        try {
-            const errorData = await presignedRes.json();
-            errorMessage = errorData.message || (Array.isArray(errorData.message) ? errorData.message.join(', ') : errorData.error) || errorMessage;
-        } catch {
-            errorMessage = `Lỗi xin cấp URL upload (Mã HTTP: ${presignedRes.status} ${presignedRes.statusText})`;
-        }
-        console.error('[Storage Pipeline] ❌ Backend từ chối cấp Presigned URL:', errorMessage);
-        throw new Error(errorMessage);
-    }
-
-    const presignedData = await presignedRes.json();
     console.log('[Storage Pipeline] ✅ Nhận Presigned URL từ Backend:', presignedData);
 
     const presignedUrl =
@@ -238,66 +233,45 @@ export async function confirmUploadWithBackend(
     // Đảm bảo public URL hợp lệ chuẩn bị gửi lên Backend (cho các endpoint yêu cầu @IsUrl)
     const publicUrl = getPublicStorageUrl(fileKeyOrUrl, presignedUrl);
 
-    let confirmEndpoint: string;
-    let method: string;
+    let confirmPath: string;
+    let method: "PATCH" | "POST";
     let bodyData: Record<string, unknown>;
 
     if (type === 'avatar') {
-        confirmEndpoint = buildBackendUrl('profiles/me');
+        confirmPath = '/profiles/me';
         method = 'PATCH';
         bodyData = { avatarUrl: publicUrl };
     } else if (type === 'cover') {
-        confirmEndpoint = buildBackendUrl('profiles/me');
+        confirmPath = '/profiles/me';
         method = 'PATCH';
         bodyData = { coverUrl: publicUrl };
     } else {
-        confirmEndpoint = buildBackendUrl(`posts/${postId}/images`);
+        confirmPath = `/posts/${postId}/images`;
         method = 'POST';
         bodyData = { fileKey: fileKeyOrUrl, imageUrl: publicUrl };
     }
 
-    console.group(`[Storage Pipeline] 📝 Bước 4: Cập nhật Database: ${method} ${confirmEndpoint}`);
+    console.group(`[Storage Pipeline] 📝 Bước 4: Cập nhật Database: ${method} ${confirmPath}`);
     console.log('Public URL:', publicUrl);
     console.log('Payload:', bodyData);
     console.groupEnd();
 
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-    if (activeToken) {
-        headers['Authorization'] = `Bearer ${activeToken}`;
-    }
-
-    let confirmRes: Response;
     try {
-        confirmRes = await fetch(confirmEndpoint, {
+        const confirmData = await apiRequest<Record<string, unknown>>(confirmPath, {
             method,
-            headers,
-            body: JSON.stringify(bodyData),
+            token: activeToken || undefined,
+            body: bodyData,
         });
+        console.log('[Storage Pipeline] 🎉 Backend xác nhận thành công:', confirmData);
+        return confirmData;
     } catch (confError: unknown) {
-        console.error('[Storage Pipeline] ❌ Lỗi mạng khi xác nhận cập nhật với Backend:', confError);
+        console.error('[Storage Pipeline] ❌ Lỗi xác nhận cập nhật với Backend:', confError);
+        const errDetails = confError instanceof Error ? confError.message : String(confError);
         throw new Error(
-            `Không thể kết nối đến ${confirmEndpoint} để hoàn tất: ${confError instanceof Error ? confError.message : String(confError)}`,
+            `Không thể xác nhận cập nhật ảnh: ${errDetails}`,
             { cause: confError }
         );
     }
-
-    if (!confirmRes.ok) {
-        let errorMessage = 'Cập nhật dữ liệu sau upload thất bại.';
-        try {
-            const errorData = await confirmRes.json();
-            errorMessage = errorData.message || (Array.isArray(errorData.message) ? errorData.message.join(', ') : errorData.error) || errorMessage;
-        } catch {
-            errorMessage = `Cập nhật dữ liệu sau upload thất bại (${confirmRes.status}).`;
-        }
-        console.error('[Storage Pipeline] ❌ Backend từ chối xác nhận:', errorMessage);
-        throw new Error(errorMessage);
-    }
-
-    const confirmData = await confirmRes.json();
-    console.log('[Storage Pipeline] 🎉 Backend xác nhận thành công:', confirmData);
-    return confirmData;
 }
 
 /**

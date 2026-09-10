@@ -213,7 +213,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         }
     };
 
-    const handleToggleBookmark = (e: React.MouseEvent) => {
+    const handleToggleBookmark = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!isLoggedIn) {
             navigate({ to: "/auth" });
@@ -223,7 +223,11 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
         const nextBookmarked = !bookmarked;
         toggleBookmark(post.id);
-        bookmarkMutation.mutate(nextBookmarked);
+        try {
+            await bookmarkMutation.mutateAsync(nextBookmarked);
+        } catch {
+            toggleBookmark(post.id);
+        }
     };
 
     const postUrl = `${window.location.origin}/post/${post.id}`;

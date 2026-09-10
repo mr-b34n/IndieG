@@ -11,7 +11,7 @@ import { ProfileHero } from "./ProfileHero";
 import { ProfileTabBar } from "./ProfileTabBar";
 
 import {
-    DEFAULT_COVER, LIBRARY_GAMES,
+    DEFAULT_COVER,
     COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES,
 } from "../constants";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
@@ -24,9 +24,30 @@ import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
+import {
+    useMyProfileQuery,
+    useUserProfileQuery,
+    useUpdateProfileMutation,
+    useGuestbookCommentsQuery,
+    useCreateGuestbookCommentMutation,
+    useDeleteGuestbookCommentMutation,
+    useLibraryGamesQuery,
+    useCreateLibraryGameMutation,
+    useDeleteLibraryGameMutation,
+    useFriendsQuery,
+    useIncomingFriendRequestsQuery,
+    useOutgoingFriendRequestsQuery,
+    useBlockedUsersQuery,
+    useSendFriendRequestMutation,
+    useAcceptFriendRequestMutation,
+    useCancelFriendRequestMutation,
+    useUnfriendMutation,
+    useBlockUserMutation,
+    useUnblockUserMutation,
+} from "@/shared/api/useQueries";
 import type { UpdateProfileDto } from "@/shared/api/types";
 import { uploadImageToR2 } from "@/shared/services/upload-service";
+import { extractFriendEntry, extractFriendRequest } from "../utils";
 
 function dataUrlToFile(dataUrl: string, filename: string): File {
     const arr = dataUrl.split(",");
@@ -84,7 +105,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [uploadFeedback, setUploadFeedback] = useState<{ type: 'loading' | 'success' | 'error'; message: string } | null>(null);
 
     const handleUploadAvatar = async (file: File) => {
-        setUploadFeedback({ type: 'loading', message: 'Đang xử lý WebP và tải lên Cloudflare R2...' });
+        setUploadFeedback({ type: 'loading', message: t("profile.uploading") });
         try {
             const result = await uploadImageToR2({ file, type: 'avatar' });
             const newUrl = result.avatarUrl || (result.url as string) || (result.imageUrl as string);
@@ -96,17 +117,16 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             queryClient.invalidateQueries({ queryKey: ["user-profile"] });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: ["profiles"] });
-            setUploadFeedback({ type: 'success', message: 'Tải ảnh đại diện lên Cloudflare R2 thành công!' });
+            setUploadFeedback({ type: 'success', message: t("profile.uploadSuccess") });
             setTimeout(() => setUploadFeedback(null), 3500);
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Tải ảnh đại diện thất bại';
-            setUploadFeedback({ type: 'error', message: msg });
+        } catch {
+            setUploadFeedback({ type: 'error', message: t("profile.uploadFailed") });
             setTimeout(() => setUploadFeedback(null), 6000);
         }
     };
 
     const handleUploadCover = async (file: File) => {
-        setUploadFeedback({ type: 'loading', message: 'Đang xử lý WebP và tải lên Cloudflare R2...' });
+        setUploadFeedback({ type: 'loading', message: t("profile.uploading") });
         try {
             const result = await uploadImageToR2({ file, type: 'cover' });
             const newUrl = result.coverUrl || (result.url as string) || (result.imageUrl as string);
@@ -117,11 +137,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             queryClient.invalidateQueries({ queryKey: ["user-profile"] });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: ["profiles"] });
-            setUploadFeedback({ type: 'success', message: 'Tải ảnh bìa lên Cloudflare R2 thành công!' });
+            setUploadFeedback({ type: 'success', message: t("profile.uploadSuccess") });
             setTimeout(() => setUploadFeedback(null), 3500);
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Tải ảnh bìa thất bại';
-            setUploadFeedback({ type: 'error', message: msg });
+        } catch {
+            setUploadFeedback({ type: 'error', message: t("profile.uploadFailed") });
             setTimeout(() => setUploadFeedback(null), 6000);
         }
     };
@@ -170,7 +189,6 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor, remoteProfile });
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
-    const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [warnCustomizeToast, setWarnCustomizeToast] = useState(false);
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
@@ -353,80 +371,326 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return false;
     });
 
-    // Friends list state
-    const [friendsList, setFriendsList] = useState<FriendEntry[]>([]);
-    const [friendRequestsList, setFriendRequestsList] = useState<FriendRequest[]>([]);
+    // Real Friendships API Queries
+    const { data: rawFriends = [], isLoading: isFriendsLoading } = useFriendsQuery(!!user);
+    const { data: rawIncomingRequests = [], isLoading: isIncomingLoading } = useIncomingFriendRequestsQuery(!!user);
+    const { data: rawOutgoingRequests = [], isLoading: isOutgoingLoading } = useOutgoingFriendRequestsQuery(!!user);
+    const { data: rawBlockedUsers = [], isLoading: isBlockedLoading } = useBlockedUsersQuery(!!user);
 
-    const [isFriend, setIsFriend] = useState(false);
-    const [isBlocked, setIsBlocked] = useState(false);
+    // Friendships Mutations
+    const sendFriendRequestMutation = useSendFriendRequestMutation();
+    const acceptFriendRequestMutation = useAcceptFriendRequestMutation();
+    const cancelFriendRequestMutation = useCancelFriendRequestMutation();
+    const unfriendMutation = useUnfriendMutation();
+    const blockUserMutation = useBlockUserMutation();
+    const unblockUserMutation = useUnblockUserMutation();
 
-    const toggleFriend = (name: string) => {
-        setFriendsList((prev) =>
-            prev.map((f) => (f.name === name ? { ...f, isFriend: !f.isFriend } : f))
-        );
-        setIsFriend((prev) => !prev);
-        triggerToast();
+    const currentUserId = user?.id;
+
+    const friendsList = useMemo<FriendEntry[]>(() => {
+        if (!Array.isArray(rawFriends)) return [];
+        return rawFriends
+            .map((item) => extractFriendEntry(item, currentUserId))
+            .filter((f): f is FriendEntry => f !== null);
+    }, [rawFriends, currentUserId]);
+
+    const friendRequestsList = useMemo<FriendRequest[]>(() => {
+        if (!Array.isArray(rawIncomingRequests)) return [];
+        return rawIncomingRequests
+            .map((item) => extractFriendRequest(item))
+            .filter((r): r is FriendRequest => r !== null);
+    }, [rawIncomingRequests]);
+
+    const outgoingRequestsList = useMemo<FriendRequest[]>(() => {
+        if (!Array.isArray(rawOutgoingRequests)) return [];
+        return rawOutgoingRequests
+            .map((item) => extractFriendRequest(item))
+            .filter((r): r is FriendRequest => r !== null);
+    }, [rawOutgoingRequests]);
+
+    const blockedUsersList = useMemo<FriendEntry[]>(() => {
+        if (!Array.isArray(rawBlockedUsers)) return [];
+        return rawBlockedUsers
+            .map((item) => extractFriendEntry(item, currentUserId))
+            .filter((b): b is FriendEntry => b !== null);
+    }, [rawBlockedUsers, currentUserId]);
+
+    const targetUserId = otherUserProfileData?.userId || otherUserProfileData?.id || remoteProfile?.userId || remoteProfile?.id || "";
+    const targetUserHandle = identity.handle?.replace(/^@/, "").toLowerCase() || "";
+    const targetUserName = identity.name.toLowerCase();
+
+    // Check relationship with target profile
+    const currentFriendEntry = useMemo(() => {
+        if (isOwnProfile) return null;
+        return friendsList.find((f) => {
+            if (targetUserId && (f.userId === targetUserId || f.id === targetUserId)) return true;
+            if (f.handle && targetUserHandle && f.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (f.name && f.name.toLowerCase() === targetUserName) return true;
+            return false;
+        }) || null;
+    }, [isOwnProfile, friendsList, targetUserId, targetUserHandle, targetUserName]);
+
+    const outgoingRequestEntry = useMemo(() => {
+        if (isOwnProfile) return null;
+        return outgoingRequestsList.find((r) => {
+            if (targetUserId && (r.userId === targetUserId || r.id === targetUserId)) return true;
+            if (r.handle && targetUserHandle && r.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (r.name && r.name.toLowerCase() === targetUserName) return true;
+            return false;
+        }) || null;
+    }, [isOwnProfile, outgoingRequestsList, targetUserId, targetUserHandle, targetUserName]);
+
+    const incomingRequestEntry = useMemo(() => {
+        if (isOwnProfile) return null;
+        return friendRequestsList.find((r) => {
+            if (targetUserId && (r.userId === targetUserId || r.id === targetUserId)) return true;
+            if (r.handle && targetUserHandle && r.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (r.name && r.name.toLowerCase() === targetUserName) return true;
+            return false;
+        }) || null;
+    }, [isOwnProfile, friendRequestsList, targetUserId, targetUserHandle, targetUserName]);
+
+    const blockedEntry = useMemo(() => {
+        if (isOwnProfile) return null;
+        return blockedUsersList.find((b) => {
+            if (targetUserId && (b.userId === targetUserId || b.id === targetUserId)) return true;
+            if (b.handle && targetUserHandle && b.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (b.name && b.name.toLowerCase() === targetUserName) return true;
+            return false;
+        }) || null;
+    }, [isOwnProfile, blockedUsersList, targetUserId, targetUserHandle, targetUserName]);
+
+    const isFriend = !!currentFriendEntry;
+    const isPendingOutgoing = !!outgoingRequestEntry;
+    const isPendingIncoming = !!incomingRequestEntry;
+    const isBlocked = !!blockedEntry;
+
+    const isFriendActionLoading =
+        sendFriendRequestMutation.isPending ||
+        acceptFriendRequestMutation.isPending ||
+        cancelFriendRequestMutation.isPending ||
+        unfriendMutation.isPending ||
+        blockUserMutation.isPending ||
+        unblockUserMutation.isPending;
+
+    const handleAddFriend = async (friendTarget?: FriendEntry | string) => {
+        const targetId = typeof friendTarget === "object" ? (friendTarget.userId || friendTarget.id) : (targetUserId || (typeof friendTarget === "string" ? friendTarget : ""));
+        if (!targetId) return;
+        try {
+            await sendFriendRequestMutation.mutateAsync({ addresseeId: targetId });
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to send friend request:", e);
+        }
     };
 
-    const blockFriend = (name: string) => {
-        setFriendsList((prev) => prev.filter((f) => f.name !== name));
-        setIsBlocked(true);
-        triggerToast();
+    const handleUnfriend = async (friendTarget?: FriendEntry | string) => {
+        let friendshipId = typeof friendTarget === "object" ? (friendTarget.friendshipId || friendTarget.id) : undefined;
+        if (!friendshipId && currentFriendEntry) {
+            friendshipId = currentFriendEntry.friendshipId || currentFriendEntry.id;
+        }
+        if (!friendshipId && typeof friendTarget === "string") {
+            friendshipId = friendTarget;
+        }
+        if (!friendshipId) return;
+        try {
+            await unfriendMutation.mutateAsync(friendshipId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to unfriend:", e);
+        }
     };
 
-    const handleAcceptRequest = (req: FriendRequest) => {
-        setFriendRequestsList((prev) => prev.filter((r) => r.id !== req.id));
-        setFriendsList((prev) => [
-            ...prev,
-            { id: req.id, name: req.name, handle: req.handle, avatar: req.avatar, status: "online", isFriend: true },
-        ]);
-        triggerToast();
+    const handleAcceptRequest = async (req?: FriendRequest) => {
+        const reqId = req?.id || incomingRequestEntry?.id;
+        if (!reqId) return;
+        try {
+            await acceptFriendRequestMutation.mutateAsync(reqId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to accept friend request:", e);
+        }
     };
 
-    const handleDeclineRequest = (id: string) => {
-        setFriendRequestsList((prev) => prev.filter((r) => r.id !== id));
+    const handleDeclineRequest = async (id?: string) => {
+        const reqId = id || incomingRequestEntry?.id;
+        if (!reqId) return;
+        try {
+            await cancelFriendRequestMutation.mutateAsync(reqId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to decline friend request:", e);
+        }
     };
 
-    // Guestbook comments state
-    const [guestbookComments, setGuestbookComments] = useState<GuestbookComment[]>([]);
+    const handleCancelOutgoingRequest = async (id?: string) => {
+        const reqId = id || outgoingRequestEntry?.id;
+        if (!reqId) return;
+        try {
+            await cancelFriendRequestMutation.mutateAsync(reqId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to cancel friend request:", e);
+        }
+    };
+
+    const handleBlockFriend = async (userTarget?: FriendEntry | string) => {
+        const blockId = typeof userTarget === "object" ? (userTarget.userId || userTarget.id) : (targetUserId || (typeof userTarget === "string" ? userTarget : ""));
+        if (!blockId) return;
+        try {
+            await blockUserMutation.mutateAsync(blockId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to block user:", e);
+        }
+    };
+
+    const handleUnblockUser = async (userTarget?: FriendEntry | string) => {
+        const unblockId = typeof userTarget === "object" ? (userTarget.friendshipId || userTarget.id) : (blockedEntry?.friendshipId || blockedEntry?.id || (typeof userTarget === "string" ? userTarget : ""));
+        if (!unblockId) return;
+        try {
+            await unblockUserMutation.mutateAsync(unblockId);
+            triggerToast();
+        } catch (e) {
+            console.error("Failed to unblock user:", e);
+        }
+    };
+
+    // Guestbook backend queries & mutations
+    const targetProfileId = remoteProfile?.id || (isOwnProfile ? (myProfileData?.id || user?.id) : otherUserProfileData?.id) || "";
+    const { data: rawGuestbookComments = [], isLoading: isGuestbookLoading } = useGuestbookCommentsQuery(targetProfileId, !!targetProfileId);
+    const createGuestbookMutation = useCreateGuestbookCommentMutation();
+    const deleteGuestbookMutation = useDeleteGuestbookCommentMutation();
+
+    const [likedCommentsMap, setLikedCommentsMap] = useState<Record<string, boolean>>({});
     const [newCommentText, setNewCommentText] = useState("");
 
-    const handleAddGuestbook = () => {
-        if (!newCommentText.trim()) return;
+    const displayedGuestbookComments = useMemo<GuestbookComment[]>(() => {
+        if (!Array.isArray(rawGuestbookComments)) return [];
+        return rawGuestbookComments.map((c) => {
+            const authorName = c.author?.name || c.author?.username || c.authorName || c.authorUsername || "Gamer";
+            const authorAvatar = c.author?.avatarUrl || c.author?.avatar_url || c.author?.avatar || c.authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.authorId || c.id)}`;
+            const isLiked = !!likedCommentsMap[c.id];
+            const canDelete = isOwnProfile || (!!user?.id && (c.authorId === user.id || c.author?.id === user.id));
+
+            return {
+                id: c.id,
+                author: authorName,
+                avatar: authorAvatar,
+                date: c.createdAt ? new Date(c.createdAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Vừa xong",
+                content: c.content,
+                likes: (c.likes || 0) + (isLiked ? 1 : 0),
+                isLiked,
+                authorId: c.authorId || c.author?.id,
+                canDelete,
+            };
+        });
+    }, [rawGuestbookComments, likedCommentsMap, isOwnProfile, user]);
+
+    const handleAddGuestbook = async (e: React.FormEvent) => {
+        e.preventDefault();
         const commentContent = newCommentText.trim();
-        setGuestbookComments((prev) => [
-            {
-                id: `gb-${prev.length + 1}-${Math.random().toString(36).substring(2, 7)}`,
-                author: currentAuthor || "Gamer",
-                handle: `@${currentAuthor || user?.username || "gamer"}`,
-                avatar: avatarUrl,
-                content: commentContent,
-                timeAgo: "Vừa xong",
-                likes: 0,
-                isLiked: false,
-            },
-            ...prev,
-        ]);
-        setNewCommentText("");
-        triggerToast();
+        if (!commentContent) return;
+        if (!targetProfileId) {
+            triggerToast(false, "Không tìm thấy thông tin hồ sơ để gửi lời nhắn.");
+            return;
+        }
+        if (!isLoggedIn) {
+            triggerToast(false, "Vui lòng đăng nhập để gửi lời nhắn.");
+            return;
+        }
+
+        try {
+            await createGuestbookMutation.mutateAsync({
+                profileId: targetProfileId,
+                data: { content: commentContent },
+            });
+            setNewCommentText("");
+            triggerToast(true, "Đã gửi lời nhắn lên sổ lưu bút thành công!");
+        } catch (err: unknown) {
+            const errorMsg = (err as { message?: string })?.message || "Không thể gửi lời nhắn, vui lòng thử lại.";
+            triggerToast(false, errorMsg);
+        }
+    };
+
+    const handleDeleteGuestbook = async (commentId: string) => {
+        if (!targetProfileId) return;
+        try {
+            await deleteGuestbookMutation.mutateAsync({
+                profileId: targetProfileId,
+                id: commentId,
+            });
+            triggerToast(true, "Đã xóa lời nhắn.");
+        } catch (err: unknown) {
+            const errorMsg = (err as { message?: string })?.message || "Không thể xóa lời nhắn.";
+            triggerToast(false, errorMsg);
+        }
     };
 
     const toggleLikeComment = (id: string) => {
-        setGuestbookComments((prev) =>
-            prev.map((c) => {
-                if (c.id !== id) return c;
-                return {
-                    ...c,
-                    likes: c.isLiked ? c.likes - 1 : c.likes + 1,
-                    isLiked: !c.isLiked,
-                };
-            })
-        );
+        setLikedCommentsMap((prev) => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
     };
 
-    const triggerToast = () => {
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 2500);
+    // Library games backend queries & mutations
+    const libraryGamesUserId = targetUserId || remoteProfile?.id || (isOwnProfile ? (myProfileData?.id || user?.id) : otherUserProfileData?.id) || cleanUsername || "";
+    const { data: rawLibraryGames = [], isLoading: isLibraryGamesLoading } = useLibraryGamesQuery(libraryGamesUserId, !!libraryGamesUserId);
+    const createLibraryGameMutation = useCreateLibraryGameMutation();
+    const deleteLibraryGameMutation = useDeleteLibraryGameMutation();
+
+    const displayedLibraryGames = useMemo<LibraryGame[]>(() => {
+        if (!Array.isArray(rawLibraryGames)) return [];
+        return rawLibraryGames.map((g) => ({
+            id: g.id,
+            name: g.name,
+            logo: g.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+            hours: g.hours ?? 0,
+            lastPlayed: g.lastPlayed || "Gần đây",
+            achievements: g.achievements ?? 0,
+            totalAchievements: g.totalAchievements ?? 0,
+            keyStat: g.keyStat || (g.hours ? `${g.hours}h chơi` : "Đang chơi"),
+            rank: g.rank || "Player",
+            mvpCount: g.mvpCount || "0",
+            kdRatio: g.kdRatio || "1.0",
+            tagColor: g.tagColor || "bg-[#1688E8]",
+            isFeatured: false,
+        }));
+    }, [rawLibraryGames]);
+
+    const handleAddLibraryGame = async (gameData: { name: string; hours?: number; rank?: string; logo?: string }) => {
+        try {
+            await createLibraryGameMutation.mutateAsync({
+                name: gameData.name,
+                hours: gameData.hours || 0,
+                rank: gameData.rank || "Player",
+                logo: gameData.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+                keyStat: `${gameData.hours || 0}h chơi`,
+            });
+            triggerToast(true, "Đã thêm game vào thư viện thành công!");
+        } catch (err: unknown) {
+            const errorMsg = (err as { message?: string })?.message || "Không thể thêm game vào thư viện.";
+            triggerToast(false, errorMsg);
+        }
+    };
+
+    const handleDeleteLibraryGame = async (gameId: string | number) => {
+        try {
+            await deleteLibraryGameMutation.mutateAsync(String(gameId));
+            triggerToast(true, "Đã xóa game khỏi thư viện.");
+        } catch (err: unknown) {
+            const errorMsg = (err as { message?: string })?.message || "Không thể xóa game khỏi thư viện.";
+            triggerToast(false, errorMsg);
+        }
+    };
+
+    const [toastState, setToastState] = useState<{ isError?: boolean; message?: string } | null>(null);
+
+    const triggerToast = (isSuccess = true, customMsg?: string) => {
+        const message = customMsg || (isSuccess ? t("profile.editSuccess") : t("profile.editError"));
+        setToastState({ isError: !isSuccess, message });
+        setTimeout(() => setToastState(null), 2500);
     };
 
     const avatarUrl = (isOwnProfile && customAvatar) ? customAvatar : (identity.avatarUrl || (identity as Record<string, unknown>).avatar as string | undefined);
@@ -469,17 +733,19 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     return (
         <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 pb-20 animate-fade-in">
-            {showSuccessToast && (
-                <div className="fixed top-20 right-6 z-50 bg-[#24C58A] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left">
-                    <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
-                    <span className="font-semibold text-sm">{t("profile.editSuccess")}</span>
+            {toastState && (
+                <div className={`fixed top-20 right-6 z-50 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-semibold text-sm ${
+                    toastState.isError ? 'bg-[#FF4D4D]' : 'bg-[#24C58A]'
+                }`}>
+                    <FontAwesomeIcon icon={toastState.isError ? faExclamationTriangle : faCheckCircle} className="text-lg" />
+                    <span>{toastState.message}</span>
                 </div>
             )}
 
             {warnCustomizeToast && (
                 <div className="fixed top-20 right-6 z-50 bg-[#E5A93D] text-black px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-bold text-sm">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="text-base" />
-                    <span>Đang ở chế độ chỉnh sửa. Hãy nhấn "Lưu thay đổi" hoặc "Hủy" ở tab Tổng quan trước khi chuyển tab!</span>
+                    <span>{t("profile.warnCustomize")}</span>
                 </div>
             )}
 
@@ -510,6 +776,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 forumRankNode={forumRankNode}
                 isFriend={isFriend}
                 isBlocked={isBlocked}
+                isPendingOutgoing={isPendingOutgoing}
+                isPendingIncoming={isPendingIncoming}
+                isFriendActionLoading={isFriendActionLoading}
+                onCancelRequest={handleCancelOutgoingRequest}
+                onAcceptRequest={handleAcceptRequest}
                 onSelectCoverFile={handleSelectCoverFile}
                 onSelectAvatarFile={handleSelectAvatarFile}
                 onSaveIdentity={triggerToast}
@@ -519,10 +790,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onStartEditMode={handleStartEditMode}
                 onSaveEdit={handleSaveEdit}
                 onDiscardEdit={handleDiscardEdit}
-                onAddFriend={() => toggleFriend(identity.name)}
-                onUnfriend={() => toggleFriend(identity.name)}
-                onBlock={() => { setIsBlocked(true); triggerToast(); }}
-                onUnblock={() => { setIsBlocked(false); triggerToast(); }}
+                onAddFriend={() => handleAddFriend()}
+                onUnfriend={() => handleUnfriend()}
+                onBlock={() => handleBlockFriend()}
+                onUnblock={() => handleUnblockUser()}
                 location={profileLocation}
                 joinedDate={identity.createdAt ? new Date(identity.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : undefined}
                 reputationPercent={0}
@@ -569,7 +840,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 {activeTab === "overview" && (
                     <OverviewTab
                         identity={identity}
-                        games={LIBRARY_GAMES}
+                        games={displayedLibraryGames}
                         reputations={COMMUNITY_REPUTATIONS}
                         activities={RECENT_ACTIVITIES}
                         gearData={gearData}
@@ -586,7 +857,17 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     />
                 )}
 
-                {activeTab === "games" && <GamesTab games={LIBRARY_GAMES} t={t} />}
+                {activeTab === "games" && (
+                    <GamesTab
+                        games={displayedLibraryGames}
+                        isLoading={isLibraryGamesLoading}
+                        isOwnProfile={isOwnProfile}
+                        onAddGame={handleAddLibraryGame}
+                        onDeleteGame={handleDeleteLibraryGame}
+                        isSubmitting={createLibraryGameMutation.isPending}
+                        t={t}
+                    />
+                )}
 
                 {activeTab === "communities" && <CommunitiesTab reputations={COMMUNITY_REPUTATIONS} t={t} />}
 
@@ -596,10 +877,16 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     <FriendsTab
                         friends={friendsList}
                         requests={friendRequestsList}
-                        onToggleFriend={toggleFriend}
-                        onBlockFriend={blockFriend}
+                        outgoingRequests={outgoingRequestsList}
+                        blockedUsers={blockedUsersList}
+                        isLoading={isFriendsLoading || isIncomingLoading || isOutgoingLoading || isBlockedLoading}
+                        isOwnProfile={isOwnProfile}
+                        onToggleFriend={handleAddFriend}
+                        onBlockFriend={handleBlockFriend}
                         onAcceptRequest={handleAcceptRequest}
                         onDeclineRequest={handleDeclineRequest}
+                        onCancelOutgoingRequest={handleCancelOutgoingRequest}
+                        onUnblockUser={handleUnblockUser}
                         t={t}
                     />
                 )}
@@ -608,11 +895,14 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
                 {activeTab === "guestbook" && (
                     <GuestbookTab
-                        comments={guestbookComments}
+                        comments={displayedGuestbookComments}
                         newCommentText={newCommentText}
                         onChangeNewComment={setNewCommentText}
                         onSubmit={handleAddGuestbook}
                         onToggleLike={toggleLikeComment}
+                        onDeleteComment={handleDeleteGuestbook}
+                        isLoading={isGuestbookLoading}
+                        isSubmitting={createGuestbookMutation.isPending}
                         displayName={identity.name}
                         t={t}
                     />

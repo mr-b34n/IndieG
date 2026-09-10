@@ -5,7 +5,7 @@ import { BookmarkList } from '@/features/bookmark';
 const Bookmark = () => {
 	useTheme("Bookmark");
 
-	return <BookmarkList />;
+	return <BookmarkList showHeader />;
 }
 
 export const Route = createFileRoute('/_layout/bookmark/')(

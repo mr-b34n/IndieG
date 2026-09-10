@@ -371,6 +371,189 @@ export interface VoteResponse {
     [key: string]: unknown;
 }
 
+// -------------------------------------------------------------
+// Games Types (/games/*)
+// -------------------------------------------------------------
+export interface GameDto {
+    appid: number;
+    slug?: string;
+    name: string;
+    communityId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface CreateGameDto {
+    appid: number;
+    slug?: string;
+    name: string;
+    communityId?: string;
+}
+
+export interface UpdateGameDto {
+    slug?: string;
+    name?: string;
+    communityId?: string;
+}
+
+export interface GetGamesParams {
+    search?: string;
+    communityId?: string;
+    page?: number;
+    limit?: number;
+}
+
+// -------------------------------------------------------------
+// Game Guides Types (/games/{appid}/guides/*)
+// -------------------------------------------------------------
+export type GuideCategory = "tactics" | "builds" | "secrets" | "general";
+export type GuideSort = "newest" | "oldest" | "most_liked" | "most_viewed";
+
+export interface GameGuideDto {
+    id: string;
+    appid: number;
+    title?: string;
+    titleVi?: string;
+    rank?: string;
+    category?: GuideCategory;
+    content: string;
+    contentVi?: string;
+    authorId?: string;
+    author?: {
+        id?: string;
+        username?: string;
+        name?: string;
+        avatarUrl?: string;
+    };
+    likes?: number;
+    views?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface CreateGameGuideDto {
+    title?: string;
+    titleVi?: string;
+    rank?: string;
+    category?: GuideCategory;
+    content: string;
+    contentVi?: string;
+}
+
+export interface UpdateGameGuideDto {
+    title?: string;
+    titleVi?: string;
+    rank?: string;
+    category?: GuideCategory;
+    content?: string;
+    contentVi?: string;
+}
+
+export interface GetGameGuidesParams {
+    category?: GuideCategory;
+    authorId?: string;
+    sort?: GuideSort;
+    page?: number;
+    limit?: number;
+}
+
+// -------------------------------------------------------------
+// Game Reviews Types (/games/{appid}/reviews/*)
+// -------------------------------------------------------------
+export type ReviewSort = "newest" | "oldest" | "most_liked" | "highest_rating" | "lowest_rating";
+
+export interface GameReviewDto {
+    id: string;
+    appid: number;
+    rating: number;
+    hoursPlayed?: string;
+    content?: string;
+    contentVi?: string;
+    recommended?: boolean;
+    authorId?: string;
+    author?: {
+        id?: string;
+        username?: string;
+        name?: string;
+        avatarUrl?: string;
+    };
+    likes?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface CreateGameReviewDto {
+    rating: number;
+    hoursPlayed?: string;
+    content?: string;
+    contentVi?: string;
+    recommended?: boolean;
+}
+
+export interface UpdateGameReviewDto {
+    rating?: number;
+    hoursPlayed?: string;
+    content?: string;
+    contentVi?: string;
+    recommended?: boolean;
+}
+
+export interface GetGameReviewsParams {
+    recommended?: boolean;
+    sort?: ReviewSort;
+    page?: number;
+    limit?: number;
+}
+
+// -------------------------------------------------------------
+// Game Patch Notes Types (/games/{appid}/patch-notes/*)
+// -------------------------------------------------------------
+export type PatchNoteType = "major" | "patch" | "hotfix" | "event";
+
+export interface GamePatchNoteDto {
+    id: string;
+    appid: number;
+    version?: string;
+    title?: string;
+    titleVi?: string;
+    summary?: string;
+    summaryVi?: string;
+    type?: PatchNoteType;
+    postId?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface CreateGamePatchNoteDto {
+    version?: string;
+    title?: string;
+    titleVi?: string;
+    summary?: string;
+    summaryVi?: string;
+    type?: PatchNoteType;
+    postId?: number;
+}
+
+export interface UpdateGamePatchNoteDto {
+    version?: string;
+    title?: string;
+    titleVi?: string;
+    summary?: string;
+    summaryVi?: string;
+    type?: PatchNoteType;
+    postId?: number;
+}
+
+export interface GetGamePatchNotesParams {
+    type?: PatchNoteType;
+    page?: number;
+    limit?: number;
+}
+
 /**
  * Adapter Mappers: Safely convert backend DTOs into frontend UI models
  * handling all optional / missing fields gracefully without runtime errors.
@@ -430,3 +613,122 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
         featured: dto.featured ?? false,
     };
 }
+
+// -------------------------------------------------------------
+// Guestbook Comments DTOs
+// -------------------------------------------------------------
+export interface GuestbookAuthorDto {
+    id?: string;
+    username?: string;
+    name?: string;
+    avatarUrl?: string;
+    avatar_url?: string;
+    avatar?: string;
+}
+
+export interface GuestbookCommentDto {
+    id: string;
+    profileId: string;
+    authorId?: string;
+    author?: GuestbookAuthorDto;
+    authorName?: string;
+    authorUsername?: string;
+    authorAvatar?: string;
+    content: string;
+    likes?: number;
+    createdAt: string;
+    updatedAt?: string;
+}
+
+export interface CreateGuestbookCommentDto {
+    content: string;
+}
+
+// -------------------------------------------------------------
+// Bookmarks DTOs
+// -------------------------------------------------------------
+export type BookmarkTargetType = "post" | "project" | "user" | "comment";
+
+export interface BookmarkDto {
+    id: string;
+    userId: string;
+    targetType: BookmarkTargetType;
+    targetId: string;
+    createdAt: string;
+    target?: unknown;
+}
+
+export interface CreateBookmarkDto {
+    targetType: BookmarkTargetType;
+    targetId: string;
+}
+
+export interface GetBookmarksParams {
+    targetType?: BookmarkTargetType;
+    page?: number;
+    limit?: number;
+}
+
+export interface CheckBookmarkParams {
+    targetType: BookmarkTargetType;
+    targetId: string;
+}
+
+// -------------------------------------------------------------
+// Library Games DTOs
+// -------------------------------------------------------------
+export interface LibraryGameDto {
+    id: string;
+    userId: string;
+    gameAppid?: string;
+    name: string;
+    logo?: string;
+    hours?: number;
+    achievements?: number;
+    totalAchievements?: number;
+    lastPlayed?: string;
+    keyStat?: string;
+    rank?: string;
+    mvpCount?: string;
+    kdRatio?: string;
+    tagColor?: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface CreateLibraryGameDto {
+    gameAppid?: string;
+    name: string;
+    logo?: string;
+    hours?: number;
+    achievements?: number;
+    totalAchievements?: number;
+    lastPlayed?: string;
+    keyStat?: string;
+    rank?: string;
+    mvpCount?: string;
+    kdRatio?: string;
+    tagColor?: string;
+}
+
+export type UpdateLibraryGameDto = Partial<CreateLibraryGameDto>;
+
+// -------------------------------------------------------------
+// Friendships DTOs
+// -------------------------------------------------------------
+export interface FriendshipDto {
+    id: string;
+    requesterId?: string;
+    addresseeId?: string;
+    status?: "pending" | "accepted" | "blocked";
+    user?: UserProfileDto;
+    requester?: UserProfileDto;
+    addressee?: UserProfileDto;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface CreateFriendshipRequestDto {
+    addresseeId: string;
+}
+
