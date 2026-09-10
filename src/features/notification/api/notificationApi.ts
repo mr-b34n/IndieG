@@ -1,5 +1,6 @@
 import { type NotificationEntity } from "../types";
 import { useNotificationStore } from "../store/useNotificationStore";
+import { apiRequest } from "@/shared/api/client";
 
 export interface CreateNotificationParams {
     userId?: string;
@@ -9,6 +10,11 @@ export interface CreateNotificationParams {
     title?: string;
     avatarUrl?: string;
     link?: string;
+}
+
+interface ApiResponse<T> {
+    success?: boolean;
+    data?: T;
 }
 
 /**
@@ -21,13 +27,13 @@ export const notificationApi = {
      */
     async getNotifications(userId: string = "user-current"): Promise<NotificationEntity[]> {
         try {
-            const res = await fetch(`/api/notifications?userId=${encodeURIComponent(userId)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && Array.isArray(data.data)) {
-                    useNotificationStore.getState().setNotifications(data.data);
-                    return data.data;
-                }
+            const data = await apiRequest<ApiResponse<NotificationEntity[]>>("/notifications", {
+                method: "GET",
+                params: { userId },
+            });
+            if (data?.success && Array.isArray(data.data)) {
+                useNotificationStore.getState().setNotifications(data.data);
+                return data.data;
             }
         } catch {
             // Fallback to client-side Zustand store if server API not reachable
@@ -50,17 +56,13 @@ export const notificationApi = {
         };
 
         try {
-            const res = await fetch("/api/notifications", {
+            const data = await apiRequest<ApiResponse<NotificationEntity>>("/notifications", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: payload,
             });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.data) {
-                    useNotificationStore.getState().addNotification(data.data);
-                    return data.data;
-                }
+            if (data?.success && data.data) {
+                useNotificationStore.getState().addNotification(data.data);
+                return data.data;
             }
         } catch {
             // Fallback to client store
@@ -75,7 +77,7 @@ export const notificationApi = {
     async markAsRead(id: string): Promise<void> {
         useNotificationStore.getState().markAsRead(id);
         try {
-            await fetch(`/api/notifications/${encodeURIComponent(id)}/read`, {
+            await apiRequest(`/notifications/${encodeURIComponent(id)}/read`, {
                 method: "PUT",
             });
         } catch {
@@ -89,10 +91,9 @@ export const notificationApi = {
     async markAllAsRead(userId: string = "user-current"): Promise<void> {
         useNotificationStore.getState().markAllAsRead(userId);
         try {
-            await fetch(`/api/notifications/read-all`, {
+            await apiRequest(`/notifications/read-all`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId }),
+                body: { userId },
             });
         } catch {
             // Handled in store

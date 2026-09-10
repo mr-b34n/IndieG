@@ -32,15 +32,27 @@ export function buildSafeApiUrl(
     endpoint: string,
     params?: Record<string, string | number | boolean | string[] | undefined | null>
 ): string {
-    const rawBase = getApiBaseUrl().trim();
-    const cleanBase = rawBase.replace(/\/+$/, "");
+    const rawBase = getApiBaseUrl().trim().replace(/\/+$/, "");
     const cleanEndpoint = endpoint.replace(/^\/+/, "").replace(/\/+/g, "/");
     const queryString = buildQueryString(params);
 
-    if (cleanBase && cleanBase !== "/" && cleanBase !== "//") {
-        return `${cleanBase}/${cleanEndpoint}${queryString}`;
+    let finalUrl: string;
+
+    if (rawBase.startsWith("http://") || rawBase.startsWith("https://")) {
+        const isHttps = rawBase.startsWith("https://");
+        const protocol = isHttps ? "https://" : "http://";
+        const hostAndPath = rawBase.slice(protocol.length);
+        const combined = `${hostAndPath}/${cleanEndpoint}`.replace(/\/+/g, "/");
+        finalUrl = `${protocol}${combined}${queryString}`;
+    } else if (rawBase && rawBase !== "/" && rawBase !== "//") {
+        const combined = `${rawBase}/${cleanEndpoint}`.replace(/\/+/g, "/");
+        finalUrl = combined.startsWith("/") ? `${combined}${queryString}` : `/${combined}${queryString}`;
+    } else {
+        const combined = `/${cleanEndpoint}`.replace(/\/+/g, "/");
+        finalUrl = `${combined}${queryString}`;
     }
-    return `/${cleanEndpoint}${queryString}`;
+
+    return finalUrl;
 }
 
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
@@ -224,6 +236,10 @@ export async function apiRequest<T = unknown>(
     const cleanEndpoint = endpoint.replace(/^\/+/, "").replace(/\/+/g, "/");
     const normalizedEndpoint = `/${cleanEndpoint}`;
     const url = buildSafeApiUrl(endpoint, params);
+
+    if (typeof window !== "undefined" && import.meta.env.DEV) {
+        console.log(`[IndieG API] ${method} ${url}`);
+    }
 
     const response = await fetch(url, {
         ...customOptions,
