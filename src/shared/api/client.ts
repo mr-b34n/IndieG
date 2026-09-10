@@ -3,13 +3,19 @@
  * Configured via VITE_API_BASE_URL (e.g. http://localhost:3636)
  */
 
-const getBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
+    if (typeof window !== "undefined") {
+        const customUrl = localStorage.getItem("indieg_custom_api_url");
+        if (customUrl && customUrl.trim()) {
+            return customUrl.trim().replace(/\/+$/, "");
+        }
+    }
     const rawUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3636";
     // Remove trailing slash if present
     return rawUrl.replace(/\/+$/, "");
 };
 
-export const API_BASE_URL = getBaseUrl();
+export const API_BASE_URL = getApiBaseUrl();
 
 export interface ApiRequestOptions extends Omit<RequestInit, "body"> {
     body?: BodyInit | Record<string, unknown> | null;
@@ -191,7 +197,8 @@ export async function apiRequest<T = unknown>(
 
     const queryString = buildQueryString(params);
     const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const url = `${API_BASE_URL}${normalizedEndpoint}${queryString}`;
+    const baseUrl = getApiBaseUrl();
+    const url = `${baseUrl}${normalizedEndpoint}${queryString}`;
 
     const response = await fetch(url, {
         ...customOptions,

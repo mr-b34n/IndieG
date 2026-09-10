@@ -60,3 +60,20 @@ Prevention:
 
 Always map remote query data directly (`extractList` -> `mapEntityToModel`), render skeleton loaders while queries are pending, and display standard empty states when zero items are returned rather than falling back to hardcoded mock entries.
 
+---
+
+## Pitfall: Storage & Upload Pipeline Silent Rejections
+
+Status: Active
+
+Problem:
+
+Image upload pipelines calling `POST /storage/presigned-url` can fail silently without triggering backend logs if:
+1. Client is served via HTTPS while Backend API is HTTP localhost (Mixed Content blocked before network dispatch).
+2. Auth token is missing from localStorage or invalid JWT.
+3. Errors inside async handlers fail to surface visual feedback.
+
+Prevention:
+
+Always provide dynamic API Base URL overrides (`indieg_custom_api_url`), wrap upload pipeline steps with detailed console logging and error diagnostics, and provide a dedicated test sandbox in Developer tools for direct endpoint testing.
+

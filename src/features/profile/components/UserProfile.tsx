@@ -23,8 +23,10 @@ import { PostsTab } from "./tabs/PostsTab";
 import { FriendsTab } from "./tabs/FriendsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
 import { BookmarkList } from "@/features/bookmark";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from "@/shared/api/useQueries";
 import type { UpdateProfileDto } from "@/shared/api/types";
+import { uploadImageToR2 } from "@/shared/services/upload-service";
 
 interface UserProfileProps {
     userId: string;
@@ -64,6 +66,48 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             });
         }
     }, [isOwnProfile, myProfileData, updateUser]);
+
+    const queryClient = useQueryClient();
+    const [uploadFeedback, setUploadFeedback] = useState<{ type: 'loading' | 'success' | 'error'; message: string } | null>(null);
+
+    const handleUploadAvatar = async (file: File) => {
+        setUploadFeedback({ type: 'loading', message: 'Đang xử lý WebP và tải lên Cloudflare R2...' });
+        try {
+            const result = await uploadImageToR2({ file, type: 'avatar' });
+            const newUrl = result.avatarUrl || (result.url as string) || (result.imageUrl as string);
+            if (newUrl) {
+                setIdentity((prev: ProfileIdentity) => ({ ...prev, avatarUrl: newUrl }));
+                updateUser({ avatarUrl: newUrl });
+                setCustomAvatar(newUrl);
+            }
+            queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+            setUploadFeedback({ type: 'success', message: 'Tải ảnh đại diện lên Cloudflare R2 thành công!' });
+            setTimeout(() => setUploadFeedback(null), 3500);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Tải ảnh đại diện thất bại';
+            setUploadFeedback({ type: 'error', message: msg });
+            setTimeout(() => setUploadFeedback(null), 6000);
+        }
+    };
+
+    const handleUploadCover = async (file: File) => {
+        setUploadFeedback({ type: 'loading', message: 'Đang xử lý WebP và tải lên Cloudflare R2...' });
+        try {
+            const result = await uploadImageToR2({ file, type: 'cover' });
+            const newUrl = result.coverUrl || (result.url as string) || (result.imageUrl as string);
+            if (newUrl) {
+                setIdentity((prev: ProfileIdentity) => ({ ...prev, coverUrl: newUrl }));
+                setCustomBg(newUrl);
+            }
+            queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+            setUploadFeedback({ type: 'success', message: 'Tải ảnh bìa lên Cloudflare R2 thành công!' });
+            setTimeout(() => setUploadFeedback(null), 3500);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Tải ảnh bìa thất bại';
+            setUploadFeedback({ type: 'error', message: msg });
+            setTimeout(() => setUploadFeedback(null), 6000);
+        }
+    };
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
@@ -384,6 +428,23 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 </div>
             )}
 
+            {uploadFeedback && (
+                <div className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-semibold text-sm text-white ${
+                    uploadFeedback.type === 'loading'
+                        ? 'bg-[#1597FF]'
+                        : uploadFeedback.type === 'success'
+                        ? 'bg-[#24C58A]'
+                        : 'bg-[#FF4D4D]'
+                }`}>
+                    {uploadFeedback.type === 'loading' && (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {uploadFeedback.type === 'success' && <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />}
+                    {uploadFeedback.type === 'error' && <FontAwesomeIcon icon={faExclamationTriangle} className="text-lg" />}
+                    <span>{uploadFeedback.message}</span>
+                </div>
+            )}
+
             {/* Gamer Hero Header */}
             <ProfileHero
                 coverSrc={effectiveCover}
@@ -394,16 +455,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 forumRankNode={forumRankNode}
                 isFriend={isFriend}
                 isBlocked={isBlocked}
-                onSelectCoverFile={(file) => {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => ev.target?.result && setRawCoverSrc(ev.target.result as string);
-                    reader.readAsDataURL(file);
-                }}
-                onSelectAvatarFile={(file) => {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => ev.target?.result && setRawAvatarSrc(ev.target.result as string);
-                    reader.readAsDataURL(file);
-                }}
+                onSelectCoverFile={handleUploadCover}
+                onSelectAvatarFile={handleUploadAvatar}
                 onSaveIdentity={triggerToast}
                 isCustomizeMode={isCustomizeMode}
                 onToggleCustomizeMode={handleToggleCustomizeMode}

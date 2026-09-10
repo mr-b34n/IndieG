@@ -792,6 +792,16 @@ export const storageApi = {
         import("../services/upload-service").then((m) => m.uploadImageToR2(options)),
 };
 
-export { uploadImageToR2, type UploadOptions, type UploadImageResult } from "../services/upload-service";
+export {
+    uploadImageToR2,
+    requestPresignedUrl,
+    uploadToR2Bucket,
+    confirmUploadWithBackend,
+    getStoredToken,
+    type UploadOptions,
+    type UploadImageResult,
+    type PresignedUrlPayload,
+    type PresignedUrlResponse,
+} from "../services/upload-service";
 export { processImagePipeline, type UploadType, type ProcessedImageResult, MAX_IMAGE_SIZES, ALLOWED_IMAGE_MIMES, validateImageFile } from "../utils/image-processor";
 
