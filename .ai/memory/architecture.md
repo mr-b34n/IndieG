@@ -82,4 +82,4 @@ Implications:
 - Use `processImagePipeline` in `src/shared/utils/image-processor.ts`.
 - Use `uploadImageToR2` in `src/shared/services/upload-service.ts`.
 - Follow defined dimension, crop, and quality policies (Avatar: 256x256 WebP Q85, Cover: max 1920px WebP Q85, Post: max 1600x1600 WebP Q80).
-- Post-upload profile confirmation targets `PATCH /profiles/me`.
+- Post-upload profile confirmation targets `PATCH /profiles/me` with a fully qualified public URL (via `getPublicStorageUrl` using `VITE_R2_PUBLIC_URL` or presigned domain) to satisfy backend `@IsUrl()` validation.

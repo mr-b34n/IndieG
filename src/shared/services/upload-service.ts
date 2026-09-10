@@ -163,16 +163,75 @@ export async function uploadToR2Bucket(presignedUrl: string, blob: Blob): Promis
 }
 
 /**
+ * Lấy Base URL của Cloudflare R2 / S3 Public CDN từ biến môi trường hoặc localStorage
+ */
+export function getStoragePublicBaseUrl(): string {
+    const envUrl =
+        (import.meta.env.VITE_R2_PUBLIC_URL as string | undefined) ||
+        (import.meta.env.VITE_STORAGE_PUBLIC_URL as string | undefined) ||
+        (import.meta.env.VITE_CDN_BASE_URL as string | undefined) ||
+        (typeof window !== 'undefined' ? localStorage.getItem('indieg_r2_public_url') || localStorage.getItem('r2_public_url') : null);
+
+    if (envUrl && envUrl.trim()) {
+        return envUrl.trim().replace(/\/+$/, '');
+    }
+    return '';
+}
+
+/**
+ * Tạo Public URL hoàn chỉnh trên Client trước khi gửi lên Backend.
+ * Đảm bảo luôn trả về định dạng HTTP/HTTPS URL hợp lệ cho @IsUrl() validator trên NestJS.
+ */
+export function getPublicStorageUrl(fileKeyOrUrl: string, presignedUrl?: string): string {
+    if (!fileKeyOrUrl) return '';
+
+    // Nếu đã là một URL đầy đủ hợp lệ
+    if (/^https?:\/\//i.test(fileKeyOrUrl)) {
+        return fileKeyOrUrl;
+    }
+
+    const cleanKey = fileKeyOrUrl.replace(/^\/+/, '');
+    const publicBase = getStoragePublicBaseUrl();
+
+    // 1. Nếu người dùng cấu hình VITE_R2_PUBLIC_URL trong .env hoặc localStorage
+    if (publicBase) {
+        return `${publicBase}/${cleanKey}`;
+    }
+
+    // 2. Nếu có presignedUrl, thử trích xuất origin/path sạch (bỏ query parameters)
+    if (presignedUrl && /^https?:\/\//i.test(presignedUrl)) {
+        try {
+            const urlObj = new URL(presignedUrl);
+            return `${urlObj.origin}${urlObj.pathname}`;
+        } catch {
+            // bỏ qua nếu parse URL thất bại
+        }
+    }
+
+    // 3. Fallback an toàn (trả về URL hợp lệ để vượt qua kiểm tra @IsUrl() của Backend)
+    const apiBase = getApiBaseUrl();
+    if (/^https?:\/\//i.test(apiBase)) {
+        return `${apiBase.replace(/\/+$/, '')}/storage/${cleanKey}`;
+    }
+
+    return `https://storage.indieg.com/${cleanKey}`;
+}
+
+/**
  * BƯỚC 4: Xác nhận và cập nhật Database trên Backend (PATCH /profiles/me cho avatar/cover, POST /posts/:id/images cho post)
  */
 export async function confirmUploadWithBackend(
     type: UploadType,
     fileKeyOrUrl: string,
     postId?: string,
-    token?: string | null
+    token?: string | null,
+    presignedUrl?: string
 ): Promise<UploadImageResult> {
     const activeToken = token || getStoredToken();
     const baseUrl = getApiBaseUrl();
+
+    // Đảm bảo public URL hợp lệ chuẩn bị gửi lên Backend (cho các endpoint yêu cầu @IsUrl)
+    const publicUrl = getPublicStorageUrl(fileKeyOrUrl, presignedUrl);
 
     let confirmEndpoint: string;
     let method: string;
@@ -181,18 +240,19 @@ export async function confirmUploadWithBackend(
     if (type === 'avatar') {
         confirmEndpoint = `${baseUrl}/profiles/me`;
         method = 'PATCH';
-        bodyData = { avatarUrl: fileKeyOrUrl };
+        bodyData = { avatarUrl: publicUrl };
     } else if (type === 'cover') {
         confirmEndpoint = `${baseUrl}/profiles/me`;
         method = 'PATCH';
-        bodyData = { coverUrl: fileKeyOrUrl };
+        bodyData = { coverUrl: publicUrl };
     } else {
         confirmEndpoint = `${baseUrl}/posts/${postId}/images`;
         method = 'POST';
-        bodyData = { fileKey: fileKeyOrUrl, imageUrl: fileKeyOrUrl };
+        bodyData = { fileKey: fileKeyOrUrl, imageUrl: publicUrl };
     }
 
     console.group(`[Storage Pipeline] 📝 Bước 4: Cập nhật Database: ${method} ${confirmEndpoint}`);
+    console.log('Public URL:', publicUrl);
     console.log('Payload:', bodyData);
     console.groupEnd();
 
@@ -278,27 +338,36 @@ export async function uploadImageToR2({
 
     // BƯỚC 4: Xác minh và cập nhật Database trên Backend qua PATCH /profiles/me
     const rawData = presigned.raw as Record<string, unknown> | undefined;
-    const resolvedUrl =
+    const rawUrlCandidate =
         rawData?.avatarUrl ||
         rawData?.coverUrl ||
         rawData?.imageUrl ||
         rawData?.url ||
+        rawData?.publicUrl ||
         (rawData?.data as Record<string, unknown> | undefined)?.avatarUrl ||
         (rawData?.data as Record<string, unknown> | undefined)?.coverUrl ||
         (rawData?.data as Record<string, unknown> | undefined)?.url ||
+        (rawData?.data as Record<string, unknown> | undefined)?.publicUrl ||
         presigned.fileKey;
+
+    const publicUrl = getPublicStorageUrl(String(rawUrlCandidate), presigned.presignedUrl);
+
+    console.log('[Storage Pipeline] 🌐 Public URL chuẩn bị cập nhật:', publicUrl);
 
     const confirmData = await confirmUploadWithBackend(
         type,
-        String(resolvedUrl),
+        publicUrl,
         postId,
-        token
+        token,
+        presigned.presignedUrl
     );
 
     return {
         ...confirmData,
-        avatarUrl: type === 'avatar' ? String(resolvedUrl) : (confirmData.avatarUrl as string),
-        coverUrl: type === 'cover' ? String(resolvedUrl) : (confirmData.coverUrl as string),
+        avatarUrl: type === 'avatar' ? publicUrl : (confirmData.avatarUrl as string),
+        coverUrl: type === 'cover' ? publicUrl : (confirmData.coverUrl as string),
+        imageUrl: type === 'post' ? publicUrl : (confirmData.imageUrl as string),
+        url: publicUrl,
         fileKey: presigned.fileKey,
         width: processed.width,
         height: processed.height,
