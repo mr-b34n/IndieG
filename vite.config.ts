@@ -695,6 +695,17 @@ export default defineConfig({
 		port: 3000,
 		strictPort: true,
 		allowedHosts: true,
+		proxy: {
+			"/auth": { target: "http://localhost:3636", changeOrigin: true },
+			"/profiles": { target: "http://localhost:3636", changeOrigin: true },
+			"/communities": { target: "http://localhost:3636", changeOrigin: true },
+			"/posts": { target: "http://localhost:3636", changeOrigin: true },
+			"/comments": { target: "http://localhost:3636", changeOrigin: true },
+			"/storage": { target: "http://localhost:3636", changeOrigin: true },
+			"/users": { target: "http://localhost:3636", changeOrigin: true },
+			"/reports": { target: "http://localhost:3636", changeOrigin: true },
+			"/votes": { target: "http://localhost:3636", changeOrigin: true },
+		},
 	},
 	plugins: [
 		searchApiPlugin(),

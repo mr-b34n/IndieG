@@ -6,13 +6,15 @@
 export const getApiBaseUrl = (): string => {
     if (typeof window !== "undefined") {
         const customUrl = localStorage.getItem("indieg_custom_api_url");
-        if (customUrl && customUrl.trim()) {
+        if (customUrl && customUrl.trim() && customUrl.trim() !== "/" && customUrl.trim() !== "//") {
             return customUrl.trim().replace(/\/+$/, "");
         }
     }
-    const rawUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3636";
-    // Remove trailing slash if present
-    return rawUrl.replace(/\/+$/, "");
+    const envUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+    if (envUrl && envUrl !== "/" && envUrl !== "//") {
+        return envUrl.replace(/\/+$/, "");
+    }
+    return "http://localhost:3636";
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -196,9 +198,10 @@ export async function apiRequest<T = unknown>(
     }
 
     const queryString = buildQueryString(params);
-    const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const baseUrl = getApiBaseUrl();
-    const url = `${baseUrl}${normalizedEndpoint}${queryString}`;
+    const cleanEndpoint = endpoint.replace(/^\/+/, "");
+    const normalizedEndpoint = `/${cleanEndpoint}`;
+    const baseUrl = getApiBaseUrl().replace(/\/+$/, "");
+    const url = baseUrl ? `${baseUrl}/${cleanEndpoint}${queryString}` : `/${cleanEndpoint}${queryString}`;
 
     const response = await fetch(url, {
         ...customOptions,

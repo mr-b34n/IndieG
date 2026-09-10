@@ -44,6 +44,15 @@ export function getStoredToken(): string | null {
 }
 
 /**
+ * Ghép URL endpoint an toàn với Backend Base URL, tránh double slash
+ */
+function buildBackendUrl(endpointPath: string): string {
+    const cleanPath = endpointPath.replace(/^\/+/, '');
+    const baseUrl = getApiBaseUrl().replace(/\/+$/, '');
+    return baseUrl ? `${baseUrl}/${cleanPath}` : `/${cleanPath}`;
+}
+
+/**
  * BƯỚC 1: Xin Presigned URL từ NestJS Backend (POST /storage/presigned-url)
  */
 export async function requestPresignedUrl(
@@ -51,8 +60,7 @@ export async function requestPresignedUrl(
     token?: string | null
 ): Promise<PresignedUrlResponse> {
     const activeToken = token || getStoredToken();
-    const baseUrl = getApiBaseUrl();
-    const endpoint = `${baseUrl}/storage/presigned-url`;
+    const endpoint = buildBackendUrl('storage/presigned-url');
 
     console.group('[Storage Pipeline] 📡 Bước 1: POST /storage/presigned-url');
     console.log('Target URL:', endpoint);
@@ -228,7 +236,6 @@ export async function confirmUploadWithBackend(
     presignedUrl?: string
 ): Promise<UploadImageResult> {
     const activeToken = token || getStoredToken();
-    const baseUrl = getApiBaseUrl();
 
     // Đảm bảo public URL hợp lệ chuẩn bị gửi lên Backend (cho các endpoint yêu cầu @IsUrl)
     const publicUrl = getPublicStorageUrl(fileKeyOrUrl, presignedUrl);
@@ -238,15 +245,15 @@ export async function confirmUploadWithBackend(
     let bodyData: Record<string, unknown>;
 
     if (type === 'avatar') {
-        confirmEndpoint = `${baseUrl}/profiles/me`;
+        confirmEndpoint = buildBackendUrl('profiles/me');
         method = 'PATCH';
         bodyData = { avatarUrl: publicUrl };
     } else if (type === 'cover') {
-        confirmEndpoint = `${baseUrl}/profiles/me`;
+        confirmEndpoint = buildBackendUrl('profiles/me');
         method = 'PATCH';
         bodyData = { coverUrl: publicUrl };
     } else {
-        confirmEndpoint = `${baseUrl}/posts/${postId}/images`;
+        confirmEndpoint = buildBackendUrl(`posts/${postId}/images`);
         method = 'POST';
         bodyData = { fileKey: fileKeyOrUrl, imageUrl: publicUrl };
     }
