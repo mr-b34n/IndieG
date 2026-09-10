@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { uploadImageToR2 } from '../services/upload-service';
+import { uploadImageToR2 } from '../shared/services/upload-service';
+import { ImageCropperModal } from '../features/profile/components/ImageCropperModal';
 
 export interface AvatarUploaderProps {
     authToken?: string;
@@ -7,6 +8,19 @@ export interface AvatarUploaderProps {
     onUploadSuccess?: (avatarUrl: string) => void;
     onError?: (error: Error) => void;
     className?: string;
+}
+
+function dataUrlToFile(dataUrl: string, filename: string): File {
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
 }
 
 export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
@@ -20,26 +34,41 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [statusMsg, setStatusMsg] = useState<string | null>(null);
+    const [rawCropSrc, setRawCropSrc] = useState<string | null>(null);
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         setErrorMsg(null);
         setStatusMsg(null);
 
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                setRawCropSrc(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleSaveCropped = async (croppedDataUrl: string, croppedFile?: File) => {
+        setRawCropSrc(null);
+        setPreviewUrl(croppedDataUrl);
+
         try {
             setLoading(true);
             setStatusMsg('Đang nén WebP và tải lên Cloudflare R2...');
 
-            // Gọi service xử lý trọn gói (Step 1 -> Step 2 -> Step 3 -> Step 4)
+            const fileToUpload = croppedFile || dataUrlToFile(croppedDataUrl, 'avatar.jpg');
             const result = await uploadImageToR2({
-                file,
+                file: fileToUpload,
                 type: 'avatar',
                 token: authToken,
             });
 
-            const newAvatarUrl = result.avatarUrl || (result.url as string) || (result.imageUrl as string);
+            const newAvatarUrl = result.avatarUrl || (result.url as string) || (result.imageUrl as string) || result.fileKey;
             if (newAvatarUrl) {
                 setPreviewUrl(newAvatarUrl);
                 onUploadSuccess?.(newAvatarUrl);
@@ -51,8 +80,6 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             onError?.(err instanceof Error ? err : new Error(message));
         } finally {
             setLoading(false);
-            // Reset file input để có thể chọn lại file cùng tên nếu muốn
-            e.target.value = '';
         }
     };
 
@@ -60,6 +87,17 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
     return (
         <div className={`flex flex-col items-center gap-3 p-4 bg-[#0E1320] border border-[#232B3E] rounded-[16px] max-w-sm ${className}`}>
+            {rawCropSrc && (
+                <ImageCropperModal
+                    rawImageSrc={rawCropSrc}
+                    onClose={() => setRawCropSrc(null)}
+                    onSave={handleSaveCropped}
+                    aspectRatio={1}
+                    title="Căn chỉnh ảnh đại diện"
+                    outputWidth={400}
+                />
+            )}
+
             <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-[#1597FF]/60 shadow-lg bg-[#141A29] flex items-center justify-center">
                 {displayAvatar ? (
                     <img
@@ -94,7 +132,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             </label>
 
             <span className="text-xs text-[#8D97AA] text-center">
-                JPG, PNG, WebP • Tối đa 5MB • Tự động crop 256x256 & nén WebP
+                JPG, PNG, WebP • Tối đa 5MB • Hỗ trợ căn chỉnh crop trước khi nén WebP
             </span>
 
             {statusMsg && !errorMsg && (

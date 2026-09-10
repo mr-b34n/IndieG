@@ -70,12 +70,16 @@ Decision:
 
 Images (avatar, cover, post) must be processed on client (validation, resize, crop, WebP conversion) and uploaded directly to Cloudflare R2 via presigned URLs before confirming with the backend.
 
+Profile avatar and cover updates confirm directly via `PATCH /profiles/me` (with `{ avatarUrl }` or `{ coverUrl }`), rather than separate `/users/avatar` or `/users/cover` endpoints.
+
 Why:
 
-Offloads heavy image processing and bandwidth from the backend server to client browser and Cloudflare edge.
+Offloads heavy image processing and bandwidth from the backend server to client browser and Cloudflare edge, while standardizing user profile modifications through a single `PATCH /profiles/me` contract.
 
 Implications:
 
+- Use `ImageCropperModal` for user drag/zoom/crop prior to passing the cropped image to `uploadImageToR2`.
 - Use `processImagePipeline` in `src/shared/utils/image-processor.ts`.
 - Use `uploadImageToR2` in `src/shared/services/upload-service.ts`.
 - Follow defined dimension, crop, and quality policies (Avatar: 256x256 WebP Q85, Cover: max 1920px WebP Q85, Post: max 1600x1600 WebP Q80).
+- Post-upload profile confirmation targets `PATCH /profiles/me`.

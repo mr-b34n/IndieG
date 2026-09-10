@@ -1,15 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { StorageApiTester } from '@/features/developer/components/StorageApiTester';
 
-function DeveloperPage() {
-    return (
-        <div className="min-h-screen bg-[#07090E] py-8">
-            <StorageApiTester />
-        </div>
-    );
-}
+const Developer = () => {
+    return <div className="p-8 text-[#C2C7CE]">Developer</div>;
+};
 
 export const Route = createFileRoute('/_authenticated/developer/')({
-    component: DeveloperPage,
+    component: Developer,
 });
 

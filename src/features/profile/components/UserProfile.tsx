@@ -28,6 +28,19 @@ import { useMyProfileQuery, useUserProfileQuery, useUpdateProfileMutation } from
 import type { UpdateProfileDto } from "@/shared/api/types";
 import { uploadImageToR2 } from "@/shared/services/upload-service";
 
+function dataUrlToFile(dataUrl: string, filename: string): File {
+    const arr = dataUrl.split(",");
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+}
+
 interface UserProfileProps {
     userId: string;
 }
@@ -81,6 +94,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 setCustomAvatar(newUrl);
             }
             queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
             setUploadFeedback({ type: 'success', message: 'Tải ảnh đại diện lên Cloudflare R2 thành công!' });
             setTimeout(() => setUploadFeedback(null), 3500);
         } catch (err: unknown) {
@@ -100,6 +115,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 setCustomBg(newUrl);
             }
             queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["profiles"] });
             setUploadFeedback({ type: 'success', message: 'Tải ảnh bìa lên Cloudflare R2 thành công!' });
             setTimeout(() => setUploadFeedback(null), 3500);
         } catch (err: unknown) {
@@ -107,6 +124,44 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             setUploadFeedback({ type: 'error', message: msg });
             setTimeout(() => setUploadFeedback(null), 6000);
         }
+    };
+
+    const handleSelectAvatarFile = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === "string") {
+                setRawAvatarSrc(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveCroppedAvatar = async (croppedDataUrl: string, croppedFile?: File) => {
+        setRawAvatarSrc(null);
+        setCustomAvatar(croppedDataUrl);
+        setIdentity((prev: ProfileIdentity) => ({ ...prev, avatarUrl: croppedDataUrl }));
+
+        const fileToUpload = croppedFile || dataUrlToFile(croppedDataUrl, "avatar.jpg");
+        await handleUploadAvatar(fileToUpload);
+    };
+
+    const handleSelectCoverFile = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === "string") {
+                setRawCoverSrc(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveCroppedCover = async (croppedDataUrl: string, croppedFile?: File) => {
+        setRawCoverSrc(null);
+        setCustomBg(croppedDataUrl);
+        setIdentity((prev: ProfileIdentity) => ({ ...prev, coverUrl: croppedDataUrl }));
+
+        const fileToUpload = croppedFile || dataUrlToFile(croppedDataUrl, "cover.jpg");
+        await handleUploadCover(fileToUpload);
     };
 
     const showBookmarks = isOwnProfile && isLoggedIn;
@@ -455,8 +510,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 forumRankNode={forumRankNode}
                 isFriend={isFriend}
                 isBlocked={isBlocked}
-                onSelectCoverFile={handleUploadCover}
-                onSelectAvatarFile={handleUploadAvatar}
+                onSelectCoverFile={handleSelectCoverFile}
+                onSelectAvatarFile={handleSelectAvatarFile}
                 onSaveIdentity={triggerToast}
                 isCustomizeMode={isCustomizeMode}
                 onToggleCustomizeMode={handleToggleCustomizeMode}
@@ -481,7 +536,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 <ImageCropperModal
                     rawImageSrc={rawCoverSrc}
                     onClose={() => setRawCoverSrc(null)}
-                    onSave={(url) => { setCustomBg(url); setRawCoverSrc(null); triggerToast(); }}
+                    onSave={handleSaveCroppedCover}
                     aspectRatio={4.5}
                     title={t("profile.uploadCover", { defaultValue: "Căn chỉnh ảnh bìa" })}
                     outputWidth={1200}
@@ -492,7 +547,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 <ImageCropperModal
                     rawImageSrc={rawAvatarSrc}
                     onClose={() => setRawAvatarSrc(null)}
-                    onSave={(url) => { setCustomAvatar(url); setRawAvatarSrc(null); triggerToast(); }}
+                    onSave={handleSaveCroppedAvatar}
+                    aspectRatio={1}
+                    title={t("profile.changeAvatar", { defaultValue: "Căn chỉnh ảnh đại diện" })}
+                    outputWidth={400}
                 />
             )}
 

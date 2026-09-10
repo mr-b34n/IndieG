@@ -9,7 +9,7 @@ const ZOOM_STEP = 0.05;
 interface ImageCropperModalProps {
     rawImageSrc: string;
     onClose: () => void;
-    onSave: (croppedDataUrl: string) => void;
+    onSave: (croppedDataUrl: string, croppedFile?: File) => void;
     aspectRatio?: number;
     title?: string;
     outputWidth?: number;
@@ -99,7 +99,15 @@ export const ImageCropperModal = ({
         ctx.drawImage(imgRef.current, -drawW / 2, -drawH / 2, drawW, drawH);
         ctx.restore();
 
-        onSave(canvas.toDataURL("image/jpeg", 0.92));
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
+                onSave(dataUrl, file);
+            } else {
+                onSave(dataUrl);
+            }
+        }, "image/jpeg", 0.95);
     };
 
     return (

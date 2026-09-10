@@ -163,25 +163,37 @@ export async function uploadToR2Bucket(presignedUrl: string, blob: Blob): Promis
 }
 
 /**
- * BƯỚC 4: Xác nhận và cập nhật Database trên Backend
+ * BƯỚC 4: Xác nhận và cập nhật Database trên Backend (PATCH /profiles/me cho avatar/cover, POST /posts/:id/images cho post)
  */
 export async function confirmUploadWithBackend(
     type: UploadType,
-    fileKey: string,
+    fileKeyOrUrl: string,
     postId?: string,
     token?: string | null
 ): Promise<UploadImageResult> {
     const activeToken = token || getStoredToken();
     const baseUrl = getApiBaseUrl();
-    const confirmEndpoint =
-        type === 'avatar'
-            ? `${baseUrl}/users/avatar`
-            : type === 'cover'
-            ? `${baseUrl}/users/cover`
-            : `${baseUrl}/posts/${postId}/images`;
 
-    console.group(`[Storage Pipeline] 📝 Bước 4: Xác nhận với Backend: POST ${confirmEndpoint}`);
-    console.log('Payload:', { fileKey });
+    let confirmEndpoint: string;
+    let method: string;
+    let bodyData: Record<string, unknown>;
+
+    if (type === 'avatar') {
+        confirmEndpoint = `${baseUrl}/profiles/me`;
+        method = 'PATCH';
+        bodyData = { avatarUrl: fileKeyOrUrl };
+    } else if (type === 'cover') {
+        confirmEndpoint = `${baseUrl}/profiles/me`;
+        method = 'PATCH';
+        bodyData = { coverUrl: fileKeyOrUrl };
+    } else {
+        confirmEndpoint = `${baseUrl}/posts/${postId}/images`;
+        method = 'POST';
+        bodyData = { fileKey: fileKeyOrUrl, imageUrl: fileKeyOrUrl };
+    }
+
+    console.group(`[Storage Pipeline] 📝 Bước 4: Cập nhật Database: ${method} ${confirmEndpoint}`);
+    console.log('Payload:', bodyData);
     console.groupEnd();
 
     const headers: Record<string, string> = {
@@ -194,9 +206,9 @@ export async function confirmUploadWithBackend(
     let confirmRes: Response;
     try {
         confirmRes = await fetch(confirmEndpoint, {
-            method: 'POST',
+            method,
             headers,
-            body: JSON.stringify({ fileKey }),
+            body: JSON.stringify(bodyData),
         });
     } catch (confError: unknown) {
         console.error('[Storage Pipeline] ❌ Lỗi mạng khi xác nhận cập nhật với Backend:', confError);
@@ -228,7 +240,7 @@ export async function confirmUploadWithBackend(
  * 1. Xin Presigned URL từ Backend (POST /storage/presigned-url)
  * 2. Xử lý & nén ảnh trên Browser (Resize, Crop, WebP Blob)
  * 3. Upload trực tiếp từ Browser lên Cloudflare R2 (PUT Presigned URL)
- * 4. Xác nhận và cập nhật dữ liệu với Backend (Confirm API)
+ * 4. Xác nhận và cập nhật dữ liệu với Backend qua PATCH /profiles/me
  */
 export async function uploadImageToR2({
     file,
@@ -264,11 +276,29 @@ export async function uploadImageToR2({
     // BƯỚC 3: Upload TRỰC TIẾP từ Browser -> Cloudflare R2 Bucket qua Presigned URL
     await uploadToR2Bucket(presigned.presignedUrl, processed.blob);
 
-    // BƯỚC 4: Xác minh và cập nhật Database trên Backend
-    const confirmData = await confirmUploadWithBackend(type, presigned.fileKey, postId, token);
+    // BƯỚC 4: Xác minh và cập nhật Database trên Backend qua PATCH /profiles/me
+    const rawData = presigned.raw as Record<string, unknown> | undefined;
+    const resolvedUrl =
+        rawData?.avatarUrl ||
+        rawData?.coverUrl ||
+        rawData?.imageUrl ||
+        rawData?.url ||
+        (rawData?.data as Record<string, unknown> | undefined)?.avatarUrl ||
+        (rawData?.data as Record<string, unknown> | undefined)?.coverUrl ||
+        (rawData?.data as Record<string, unknown> | undefined)?.url ||
+        presigned.fileKey;
+
+    const confirmData = await confirmUploadWithBackend(
+        type,
+        String(resolvedUrl),
+        postId,
+        token
+    );
 
     return {
         ...confirmData,
+        avatarUrl: type === 'avatar' ? String(resolvedUrl) : (confirmData.avatarUrl as string),
+        coverUrl: type === 'cover' ? String(resolvedUrl) : (confirmData.coverUrl as string),
         fileKey: presigned.fileKey,
         width: processed.width,
         height: processed.height,

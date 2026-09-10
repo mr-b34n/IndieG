@@ -13,8 +13,7 @@ import {
     faUser,
     faGear,
     faRightFromBracket,
-    faChevronDown,
-    faCode
+    faChevronDown
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from '@/features/auth';
 import { getCurrentAuthor } from "@/features/post";
@@ -215,18 +214,6 @@ export const Header = () => {
                                             >
                                                 <FontAwesomeIcon icon={faGear} className="w-3.5 text-[#8B9097]" />
                                                 <span>{t('common.settings', { defaultValue: 'Cài đặt' })}</span>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setShowUserMenu(false);
-                                                    navigate({ to: "/developer" });
-                                                }}
-                                                className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-[#1597FF] hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
-                                            >
-                                                <FontAwesomeIcon icon={faCode} className="w-3.5 text-[#1597FF]" />
-                                                <span>Storage / API Tester</span>
                                             </button>
                                         </div>
 
