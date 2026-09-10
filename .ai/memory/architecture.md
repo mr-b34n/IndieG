@@ -84,4 +84,4 @@ Implications:
 - Follow defined dimension, crop, and quality policies (Avatar: 256x256 WebP Q85, Cover: max 1920px WebP Q85, Post: max 1600x1600 WebP Q80).
 - Post-upload profile confirmation targets `PATCH /profiles/me` with a fully qualified public URL (via `getPublicStorageUrl` using `VITE_R2_PUBLIC_URL` or presigned domain) to satisfy backend `@IsUrl()` validation.
 - All API endpoints must normalize leading and trailing slashes through `getApiBaseUrl()` and strip extra slashes to avoid double-slash (`//endpoint`) routing errors.
-- Dev proxy fallback configured in `vite.config.ts` for relative API forwarding to `http://localhost:3636`.
+- SPA frontend routes (such as `/auth`) are handled directly by Vite dev server (`index.html`), while backend API calls use direct absolute URLs from `getApiBaseUrl()` (pointing to `http://localhost:3636` or `VITE_API_BASE_URL`).
