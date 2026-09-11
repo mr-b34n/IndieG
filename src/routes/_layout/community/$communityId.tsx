@@ -684,7 +684,7 @@ export function CommunityDetailPage() {
                 </div>
 
                 {/* CENTER COLUMN: Main Content & Activity Feed */}
-                <main className="flex-1 w-full min-w-0 max-w-[840px] flex flex-col gap-6">
+                <main className="flex-1 w-full min-w-0 flex flex-col gap-6">
                     {/* Compact Community Header */}
                     <CommunityHubHeader
                         name={community.name}

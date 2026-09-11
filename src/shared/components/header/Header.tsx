@@ -30,7 +30,6 @@ export const Header = () => {
     const toggleLeft = useSidebarStore((state) => state.toggleLeft);
     const toggleRight = useSidebarStore((state) => state.toggleRight);
     const { pathname } = useLocation();
-    const isHomePage = pathname === '/' || pathname === '';
     const hideSidebars = 
         pathname.startsWith('/settings') || 
         pathname.startsWith('/profile') || 
@@ -52,7 +51,7 @@ export const Header = () => {
         user?.avatar_url ||
         customAvatar ||
         (user?.user_metadata?.avatar_url as string | undefined) ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
+        "";
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -159,8 +158,8 @@ export const Header = () => {
                             )}
                         </div>
 
-                        {/* User Avatar Menu (Only displayed when not on home page) */}
-                        {!isHomePage && (
+                        {/* User Avatar Menu (Only displayed when left sidebar is hidden/not present) */}
+                        {hideSidebars && (
                             <div className="relative shrink-0" ref={userMenuRef}>
                                 <button
                                     type="button"
@@ -170,11 +169,20 @@ export const Header = () => {
                                     }}
                                     className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-[#14171A] transition-colors cursor-pointer group"
                                 >
-                                    <img
-                                        src={avatarUrl}
-                                        alt="User avatar"
-                                        className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
-                                    />
+                                    {avatarUrl ? (
+                                        <img
+                                            src={avatarUrl}
+                                            alt="User avatar"
+                                            className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                            {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
+                                        </div>
+                                    )}
                                     <FontAwesomeIcon
                                         icon={faChevronDown}
                                         className={`text-[10px] text-[#8B9097] group-hover:text-[#E8E9EA] transition-transform duration-200 ${

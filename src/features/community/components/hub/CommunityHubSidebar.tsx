@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faHouse,
@@ -9,6 +9,7 @@ import {
     faEllipsis,
     faChevronLeft,
     faChevronRight,
+    faChevronDown,
     faUsers,
     faTrophy,
     faFileLines,
@@ -43,7 +44,6 @@ export const CommunityHubSidebar = ({
     reportsCount,
 }: CommunityHubSidebarProps) => {
     const [isMoreOpen, setIsMoreOpen] = useState(false);
-    const moreRef = useRef<HTMLDivElement>(null);
 
     const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
@@ -89,23 +89,12 @@ export const CommunityHubSidebar = ({
             : []),
     ];
 
-    // Close "More" dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
-                setIsMoreOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
     const isMoreActive = moreNavItems.some((item) => item.id === activeNav);
 
     return (
         <aside
             className={`flex flex-col justify-between select-none ${
-                isCollapsed ? "w-12 items-center" : "w-full"
+                isCollapsed ? "w-12 items-start" : "w-full"
             }`}
         >
             <div className="w-full flex flex-col gap-3">
@@ -125,12 +114,12 @@ export const CommunityHubSidebar = ({
                         </button>
                     </div>
                 ) : (
-                    <div className="flex justify-center pt-1 h-8">
+                    <div className="flex items-center justify-start pl-1 pt-1 h-8">
                         <button
                             type="button"
                             onClick={onToggleCollapse}
                             title={isVi ? "Mở rộng thanh điều hướng" : "Expand sidebar"}
-                            className="w-7 h-7 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
+                            className="w-8 h-8 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
                         >
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
@@ -147,14 +136,11 @@ export const CommunityHubSidebar = ({
                             <button
                                 key={item.id}
                                 type="button"
-                                onClick={() => {
-                                    onNavChange(item.id);
-                                    setIsMoreOpen(false);
-                                }}
+                                onClick={() => onNavChange(item.id)}
                                 title={isCollapsed ? label : undefined}
                                 className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                     isCollapsed
-                                        ? "w-9 justify-center mx-auto"
+                                        ? "w-9 justify-center"
                                         : "w-full px-2.5 gap-2.5 text-left"
                                 } ${
                                     isActive
@@ -189,15 +175,15 @@ export const CommunityHubSidebar = ({
                         );
                     })}
 
-                    {/* "More" Destination Item */}
-                    <div ref={moreRef} className="relative w-full">
+                    {/* "More" Destination Item with inline downward accordion */}
+                    <div className="w-full flex flex-col">
                         <button
                             type="button"
                             onClick={() => setIsMoreOpen(!isMoreOpen)}
                             title={isCollapsed ? (isVi ? "Thêm" : "More") : undefined}
                             className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                 isCollapsed
-                                    ? "w-9 justify-center mx-auto"
+                                    ? "w-9 justify-center"
                                     : "w-full px-2.5 gap-2.5 text-left"
                             } ${
                                 isMoreActive || isMoreOpen
@@ -215,10 +201,18 @@ export const CommunityHubSidebar = ({
                             </div>
 
                             {!isCollapsed && (
-                                <span className="truncate flex-1">{isVi ? "Thêm..." : "More"}</span>
+                                <>
+                                    <span className="truncate flex-1">{isVi ? "Thêm..." : "More"}</span>
+                                    <FontAwesomeIcon
+                                        icon={faChevronDown}
+                                        className={`text-[10px] text-text-faint transition-transform duration-200 ${
+                                            isMoreOpen ? "rotate-180 text-primary" : ""
+                                        }`}
+                                    />
+                                </>
                             )}
 
-                            {isMoreActive && !isCollapsed && (
+                            {isMoreActive && !isCollapsed && !isMoreOpen && (
                                 <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                             )}
 
@@ -230,13 +224,13 @@ export const CommunityHubSidebar = ({
                             )}
                         </button>
 
-                        {/* More Popup Dropdown Menu */}
+                        {/* Inline downward sub-tab list */}
                         {isMoreOpen && (
                             <div
-                                className={`absolute z-50 py-1.5 bg-surface border border-divider-primary/80 rounded-[6px] shadow-2xl animate-fade-in ${
+                                className={`flex flex-col gap-0.5 animate-fade-in ${
                                     isCollapsed
-                                        ? "left-full ml-2 top-0 w-44"
-                                        : "left-0 top-full mt-1.5 w-full"
+                                        ? "pt-1 gap-1"
+                                        : "pl-3 mt-1 border-l-2 border-divider-primary/60 ml-3.5"
                                 }`}
                             >
                                 {moreNavItems.map((subItem) => {
@@ -246,21 +240,32 @@ export const CommunityHubSidebar = ({
                                         <button
                                             key={subItem.id}
                                             type="button"
-                                            onClick={() => {
-                                                onNavChange(subItem.id);
-                                                setIsMoreOpen(false);
-                                            }}
-                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors cursor-pointer text-left ${
+                                            onClick={() => onNavChange(subItem.id)}
+                                            title={isCollapsed ? subLabel : undefined}
+                                            className={`group relative flex items-center rounded-[6px] text-xs font-medium transition-colors cursor-pointer ${
+                                                isCollapsed
+                                                    ? "w-9 h-8 justify-center"
+                                                    : "w-full px-2 py-1.5 gap-2 text-left"
+                                            } ${
                                                 isSubActive
-                                                    ? "bg-primary/10 text-primary font-bold"
+                                                    ? "bg-primary/15 text-primary font-bold"
                                                     : "text-text-muted hover:text-text hover:bg-surface-hover/60"
                                             }`}
                                         >
-                                            <FontAwesomeIcon
-                                                icon={subItem.icon}
-                                                className={`text-xs w-4 shrink-0 ${isSubActive ? "text-primary" : "text-text-faint"}`}
-                                            />
-                                            <span className="truncate">{subLabel}</span>
+                                            <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                                                <FontAwesomeIcon
+                                                    icon={subItem.icon}
+                                                    className={`text-[11px] shrink-0 ${
+                                                        isSubActive ? "text-primary" : "text-text-faint group-hover:text-text"
+                                                    }`}
+                                                />
+                                            </div>
+                                            {!isCollapsed && <span className="truncate flex-1">{subLabel}</span>}
+                                            {isCollapsed && (
+                                                <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                                    {subLabel}
+                                                </div>
+                                            )}
                                         </button>
                                     );
                                 })}
@@ -290,14 +295,11 @@ export const CommunityHubSidebar = ({
                                     <button
                                         key={item.id}
                                         type="button"
-                                        onClick={() => {
-                                            onNavChange(item.id);
-                                            setIsMoreOpen(false);
-                                        }}
+                                        onClick={() => onNavChange(item.id)}
                                         title={isCollapsed ? label : undefined}
                                         className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                             isCollapsed
-                                                ? "w-9 justify-center mx-auto"
+                                                ? "w-9 justify-center"
                                                 : "w-full px-2.5 gap-2.5 text-left"
                                         } ${
                                             isActive

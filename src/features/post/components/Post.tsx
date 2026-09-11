@@ -327,11 +327,20 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             <div className="flex flex-row items-center justify-between gap-3 mb-2.5">
                 <div className="flex flex-row items-center gap-2.5 min-w-0">
                     <div className="relative shrink-0 cursor-pointer hover:opacity-85 transition-opacity" onClick={handleAuthorClick}>
-                        <img
-                            src={authorAvatar}
-                            alt={authorName}
-                            className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
-                        />
+                        {authorAvatar ? (
+                            <img
+                                src={authorAvatar}
+                                alt={authorName}
+                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
+                                onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                                }}
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                {(authorName || "G").replace(/^@/, "").charAt(0) || "G"}
+                            </div>
+                        )}
                         {rank && (
                             <span
                                 title={getRankLabel(rank, language)}

@@ -333,7 +333,7 @@ export const CreatePostBox = ({
         user?.avatar_url ||
         customAvatar ||
         (user?.user_metadata?.avatar_url as string | undefined) ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
+        "";
 
     const { communities } = useCommunitiesStore();
     const joinedCommunities = useMemo(() => {
@@ -589,11 +589,20 @@ export const CreatePostBox = ({
                 >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative shrink-0">
-                            <img
-                                src={avatarUrl}
-                                alt="User"
-                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
-                            />
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt="User"
+                                    className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                                    }}
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                    {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
+                                </div>
+                            )}
                             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-bg" />
                         </div>
 
@@ -645,11 +654,20 @@ export const CreatePostBox = ({
                     {/* Metadata: User & Community Selector */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <img
-                                src={avatarUrl}
-                                alt="User"
-                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80 shrink-0"
-                            />
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt="User"
+                                    className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80 shrink-0"
+                                    onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                                    }}
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 shrink-0 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                    {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
+                                </div>
+                            )}
 
                             {!hideCommunitySelector && (
                                 <div className="flex items-center gap-2 min-w-0 w-full sm:w-80">

@@ -42,7 +42,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
     return (
         <div
             onClick={handleCardClick}
-            className="group relative w-full flex flex-col bg-[#0F1216] hover:bg-[#14181F] border border-[#1F242C] hover:border-[#303744] rounded-lg overflow-hidden cursor-pointer transition-all duration-250 ease-out hover:scale-[1.025] hover:shadow-2xl hover:shadow-black/70 select-none"
+            className="group relative w-full flex flex-col bg-[#0F1216] hover:bg-[#14181F] rounded-lg overflow-hidden cursor-pointer transition-all duration-250 ease-out hover:shadow-2xl hover:shadow-black/70 select-none"
         >
             {/* 1. Game Art Canvas with atmospheric gradient expansion & subtle desaturation on hover */}
             <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-[#14171D]">

@@ -65,7 +65,7 @@ export const LeftBar = () => {
         user?.avatar_url ||
         customAvatar ||
         (user?.user_metadata?.avatar_url as string | undefined) ||
-        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user?.username || displayName || "Felix")}`;
+        "";
 
     const handleProfileClick = () => {
         navigate({ to: "/profile/$userId", params: { userId: "me" } });
@@ -88,11 +88,20 @@ export const LeftBar = () => {
                     className="flex flex-row items-center gap-3 px-3 py-2.5 mb-1
                         rounded-md cursor-pointer hover:bg-surface-hover/70 transition-colors group"
                 >
-                    <img
-                        src={avatarUrl}
-                        alt="avatar"
-                        className="w-8 h-8 rounded-full ring-1 ring-border/80 shrink-0 object-cover"
-                    />
+                    {avatarUrl ? (
+                        <img
+                            src={avatarUrl}
+                            alt="avatar"
+                            className="w-8 h-8 rounded-full ring-1 ring-border/80 shrink-0 object-cover"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                        />
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 shrink-0 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                            {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
+                        </div>
+                    )}
                     <div className="flex flex-col leading-tight min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 min-w-0">
                             <p className="font-bold text-xs sm:text-sm text-text truncate">{displayName}</p>
