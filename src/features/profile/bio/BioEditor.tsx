@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faBold,
@@ -62,6 +63,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<HTMLDivElement>(null);
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const presetContainerRef = useRef<HTMLDivElement>(null);
 
     // Floating contextual toolbar state
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
@@ -196,49 +198,63 @@ export const BioEditor: React.FC<BioEditorProps> = ({
             updateActiveFormatStates(currentDoc, offsets);
         }
 
-        // Calculate position relative to container
+        // Calculate fixed viewport position for createPortal
         const rangeRect = range.getBoundingClientRect();
-        const containerRect = containerEl.getBoundingClientRect();
-
         const toolbarEstimatedWidth = 280;
-        const toolbarEstimatedHeight = 44;
+        const toolbarEstimatedHeight = 42;
 
-        // Position directly above the selected text
-        let top = rangeRect.top - containerRect.top - toolbarEstimatedHeight - 10;
-        let left = rangeRect.left - containerRect.left + rangeRect.width / 2 - toolbarEstimatedWidth / 2;
+        // Position directly above the selected text in viewport coordinates
+        let top = rangeRect.top - toolbarEstimatedHeight - 10;
+        let left = rangeRect.left + rangeRect.width / 2 - toolbarEstimatedWidth / 2;
 
-        // Flip below if too close to the top of the container
-        if (top < 10) {
-            top = rangeRect.bottom - containerRect.top + 10;
+        // Flip below if too close to viewport top (< 60px)
+        if (top < 60) {
+            top = rangeRect.bottom + 10;
         }
 
-        // Clamp horizontally within container bounds
-        const maxLeft = Math.max(10, containerRect.width - toolbarEstimatedWidth - 12);
+        // Clamp horizontally within viewport
+        const maxLeft = Math.max(10, window.innerWidth - toolbarEstimatedWidth - 12);
         left = Math.max(12, Math.min(maxLeft, left));
 
         setToolbarPos({ top, left });
         setIsToolbarOpen(true);
     }, [updateActiveFormatStates]);
 
-    // Listen to selectionchange and mouseup
+    // Listen to selectionchange, scroll, and resize
     useEffect(() => {
         const handleSelection = () => {
             updateSelectionToolbar();
         };
 
+        const handleScrollOrResize = () => {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
+                updateSelectionToolbar();
+            }
+        };
+
         document.addEventListener("selectionchange", handleSelection);
+        window.addEventListener("scroll", handleScrollOrResize, true);
+        window.addEventListener("resize", handleScrollOrResize);
+
         return () => {
             document.removeEventListener("selectionchange", handleSelection);
+            window.removeEventListener("scroll", handleScrollOrResize, true);
+            window.removeEventListener("resize", handleScrollOrResize);
         };
     }, [updateSelectionToolbar]);
 
     // Close menus on outside click
     useEffect(() => {
         const handleMouseDownOutside = (e: MouseEvent) => {
-            if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+            const target = e.target as Node;
+            if (toolbarRef.current && !toolbarRef.current.contains(target)) {
                 setFontMenuOpen(false);
                 setColorMenuOpen(false);
                 setAlignMenuOpen(false);
+            }
+            if (presetContainerRef.current && !presetContainerRef.current.contains(target)) {
+                setPresetMenuOpen(false);
             }
         };
         document.addEventListener("mousedown", handleMouseDownOutside);
@@ -345,20 +361,24 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         return BIO_COLORS.find((c) => c.value === activeColor) || BIO_COLORS[0];
     }, [activeColor]);
 
+    const shouldOpenUpwards = toolbarPos.top + 240 > (typeof window !== "undefined" ? window.innerHeight : 800);
+
     return (
         <div
             ref={containerRef}
-            className="relative w-full bg-[#13161C] p-3.5 rounded-[8px] border border-[#1688E8]/40 shadow-inner group focus-within:border-[#1688E8] focus-within:ring-1 focus-within:ring-[#1688E8]/30 transition-all"
+            className="relative overflow-visible z-10 w-full bg-[#13161C] p-3.5 rounded-[8px] border border-[#1688E8]/40 shadow-inner group focus-within:border-[#1688E8] focus-within:ring-1 focus-within:ring-[#1688E8]/30 transition-all"
         >
-            {/* ── SELECTION-BASED CONTEXTUAL FLOATING TOOLBAR ── */}
-            {isToolbarOpen && (
+            {/* ── SELECTION-BASED CONTEXTUAL FLOATING TOOLBAR (Rendered into document.body to prevent clipping by any parent div) ── */}
+            {isToolbarOpen && typeof document !== "undefined" && createPortal(
                 <div
                     ref={toolbarRef}
                     style={{
+                        position: "fixed",
                         top: `${toolbarPos.top}px`,
                         left: `${toolbarPos.left}px`,
+                        zIndex: 99999,
                     }}
-                    className="absolute z-50 flex items-center gap-1 px-1.5 py-1 rounded-[8px] bg-[#141822]/95 border border-[#2A3142] shadow-[0_12px_32px_rgba(0,0,0,0.7)] backdrop-blur-md animate-fade-in text-xs font-semibold select-none"
+                    className="flex items-center gap-1 px-1.5 py-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-[0_16px_36px_rgba(0,0,0,0.85)] backdrop-blur-md animate-fade-in text-xs font-semibold select-none"
                     onMouseDown={(e) => {
                         // Prevent losing text selection when clicking anywhere inside the toolbar
                         e.preventDefault();
@@ -432,7 +452,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                         </button>
 
                         {fontMenuOpen && (
-                            <div className="absolute top-full mt-1.5 left-0 w-36 py-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col">
+                            <div className={`absolute ${shouldOpenUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"} left-0 w-36 py-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col`}>
                                 {BIO_FONTS.map((f) => (
                                     <button
                                         key={f.value}
@@ -476,7 +496,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                         </button>
 
                         {colorMenuOpen && (
-                            <div className="absolute top-full mt-1.5 left-0 w-36 p-1.5 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col gap-1">
+                            <div className={`absolute ${shouldOpenUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"} left-0 w-36 p-1.5 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col gap-1`}>
                                 {BIO_COLORS.map((c) => (
                                     <button
                                         key={c.value}
@@ -530,7 +550,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                         </button>
 
                         {alignMenuOpen && (
-                            <div className="absolute top-full mt-1.5 right-0 py-1 px-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex items-center gap-1">
+                            <div className={`absolute ${shouldOpenUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"} right-0 py-1 px-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex items-center gap-1`}>
                                 {BIO_ALIGNMENTS.map((a) => (
                                     <button
                                         key={a.value}
@@ -558,7 +578,8 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                             </div>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* ── INLINE WYSIWYG CONTENTEDITABLE AREA ── */}
@@ -575,7 +596,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
             {/* ── SUBTLE BOTTOM META ROW (Presets + Live Character Counter) ── */}
             <div className="mt-3 pt-2.5 border-t border-[#1F2532]/60 flex items-center justify-between text-[11px] text-[#6A707E] select-none">
                 {/* Presets dropdown chip */}
-                <div className="relative">
+                <div className="relative" ref={presetContainerRef}>
                     <button
                         type="button"
                         onClick={() => setPresetMenuOpen((prev) => !prev)}

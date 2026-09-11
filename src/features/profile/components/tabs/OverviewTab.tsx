@@ -91,7 +91,7 @@ export const OverviewTab = ({
             {/* ── ROW 1: PLAYER IDENTITY ─────────────────────── */}
             {showPlayerIdentity && (
                 <div className="w-full">
-                    <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative overflow-hidden transition-all ${cardCustomStyle("playerIdentity")}`}>
+                    <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 flex flex-col gap-4 shadow-sm relative overflow-visible z-10 transition-all ${cardCustomStyle("playerIdentity")}`}>
                         <div className="flex items-center justify-between pb-1.5 border-b border-[#181C24]/60">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm">🎯</span>

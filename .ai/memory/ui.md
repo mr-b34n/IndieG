@@ -187,6 +187,7 @@ Decision:
    - No permanent toolbar: Retains clean dark gaming aesthetic without visual clutter.
    - Native input preservation: ContentEditable element preserves native typing, backspace, and IME while synchronizing model to `BioDocument`.
    - Character counter strictly capped at 300 characters with responsive status styling.
+   - Contextual toolbar renders via React `createPortal` with fixed viewport coordinates and smart directional popovers (`top-full` / `bottom-full`), preventing clipping or layering behind outer card containers.
 4. **Profile Edit State Recovery**:
    - `handleDiscardEdit` in `UserProfile.tsx` uses `setCustomGear(snapshotGear)` to avoid `ReferenceError` on gear restoration.
 
