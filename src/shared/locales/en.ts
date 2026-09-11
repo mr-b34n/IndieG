@@ -224,7 +224,10 @@ export const en = {
         viewAll: "View All",
         feedLoadError: "An error occurred while loading the feed",
         retry: "Retry",
-        postSubmitError: "An error occurred while publishing the post. Please try again!"
+        postSubmitError: "An error occurred while publishing the post. Please try again!",
+        titleMinLenError: "Title must be at least {min} characters ({current}/{min})",
+        contentMinLenError: "Content must be at least {min} characters ({current}/{min})",
+        contentMaxLenError: "Content cannot exceed {max} characters"
     },
     post: {
         post: "Post",
@@ -349,6 +352,8 @@ export const en = {
         headerTitle: "COMMUNITIES",
         headerSub: "Find your games. Find your people.",
         createCommunity: "Create community",
+        nameMinLenError: "Community name must be at least {min} characters ({current}/{min})",
+        descMinLenError: "Description must be at least {min} characters ({current}/{min})",
         communitiesStatLabel: "COMMUNITIES",
         onlineNowStatLabel: "ONLINE NOW",
         gamersJoinedStatLabel: "GAMERS JOINED",
@@ -548,6 +553,7 @@ export const en = {
         reportingPostBy: "You are reporting a post by {author}. Please select a reason:",
         additionalDetails: "Additional details (optional)",
         provideExtraContext: "Provide any extra context here...",
+        detailsMinLenError: "Report detail must be at least {min} characters ({current}/{min})",
         submitReport: "Submit Report"
     },
     bookmark: {
@@ -740,6 +746,7 @@ export const en = {
         achievementsLabel: "Achievements:",
         guestbookFormTitle: "Leave a message on {name}'s wall",
         guestbookHint: "💡 Tip: Share a public greeting or congratulate on a recent achievement!",
+        guestbookMinLenError: "Message must be at least {min} characters ({current}/{min})",
         editName: "Edit Name",
         unfriend: "Unfriend",
         blockUser: "Block User",
@@ -794,6 +801,8 @@ export const en = {
         emptyDesc: "Be the first to share your thoughts and start the discussion!",
         verifyEmailDesc: "Verify email ({email}) to comment on this post.",
         verifyOtpPrompt: "Please enter OTP to comment on this post.",
+        minLenError: "Comment must be at least {min} characters ({current}/{min})",
+        maxLenError: "Comment cannot exceed {max} characters",
         options: "Comment options"
     },
     game: {

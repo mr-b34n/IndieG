@@ -223,6 +223,26 @@ Key Architectural Decisions:
    - Order: Player Identity → Game Mastery → Recent Activity → Community Reputation & Battlestation Loadout.
    - Compact section gaps (24px) and dark neutral background (`#0A0C0E`).
 
+---
+
+## Decision: Input Min/Max Length Validation Warnings & Localization
+
+Status: Active
+
+Date: 2026-09-11
+
+Decision:
+
+Input fields across the application (Comments, Posts, Communities, Reports, Guestbook) strictly enforce min/max length validation matching backend API contracts, and display localized warning messages (`en.ts` / `vi.ts`) with warning icons (`faTriangleExclamation`) when input constraints are not met.
+
+Key Validation Rules:
+1. **Comments & Replies**: Min length 6 (or image attachment present), Max length 1000. Submit button disabled when invalid.
+2. **Posts**: Title min length 6 (if present), Max length 200. Content min length 6 (or file attachment present), Max length 10000.
+3. **Communities**: Name min length 3. Description min length 6 (if present).
+4. **Reports**: Additional details min length 6 (if present).
+5. **Guestbook**: Comment min length 6. Submit button disabled when invalid.
+6. **Localization**: All error warnings use parameterized translation keys (e.g. `comment.minLenError`, `feed.titleMinLenError`, `community.nameMinLenError`, `report.detailsMinLenError`, `profile.guestbookMinLenError`) supporting English and Vietnamese.
+
 
 
 

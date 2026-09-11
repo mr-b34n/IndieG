@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faCheckCircle, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
@@ -15,8 +15,10 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
     const [isSubmitted, setIsSubmitted] = useState(false);
     const createReportMutation = useCreateReportMutation();
 
+    const isDetailsValid = details.trim().length === 0 || details.trim().length >= 6;
+
     const handleSubmit = async () => {
-        if (!selectedReason) return;
+        if (!selectedReason || !isDetailsValid) return;
         if (!useAuthStore.getState().requireVerifiedEmail("gửi báo cáo vi phạm")) return;
         
         try {
@@ -104,6 +106,12 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
                                 placeholder={t('report.provideExtraContext')}
                                 className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-24"
                             />
+                            {details.trim().length > 0 && details.trim().length < 6 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('report.detailsMinLenError', { min: 6, current: details.trim().length })}</span>
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-row gap-3 pt-2">
@@ -115,9 +123,9 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={!selectedReason}
-                                className={`flex-1 py-2.5 rounded-full font-semibold text-sm transition-colors ${selectedReason
-                                    ? "bg-accent-500 text-white hover:bg-accent-600 shadow-sm"
+                                disabled={!selectedReason || !isDetailsValid}
+                                className={`flex-1 py-2.5 rounded-full font-semibold text-sm transition-colors ${selectedReason && isDetailsValid
+                                    ? "bg-accent-500 text-white hover:bg-accent-600 shadow-sm cursor-pointer"
                                     : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                             >

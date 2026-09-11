@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faComment, faThumbtack } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faComment, faThumbtack, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
@@ -47,7 +47,11 @@ export const EditPostModal = ({
     const [pinned, setPinned] = useState<boolean>(initialPinned ?? false);
     const [isSaving, setIsSaving] = useState(false);
 
-    const canSave = content.trim().length > 0 && !isSaving;
+    const titleLen = title.trim().length;
+    const contentLen = content.trim().length;
+    const isTitleValid = titleLen === 0 || (titleLen >= 6 && titleLen <= 200);
+    const isContentValid = (contentLen >= 6 || (contentLen === 0 && attachments.length > 0)) && contentLen <= 10000;
+    const canSave = isTitleValid && isContentValid && (titleLen > 0 || contentLen > 0 || attachments.length > 0) && !isSaving;
 
     const handleSave = async () => {
         if (!canSave) return;
@@ -114,6 +118,12 @@ export const EditPostModal = ({
                             placeholder={t('feed.postTitle')}
                             className="w-full h-10 px-4 bg-surface-hover border border-border rounded-xl text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
                         />
+                        {title.trim().length > 0 && title.trim().length < 6 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('feed.titleMinLenError', { min: 6, current: title.trim().length })}</span>
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -127,6 +137,18 @@ export const EditPostModal = ({
                             placeholder={t('feed.whatOnMind')}
                             className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-32"
                         />
+                        {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length })}</span>
+                            </p>
+                        )}
+                        {content.trim().length > 10000 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('feed.contentMaxLenError', { max: 10000 })}</span>
+                            </p>
+                        )}
                     </div>
 
                     <AttachmentPicker

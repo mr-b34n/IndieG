@@ -335,7 +335,10 @@ const CommentItem = ({
 
     const handleSubmitSubReply = async () => {
         if (!requireVerifiedEmail("gửi bình luận")) return;
-        if (!replyText.trim() && !replyImage.previewUrl) return;
+        const textLen = replyText.trim().length;
+        if (textLen > 0 && textLen < 6) return;
+        if (textLen === 0 && !replyImage.previewUrl) return;
+        if (textLen > 1000) return;
         const imageDataUrl = await replyImage.toDataUrl();
         onAddReply(comment.id, replyText.trim(), imageDataUrl);
         setReplyText("");
@@ -356,7 +359,8 @@ const CommentItem = ({
 
     const handleSaveEdit = () => {
         if (!requireVerifiedEmail("chỉnh sửa bình luận")) return;
-        if (!editText.trim()) return;
+        const editLen = editText.trim().length;
+        if (editLen < 6 || editLen > 1000) return;
         if (onEditComment) {
             onEditComment(comment.id, editText.trim());
         }
@@ -517,6 +521,18 @@ const CommentItem = ({
                                     rows={2}
                                     autoFocus
                                 />
+                                {editText.trim().length > 0 && editText.trim().length < 6 && (
+                                    <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 my-1">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} />
+                                        <span>{t('comment.minLenError', { min: 6, current: editText.trim().length })}</span>
+                                    </p>
+                                )}
+                                {editText.trim().length > 1000 && (
+                                    <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 my-1">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} />
+                                        <span>{t('comment.maxLenError', { max: 1000 })}</span>
+                                    </p>
+                                )}
                                 <div className="flex justify-end gap-2 pt-1 border-t border-border/40">
                                     <button
                                         type="button"
@@ -528,8 +544,8 @@ const CommentItem = ({
                                     <button
                                         type="button"
                                         onClick={handleSaveEdit}
-                                        disabled={!editText.trim()}
-                                        className="px-3 py-1 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary-hover disabled:opacity-50 transition-colors"
+                                        disabled={editText.trim().length < 6 || editText.trim().length > 1000}
+                                        className="px-3 py-1 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {t('comment.save')}
                                     </button>
@@ -602,6 +618,19 @@ const CommentItem = ({
                                 <p className="text-xs text-accent-500 font-medium">{replyImage.error}</p>
                             )}
 
+                            {replyText.trim().length > 0 && replyText.trim().length < 6 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 my-1">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('comment.minLenError', { min: 6, current: replyText.trim().length })}</span>
+                                </p>
+                            )}
+                            {replyText.trim().length > 1000 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 my-1">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('comment.maxLenError', { max: 1000 })}</span>
+                                </p>
+                            )}
+
                             <div className="flex flex-row items-center justify-between gap-2 pt-2 border-t border-border/60">
                                 <div className="flex flex-row items-center gap-1">
                                     <button
@@ -645,10 +674,15 @@ const CommentItem = ({
                                     </button>
                                     <button
                                         onClick={handleSubmitSubReply}
-                                        disabled={!replyText.trim() && !replyImage.previewUrl}
+                                        disabled={
+                                            (replyText.trim().length > 0 && replyText.trim().length < 6) ||
+                                            replyText.trim().length > 1000 ||
+                                            (!replyText.trim() && !replyImage.previewUrl)
+                                        }
                                         className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                                            replyText.trim() || replyImage.previewUrl
-                                                ? "bg-primary text-white hover:bg-primary-hover"
+                                            (replyText.trim().length >= 6 || (!replyText.trim() && replyImage.previewUrl)) &&
+                                            replyText.trim().length <= 1000
+                                                ? "bg-primary text-white hover:bg-primary-hover cursor-pointer"
                                                 : "bg-surface-hover text-text-faint cursor-not-allowed"
                                         }`}
                                     >
@@ -947,7 +981,10 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
 
     const handleMainReplySubmit = async () => {
         if (!requireVerifiedEmail("gửi bình luận")) return;
-        if (!commentText.trim() && !mainImage.previewUrl) return;
+        const textLen = commentText.trim().length;
+        if (textLen > 0 && textLen < 6) return;
+        if (textLen === 0 && !mainImage.previewUrl) return;
+        if (textLen > 1000) return;
         const textContent = commentText.trim();
         const imageDataUrl = await mainImage.toDataUrl();
         const authorName = user?.name || user?.username || getCurrentAuthor() || "You";
@@ -1030,7 +1067,8 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     };
 
 
-    const canSubmitMain = commentText.trim().length > 0 || !!mainImage.previewUrl;
+    const mainTextLen = commentText.trim().length;
+    const canSubmitMain = (mainTextLen >= 6 || (mainTextLen === 0 && !!mainImage.previewUrl)) && mainTextLen <= 1000;
 
     const removeCommentFromTree = (list: CommentData[], targetId: string | number): CommentData[] => {
         return list
@@ -1175,6 +1213,19 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                             )}
                             {mainImage.error && (
                                 <p className="text-xs text-accent-500 font-medium">{mainImage.error}</p>
+                            )}
+
+                            {commentText.trim().length > 0 && commentText.trim().length < 6 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('comment.minLenError', { min: 6, current: commentText.trim().length })}</span>
+                                </p>
+                            )}
+                            {commentText.trim().length > 1000 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('comment.maxLenError', { max: 1000 })}</span>
+                                </p>
                             )}
 
                             <div className="flex flex-row justify-between items-center pt-2 border-t border-border/60">

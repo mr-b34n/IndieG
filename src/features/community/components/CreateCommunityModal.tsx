@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faUsers, faLayerGroup, faImage, faPlus, faTag, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faUsers, faLayerGroup, faImage, faPlus, faTag, faShieldHalved, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityData } from "../types";
 import { getCurrentAuthor } from "@/features/post";
@@ -29,6 +30,7 @@ interface CreateCommunityModalProps {
 }
 
 export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onClose }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const addCommunity = useCommunitiesStore((state) => state.addCommunity);
     const createCommunity = useCommunitiesStore((state) => state.createCommunity);
@@ -56,9 +58,12 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
         return null;
     }
 
+    const isNameValid = name.trim().length >= 3;
+    const isDescValid = description.trim().length === 0 || description.trim().length >= 6;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!isNameValid || !isDescValid) return;
 
         const authorUsername = getCurrentAuthor();
         const { user, customAvatar } = useAuthStore.getState();
@@ -158,6 +163,12 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                             className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary transition-colors"
                             required
                         />
+                        {name.trim().length > 0 && name.trim().length < 3 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('community.nameMinLenError', { min: 3, current: name.trim().length })}</span>
+                            </p>
+                        )}
                     </div>
 
                     {/* Category */}
@@ -189,6 +200,12 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                             placeholder="Giới thiệu mục tiêu, phong cách chơi hoặc chủ đề thảo luận chính của cộng đồng..."
                             className="p-2.5 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-medium focus:outline-none focus:border-primary resize-none transition-colors"
                         />
+                        {description.trim().length > 0 && description.trim().length < 6 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('community.descMinLenError', { min: 6, current: description.trim().length })}</span>
+                            </p>
+                        )}
                     </div>
 
                     {/* Logo preset selector */}

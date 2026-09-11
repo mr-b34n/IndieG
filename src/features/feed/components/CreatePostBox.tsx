@@ -11,7 +11,8 @@ import {
     faEyeSlash,
     faPaperclip,
     faXmark,
-    faLock
+    faLock,
+    faTriangleExclamation
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useNavigate } from "@tanstack/react-router"
@@ -463,7 +464,11 @@ export const CreatePostBox = ({
         e.target.value = "";
     };
 
-    const hasValidContent = content.trim().length > 0 || title.trim().length > 0 || attachments.length > 0;
+    const titleLen = title.trim().length;
+    const contentLen = content.trim().length;
+    const isTitleValid = titleLen === 0 || (titleLen >= 6 && titleLen <= 200);
+    const isContentValid = (contentLen >= 6 || (contentLen === 0 && attachments.length > 0)) && contentLen <= 10000;
+    const hasValidContent = isTitleValid && isContentValid && (titleLen > 0 || contentLen > 0 || attachments.length > 0);
     const canPost = communityId !== null && communityId !== undefined && hasValidContent && !isPosting;
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
@@ -701,6 +706,12 @@ export const CreatePostBox = ({
                                 placeholder={t('feed.postTitlePlaceholder') || "Give your post a title..."}
                                 className="w-full bg-transparent border-none outline-none text-sm font-bold text-text placeholder:text-text-faint py-1.5 px-0.5"
                             />
+                            {title.trim().length > 0 && title.trim().length < 6 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5 px-0.5">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('feed.titleMinLenError', { min: 6, current: title.trim().length })}</span>
+                                </p>
+                            )}
                         </div>
 
                         {/* Tags Field */}
@@ -736,6 +747,18 @@ export const CreatePostBox = ({
                                 {renderHighlightedContent(content)}
                                 {content.endsWith("\n") ? "\u200b" : null}
                             </div>
+                            {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1 px-2">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length })}</span>
+                                </p>
+                            )}
+                            {content.trim().length > 10000 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1 px-2">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('feed.contentMaxLenError', { max: 10000 })}</span>
+                                </p>
+                            )}
                         </div>
 
                         {/* Attachments preview */}

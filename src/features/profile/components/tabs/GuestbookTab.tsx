@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faPaperPlane, faHeart, faTrash, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faPen, faPaperPlane, faHeart, faTrash, faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import type { GuestbookComment } from "../../types";
 
 interface GuestbookTabProps {
@@ -44,12 +44,18 @@ export const GuestbookTab = ({
                 placeholder={t("profile.guestbookPlaceholder")}
                 className="w-full px-4 py-3 rounded-[8px] bg-[#13161C] text-[#F0F1F2] placeholder-[#666A71] text-xs font-medium focus:outline-none focus:bg-[#181C24] resize-none"
             />
+            {newCommentText.trim().length > 0 && newCommentText.trim().length < 6 && (
+                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                    <span>{t("profile.guestbookMinLenError", { min: 6, current: newCommentText.trim().length })}</span>
+                </p>
+            )}
             <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-[#8A8F98]">{t("profile.guestbookHint")}</span>
                 <button
                     type="submit"
-                    disabled={!newCommentText.trim() || isSubmitting}
-                    className="px-4 py-2 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] disabled:opacity-40 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center gap-2"
+                    disabled={newCommentText.trim().length < 6 || isSubmitting}
+                    className="px-4 py-2 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center gap-2"
                 >
                     <FontAwesomeIcon icon={isSubmitting ? faSpinner : faPaperPlane} className={isSubmitting ? "animate-spin" : ""} />
                     <span>{t("profile.postComment")}</span>

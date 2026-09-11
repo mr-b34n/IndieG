@@ -224,7 +224,10 @@ export const vi = {
         viewAll: "Xem tất cả",
         feedLoadError: "Đã xảy ra lỗi khi tải nguồn cấp bài viết",
         retry: "Thử lại",
-        postSubmitError: "Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!"
+        postSubmitError: "Đã có lỗi xảy ra khi đăng bài. Vui lòng thử lại!",
+        titleMinLenError: "Tiêu đề phải có ít nhất {min} ký tự ({current}/{min})",
+        contentMinLenError: "Nội dung phải có ít nhất {min} ký tự ({current}/{min})",
+        contentMaxLenError: "Nội dung không được vượt quá {max} ký tự"
     },
     post: {
         post: "Bài viết",
@@ -349,6 +352,8 @@ export const vi = {
         headerTitle: "CỘNG ĐỒNG",
         headerSub: "Tìm kiếm tựa game của bạn. Tìm kiếm những đồng đội cùng đam mê.",
         createCommunity: "Tạo cộng đồng",
+        nameMinLenError: "Tên cộng đồng phải có ít nhất {min} ký tự ({current}/{min})",
+        descMinLenError: "Mô tả cộng đồng phải có ít nhất {min} ký tự ({current}/{min})",
         communitiesStatLabel: "CỘNG ĐỒNG",
         onlineNowStatLabel: "ĐANG ONLINE",
         gamersJoinedStatLabel: "GAME THỦ THAM GIA",
@@ -548,6 +553,7 @@ export const vi = {
         reportingPostBy: "Bạn đang báo cáo bài viết của {author}. Vui lòng chọn lý do:",
         additionalDetails: "Chi tiết bổ sung (không bắt buộc)",
         provideExtraContext: "Cung cấp thêm ngữ cảnh ở đây...",
+        detailsMinLenError: "Chi tiết báo cáo phải có ít nhất {min} ký tự ({current}/{min})",
         submitReport: "Gửi báo cáo"
     },
     bookmark: {
@@ -740,6 +746,7 @@ export const vi = {
         achievementsLabel: "Thành tựu (Achievements):",
         guestbookFormTitle: "Gửi lời nhắn / Lưu bút lên tường của {name}",
         guestbookHint: "💡 Mẹo: Có thể gửi lời nhắn công khai hoặc chúc mừng thành tựu mới nhất!",
+        guestbookMinLenError: "Lời nhắn phải có ít nhất {min} ký tự ({current}/{min})",
         editName: "Sửa tên",
         unfriend: "Hủy kết bạn",
         blockUser: "Chặn người dùng",
@@ -794,6 +801,8 @@ export const vi = {
         emptyDesc: "Hãy là người đầu tiên chia sẻ suy nghĩ và bắt đầu cuộc thảo luận!",
         verifyEmailDesc: "Xác thực email ({email}) để gửi bình luận bài viết này.",
         verifyOtpPrompt: "Vui lòng nhập mã OTP để bình luận bài viết.",
+        minLenError: "Bình luận phải có ít nhất {min} ký tự ({current}/{min})",
+        maxLenError: "Bình luận không được vượt quá {max} ký tự",
         options: "Tùy chọn bình luận"
     },
     game: {
