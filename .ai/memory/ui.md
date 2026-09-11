@@ -186,10 +186,41 @@ Decision:
    - Selection-based contextual floating toolbar: B, I, S, Aa (font selector), Color (semantic palette), and Align pop up directly above highlighted text and format in place instantly.
    - No permanent toolbar: Retains clean dark gaming aesthetic without visual clutter.
    - Native input preservation: ContentEditable element preserves native typing, backspace, and IME while synchronizing model to `BioDocument`.
+   - Custom Enter & Backspace block handling: `handleKeyDown` intercepts Enter and Backspace to explicitly manage block splits (`splitBlockAtSelection`) and merges (`mergeBlockWithPrevious`) in `BioDocument` model, setting range caret accurately to line 2 without DOM corruption or cursor jumping.
+   - Self-update DOM sync protection (`isSelfUpdatingRef`): Prevents internal `onChange` state updates from unnecessarily resetting `innerHTML`, preserving browser caret selection.
    - Character counter strictly capped at 300 characters with responsive status styling.
    - Contextual toolbar renders via React `createPortal` with fixed viewport coordinates and smart directional popovers (`top-full` / `bottom-full`), preventing clipping or layering behind outer card containers.
 4. **Profile Edit State Recovery**:
    - `handleDiscardEdit` in `UserProfile.tsx` uses `setCustomGear(snapshotGear)` to avoid `ReferenceError` on gear restoration.
+
+---
+
+## Decision: Gaming Character Profile Overview Redesign
+
+Status: Active
+
+Date: 2026-09-11
+
+Decision:
+
+The Profile Overview page is redesigned into a **modern gaming character profile**, moving away from a generic social dashboard.
+
+Key Architectural Decisions:
+
+1. **Player Identity as Primary Anchor**:
+   - Bio rendered naturally without an enclosing card box, borders, or nested containers in view mode.
+   - Edit mode uses the inline selection-based `BioEditor`.
+2. **Game Mastery Visual Cards**:
+   - Focused on game artwork, title, hours played, rank, winrate, achievement progress bar, and skill stars.
+   - When empty, uses an intentional compact empty button instead of a large empty card.
+3. **Low-Weight Recent Activity Feed**:
+   - Reduced visual weight with concise activity rows (Posts, Comments, Achievements, Community).
+4. **Public Gaming Loadout Battlestation**:
+   - Public view renders hardware gear as a high-density spec sheet (CPU, GPU, Display, Keyboard, Mouse, Headset) with category labels in mono font.
+   - Edit view (`isCustomizeMode`) provides interactive form inputs per category.
+5. **Section Hierarchy & Spacing**:
+   - Order: Player Identity → Game Mastery → Recent Activity → Community Reputation & Battlestation Loadout.
+   - Compact section gaps (24px) and dark neutral background (`#0A0C0E`).
 
 
 

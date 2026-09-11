@@ -29,6 +29,8 @@ import {
     getSelectionOffsets,
     restoreSelectionInContainer,
     applyFormattingToDocument,
+    splitBlockAtSelection,
+    mergeBlockWithPrevious,
     type SelectionOffsets,
     type BioFormatPatch,
 } from "./utils";
@@ -48,14 +50,22 @@ export const BioEditor: React.FC<BioEditorProps> = ({
     const [doc, setDoc] = useState<BioDocument>(() => parseBio(value));
     const [charCount, setCharCount] = useState<number>(() => getBioCharacterCount(parseBio(value)));
 
-    // Track external value changes during render (recommended React pattern)
+    // Ref to prevent self-triggered prop updates from resetting DOM innerHTML
+    const isSelfUpdatingRef = useRef(false);
+
+    // Track external value changes during render
     const [prevValue, setPrevValue] = useState(value);
     if (value !== prevValue) {
         setPrevValue(value);
-        const next = parseBio(value);
-        if (serializeBio(doc) !== serializeBio(next)) {
+        if (isSelfUpdatingRef.current) {
+            isSelfUpdatingRef.current = false;
+        } else {
+            const next = parseBio(value);
             setDoc(next);
             setCharCount(getBioCharacterCount(next));
+            if (editorRef.current) {
+                editorRef.current.innerHTML = bioDocumentToHtml(next);
+            }
         }
     }
 
@@ -86,26 +96,14 @@ export const BioEditor: React.FC<BioEditorProps> = ({
 
     const isOverLimit = charCount > MAX_BIO_CHAR_LIMIT;
 
-    // Synchronize DOM with doc when external value prop changes or on initial mount
+    // Synchronize DOM with doc on initial mount
     const isFirstMount = useRef(true);
     useEffect(() => {
-        if (editorRef.current) {
-            if (isFirstMount.current || editorRef.current.innerHTML === "") {
-                editorRef.current.innerHTML = bioDocumentToHtml(doc);
-                isFirstMount.current = false;
-            }
+        if (editorRef.current && isFirstMount.current) {
+            editorRef.current.innerHTML = bioDocumentToHtml(doc);
+            isFirstMount.current = false;
         }
     }, [doc]);
-
-    useEffect(() => {
-        // When external value changes explicitly (like Discard), update DOM
-        if (editorRef.current) {
-            const currentDoc = domToBioDocument(editorRef.current);
-            if (serializeBio(currentDoc) !== serializeBio(doc)) {
-                editorRef.current.innerHTML = bioDocumentToHtml(doc);
-            }
-        }
-    }, [prevValue, doc]);
 
     // Update active toolbar formatting from selection
     const updateActiveFormatStates = useCallback((currentDoc: BioDocument, offsets: SelectionOffsets) => {
@@ -268,6 +266,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         const count = getBioCharacterCount(nextDoc);
         setCharCount(count);
         setDoc(nextDoc);
+        isSelfUpdatingRef.current = true;
         onChange(serializeBio(nextDoc));
     };
 
@@ -289,6 +288,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         setDoc(newDoc);
         const count = getBioCharacterCount(newDoc);
         setCharCount(count);
+        isSelfUpdatingRef.current = true;
         onChange(serializeBio(newDoc));
 
         // Refresh formatting states
@@ -323,8 +323,63 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         setAlignMenuOpen(false);
     };
 
-    // Keyboard shortcuts
+    // Keyboard shortcuts & Enter/Backspace block navigation
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (!editorRef.current) return;
+
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const currentDoc = domToBioDocument(editorRef.current);
+            const offsets = getSelectionOffsets(editorRef.current) || {
+                startBlockIdx: Math.max(0, currentDoc.blocks.length - 1),
+                startOffset: 0,
+                endBlockIdx: Math.max(0, currentDoc.blocks.length - 1),
+                endOffset: 0,
+            };
+
+            const { newDoc, newSelection } = splitBlockAtSelection(currentDoc, offsets);
+
+            isSelfUpdatingRef.current = true;
+            editorRef.current.innerHTML = bioDocumentToHtml(newDoc);
+            restoreSelectionInContainer(editorRef.current, newSelection);
+
+            setDoc(newDoc);
+            setCharCount(getBioCharacterCount(newDoc));
+            onChange(serializeBio(newDoc));
+
+            setIsToolbarOpen(false);
+            return;
+        }
+
+        if (e.key === "Backspace") {
+            const offsets = getSelectionOffsets(editorRef.current);
+            if (
+                offsets &&
+                offsets.startBlockIdx > 0 &&
+                offsets.startOffset === 0 &&
+                offsets.startBlockIdx === offsets.endBlockIdx &&
+                offsets.startOffset === offsets.endOffset
+            ) {
+                e.preventDefault();
+                const currentDoc = domToBioDocument(editorRef.current);
+                const mergeResult = mergeBlockWithPrevious(currentDoc, offsets);
+                if (mergeResult) {
+                    const { newDoc, newSelection } = mergeResult;
+
+                    isSelfUpdatingRef.current = true;
+                    editorRef.current.innerHTML = bioDocumentToHtml(newDoc);
+                    restoreSelectionInContainer(editorRef.current, newSelection);
+
+                    setDoc(newDoc);
+                    setCharCount(getBioCharacterCount(newDoc));
+                    onChange(serializeBio(newDoc));
+
+                    setIsToolbarOpen(false);
+                    return;
+                }
+            }
+        }
+
         if (e.metaKey || e.ctrlKey) {
             const key = e.key.toLowerCase();
             if (key === "b") {
@@ -348,6 +403,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
         if (editorRef.current) {
             editorRef.current.innerHTML = bioDocumentToHtml(preset.document);
         }
+        isSelfUpdatingRef.current = true;
         onChange(serializeBio(preset.document));
         setPresetMenuOpen(false);
         setIsToolbarOpen(false);

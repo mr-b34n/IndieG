@@ -244,13 +244,13 @@ export const ProfileHero = ({
                             ) : (
                                 <>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h1 className="text-xl sm:text-2xl font-bold text-[#F0F1F2] tracking-tight">
+                                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F0F1F2] tracking-tight">
                                             {identity.name}
                                         </h1>
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs text-[#9A9DA3] font-medium">{identity.username}</span>
+                                        <span className="text-xs font-mono font-bold text-[#1688E8]">{identity.username}</span>
                                         {location && (
                                             <>
                                                 <span className="text-[#666A71]">•</span>

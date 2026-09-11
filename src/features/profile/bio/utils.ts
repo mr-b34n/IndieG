@@ -483,7 +483,8 @@ export function restoreSelectionInContainer(container: HTMLElement, offsets: Sel
         if (lastNode) {
             return { node: lastNode, offset: lastNode.textContent?.length || 0 };
         }
-        return { node: blockEl, offset: 0 };
+        const spanOrBr = blockEl.querySelector("span") || blockEl;
+        return { node: spanOrBr, offset: 0 };
     };
 
     const startPos = findTextNodeAtOffset(startBlock, offsets.startOffset);
@@ -493,10 +494,278 @@ export function restoreSelectionInContainer(container: HTMLElement, offsets: Sel
     if (sel && startPos && endPos) {
         sel.removeAllRanges();
         const newRange = document.createRange();
-        newRange.setStart(startPos.node, startPos.offset);
-        newRange.setEnd(endPos.node, endPos.offset);
-        sel.addRange(newRange);
+        try {
+            newRange.setStart(startPos.node, startPos.offset);
+            newRange.setEnd(endPos.node, endPos.offset);
+            sel.addRange(newRange);
+        } catch {
+            // Fallback safety
+        }
     }
+}
+
+/**
+ * Deletes text in selected range from BioDocument
+ */
+export function deleteSelectionFromDocument(
+    doc: BioDocument,
+    offsets: SelectionOffsets
+): { newDoc: BioDocument; collapsedOffsets: SelectionOffsets } {
+    if (
+        offsets.startBlockIdx === offsets.endBlockIdx &&
+        offsets.startOffset === offsets.endOffset
+    ) {
+        return { newDoc: doc, collapsedOffsets: offsets };
+    }
+
+    const { startBlockIdx, startOffset, endBlockIdx, endOffset } = offsets;
+    const startBlock = doc.blocks[startBlockIdx];
+    const endBlock = doc.blocks[endBlockIdx];
+
+    if (!startBlock || !endBlock) {
+        return { newDoc: doc, collapsedOffsets: offsets };
+    }
+
+    if (startBlockIdx === endBlockIdx) {
+        // Range inside a single block
+        const newSpans: BioSpan[] = [];
+        let curr = 0;
+        for (const span of startBlock.spans) {
+            const len = span.text.length;
+            const spanStart = curr;
+            const spanEnd = curr + len;
+
+            if (spanEnd <= startOffset || spanStart >= endOffset) {
+                newSpans.push({ ...span });
+            } else if (spanStart >= startOffset && spanEnd <= endOffset) {
+                // Omit
+            } else {
+                let keepText = "";
+                if (spanStart < startOffset) {
+                    keepText += span.text.slice(0, startOffset - spanStart);
+                }
+                if (spanEnd > endOffset) {
+                    keepText += span.text.slice(endOffset - spanStart);
+                }
+                if (keepText) {
+                    newSpans.push({ ...span, text: keepText });
+                }
+            }
+            curr += len;
+        }
+
+        if (newSpans.length === 0) {
+            newSpans.push({
+                text: "",
+                font: startBlock.spans[0]?.font || "inter",
+                color: startBlock.spans[0]?.color || "default",
+            });
+        }
+
+        const newBlocks = [
+            ...doc.blocks.slice(0, startBlockIdx),
+            { ...startBlock, spans: newSpans },
+            ...doc.blocks.slice(startBlockIdx + 1),
+        ];
+
+        const collapsedOffsets: SelectionOffsets = {
+            startBlockIdx,
+            startOffset,
+            endBlockIdx: startBlockIdx,
+            endOffset: startOffset,
+        };
+
+        return { newDoc: { version: 1, blocks: newBlocks }, collapsedOffsets };
+    }
+
+    // Spans multiple blocks
+    const startSpans: BioSpan[] = [];
+    let currStart = 0;
+    for (const span of startBlock.spans) {
+        const len = span.text.length;
+        if (currStart + len <= startOffset) {
+            startSpans.push({ ...span });
+        } else if (currStart < startOffset) {
+            startSpans.push({ ...span, text: span.text.slice(0, startOffset - currStart) });
+        }
+        currStart += len;
+    }
+
+    const endSpans: BioSpan[] = [];
+    let currEnd = 0;
+    for (const span of endBlock.spans) {
+        const len = span.text.length;
+        if (currEnd >= endOffset) {
+            endSpans.push({ ...span });
+        } else if (currEnd + len > endOffset) {
+            endSpans.push({ ...span, text: span.text.slice(endOffset - currEnd) });
+        }
+        currEnd += len;
+    }
+
+    const mergedSpans = [...startSpans, ...endSpans];
+    if (mergedSpans.length === 0) {
+        mergedSpans.push({
+            text: "",
+            font: startBlock.spans[0]?.font || "inter",
+            color: startBlock.spans[0]?.color || "default",
+        });
+    }
+
+    const newBlocks = [
+        ...doc.blocks.slice(0, startBlockIdx),
+        { ...startBlock, spans: mergedSpans },
+        ...doc.blocks.slice(endBlockIdx + 1),
+    ];
+
+    const collapsedOffsets: SelectionOffsets = {
+        startBlockIdx,
+        startOffset,
+        endBlockIdx: startBlockIdx,
+        endOffset: startOffset,
+    };
+
+    return { newDoc: { version: 1, blocks: newBlocks }, collapsedOffsets };
+}
+
+/**
+ * Splits a block at selection offsets into two paragraphs.
+ */
+export function splitBlockAtSelection(
+    doc: BioDocument,
+    offsets: SelectionOffsets
+): { newDoc: BioDocument; newSelection: SelectionOffsets } {
+    const { newDoc: collapsedDoc, collapsedOffsets } = deleteSelectionFromDocument(doc, offsets);
+
+    const bIdx = Math.min(Math.max(0, collapsedOffsets.startBlockIdx), collapsedDoc.blocks.length - 1);
+    const targetBlock = collapsedDoc.blocks[bIdx] || { type: "paragraph", align: "left", spans: [] };
+    const charOffset = collapsedOffsets.startOffset;
+
+    const leftSpans: BioSpan[] = [];
+    const rightSpans: BioSpan[] = [];
+
+    let currentOffset = 0;
+    let splitFont: BioFont = "inter";
+    let splitColor: BioColor = "default";
+    let splitBold = false;
+    let splitItalic = false;
+    let splitStrike = false;
+
+    for (const span of targetBlock.spans) {
+        const len = span.text.length;
+        splitFont = span.font || "inter";
+        splitColor = span.color || "default";
+        splitBold = Boolean(span.bold);
+        splitItalic = Boolean(span.italic);
+        splitStrike = Boolean(span.strikethrough);
+
+        if (currentOffset + len <= charOffset) {
+            leftSpans.push({ ...span });
+        } else if (currentOffset >= charOffset) {
+            rightSpans.push({ ...span });
+        } else {
+            const splitPoint = charOffset - currentOffset;
+            const leftText = span.text.slice(0, splitPoint);
+            const rightText = span.text.slice(splitPoint);
+
+            if (leftText) {
+                leftSpans.push({ ...span, text: leftText });
+            }
+            if (rightText) {
+                rightSpans.push({ ...span, text: rightText });
+            }
+        }
+        currentOffset += len;
+    }
+
+    if (leftSpans.length === 0) {
+        leftSpans.push({
+            text: "",
+            font: splitFont,
+            color: splitColor,
+            bold: splitBold,
+            italic: splitItalic,
+            strikethrough: splitStrike,
+        });
+    }
+
+    if (rightSpans.length === 0) {
+        rightSpans.push({
+            text: "",
+            font: splitFont,
+            color: splitColor,
+            bold: splitBold,
+            italic: splitItalic,
+            strikethrough: splitStrike,
+        });
+    }
+
+    const newBlocks: BioBlock[] = [
+        ...collapsedDoc.blocks.slice(0, bIdx),
+        { type: "paragraph", align: targetBlock.align || "left", spans: leftSpans },
+        { type: "paragraph", align: targetBlock.align || "left", spans: rightSpans },
+        ...collapsedDoc.blocks.slice(bIdx + 1),
+    ];
+
+    const newDoc: BioDocument = {
+        version: 1,
+        blocks: newBlocks,
+    };
+
+    const newSelection: SelectionOffsets = {
+        startBlockIdx: bIdx + 1,
+        startOffset: 0,
+        endBlockIdx: bIdx + 1,
+        endOffset: 0,
+    };
+
+    return { newDoc, newSelection };
+}
+
+/**
+ * Merges current block with previous block on Backspace at start of line
+ */
+export function mergeBlockWithPrevious(
+    doc: BioDocument,
+    offsets: SelectionOffsets
+): { newDoc: BioDocument; newSelection: SelectionOffsets } | null {
+    if (offsets.startBlockIdx <= 0 || offsets.startOffset > 0) return null;
+
+    const bIdx = offsets.startBlockIdx;
+    const prevBlockIdx = bIdx - 1;
+    const prevBlock = doc.blocks[prevBlockIdx];
+    const currBlock = doc.blocks[bIdx];
+
+    if (!prevBlock || !currBlock) return null;
+
+    let targetOffset = 0;
+    for (const span of prevBlock.spans) {
+        targetOffset += span.text.length;
+    }
+
+    const mergedSpans = [...prevBlock.spans, ...currBlock.spans];
+    const nonEmpties = mergedSpans.filter((s) => s.text.length > 0);
+    const finalSpans = nonEmpties.length > 0 ? nonEmpties : [mergedSpans[0] || { text: "", font: "inter", color: "default" }];
+
+    const newBlocks: BioBlock[] = [
+        ...doc.blocks.slice(0, prevBlockIdx),
+        { type: "paragraph", align: prevBlock.align || "left", spans: finalSpans },
+        ...doc.blocks.slice(bIdx + 1),
+    ];
+
+    const newDoc: BioDocument = {
+        version: 1,
+        blocks: newBlocks,
+    };
+
+    const newSelection: SelectionOffsets = {
+        startBlockIdx: prevBlockIdx,
+        startOffset: targetOffset,
+        endBlockIdx: prevBlockIdx,
+        endOffset: targetOffset,
+    };
+
+    return { newDoc, newSelection };
 }
 
 export type BioFormatPatch = {
