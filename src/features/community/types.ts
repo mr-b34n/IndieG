@@ -42,9 +42,12 @@ import type { GetCommunitiesParams } from "@/shared/api";
 
 export interface CommunitiesState {
     communities: CommunityData[];
+    joinedCommunityIds: string[];
     isLoading: boolean;
     error: string | null;
     fetchCommunities: (params?: GetCommunitiesParams) => Promise<void>;
+    syncJoinedCommunities: (items: unknown) => void;
+    mergeCommunities: (items: unknown, isJoinedList?: boolean) => void;
     toggleJoin: (id: string | number) => void;
     toggleJoinCommunity: (id: string | number) => void;
     getCommunityById: (id: string | number) => CommunityData | undefined;

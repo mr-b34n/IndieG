@@ -492,9 +492,9 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
                     {post.tags && post.tags.length > 0 && (
                         <div className="flex flex-row gap-1.5 flex-wrap pt-2">
-                            {post.tags.map((tag) => (
+                            {post.tags.map((tag, idx) => (
                                 <span
-                                    key={tag}
+                                    key={`${tag}-${idx}`}
                                     className="text-xs font-medium text-primary hover:underline cursor-pointer"
                                 >
                                     #{tag}

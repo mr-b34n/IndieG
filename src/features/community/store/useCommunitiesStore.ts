@@ -19,63 +19,135 @@ function extractCommunityList(res: unknown): CommunityDto[] {
 
 export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     communities: INITIAL_COMMUNITIES,
+    joinedCommunityIds: INITIAL_COMMUNITIES.filter((c) => c.joined).map((c) => String(c.id)),
     isLoading: false,
     error: null,
+
+    syncJoinedCommunities: (items: unknown) => {
+        const list = extractCommunityList(items);
+        const joinedIds = new Set<string>();
+        const mappedJoined: CommunityData[] = list.map((item) => {
+            const base = mapCommunityDtoToCommunityData(item);
+            joinedIds.add(String(base.id));
+            return {
+                ...base,
+                joined: true,
+            };
+        });
+
+        set((state) => {
+            const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
+            mappedJoined.forEach((item) => {
+                const prev = existingMap.get(String(item.id));
+                existingMap.set(String(item.id), {
+                    ...prev,
+                    ...item,
+                    joined: true,
+                });
+            });
+
+            const mergedList = Array.from(existingMap.values()).map((c) => ({
+                ...c,
+                joined: joinedIds.has(String(c.id)) ? true : c.joined,
+            }));
+
+            const allJoinedIds = Array.from(
+                new Set([...state.joinedCommunityIds, ...Array.from(joinedIds)])
+            );
+
+            return {
+                communities: mergedList,
+                joinedCommunityIds: allJoinedIds,
+            };
+        });
+    },
+
+    mergeCommunities: (items: unknown, isJoinedList = false) => {
+        const list = extractCommunityList(items);
+        if (!Array.isArray(list) || list.length === 0) return;
+
+        set((state) => {
+            const joinedSet = new Set(state.joinedCommunityIds);
+            if (isJoinedList) {
+                list.forEach((item) => joinedSet.add(String(item.id)));
+            }
+
+            const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
+
+            list.forEach((item) => {
+                const base = mapCommunityDtoToCommunityData(item);
+                const prev = existingMap.get(String(base.id));
+                const isJoined =
+                    isJoinedList ||
+                    joinedSet.has(String(base.id)) ||
+                    item.joined === true ||
+                    item.isJoined === true ||
+                    (prev?.joined ?? false);
+
+                if (isJoined) {
+                    joinedSet.add(String(base.id));
+                }
+
+                existingMap.set(String(base.id), {
+                    ...prev,
+                    ...base,
+                    joined: isJoined,
+                });
+            });
+
+            return {
+                communities: Array.from(existingMap.values()),
+                joinedCommunityIds: Array.from(joinedSet),
+                isLoading: false,
+            };
+        });
+    },
 
     fetchCommunities: async (params?: GetCommunitiesParams) => {
         set({ isLoading: true, error: null });
         try {
             const res = await communitiesApi.getAll(params || { limit: 9 });
-            const list = extractCommunityList(res);
-            
-            if (Array.isArray(list)) {
-                if (list.length > 0) {
-                    const mappedList: CommunityData[] = list.map((item) => {
-                        const base = mapCommunityDtoToCommunityData(item);
-                        const isJoined = item.joined !== undefined
-                            ? Boolean(item.joined)
-                            : (item.isJoined !== undefined
-                                ? Boolean(item.isJoined)
-                                : (get().communities.find((c) => String(c.id) === String(item.id))?.joined ?? false));
-                        return {
-                            ...base,
-                            joined: isJoined,
-                        };
-                    });
-                    set({ communities: mappedList, isLoading: false });
-                } else {
-                    // Empty list returned from backend
-                    set({ communities: [], isLoading: false });
-                }
-            } else {
-                set({ isLoading: false });
-            }
+            get().mergeCommunities(res, params?.type === "joined");
+            set({ isLoading: false });
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : "Failed to load communities";
-            // In case of error (e.g. backend offline), keep existing data
             set({ error: errorMsg, isLoading: false });
         }
     },
 
     toggleJoin: (id) => {
-        const targetComm = get().communities.find((c) => String(c.id) === String(id));
-        const newJoinedState = targetComm ? !targetComm.joined : true;
+        const strId = String(id);
+        const targetComm = get().communities.find((c) => String(c.id) === strId);
+        const willBeJoined = targetComm ? !targetComm.joined : true;
 
-        set((state) => ({
-            communities: state.communities.map((c) =>
-                String(c.id) === String(id)
-                    ? {
-                          ...c,
-                          joined: !c.joined,
-                          members: c.joined ? Math.max(0, c.members - 1) : c.members + 1,
-                      }
-                    : c
-            ),
-        }));
+        set((state) => {
+            const nextJoinedSet = new Set(state.joinedCommunityIds);
+            if (willBeJoined) {
+                nextJoinedSet.add(strId);
+            } else {
+                nextJoinedSet.delete(strId);
+            }
 
-        // Trigger backend join/leave API (POST /communities/{id}/members or PATCH /communities/{id}/members)
+            const updatedCommunities = state.communities.map((c) => {
+                if (String(c.id) === strId) {
+                    return {
+                        ...c,
+                        joined: willBeJoined,
+                        members: willBeJoined ? c.members + 1 : Math.max(0, c.members - 1),
+                    };
+                }
+                return c;
+            });
+
+            return {
+                communities: updatedCommunities,
+                joinedCommunityIds: Array.from(nextJoinedSet),
+            };
+        });
+
+        // Trigger backend join/leave API
         if (typeof id === "string" && !id.startsWith("comm_")) {
-            if (newJoinedState) {
+            if (willBeJoined) {
                 communitiesApi.join(id).catch(() => {
                     // Handled gracefully in offline or dev preview
                 });

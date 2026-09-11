@@ -2,33 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGamepad, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
-import type { CommunityTabKey, CommunityData } from "../types";
+import type { CommunityTabKey } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { CreateCommunityModal } from "./CreateCommunityModal";
 import { useAuthStore } from "@/features/auth";
 import { Pagination } from "@/shared/components/ui/Pagination";
-import { CommunityHeader } from "./CommunityHeader";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
-import { mapCommunityDtoToCommunityData, extractPaginationMeta, type CommunityDto } from "@/shared/api";
-
-function extractCommunityList(res: unknown): CommunityDto[] {
-    if (!res) return [];
-    if (Array.isArray(res)) return res as CommunityDto[];
-    if (typeof res === "object") {
-        const obj = res as Record<string, unknown>;
-        if (Array.isArray(obj.items)) return obj.items as CommunityDto[];
-        if (Array.isArray(obj.data)) return obj.data as CommunityDto[];
-        if (Array.isArray(obj.communities)) return obj.communities as CommunityDto[];
-    }
-    return [];
-}
 
 export const CommunityList = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
-    const canCreateCommunity = !!user;
+    const mockLogin = useAuthStore((state) => state.mockLogin);
+    const isLoggedIn = !!user || mockLogin;
+    const canCreateCommunity = user?.role === "admin";
 
     const [currentPage, setCurrentPage] = useState(1);
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
@@ -39,83 +27,38 @@ export const CommunityList = () => {
 
     const communities = useCommunitiesStore((state) => state.communities);
     const storeLoading = useCommunitiesStore((state) => state.isLoading);
+    const mergeCommunities = useCommunitiesStore((state) => state.mergeCommunities);
+    const syncJoinedCommunities = useCommunitiesStore((state) => state.syncJoinedCommunities);
 
-    const hasJoinedInStore = useMemo(
-        () => communities.some((c) => c.joined),
-        [communities]
+    // 1. Always fetch and keep joined communities updated in store
+    const { data: rawJoinedData } = useCommunitiesQuery(
+        { type: "joined", page: 1, limit: ITEMS_PER_PAGE },
+        { enabled: isLoggedIn }
     );
 
-    // Disable duplicate initial query for joined tab if already fetched on app load
-    const isQueryEnabled = useMemo(() => {
-        if (activeTab === "joined" && currentPage === 1 && hasJoinedInStore) {
-            return false;
+    useEffect(() => {
+        if (rawJoinedData) {
+            syncJoinedCommunities(rawJoinedData);
         }
-        return true;
-    }, [activeTab, currentPage, hasJoinedInStore]);
+    }, [rawJoinedData, syncJoinedCommunities]);
 
-    // 1. TanStack Query for communities
-    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery(
-        {
-            page: currentPage,
-            limit: ITEMS_PER_PAGE,
-            type: activeTab === "joined" ? "joined" : "all",
-        },
-        { enabled: isQueryEnabled }
-    );
+    // 2. Query for current tab / pagination
+    const { data: rawCommunitiesData, isLoading: isQueryLoading } = useCommunitiesQuery({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        type: activeTab === "joined" ? "joined" : "all",
+    });
 
-    const isLoading = isQueryLoading || storeLoading;
-    
-    // Sync query results to global store by merging without overwriting other pages/data
     useEffect(() => {
         if (rawCommunitiesData) {
-            const list = extractCommunityList(rawCommunitiesData);
-            if (Array.isArray(list) && list.length > 0) {
-                const currentCommunities = useCommunitiesStore.getState().communities;
-                const mapped: CommunityData[] = list.map((item) => {
-                    const base = mapCommunityDtoToCommunityData(item);
-                    const existing = currentCommunities.find((c) => String(c.id) === String(item.id));
-                    const isJoined = item.joined !== undefined
-                        ? Boolean(item.joined)
-                        : (item.isJoined !== undefined
-                            ? Boolean(item.isJoined)
-                            : (existing?.joined ?? false));
-                    return {
-                        ...base,
-                        joined: isJoined,
-                    };
-                });
-
-                useCommunitiesStore.setState((state) => {
-                    const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
-                    mapped.forEach((item) => {
-                        const prev = existingMap.get(String(item.id));
-                        existingMap.set(String(item.id), {
-                            ...prev,
-                            ...item,
-                            joined: item.joined !== undefined ? item.joined : (prev?.joined ?? false),
-                        });
-                    });
-                    return {
-                        communities: Array.from(existingMap.values()),
-                        isLoading: false,
-                    };
-                });
-            }
+            mergeCommunities(rawCommunitiesData, activeTab === "joined");
         }
-    }, [rawCommunitiesData]);
+    }, [rawCommunitiesData, mergeCommunities, activeTab]);
+
+    const isLoading = isQueryLoading || storeLoading;
 
     const categories = useMemo(
-        () => Array.from(new Set(communities.map((c) => c.category))),
-        [communities]
-    );
-
-    const totalMembers = useMemo(
-        () => communities.reduce((acc, c) => acc + c.members, 0),
-        [communities]
-    );
-
-    const totalOnline = useMemo(
-        () => communities.reduce((acc, c) => acc + c.onlineNow, 0),
+        () => Array.from(new Set(communities.map((c) => c.category).filter(Boolean))),
         [communities]
     );
 
@@ -127,63 +70,37 @@ export const CommunityList = () => {
     const filtered = useMemo(() => {
         let list = [...communities];
 
-        if (activeTab === "joined") list = list.filter((c) => c.joined);
-        if (activeTab === "trending") list = list.sort((a, b) => b.onlineNow - a.onlineNow);
+        if (activeTab === "joined") {
+            list = list.filter((c) => c.joined);
+        }
+        if (activeTab === "trending") {
+            list = list.sort((a, b) => (b.onlineNow || 0) - (a.onlineNow || 0));
+        }
 
-        if (activeCategory) list = list.filter((c) => c.category === activeCategory);
+        if (activeCategory) {
+            list = list.filter((c) => c.category === activeCategory);
+        }
 
         if (search.trim()) {
             const q = search.trim().toLowerCase();
             list = list.filter(
                 (c) =>
                     c.name.toLowerCase().includes(q) ||
-                    c.tags.some((t) => t.toLowerCase().includes(q)) ||
-                    c.category.toLowerCase().includes(q)
+                    c.tags?.some((t) => t.toLowerCase().includes(q)) ||
+                    c.category?.toLowerCase().includes(q)
             );
         }
 
         return list;
     }, [communities, activeTab, activeCategory, search]);
 
-    const isFilteredLocally = Boolean(search.trim() || activeCategory || activeTab === "trending");
-
-    const apiMeta = useMemo(() => {
-        return extractPaginationMeta(rawCommunitiesData, filtered.length, ITEMS_PER_PAGE, currentPage);
-    }, [rawCommunitiesData, filtered.length, currentPage]);
-
-    const totalPages = isFilteredLocally
-        ? Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
-        : Math.max(1, apiMeta.totalPages || Math.ceil(filtered.length / ITEMS_PER_PAGE));
-
-    const totalItems = isFilteredLocally
-        ? filtered.length
-        : (apiMeta.total || filtered.length);
-
-    const currentPageApiItems = useMemo(() => {
-        const list = extractCommunityList(rawCommunitiesData);
-        if (!list || list.length === 0) return null;
-        return list.map((item) => {
-            const base = mapCommunityDtoToCommunityData(item);
-            const storeItem = communities.find((c) => String(c.id) === String(item.id));
-            const isJoined = item.joined !== undefined
-                ? Boolean(item.joined)
-                : (item.isJoined !== undefined
-                    ? Boolean(item.isJoined)
-                    : (storeItem?.joined ?? false));
-            return {
-                ...base,
-                joined: isJoined,
-            };
-        });
-    }, [rawCommunitiesData, communities]);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    const totalItems = filtered.length;
 
     const paginatedCommunities = useMemo(() => {
-        if (!isFilteredLocally && currentPageApiItems && currentPageApiItems.length > 0) {
-            return currentPageApiItems;
-        }
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         return filtered.slice(start, start + ITEMS_PER_PAGE);
-    }, [filtered, currentPage, isFilteredLocally, currentPageApiItems]);
+    }, [filtered, currentPage]);
 
     const handleTabChange = (tab: CommunityTabKey) => {
         setActiveTab(tab);
@@ -195,28 +112,19 @@ export const CommunityList = () => {
         setCurrentPage(1);
     };
 
+    const handleCreateCommunity = () => {
+        if (!canCreateCommunity) return;
+        if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;
+        setShowCreateModal(true);
+    };
+
     return (
         <div className="w-full flex flex-col gap-6 pb-16 animate-fade-in select-none">
             {showCreateModal && (
                 <CreateCommunityModal onClose={() => setShowCreateModal(false)} />
             )}
 
-            {/* 1. Header with Title + Typography-based Stats + Create Action */}
-            <CommunityHeader
-                communityCount={isFilteredLocally ? filtered.length : (apiMeta.total || communities.length)}
-                totalOnline={totalOnline}
-                totalMembers={totalMembers}
-                canCreateCommunity={canCreateCommunity}
-                onCreateCommunity={() => {
-                    if (!canCreateCommunity) {
-                        return;
-                    }
-                    if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;
-                    setShowCreateModal(true);
-                }}
-            />
-
-            {/* 2. Community Navigator: Search Bar + Tabs + Category Filters */}
+            {/* Community Navigator: Search Bar + Filter Dropdown Bar */}
             <CommunityNavigator
                 search={search}
                 onSearchChange={setSearch}
@@ -226,6 +134,8 @@ export const CommunityList = () => {
                 activeCategory={activeCategory}
                 onCategoryChange={handleCategoryChange}
                 joinedCount={joinedCount}
+                canCreateCommunity={canCreateCommunity}
+                onCreateCommunity={handleCreateCommunity}
             />
 
             {/* 3. Community Directory 3-Column Grid */}
@@ -237,8 +147,8 @@ export const CommunityList = () => {
             ) : filtered.length > 0 ? (
                 <div className="flex flex-col gap-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {paginatedCommunities.map((community) => (
-                            <CommunityGameTile key={community.id} community={community} />
+                        {paginatedCommunities.map((community, idx) => (
+                            <CommunityGameTile key={`${community.id || community.slug || 'comm'}-${idx}`} community={community} />
                         ))}
                     </div>
 

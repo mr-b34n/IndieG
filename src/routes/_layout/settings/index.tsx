@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faShieldHalved, faGlobe, faBug, faLightbulb, faCheckCircle, faArrowLeft, faBan, faGamepad, faCheck,
     faEye, faBell, faLaptop, faMobileScreen, faExclamationTriangle,
-    faUserClock, faArrowUp, faArrowDown, faSun, faMoon, faLanguage,
-    faChevronRight, faXmark, faSliders
+    faUserClock, faArrowUp, faArrowDown, faLanguage,
+    faChevronRight, faXmark, faSliders, faComment, faReply, faHeart, faAt, faUsers
 } from '@fortawesome/free-solid-svg-icons';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useGameStore } from '@/features/game';
@@ -18,7 +18,6 @@ export const Route = createFileRoute('/_layout/settings/')({
     component: SettingsPage,
 });
 
-
 interface BlockedUser {
     id: string;
     name: string;
@@ -27,6 +26,33 @@ interface BlockedUser {
     blockedAt: string;
     reason: string;
 }
+
+interface ToggleSwitchProps {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    disabled?: boolean;
+    ariaLabel?: string;
+}
+
+const ToggleSwitch = ({ checked, onChange, disabled, ariaLabel }: ToggleSwitchProps) => (
+    <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
+            checked ? 'bg-primary' : 'bg-[#252930]'
+        }`}
+    >
+        <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                checked ? 'translate-x-5' : 'translate-x-0'
+            }`}
+        />
+    </button>
+);
 
 export function SettingsPage() {
     const navigate = useNavigate();
@@ -88,8 +114,6 @@ export function SettingsPage() {
     const [changePwdLoading, setChangePwdLoading] = useState(false);
     const [changePwdError, setChangePwdError] = useState<string | null>(null);
     const [changePwdSuccess, setChangePwdSuccess] = useState<string | null>(null);
-
-    
 
     // 5. Blocked Users
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -171,7 +195,6 @@ export function SettingsPage() {
             return;
         }
         setCurrentEmail(newEmail);
-        // Only toggle if currently verified
         if (authStore.user?.isVerified) {
             authStore.toggleVerifyEmailStatus();
         }
@@ -193,8 +216,6 @@ export function SettingsPage() {
         setEmailPendingVerify(false);
         setEmailSuccessMsg(null);
     };
-
-
 
     const handleUnblockUser = (userId: string) => {
         setBlockedUsers(blockedUsers.filter((u) => u.id !== userId));
@@ -250,154 +271,188 @@ export function SettingsPage() {
         : allNavTabs.filter((tab) => tab.id === "general" || tab.id === "feedback");
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 space-y-6 text-text">
-            {/* Header - Sleek & Compact Panel Header (6px/8px corners) */}
-            <div className="bg-surface border border-border/80 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                    <button 
+        <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-4 space-y-5 text-text select-none animate-fade-in">
+            {/* 1. Header Navigation Bar (Home visual language) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-divider-primary/60">
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
                         onClick={() => navigate({ to: "/" })}
-                        className="w-9 h-9 rounded-md bg-surface-hover/80 border border-border/70 hover:border-primary/60 text-text hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                        className="w-8 h-8 rounded bg-surface hover:bg-surface-hover border border-divider-primary/80 text-text-muted hover:text-text flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-xs"
                         title={t('common.backToHome', { defaultValue: 'Quay lại Trang chủ' })}
                     >
-                        <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
+                        <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary border border-primary/20">
-                                {t('settings.headerBadge', { defaultValue: 'User Preferences' })}
+                            <span className="px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                                {t('settings.headerBadge', { defaultValue: 'USER PREFERENCES' })}
                             </span>
                         </div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-text mt-0.5 tracking-tight">
+                        <h1 className="text-base sm:text-xl font-black text-text mt-0.5 tracking-tight">
                             {t('settings.headerTitle', { defaultValue: 'Cài đặt hệ thống' })}
                         </h1>
                     </div>
                 </div>
-                <div className="text-xs text-text-muted flex items-center gap-2 bg-surface-hover/40 px-3 py-1.5 rounded-md border border-border/50 self-start sm:self-auto">
-                    <FontAwesomeIcon icon={faSliders} className="text-primary" />
-                    <span>{t('settings.headerSub', { defaultValue: 'Tuỳ chỉnh tài khoản & cá nhân hóa' })}</span>
+                <div className="text-xs text-text-faint flex items-center gap-2 self-start sm:self-auto">
+                    <FontAwesomeIcon icon={faSliders} className="text-primary text-xs" />
+                    <span>{t('settings.headerSub', { defaultValue: 'Tùy chỉnh tài khoản & cá nhân hóa' })}</span>
                 </div>
             </div>
 
-            {/* Layout Grid: Left Clean Navigation Deck + Right Content Frame */}
-            <div className="flex flex-col lg:flex-row gap-5 items-start w-full min-w-0">
-                
-                {/* Left Navigation Deck */}
-                <div className="w-full lg:w-72 shrink-0 bg-surface border border-border/80 rounded-lg p-2 space-y-1">
-                    <div className="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-text-muted/80 border-b border-border/40 mb-1">
+            {/* Mobile/Tablet Category Selector (Horizontal Scroll Bar) */}
+            <div className="lg:hidden w-full overflow-x-auto scrollbar-none pb-1 flex items-center gap-1.5 border-b border-divider-primary/60">
+                {navTabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                            className={`px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer ${
+                                isActive
+                                    ? tab.isDanger
+                                        ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                                        : "bg-primary/15 text-primary border border-primary/30"
+                                    : "bg-surface hover:bg-surface-hover text-text-muted border border-divider-primary/60"
+                            }`}
+                        >
+                            <FontAwesomeIcon icon={tab.icon} className="text-[11px]" />
+                            <span>{tab.label}</span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* 2. Main 2-Column Settings Layout */}
+            <div className="flex flex-col lg:flex-row gap-6 items-start w-full min-w-0">
+                {/* Left Integrated Navigation List */}
+                <div className="hidden lg:flex flex-col w-64 shrink-0 gap-0.5 select-none pt-1">
+                    <div className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-text-faint border-b border-divider-primary/40 mb-1">
                         {t('settings.categories', { defaultValue: 'Danh mục cài đặt' })}
                     </div>
-
-                    <div className="space-y-0.5">
-                        {navTabs.map((tab) => {
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors cursor-pointer text-left border-l-4 ${
-                                        isActive
-                                            ? tab.isDanger
-                                                ? "bg-rose-500/15 border-rose-500 text-rose-500 font-semibold"
-                                                : "bg-primary/10 border-primary text-primary font-semibold"
-                                            : tab.isDanger
-                                            ? "border-transparent hover:bg-rose-500/10 text-rose-500 font-medium"
-                                            : "border-transparent hover:bg-surface-hover/80 text-text-muted hover:text-text font-medium"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <FontAwesomeIcon 
-                                            icon={tab.icon} 
-                                            className={`text-xs shrink-0 w-4 text-center ${
-                                                isActive 
-                                                    ? tab.isDanger ? "text-rose-500" : "text-primary" 
-                                                    : "text-text-muted"
-                                            }`} 
-                                        />
-                                        <span className="text-xs tracking-tight truncate flex-1 min-w-0">{tab.label}</span>
-                                    </div>
-                                    <FontAwesomeIcon 
-                                        icon={faChevronRight} 
-                                        className={`text-[10px] shrink-0 ml-1 ${isActive ? (tab.isDanger ? "text-rose-500" : "text-primary") : "text-text-muted/40"}`} 
+                    {navTabs.map((tab) => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-r-md transition-colors cursor-pointer text-left border-l-2 ${
+                                    isActive
+                                        ? tab.isDanger
+                                            ? "bg-rose-500/10 border-rose-500 text-rose-400 font-bold"
+                                            : "bg-[#14171A] border-primary text-text font-bold"
+                                        : tab.isDanger
+                                        ? "border-transparent hover:bg-rose-500/5 text-rose-500/80 font-medium"
+                                        : "border-transparent hover:bg-[#14171A]/60 text-[#8B9097] hover:text-[#E8E9EA] font-medium"
+                                }`}
+                            >
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <FontAwesomeIcon
+                                        icon={tab.icon}
+                                        className={`text-xs shrink-0 w-4 text-center ${
+                                            isActive
+                                                ? tab.isDanger ? "text-rose-400" : "text-primary"
+                                                : "text-text-faint"
+                                        }`}
                                     />
-                                </button>
-                            );
-                        })}
-                    </div>
+                                    <span className="text-xs tracking-tight truncate">{tab.label}</span>
+                                </div>
+                                <FontAwesomeIcon
+                                    icon={faChevronRight}
+                                    className={`text-[9px] shrink-0 ml-1.5 ${
+                                        isActive ? (tab.isDanger ? "text-rose-400" : "text-primary") : "text-text-faint/30"
+                                    }`}
+                                />
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* Right Content Panel (Stable & Clean, Fixed Dimensions) */}
-                <div className="flex-1 w-full min-w-0 bg-surface border border-border/80 rounded-lg p-5 sm:p-6 min-h-[480px]">
+                {/* Right Settings Content Frame */}
+                <div className="flex-1 w-full min-w-0 bg-surface/40 border border-divider-primary/60 rounded-lg p-4 sm:p-6 min-h-[440px]">
                     
-                    {/* TAB 1: GENERAL */}
+                    {/* TAB 1: APPEARANCE & LANGUAGE */}
                     {activeTab === "general" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGlobe} className="text-primary text-sm" />
                                     <span>{t('settings.general.title', { defaultValue: 'Giao diện & Ngôn ngữ' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.general.sub', { defaultValue: 'Tùy chỉnh chủ đề hiển thị và ngôn ngữ giao diện' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.general.sub', { defaultValue: 'Tùy chỉnh chủ đề hiển thị và ngôn ngữ giao diện' })}</p>
                             </div>
 
-                            <div className="space-y-4">
-                                {/* Theme Toggle */}
-                                <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 flex items-center justify-between gap-4">
-                                    <div>
-                                        <div className="text-xs font-bold text-text">
-                                            {t('settings.general.appearance', { defaultValue: 'Giao diện' })}
+                            <div className="divide-y divide-divider-primary/50">
+                                {/* Theme Row */}
+                                <div className="py-3.5 flex items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-surface hover:bg-surface-hover border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                            <FontAwesomeIcon icon={theme === 'dark' ? faGlobe : faGlobe} className="text-xs" />
                                         </div>
-                                        <div className="text-[11px] text-text-muted mt-0.5">
-                                            {theme === 'dark'
-                                                ? t('settings.general.darkModeDesc', { defaultValue: 'Sử dụng nền tối để bảo vệ mắt' })
-                                                : t('settings.general.lightModeDesc', { defaultValue: 'Sử dụng giao diện nền sáng truyền thống' })}
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-text">
+                                                {t('settings.general.appearance', { defaultValue: 'Chế độ tối (Dark Mode)' })}
+                                            </div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">
+                                                {theme === 'dark'
+                                                    ? t('settings.general.darkModeDesc', { defaultValue: 'Sử dụng giao diện nền tối gaming mắt dịu' })
+                                                    : t('settings.general.lightModeDesc', { defaultValue: 'Sử dụng giao diện sáng truyền thống' })}
+                                            </div>
                                         </div>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={toggleTheme}
-                                        className="px-3.5 py-1.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-bold cursor-pointer flex items-center gap-2 shrink-0"
-                                    >
-                                        <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} className={theme === 'dark' ? 'text-primary' : 'text-amber-500'} />
-                                        <span>
-                                            {theme === 'dark'
-                                                ? t('settings.general.darkMode', { defaultValue: 'Chế độ tối (Dark)' })
-                                                : t('settings.general.lightMode', { defaultValue: 'Chế độ sáng (Light)' })}
-                                        </span>
-                                    </button>
+
+                                    {/* iPhone style Toggle Switch */}
+                                    <ToggleSwitch
+                                        checked={theme === 'dark'}
+                                        onChange={toggleTheme}
+                                        ariaLabel="Toggle Dark Mode"
+                                    />
                                 </div>
 
-                                <div className="p-4 rounded-md border border-border/70 bg-surface-hover/20 flex items-center justify-between gap-4">
-                                    <div>
-                                        <div className="text-xs font-bold text-text">{t('settings.general.languageLabel', { defaultValue: 'Ngôn ngữ hiển thị (Language)' })}</div>
-                                        <div className="text-[11px] text-text-muted mt-0.5">
-                                            {t('settings.general.languageCurrent', { defaultValue: 'Ngôn ngữ hiện tại' })}: {language === 'vi' ? 'Tiếng Việt' : 'English'}
+                                {/* Language Row */}
+                                <div className="py-3.5 flex items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-surface hover:bg-surface-hover border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                            <FontAwesomeIcon icon={faLanguage} className="text-xs" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-text">
+                                                {t('settings.general.languageLabel', { defaultValue: 'Ngôn ngữ hiển thị' })}
+                                            </div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">
+                                                {t('settings.general.languageCurrent', { defaultValue: 'Ngôn ngữ hiện tại' })}: <strong className="text-primary">{language === 'vi' ? 'Tiếng Việt' : 'English'}</strong>
+                                            </div>
                                         </div>
                                     </div>
+
                                     <button
+                                        type="button"
                                         onClick={toggleLanguage}
-                                        className="px-3 py-1.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-bold cursor-pointer flex items-center gap-2"
+                                        className="px-3.5 py-1.5 rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors text-xs font-bold cursor-pointer flex items-center gap-2"
                                     >
-                                        <FontAwesomeIcon icon={faLanguage} />
-                                        <span>{t('settings.general.switchLangBtn', { defaultValue: 'Đổi' })} ({language === 'vi' ? 'EN' : 'VI'})</span>
+                                        <FontAwesomeIcon icon={faLanguage} className="text-xs" />
+                                        <span>{language === 'vi' ? 'Chuyển sang EN' : 'Switch to VI'}</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* TAB 2: QUICK ACCESS */}
+                    {/* TAB 2: FAVORITE GAMES / QUICK ACCESS */}
                     {activeTab === "quickAccess" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGamepad} className="text-primary text-sm" />
-                                    <span>{t('settings.quickAccess.title', { defaultValue: 'Lối tắt Game yêu thích (Quick Access)' })}</span>
+                                    <span>{t('settings.quickAccess.title', { defaultValue: 'Lối tắt Game yêu thích' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.quickAccess.sub', { defaultValue: 'Ghim tối đa 4 tựa game lên menu điều hướng nhanh' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.quickAccess.sub', { defaultValue: 'Ghim tối đa 4 tựa game ưa thích lên menu điều hướng nhanh' })}</p>
                             </div>
 
                             {saveQuickAccessSuccess && (
-                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-md text-xs font-bold flex items-center gap-2">
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded text-xs font-bold flex items-center gap-2">
                                     <FontAwesomeIcon icon={faCheckCircle} />
                                     <span>{t('settings.quickAccess.saveSuccess', { defaultValue: 'Đã cập nhật lối tắt thành công!' })}</span>
                                 </div>
@@ -405,44 +460,47 @@ export function SettingsPage() {
 
                             {/* Pinned Items */}
                             {tempSelectedSlugs.length > 0 && (
-                                <div className="p-3.5 rounded-md border border-primary/30 bg-primary/5 space-y-2.5">
+                                <div className="p-3 rounded border border-primary/30 bg-primary/5 space-y-2">
                                     <div className="flex items-center justify-between text-xs font-bold text-primary">
                                         <span>{t('settings.quickAccess.pinnedList', { defaultValue: 'Danh sách đã ghim' })} ({tempSelectedSlugs.length}/4)</span>
-                                        <span className="text-[10px] text-text-muted">{t('settings.quickAccess.reorderHint', { defaultValue: 'Đổi thứ tự bằng nút mũi tên' })}</span>
+                                        <span className="text-[10px] text-text-faint">{t('settings.quickAccess.reorderHint', { defaultValue: 'Đổi thứ tự bằng nút mũi tên' })}</span>
                                     </div>
 
-                                    <div className="divide-y divide-border/50 border border-border/60 bg-surface rounded-md overflow-hidden">
+                                    <div className="divide-y divide-divider-primary/50 border border-divider-primary/60 bg-surface rounded overflow-hidden">
                                         {tempSelectedSlugs.map((slug, idx) => {
                                             const gameObj = INITIAL_GAMES.find((g) => g.slug === slug);
                                             if (!gameObj) return null;
                                             return (
-                                                <div key={slug} className="p-2.5 flex items-center justify-between gap-3 text-xs">
+                                                <div key={`${slug}-${idx}`} className="p-2.5 flex items-center justify-between gap-3 text-xs">
                                                     <div className="flex items-center gap-2.5 min-w-0">
                                                         <span className="w-5 h-5 rounded bg-primary text-white font-bold flex items-center justify-center text-[10px] shrink-0">
                                                             {idx + 1}
                                                         </span>
-                                                        <img src={gameObj.logoUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-border/40 shrink-0" />
+                                                        <img src={gameObj.logoUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-divider-primary/40 shrink-0" />
                                                         <span className="font-bold text-text truncate">{gameObj.name}</span>
                                                     </div>
 
                                                     <div className="flex items-center gap-1 shrink-0">
                                                         <button
+                                                            type="button"
                                                             disabled={idx === 0}
                                                             onClick={() => moveQuickAccessGame(slug, "up")}
-                                                            className="w-6 h-6 rounded border border-border/60 hover:bg-surface-hover disabled:opacity-20 cursor-pointer flex items-center justify-center text-[10px]"
+                                                            className="w-6 h-6 rounded border border-divider-primary/60 hover:bg-surface-hover disabled:opacity-20 cursor-pointer flex items-center justify-center text-[10px]"
                                                         >
                                                             <FontAwesomeIcon icon={faArrowUp} />
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             disabled={idx === tempSelectedSlugs.length - 1}
                                                             onClick={() => moveQuickAccessGame(slug, "down")}
-                                                            className="w-6 h-6 rounded border border-border/60 hover:bg-surface-hover disabled:opacity-20 cursor-pointer flex items-center justify-center text-[10px]"
+                                                            className="w-6 h-6 rounded border border-divider-primary/60 hover:bg-surface-hover disabled:opacity-20 cursor-pointer flex items-center justify-center text-[10px]"
                                                         >
                                                             <FontAwesomeIcon icon={faArrowDown} />
                                                         </button>
                                                         <button
+                                                            type="button"
                                                             onClick={() => setTempSelectedSlugs(tempSelectedSlugs.filter((s) => s !== slug))}
-                                                            className="px-2 py-0.5 rounded border border-rose-500/40 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold ml-1"
+                                                            className="px-2 py-0.5 rounded border border-rose-500/40 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer text-[10px] font-bold ml-1"
                                                         >
                                                             {t('settings.quickAccess.remove', { defaultValue: 'Gỡ' })}
                                                         </button>
@@ -456,15 +514,15 @@ export function SettingsPage() {
 
                             {/* Game List */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-text-muted block">{t('settings.quickAccess.selectLabel', { defaultValue: 'Chọn game để ghim:' })}</label>
+                                <label className="text-xs font-bold text-text-faint block">{t('settings.quickAccess.selectLabel', { defaultValue: 'Chọn game để ghim:' })}</label>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {INITIAL_GAMES.map((game) => {
+                                    {INITIAL_GAMES.map((game, idx) => {
                                         const isSelected = tempSelectedSlugs.includes(game.slug);
                                         const canSelect = isSelected || tempSelectedSlugs.length < 4;
 
                                         return (
                                             <div
-                                                key={game.slug}
+                                                key={`${game.slug}-${idx}`}
                                                 onClick={() => {
                                                     if (isSelected) {
                                                         setTempSelectedSlugs(tempSelectedSlugs.filter((s) => s !== game.slug));
@@ -472,17 +530,17 @@ export function SettingsPage() {
                                                         setTempSelectedSlugs([...tempSelectedSlugs, game.slug]);
                                                     }
                                                 }}
-                                                className={`p-2.5 rounded-md border transition-colors cursor-pointer flex items-center justify-between ${
+                                                className={`p-2.5 rounded border transition-colors cursor-pointer flex items-center justify-between ${
                                                     isSelected
                                                         ? "bg-primary/10 border-primary text-text font-bold"
-                                                        : "bg-surface border-border/60 hover:border-border text-text-muted"
+                                                        : "bg-surface border-divider-primary/60 hover:border-divider-primary text-text-muted"
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <img src={game.logoUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-border/40" />
+                                                    <img src={game.logoUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-divider-primary/40" />
                                                     <span className="text-xs font-bold text-text truncate">{game.name}</span>
                                                 </div>
-                                                <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? "bg-primary border-primary text-white" : "border-border/60 bg-surface"}`}>
+                                                <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? "bg-primary border-primary text-white" : "border-divider-primary/60 bg-surface"}`}>
                                                     {isSelected && <FontAwesomeIcon icon={faCheck} className="text-[9px]" />}
                                                 </div>
                                             </div>
@@ -491,11 +549,12 @@ export function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-3 border-t border-border/60">
-                                <span className="text-xs text-text-muted">{t('settings.quickAccess.selectedCount', { defaultValue: 'Đã chọn:' })} <strong className="text-primary">{tempSelectedSlugs.length}/4</strong></span>
+                            <div className="flex items-center justify-between pt-3 border-t border-divider-primary/60">
+                                <span className="text-xs text-text-faint">{t('settings.quickAccess.selectedCount', { defaultValue: 'Đã chọn:' })} <strong className="text-primary">{tempSelectedSlugs.length}/4</strong></span>
                                 <button
+                                    type="button"
                                     onClick={handleSaveQuickAccess}
-                                    className="px-5 py-2 rounded-md bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors cursor-pointer"
+                                    className="px-5 py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors cursor-pointer shadow-xs"
                                 >
                                     {t('settings.quickAccess.saveBtn', { defaultValue: 'Lưu cài đặt' })}
                                 </button>
@@ -505,52 +564,71 @@ export function SettingsPage() {
 
                     {/* TAB 3: PRIVACY */}
                     {activeTab === "privacy" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faEye} className="text-primary text-sm" />
-                                    <span>{t('settings.privacy.title', { defaultValue: 'Quyền riêng tư (Privacy)' })}</span>
+                                    <span>{t('settings.privacy.title', { defaultValue: 'Quyền riêng tư' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.privacy.sub', { defaultValue: 'Kiểm soát quyền xem hồ sơ và trạng thái cá nhân' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.privacy.sub', { defaultValue: 'Kiểm soát quyền xem hồ sơ và trạng thái cá nhân' })}</p>
                             </div>
 
-                            <div className="space-y-3">
-                                <div className="p-3.5 rounded-md bg-surface border border-border/70 space-y-1.5">
-                                    <label className="text-xs font-bold text-text block">{t('settings.privacy.profileVisibility', { defaultValue: 'Quyền xem Hồ sơ cá nhân' })}</label>
+                            <div className="divide-y divide-divider-primary/50">
+                                {/* Profile Visibility */}
+                                <div className="py-3.5 flex items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-surface border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                            <FontAwesomeIcon icon={faEye} className="text-xs" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-text">{t('settings.privacy.profileVisibility', { defaultValue: 'Quyền xem Hồ sơ cá nhân' })}</div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">Ai có quyền truy cập trang thông tin cá nhân của bạn</div>
+                                        </div>
+                                    </div>
                                     <select
                                         value={privacy.profileVisibility}
                                         onChange={(e) => setPrivacy({ ...privacy, profileVisibility: e.target.value as "public" | "friends" | "private" })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 text-text rounded-md p-2 text-xs font-bold focus:outline-none focus:border-primary"
+                                        className="bg-surface border border-divider-primary text-text rounded px-3 py-1.5 text-xs font-bold focus:outline-none focus:border-primary shrink-0 cursor-pointer"
                                     >
-                                        <option value="public">{t('settings.privacy.optionPublic', { defaultValue: 'Công khai (Tất cả mọi người)' })}</option>
+                                        <option value="public">{t('settings.privacy.optionPublic', { defaultValue: 'Công khai' })}</option>
                                         <option value="friends">{t('settings.privacy.optionFriends', { defaultValue: 'Chỉ bạn bè' })}</option>
-                                        <option value="private">{t('settings.privacy.optionPrivate', { defaultValue: 'Riêng tư (Chỉ mình tôi)' })}</option>
+                                        <option value="private">{t('settings.privacy.optionPrivate', { defaultValue: 'Riêng tư' })}</option>
                                     </select>
                                 </div>
 
-                                <div className="p-3.5 rounded-md bg-surface border border-border/70 flex items-center justify-between">
-                                    <div>
-                                        <div className="text-xs font-bold text-text">{t('settings.privacy.onlineStatus', { defaultValue: 'Trạng thái trực tuyến' })}</div>
-                                        <div className="text-[11px] text-text-muted">{t('settings.privacy.onlineStatusDesc', { defaultValue: 'Hiển thị khi bạn đang online' })}</div>
+                                {/* Online Status (iOS Switch) */}
+                                <div className="py-3.5 flex items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-surface border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                            <FontAwesomeIcon icon={faUserClock} className="text-xs" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-text">{t('settings.privacy.onlineStatus', { defaultValue: 'Trạng thái trực tuyến' })}</div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">{t('settings.privacy.onlineStatusDesc', { defaultValue: 'Hiển thị huy hiệu xanh khi bạn đang online' })}</div>
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={() => setPrivacy({ ...privacy, onlineStatus: !privacy.onlineStatus })}
-                                        className={`px-3 py-1 rounded-md border text-xs font-bold cursor-pointer transition-colors ${
-                                            privacy.onlineStatus
-                                                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-                                                : "border-border/60 bg-surface-hover text-text-muted"
-                                        }`}
-                                    >
-                                        {privacy.onlineStatus ? t('settings.privacy.on', { defaultValue: 'Bật' }) : t('settings.privacy.off', { defaultValue: 'Tắt' })}
-                                    </button>
+                                    <ToggleSwitch
+                                        checked={privacy.onlineStatus}
+                                        onChange={(checked) => setPrivacy({ ...privacy, onlineStatus: checked })}
+                                        ariaLabel="Toggle Online Status"
+                                    />
                                 </div>
 
-                                <div className="p-3.5 rounded-md bg-surface border border-border/70 space-y-1.5">
-                                    <label className="text-xs font-bold text-text block">{t('settings.privacy.gameLibraryVisibility', { defaultValue: 'Hiển thị Tủ game & Thành tích' })}</label>
+                                {/* Game Library Visibility */}
+                                <div className="py-3.5 flex items-center justify-between gap-4">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded bg-surface border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                            <FontAwesomeIcon icon={faGamepad} className="text-xs" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-text">{t('settings.privacy.gameLibraryVisibility', { defaultValue: 'Tủ game & Thành tích' })}</div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">Quyền xem huy hiệu và tựa game đã chọn</div>
+                                        </div>
+                                    </div>
                                     <select
                                         value={privacy.gameLibraryVisibility}
                                         onChange={(e) => setPrivacy({ ...privacy, gameLibraryVisibility: e.target.value as "public" | "friends" | "private" })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 text-text rounded-md p-2 text-xs font-bold focus:outline-none focus:border-primary"
+                                        className="bg-surface border border-divider-primary text-text rounded px-3 py-1.5 text-xs font-bold focus:outline-none focus:border-primary shrink-0 cursor-pointer"
                                     >
                                         <option value="public">{t('settings.privacy.optionPublic', { defaultValue: 'Công khai' })}</option>
                                         <option value="friends">{t('settings.privacy.optionFriends', { defaultValue: 'Chỉ bạn bè' })}</option>
@@ -563,38 +641,41 @@ export function SettingsPage() {
 
                     {/* TAB 4: NOTIFICATIONS */}
                     {activeTab === "notifications" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBell} className="text-primary text-sm" />
                                     <span>{t('settings.notifications.title', { defaultValue: 'Cài đặt Thông báo' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.notifications.sub', { defaultValue: 'Tùy chọn tương tác muốn nhận thông báo' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.notifications.sub', { defaultValue: 'Tùy chọn tương tác bạn muốn nhận thông báo' })}</p>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="divide-y divide-divider-primary/50">
                                 {[
-                                    { key: "comments", label: t('settings.notifications.comments', { defaultValue: 'Bình luận mới trong bài viết' }) },
-                                    { key: "replies", label: t('settings.notifications.replies', { defaultValue: 'Phản hồi bình luận của bạn' }) },
-                                    { key: "likes", label: t('settings.notifications.likes', { defaultValue: 'Lượt thích bài viết & bình luận' }) },
-                                    { key: "mentions", label: t('settings.notifications.mentions', { defaultValue: 'Thẻ nhắc tên (@Mentions)' }) },
-                                    { key: "communityActivity", label: t('settings.notifications.communityActivity', { defaultValue: 'Hoạt động từ Cộng đồng' }) },
+                                    { key: "comments", icon: faComment, label: t('settings.notifications.comments', { defaultValue: 'Bình luận mới trong bài viết' }), desc: 'Nhận thông báo khi ai đó bình luận bài viết của bạn' },
+                                    { key: "replies", icon: faReply, label: t('settings.notifications.replies', { defaultValue: 'Phản hồi bình luận của bạn' }), desc: 'Nhận thông báo khi ai đó trả lời bình luận' },
+                                    { key: "likes", icon: faHeart, label: t('settings.notifications.likes', { defaultValue: 'Lượt thích bài viết & bình luận' }), desc: 'Nhận thông báo khi bài viết nhận lượt thích' },
+                                    { key: "mentions", icon: faAt, label: t('settings.notifications.mentions', { defaultValue: 'Thẻ nhắc tên (@Mentions)' }), desc: 'Nhận thông báo khi có người nhắc đến bạn' },
+                                    { key: "communityActivity", icon: faUsers, label: t('settings.notifications.communityActivity', { defaultValue: 'Hoạt động từ Cộng đồng' }), desc: 'Nhận thông tin cập nhật từ cộng đồng đã tham gia' },
                                 ].map((item) => {
                                     const isChecked = notifications[item.key as keyof typeof notifications];
                                     return (
-                                        <div
-                                            key={item.key}
-                                            onClick={() => setNotifications({ ...notifications, [item.key]: !isChecked })}
-                                            className={`p-3 rounded-md border flex items-center justify-between cursor-pointer transition-colors ${
-                                                isChecked 
-                                                    ? "bg-primary/5 border-primary/40 text-text font-bold" 
-                                                    : "bg-surface border-border/60 text-text-muted hover:border-border"
-                                            }`}
-                                        >
-                                            <span className="text-xs font-medium">{item.label}</span>
-                                            <div className={`w-4 h-4 rounded flex items-center justify-center border ${isChecked ? "bg-primary border-primary text-white" : "border-border/60 bg-surface"}`}>
-                                                {isChecked && <FontAwesomeIcon icon={faCheck} className="text-[9px]" />}
+                                        <div key={item.key} className="py-3.5 flex items-center justify-between gap-4">
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <div className="w-8 h-8 rounded bg-surface border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                                    <FontAwesomeIcon icon={item.icon} className="text-xs" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-xs font-bold text-text">{item.label}</div>
+                                                    <div className="text-[11px] text-text-faint mt-0.5">{item.desc}</div>
+                                                </div>
                                             </div>
+
+                                            <ToggleSwitch
+                                                checked={isChecked}
+                                                onChange={(val) => setNotifications({ ...notifications, [item.key]: val })}
+                                                ariaLabel={item.label}
+                                            />
                                         </div>
                                     );
                                 })}
@@ -605,34 +686,34 @@ export function SettingsPage() {
                     {/* TAB 5: ACCOUNT & SECURITY */}
                     {activeTab === "account" && (
                         <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faShieldHalved} className="text-primary text-sm" />
                                     <span>{t('settings.account.title', { defaultValue: 'Tài khoản & Bảo mật' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.account.sub', { defaultValue: 'Quản lý Email, mật khẩu và phiên làm việc' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.account.sub', { defaultValue: 'Quản lý Email, mật khẩu và phiên làm việc' })}</p>
                             </div>
 
                             {emailSuccessMsg && (
-                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-md text-xs font-bold flex items-center gap-2">
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded text-xs font-bold flex items-center gap-2">
                                     <FontAwesomeIcon icon={faCheckCircle} />
                                     <span>{emailSuccessMsg}</span>
                                 </div>
                             )}
 
-                            {/* Email Card */}
-                            <div className="p-4 rounded-md bg-surface border border-border/70 space-y-3">
+                            {/* Email Row */}
+                            <div className="space-y-3 pb-4 border-b border-divider-primary/50">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold uppercase text-text-muted">
+                                    <span className="text-xs font-bold uppercase text-text-faint tracking-wider">
                                         {t('authenticate.email', { defaultValue: 'Email tài khoản' })}
                                     </span>
                                     <span
                                         className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                             isEmailVerified
-                                                ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30"
+                                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                                                 : emailPendingVerify
-                                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/30"
-                                                : "bg-rose-500/10 text-rose-500 border border-rose-500/30"
+                                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                                                : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
                                         }`}
                                     >
                                         {isEmailVerified
@@ -643,14 +724,14 @@ export function SettingsPage() {
                                     </span>
                                 </div>
 
-                                <div className="p-2.5 rounded bg-surface-hover/50 border border-border/50 text-xs font-bold text-text">
+                                <div className="p-2.5 rounded bg-surface border border-divider-primary/60 text-xs font-bold text-text">
                                     {currentEmail}
                                 </div>
 
                                 {!isEmailVerified && (
                                     <div className="space-y-2 pt-1">
                                         {emailPendingVerify ? (
-                                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs space-y-2.5">
+                                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs space-y-2.5">
                                                 <p className="text-amber-200 font-medium leading-relaxed">
                                                     {t('settings.account.pendingVerifyNotice', {
                                                         defaultValue: 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư của bạn để hoàn tất.'
@@ -685,21 +766,21 @@ export function SettingsPage() {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleChangeEmailSubmit} className="space-y-2 pt-2 border-t border-border/50">
-                                    <div className="text-xs font-bold text-text-muted">{t('settings.account.changeEmailTitle', { defaultValue: 'Đổi Email:' })}</div>
+                                <form onSubmit={handleChangeEmailSubmit} className="space-y-2 pt-2">
+                                    <div className="text-xs font-bold text-text-faint">{t('settings.account.changeEmailTitle', { defaultValue: 'Đổi Email:' })}</div>
                                     <input
                                         type="email"
                                         value={newEmail}
                                         onChange={(e) => setNewEmail(e.target.value)}
                                         placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'Email mới...' })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={emailPasswordConfirm}
                                         onChange={(e) => setEmailPasswordConfirm(e.target.value)}
                                         placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <button
                                         type="submit"
@@ -710,17 +791,17 @@ export function SettingsPage() {
                                 </form>
                             </div>
 
-                            {/* Password Card */}
-                            <form onSubmit={handleChangePasswordSubmit} className="p-4 rounded-md bg-surface border border-border/70 space-y-3">
-                                <div className="text-xs font-bold uppercase text-text-muted">{t('settings.account.changePasswordTitle', { defaultValue: 'Đổi mật khẩu' })}</div>
+                            {/* Password Form */}
+                            <form onSubmit={handleChangePasswordSubmit} className="space-y-3 pb-4 border-b border-divider-primary/50">
+                                <div className="text-xs font-bold uppercase text-text-faint tracking-wider">{t('settings.account.changePasswordTitle', { defaultValue: 'Đổi mật khẩu' })}</div>
 
                                 {changePwdError && (
-                                    <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold">
+                                    <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold">
                                         {changePwdError}
                                     </div>
                                 )}
                                 {changePwdSuccess && (
-                                    <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-bold flex items-center gap-2">
+                                    <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
                                         <FontAwesomeIcon icon={faCheckCircle} />
                                         <span>{changePwdSuccess}</span>
                                     </div>
@@ -732,21 +813,21 @@ export function SettingsPage() {
                                         value={changePwdState.currentPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, currentPassword: e.target.value })}
                                         placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={changePwdState.newPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, newPassword: e.target.value })}
                                         placeholder={t('settings.account.newPasswordPlaceholder', { defaultValue: 'Mật khẩu mới (≥8 ký tự)...' })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                     <input
                                         type="password"
                                         value={changePwdState.confirmPassword}
                                         onChange={(e) => setChangePwdState({ ...changePwdState, confirmPassword: e.target.value })}
                                         placeholder={t('settings.account.confirmPasswordPlaceholder', { defaultValue: 'Xác nhận mật khẩu mới...' })}
-                                        className="w-full bg-surface-hover/50 border border-border/60 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                 </div>
 
@@ -762,11 +843,11 @@ export function SettingsPage() {
                             {/* Active Sessions */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-text-muted">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({remoteSessions?.length || 0}):</span>
+                                    <span className="font-bold text-text-faint uppercase tracking-wider">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({remoteSessions?.length || 0}):</span>
                                 </div>
 
-                                <div className="divide-y divide-border/40 border border-border/60 bg-surface rounded-md overflow-hidden">
-                                    {sessionsLoading && <div className="p-3 text-xs text-text-muted">{t('common.loading', { defaultValue: 'Đang tải...' })}</div>}
+                                <div className="divide-y divide-divider-primary/50 border border-divider-primary/60 bg-surface rounded overflow-hidden">
+                                    {sessionsLoading && <div className="p-3 text-xs text-text-faint">{t('common.loading', { defaultValue: 'Đang tải...' })}</div>}
                                     {!sessionsLoading && remoteSessions?.map((s) => {
                                         const isRevoked = Boolean(s.revoked_at);
                                         return (
@@ -777,25 +858,24 @@ export function SettingsPage() {
                                                         <div className="font-bold text-text flex items-center gap-1.5 truncate">
                                                             <span>{s.userAgent?.substring(0, 30) || "Unknown Device"}</span>
                                                         </div>
-                                                        <div className="text-[10px] text-text-muted truncate">
-                                                            IP: {s.ip_address} • 
-                                                            {new Date(s.created_at).toLocaleString()}
+                                                        <div className="text-[10px] text-text-faint truncate">
+                                                            IP: {s.ip_address} • {new Date(s.created_at).toLocaleString()}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     {isRevoked ? (
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
                                                             {t('settings.account.revokedSession', { defaultValue: 'Đã thu hồi' })}
                                                         </span>
                                                     ) : (
                                                         <>
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                                                                 {t('settings.account.runningSession', { defaultValue: 'Đang hoạt động' })}
                                                             </span>
                                                             <button
                                                                 type="button"
-                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer"
+                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer"
                                                             >
                                                                 {t('settings.account.revokeSession', { defaultValue: 'Thu hồi' })}
                                                             </button>
@@ -806,7 +886,7 @@ export function SettingsPage() {
                                         );
                                     })}
                                     {!sessionsLoading && remoteSessions?.length === 0 && (
-                                        <div className="p-3 text-xs text-text-muted text-center">{t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}</div>
+                                        <div className="p-3 text-xs text-text-faint text-center">{t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}</div>
                                     )}
                                 </div>
                             </div>
@@ -815,34 +895,35 @@ export function SettingsPage() {
 
                     {/* TAB 6: BLOCKED USERS */}
                     {activeTab === "blocked" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBan} className="text-primary text-sm" />
                                     <span>{t('settings.blocked.title', { defaultValue: 'Danh sách đã chặn' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.blocked.sub', { defaultValue: 'Quản lý người dùng bị chặn tương tác' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.blocked.sub', { defaultValue: 'Quản lý người dùng bị chặn tương tác' })}</p>
                             </div>
 
                             {blockedUsers.length === 0 ? (
-                                <div className="p-6 text-center border border-dashed border-border/60 rounded-md text-text-muted text-xs">
+                                <div className="p-6 text-center border border-dashed border-divider-primary/60 rounded text-text-faint text-xs">
                                     {t('settings.blocked.empty', { defaultValue: 'Bạn chưa chặn người dùng nào.' })}
                                 </div>
                             ) : (
-                                <div className="divide-y divide-border/40 border border-border/60 bg-surface rounded-md overflow-hidden">
+                                <div className="divide-y divide-divider-primary/50 border border-divider-primary/60 bg-surface rounded overflow-hidden">
                                     {blockedUsers.map((u) => (
                                         <div key={u.id} className="p-3 flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded object-cover border border-border/40 shrink-0" />
+                                                <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded object-cover border border-divider-primary/40 shrink-0" />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-xs text-text truncate">{u.name} (@{u.username})</div>
-                                                    <div className="text-[10px] text-text-muted truncate">{t('settings.blocked.reasonLabel', { defaultValue: 'Lý do:' })} {u.reason}</div>
+                                                    <div className="text-[10px] text-text-faint truncate">{t('settings.blocked.reasonLabel', { defaultValue: 'Lý do:' })} {u.reason}</div>
                                                 </div>
                                             </div>
 
                                             <button
+                                                type="button"
                                                 onClick={() => handleUnblockUser(u.id)}
-                                                className="px-2.5 py-1 rounded border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors cursor-pointer font-bold text-xs shrink-0"
+                                                className="px-2.5 py-1 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 transition-colors cursor-pointer font-bold text-xs shrink-0"
                                             >
                                                 {t('settings.blocked.unblock', { defaultValue: 'Bỏ chặn' })}
                                             </button>
@@ -855,17 +936,17 @@ export function SettingsPage() {
 
                     {/* TAB 7: FEEDBACK */}
                     {activeTab === "feedback" && (
-                        <div className="space-y-5">
-                            <div className="border-b border-border/60 pb-3">
-                                <h2 className="text-lg font-bold text-text flex items-center gap-2">
+                        <div className="space-y-4">
+                            <div className="border-b border-divider-primary/60 pb-3">
+                                <h2 className="text-base font-bold text-text flex items-center gap-2">
                                     <FontAwesomeIcon icon={faBug} className="text-primary text-sm" />
                                     <span>{t('settings.feedback.title', { defaultValue: 'Gửi Báo lỗi & Đóng góp' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.feedback.sub', { defaultValue: 'Gửi phản hồi trực tiếp đến Ban Quản Trị' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.feedback.sub', { defaultValue: 'Gửi phản hồi trực tiếp đến Ban Quản Trị' })}</p>
                             </div>
 
                             {isFeedbackSuccess && (
-                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-md text-xs font-bold flex items-center gap-2">
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded text-xs font-bold flex items-center gap-2">
                                     <FontAwesomeIcon icon={faCheckCircle} />
                                     <span>{t('settings.feedback.successMsg', { defaultValue: 'Cảm ơn bạn! Phản hồi đã được gửi thành công.' })}</span>
                                 </div>
@@ -878,10 +959,10 @@ export function SettingsPage() {
                                         <button
                                             type="button"
                                             onClick={() => setFeedbackType("bug")}
-                                            className={`p-2.5 rounded-md border text-xs font-bold transition-colors cursor-pointer ${
+                                            className={`p-2.5 rounded border text-xs font-bold transition-colors cursor-pointer ${
                                                 feedbackType === "bug"
-                                                    ? "bg-rose-500/10 border-rose-500/50 text-rose-500"
-                                                    : "bg-surface border-border/60 text-text-muted"
+                                                    ? "bg-rose-500/10 border-rose-500/50 text-rose-400"
+                                                    : "bg-surface border-divider-primary/60 text-text-faint"
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={faBug} className="mr-1.5" /> {t('settings.feedback.bugOption', { defaultValue: 'Báo lỗi kỹ thuật' })}
@@ -889,10 +970,10 @@ export function SettingsPage() {
                                         <button
                                             type="button"
                                             onClick={() => setFeedbackType("idea")}
-                                            className={`p-2.5 rounded-md border text-xs font-bold transition-colors cursor-pointer ${
+                                            className={`p-2.5 rounded border text-xs font-bold transition-colors cursor-pointer ${
                                                 feedbackType === "idea"
                                                     ? "bg-primary/10 border-primary text-primary"
-                                                    : "bg-surface border-border/60 text-text-muted"
+                                                    : "bg-surface border-divider-primary/60 text-text-faint"
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={faLightbulb} className="mr-1.5" /> {t('settings.feedback.ideaOption', { defaultValue: 'Đóng góp ý tưởng' })}
@@ -908,7 +989,7 @@ export function SettingsPage() {
                                         value={feedbackTitle}
                                         onChange={(e) => setFeedbackTitle(e.target.value)}
                                         placeholder={t('settings.feedback.titlePlaceholder', { defaultValue: 'Tiêu đề ngắn gọn...' })}
-                                        className="w-full bg-surface border border-border/60 rounded-md p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
                                     />
                                 </div>
 
@@ -920,14 +1001,14 @@ export function SettingsPage() {
                                         value={feedbackDescription}
                                         onChange={(e) => setFeedbackDescription(e.target.value)}
                                         placeholder={t('settings.feedback.contentPlaceholder', { defaultValue: 'Mô tả nội dung...' })}
-                                        className="w-full bg-surface border border-border/60 rounded-md p-2 text-xs text-text focus:outline-none focus:border-primary resize-y"
+                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary resize-y"
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
                                     disabled={isSubmittingFeedback}
-                                    className="w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50"
+                                    className="w-full py-2.5 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50 shadow-xs"
                                 >
                                     {isSubmittingFeedback ? t('settings.feedback.submitting', { defaultValue: 'Đang gửi...' }) : t('settings.feedback.submitBtn', { defaultValue: 'Gửi phản hồi' })}
                                 </button>
@@ -937,45 +1018,47 @@ export function SettingsPage() {
 
                     {/* TAB 8: DANGER ZONE */}
                     {activeTab === "danger" && (
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                             <div className="border-b border-rose-500/30 pb-3">
-                                <h2 className="text-lg font-bold text-rose-500 flex items-center gap-2">
+                                <h2 className="text-base font-bold text-rose-500 flex items-center gap-2">
                                     <FontAwesomeIcon icon={faExclamationTriangle} />
                                     <span>{t('settings.danger.title', { defaultValue: 'Vùng nguy hiểm (Danger Zone)' })}</span>
                                 </h2>
-                                <p className="text-xs text-text-muted mt-0.5">{t('settings.danger.sub', { defaultValue: 'Thao tác ảnh hưởng trực tiếp đến trạng thái tài khoản' })}</p>
+                                <p className="text-xs text-text-faint mt-0.5">{t('settings.danger.sub', { defaultValue: 'Thao tác ảnh hưởng trực tiếp đến trạng thái tài khoản' })}</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {/* Deactivate */}
-                                <div className="p-4 rounded-md bg-surface border border-rose-500/30 space-y-2">
+                                <div className="p-4 rounded bg-surface/80 border border-rose-500/30 space-y-2">
                                     <div className="font-bold text-xs text-text flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faUserClock} className="text-amber-500" />
+                                        <FontAwesomeIcon icon={faUserClock} className="text-amber-400" />
                                         <span>{t('settings.danger.deactivateTitle', { defaultValue: 'Tạm ngưng tài khoản' })}</span>
                                     </div>
-                                    <p className="text-[11px] text-text-muted">
+                                    <p className="text-[11px] text-text-faint">
                                         {t('settings.danger.deactivateDesc', { defaultValue: 'Ẩn tài khoản tạm thời. Kích hoạt lại bằng cách đăng nhập lại.' })}
                                     </p>
                                     <button
+                                        type="button"
                                         onClick={() => setDangerModal({ open: true, type: "deactivate", confirmText: "" })}
-                                        className="w-full py-2 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors font-bold text-xs cursor-pointer"
+                                        className="w-full py-2 rounded border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors font-bold text-xs cursor-pointer"
                                     >
                                         {t('settings.danger.deactivateBtn', { defaultValue: 'Tạm ngưng' })}
                                     </button>
                                 </div>
 
                                 {/* Delete */}
-                                <div className="p-4 rounded-md bg-surface border border-rose-500/40 space-y-2">
-                                    <div className="font-bold text-xs text-rose-500 flex items-center gap-2">
+                                <div className="p-4 rounded bg-surface/80 border border-rose-500/40 space-y-2">
+                                    <div className="font-bold text-xs text-rose-400 flex items-center gap-2">
                                         <FontAwesomeIcon icon={faBan} />
                                         <span>{t('settings.danger.deleteTitle', { defaultValue: 'Xóa tài khoản vĩnh viễn' })}</span>
                                     </div>
-                                    <p className="text-[11px] text-text-muted">
+                                    <p className="text-[11px] text-text-faint">
                                         {t('settings.danger.deleteDesc', { defaultValue: 'Xóa toàn bộ dữ liệu cá nhân vĩnh viễn không thể khôi phục.' })}
                                     </p>
                                     <button
+                                        type="button"
                                         onClick={() => setDangerModal({ open: true, type: "delete", confirmText: "" })}
-                                        className="w-full py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white transition-colors font-bold text-xs cursor-pointer"
+                                        className="w-full py-2 rounded bg-rose-600 hover:bg-rose-700 text-white transition-colors font-bold text-xs cursor-pointer"
                                     >
                                         {t('settings.danger.deleteBtn', { defaultValue: 'Xóa tài khoản' })}
                                     </button>
@@ -988,25 +1071,26 @@ export function SettingsPage() {
 
             {/* DANGER MODAL */}
             {dangerModal.open && (
-                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-                    <div className="bg-surface border border-rose-500/50 w-full max-w-md p-5 rounded-lg space-y-3 shadow-xl relative">
-                        <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                            <span className="font-bold text-rose-500 text-xs uppercase flex items-center gap-2">
+                <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-surface border border-rose-500/50 w-full max-w-md p-5 rounded-md space-y-3 shadow-2xl relative">
+                        <div className="flex items-center justify-between border-b border-divider-primary/60 pb-2">
+                            <span className="font-bold text-rose-400 text-xs uppercase flex items-center gap-2">
                                 <FontAwesomeIcon icon={faExclamationTriangle} />
                                 {dangerModal.type === "deactivate"
                                     ? t('settings.danger.deactivateModalTitle', { defaultValue: 'Xác nhận Tạm ngưng' })
                                     : t('settings.danger.deleteModalTitle', { defaultValue: 'Xác nhận Xóa tài khoản' })}
                             </span>
                             <button
+                                type="button"
                                 onClick={() => setDangerModal({ open: false, type: null, confirmText: "" })}
-                                className="w-6 h-6 rounded border border-border/60 flex items-center justify-center text-text-muted hover:text-text cursor-pointer text-xs"
+                                className="w-6 h-6 rounded border border-divider-primary/60 flex items-center justify-center text-text-faint hover:text-text cursor-pointer text-xs"
                             >
                                 <FontAwesomeIcon icon={faXmark} />
                             </button>
                         </div>
 
                         {dangerAlertMsg && (
-                            <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-bold">
+                            <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold">
                                 {dangerAlertMsg}
                             </div>
                         )}
@@ -1022,17 +1106,19 @@ export function SettingsPage() {
                             value={dangerModal.confirmText}
                             onChange={(e) => setDangerModal({ ...dangerModal, confirmText: e.target.value })}
                             placeholder={dangerModal.type === "deactivate" ? "TAM NGUNG" : "XOA TAI KHOAN"}
-                            className="w-full bg-surface-hover/50 border border-rose-500/50 p-2 rounded-md text-xs font-bold tracking-wider text-center text-text uppercase focus:outline-none"
+                            className="w-full bg-surface border border-rose-500/50 p-2 rounded text-xs font-bold tracking-wider text-center text-text uppercase focus:outline-none"
                         />
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/50">
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-divider-primary/50">
                             <button
+                                type="button"
                                 onClick={() => setDangerModal({ open: false, type: null, confirmText: "" })}
-                                className="px-3 py-1.5 rounded border border-border/60 bg-surface hover:bg-surface-hover text-xs font-bold cursor-pointer"
+                                className="px-3 py-1.5 rounded border border-divider-primary/60 bg-surface hover:bg-surface-hover text-xs font-bold cursor-pointer"
                             >
                                 {t('common.cancel', { defaultValue: 'Hủy' })}
                             </button>
                             <button
+                                type="button"
                                 onClick={handleConfirmDangerAction}
                                 className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
                             >

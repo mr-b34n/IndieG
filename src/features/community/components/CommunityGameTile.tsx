@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faLock,
+    faPlus,
+    faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { CommunityData } from "../types";
@@ -35,15 +37,15 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
     return (
         <div
             onClick={handleCardClick}
-            className="group w-full flex flex-col bg-surface hover:bg-surface-hover/40 border border-divider-primary/50 hover:border-divider-primary rounded-[4px] overflow-hidden cursor-pointer transition-all duration-200 relative"
+            className="group w-full flex flex-col bg-[#14171A] hover:bg-[#20252C] border border-[#23272E]/90 hover:border-[#383F4C] rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-xl hover:shadow-black/60 relative"
         >
             {/* 1. Game Art Canvas */}
-            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-surface-hover">
+            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-[#181B20]">
                 {community.backdrop ? (
                     <img
                         src={community.backdrop}
                         alt={`${community.name} artwork`}
-                        className="w-full h-full object-cover object-center group-hover:scale-103 transition-transform duration-500 ease-out"
+                        className="w-full h-full object-cover object-center"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary/10">
@@ -52,7 +54,7 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                 )}
 
                 {/* Subtle dark gradient at bottom for contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#14171A] group-hover:from-[#20252C] via-transparent to-transparent pointer-events-none transition-colors duration-200" />
 
                 {/* Top Overlay: HOT or LOCKED */}
                 <div className="absolute top-2.5 right-3 z-10 flex items-center gap-1.5">
@@ -67,13 +69,6 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                             HOT
                         </span>
                     )}
-                </div>
-
-                {/* Hover Quick Cue */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                    <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5 bg-black/75 px-3 py-1 rounded-[4px] border border-white/20">
-                        <span>{community.joined ? t('community.accessCommunity', { defaultValue: 'Truy cập cộng đồng' }) : t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}</span>
-                    </span>
                 </div>
             </div>
 
@@ -99,27 +94,40 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                         {community.category}
                     </p>
                     <p className="font-medium">
-                        {formatCompactNumber(community.members)} {t('community.membersCount', { defaultValue: 'members' })} · <span className="text-emerald-500 font-semibold">{formatCompactNumber(community.onlineNow)} {t('community.onlineCount', { defaultValue: 'online' })}</span>
+                        {formatCompactNumber(community.members)} {t('community.membersCount', { defaultValue: 'thành viên' })} · <span className="text-emerald-500 font-semibold">{formatCompactNumber(community.onlineNow)} {t('community.onlineCount', { defaultValue: 'trực tuyến' })}</span>
                     </p>
                 </div>
 
                 {/* Action & Status Row */}
                 <div className="flex items-center justify-between pt-1 text-xs">
                     {community.joined ? (
-                        <span className="text-xs font-semibold text-text-muted group-hover:text-primary transition-colors">
-                            {t('community.accessCommunity', { defaultValue: 'Truy cập cộng đồng' })}
-                        </span>
+                        <>
+                            <span className="text-[11px] font-bold text-emerald-400/90 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                <span>{t('community.joinedBadge', { defaultValue: 'Đã tham gia' })}</span>
+                            </span>
+
+                            <button
+                                type="button"
+                                onClick={handleCardClick}
+                                className="flex items-center gap-1.5 text-xs font-bold text-[#D0D4DC] hover:text-white bg-[#262B33] hover:bg-[#323944] border border-[#3E4552]/60 hover:border-[#525B6C] transition-all uppercase tracking-wider py-1.5 px-3 rounded-[4px] cursor-pointer"
+                            >
+                                <span>{t('community.accessBtn', { defaultValue: 'Truy cập' })}</span>
+                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                            </button>
+                        </>
                     ) : (
                         <>
-                            <span className="text-xs font-medium text-text-muted group-hover:text-primary transition-colors">
-                                {t('community.exploreCommunity', { defaultValue: 'Khám phá cộng đồng' })}
+                            <span className="text-[11px] text-text-faint font-medium">
+                                {t('community.notJoinedYet', { defaultValue: 'Chưa tham gia' })}
                             </span>
 
                             <button
                                 type="button"
                                 onClick={handleJoinClick}
-                                className="flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-wider py-1 px-2.5 rounded bg-primary/10 hover:bg-primary/20 cursor-pointer"
+                                className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover transition-colors uppercase tracking-wider py-1.5 px-3 rounded-[4px] cursor-pointer shadow-xs shadow-primary/30"
                             >
+                                <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
                                 <span>{t('community.joinBtn', { defaultValue: 'Tham gia' })}</span>
                             </button>
                         </>

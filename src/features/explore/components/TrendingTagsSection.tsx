@@ -24,9 +24,9 @@ export const TrendingTagsSection = ({ tags, onSelectTag }: TrendingTagsSectionPr
 
             {/* Text-only Trending Strip (No bulky pill backgrounds) */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1">
-                {tags.map((tag) => (
+                {tags.map((tag, idx) => (
                     <button
-                        key={tag.id}
+                        key={`${tag.id || tag.name}-${idx}`}
                         type="button"
                         onClick={() => onSelectTag?.(tag.name)}
                         className="group flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer text-left"

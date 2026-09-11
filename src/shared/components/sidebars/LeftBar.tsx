@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import {
     faUsers, faHouse,
     faGear,
-    faCompass, faPlus,
+    faPlus,
     faRightFromBracket
 } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -10,10 +10,9 @@ import { useNavigate, useLocation } from "@tanstack/react-router"
 
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor } from "@/features/post";
-import { useCommunitiesStore, type CommunityData } from "@/features/community";
+import { useCommunitiesStore } from "@/features/community";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
-import { extractCommunityList, mapCommunityDtoToCommunityData } from "@/shared/api";
 
 const navItem = `
     w-full flex flex-row items-center gap-3 px-3 py-2
@@ -34,6 +33,7 @@ const sectionLabel = `
 
 export const LeftBar = () => {
     const communities = useCommunitiesStore((state) => state.communities);
+    const syncJoinedCommunities = useCommunitiesStore((state) => state.syncJoinedCommunities);
     const navigate = useNavigate();
     const { pathname } = useLocation();
     const {t} = useTranslation();
@@ -44,40 +44,18 @@ export const LeftBar = () => {
     const isLoggedIn = !!user || mockLogin;
 
     // Automatically fetch joined communities for the current user
-    const { data: rawJoinedData } = useCommunitiesQuery({ type: "joined", page: 1, limit: 50 });
+    const { data: rawJoinedData } = useCommunitiesQuery(
+        { type: "joined", page: 1, limit: 50 },
+        { enabled: isLoggedIn }
+    );
 
     useEffect(() => {
         if (rawJoinedData) {
-            const list = extractCommunityList(rawJoinedData);
-            if (Array.isArray(list)) {
-                const mapped: CommunityData[] = list.map((item) => {
-                    const base = mapCommunityDtoToCommunityData(item);
-                    return {
-                        ...base,
-                        joined: true,
-                    };
-                });
-
-                useCommunitiesStore.setState((state) => {
-                    const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
-                    mapped.forEach((item) => {
-                        const prev = existingMap.get(String(item.id));
-                        existingMap.set(String(item.id), {
-                            ...prev,
-                            ...item,
-                            joined: true,
-                        });
-                    });
-                    return {
-                        communities: Array.from(existingMap.values()),
-                    };
-                });
-            }
+            syncJoinedCommunities(rawJoinedData);
         }
-    }, [rawJoinedData]);
+    }, [rawJoinedData, syncJoinedCommunities]);
 
     const isHomeActive = pathname === "/" || pathname.startsWith("/post");
-    const isExploreActive = pathname.startsWith("/explore");
     const isCommunityActive = pathname.startsWith("/community");
     const isSettingsActive = pathname.startsWith("/settings");
 
@@ -162,15 +140,6 @@ export const LeftBar = () => {
 
                 <button
                     type="button"
-                    onClick={() => navigate({to: "/explore"})}
-                    className={isExploreActive ? navItemActive : navItem}
-                >
-                    <FontAwesomeIcon icon={faCompass} className={`w-4 shrink-0 ${isExploreActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
-                    <span>{t('common.explore', { defaultValue: 'Explore' })}</span>
-                </button>
-
-                <button
-                    type="button"
                     onClick={() => navigate({ to: "/community" })}
                     className={isCommunityActive ? navItemActive : navItem}
                 >
@@ -199,11 +168,11 @@ export const LeftBar = () => {
                 <div className="flex flex-col gap-0.5 px-1 pb-1">
                     {joinedCommunities.length > 0 ? (
                         <>
-                            {joinedCommunities.slice(0, 5).map((c) => {
+                            {joinedCommunities.slice(0, 5).map((c, idx) => {
                                 const isThisCommActive = pathname.startsWith(`/community/${c.id}`);
                                 return (
                                     <button
-                                        key={c.id}
+                                        key={`${c.id}-${idx}`}
                                         type="button"
                                         onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(c.id) } })}
                                         className={`w-full flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg text-xs transition-colors cursor-pointer group ${

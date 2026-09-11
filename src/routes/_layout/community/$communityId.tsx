@@ -586,9 +586,9 @@ export function CommunityDetailPage() {
                                     onClick={() => setShowCommunitySwitcher(false)}
                                 />
                                 <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
-                                    {INITIAL_COMMUNITIES.map((c) => (
+                                    {INITIAL_COMMUNITIES.map((c, idx) => (
                                         <button
-                                            key={c.id}
+                                            key={`${c.id}-${idx}`}
                                             type="button"
                                             onClick={() => {
                                                 navigate({
