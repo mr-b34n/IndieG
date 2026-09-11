@@ -210,9 +210,10 @@ Key Architectural Decisions:
 1. **Player Identity as Primary Anchor**:
    - Bio rendered naturally without an enclosing card box, borders, or nested containers in view mode.
    - Edit mode uses the inline selection-based `BioEditor`.
-2. **Game Mastery Visual Cards**:
-   - Focused on game artwork, title, hours played, rank, winrate, achievement progress bar, and skill stars.
-   - When empty, uses an intentional compact empty button instead of a large empty card.
+2. **Game Mastery Real Data & Zero Mock Policy**:
+   - Hardcoded mock fallback data (`DEFAULT_FEATURED_GAMES`) removed completely.
+   - Game Mastery strictly connects to backend API library games response (`useLibraryGamesQuery`).
+   - Displays a clean loading state when fetching data and an explicit notice banner ("Chưa có dữ liệu Game Mastery") with a call-to-action button to add games when no games exist or no API response is returned.
 3. **Low-Weight Recent Activity Feed**:
    - Reduced visual weight with concise activity rows (Posts, Comments, Achievements, Community).
 4. **Public Gaming Loadout Battlestation**:

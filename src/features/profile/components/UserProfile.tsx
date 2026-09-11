@@ -841,6 +841,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     <OverviewTab
                         identity={identity}
                         games={displayedLibraryGames}
+                        isLoadingGames={isLibraryGamesLoading}
                         reputations={COMMUNITY_REPUTATIONS}
                         activities={RECENT_ACTIVITIES}
                         gearData={gearData}
@@ -853,6 +854,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         onSaveGear={triggerToast}
                         onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
                         onSaveIdentity={triggerToast}
+                        onNavigateToGames={() => handleTabChange("games")}
                         t={t}
                     />
                 )}

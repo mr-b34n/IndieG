@@ -645,6 +645,8 @@ export const en = {
         },
         empty: {
             bio: "No bio provided",
+            bioDetail: "Character bio description not set yet.",
+            bioEditPrompt: "Click \"Edit Profile\" to write a bio for your character.",
             playstyle: "Playstyle & roles not specified.",
             gear: "No setup gear listed.",
             gamesTitle: "Empty Game Library",
@@ -667,6 +669,20 @@ export const en = {
             unlocked: "Unlocked",
             clutchGod: "🏆 Clutch God"
         },
+        gameMastery: {
+            title: "Game Mastery",
+            featuredGame: "Featured Game",
+            loading: "Loading Game Mastery data from system...",
+            emptyTitle: "No Game Mastery Data Yet",
+            emptyDescOwn: "No game data received. You can add games and stats to your library.",
+            emptyDescOther: "This user has not updated their Game Mastery library yet.",
+            addGameBtn: "Add Games to Library",
+            primaryBadge: "PRIMARY",
+            hoursPlayed: "{hours} Hours Played",
+            achievementProgress: "Achievement Progress ({achievements}/{total})"
+        },
+        toggleHidden: "Hidden (Click to show)",
+        toggleVisible: "Visible (Click to hide)",
         emptyPosts: "No posts yet on this profile.",
         createFirstPost: "Share your gaming highlights or tactical guides now!",
         editSuccess: "Update successful",

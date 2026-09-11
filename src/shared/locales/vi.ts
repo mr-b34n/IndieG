@@ -645,6 +645,8 @@ export const vi = {
         },
         empty: {
             bio: "Chưa có tiểu sử (bio)",
+            bioDetail: "Chưa thiết lập mô tả tiểu sử character.",
+            bioEditPrompt: "Bấm \"Chỉnh sửa hồ sơ\" để viết mô tả tiểu sử cho nhân vật.",
             playstyle: "Chưa cập nhật phong cách chơi & vai trò.",
             gear: "Chưa cập nhật cấu hình thiết bị (Setup).",
             gamesTitle: "Thư viện game trống",
@@ -667,6 +669,20 @@ export const vi = {
             unlocked: "Đã mở khóa",
             clutchGod: "🏆 Thần Clutch"
         },
+        gameMastery: {
+            title: "Game Mastery",
+            featuredGame: "Featured Game",
+            loading: "Đang tải dữ liệu Game Mastery từ hệ thống...",
+            emptyTitle: "Chưa có dữ liệu Game Mastery",
+            emptyDescOwn: "Chưa nhận được phản hồi dữ liệu game. Bạn có thể thêm các tựa game và chỉ số vào thư viện.",
+            emptyDescOther: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery.",
+            addGameBtn: "Thêm game vào thư viện",
+            primaryBadge: "PRIMARY",
+            hoursPlayed: "{hours} Giờ chơi",
+            achievementProgress: "Thành tựu ({achievements}/{total})"
+        },
+        toggleHidden: "Đã ẩn (Click để hiện)",
+        toggleVisible: "Đang hiện (Click để ẩn)",
         emptyPosts: "Chưa có bài viết nào trên trang cá nhân.",
         createFirstPost: "Hãy chia sẻ khoảnh khắc highlight hoặc chiến thuật gaming của bạn ngay!",
         editSuccess: "Cập nhật thành công",

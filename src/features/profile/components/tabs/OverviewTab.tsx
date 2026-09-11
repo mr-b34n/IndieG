@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus,
+    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faGamepad, faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import { GEAR_CATEGORIES } from "../../constants";
-import type { TranslateFn } from "@/shared/hooks/useTranslate";
+import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 import { BioEditor, BioRenderer, isBioEmpty, parseBio } from "../../bio";
 
 interface OverviewTabProps {
     identity: ProfileIdentity;
     games: LibraryGame[];
+    isLoadingGames?: boolean;
     reputations: CommunityReputation[];
     activities: RecentActivityItem[];
     gearData: Record<string, string>;
@@ -25,49 +26,14 @@ interface OverviewTabProps {
     onIdentityChange?: (next: Partial<ProfileIdentity>) => void;
     onSaveIdentity?: () => void;
     onOpenBadgeSelector?: () => void;
+    onNavigateToGames?: () => void;
     t?: TranslateFn;
 }
-
-const DEFAULT_FEATURED_GAMES: LibraryGame[] = [
-    {
-        id: "elden-ring",
-        name: "Elden Ring",
-        logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=240&auto=format&fit=crop&q=80",
-        hours: 287,
-        lastPlayed: "Hôm qua",
-        achievements: 38,
-        totalAchievements: 42,
-        keyStat: "90% COMPLETE",
-        rank: "Soulslike · RPG",
-        ratingScore: "NG+3",
-        isFeatured: true,
-        skills: [
-            { name: "Parry & Dodge", stars: 5 },
-            { name: "Boss Mastery", stars: 5 },
-        ]
-    },
-    {
-        id: "cs2",
-        name: "Counter-Strike 2",
-        logo: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=240&auto=format&fit=crop&q=80",
-        hours: 1420,
-        lastPlayed: "2 giờ trước",
-        achievements: 25,
-        totalAchievements: 25,
-        keyStat: "68.4% WINRATE",
-        rank: "Premier 18,500",
-        ratingScore: "18,500",
-        isFeatured: false,
-        skills: [
-            { name: "Aim Precision", stars: 5 },
-            { name: "Game Sense", stars: 4 },
-        ]
-    }
-];
 
 export const OverviewTab = ({
     identity,
     games = [],
+    isLoadingGames = false,
     reputations = [],
     activities = [],
     gearData = {},
@@ -77,11 +43,16 @@ export const OverviewTab = ({
     onToggleHideSection,
     onGearChange,
     onIdentityChange,
+    onNavigateToGames,
+    t,
 }: OverviewTabProps) => {
-    // Fallback to default featured games if user has not populated library games
-    const activeGamesList = (games && games.length > 0) ? games : DEFAULT_FEATURED_GAMES;
+    const { t: fallbackT } = useTranslation();
+    const tr = t || fallbackT;
+
+    // Real library games from backend API
+    const activeGamesList = games || [];
     
-    const [selectedGameSlug, setSelectedGameSlug] = useState<string>(activeGamesList[0]?.id ? String(activeGamesList[0].id) : "elden-ring");
+    const [selectedGameSlug, setSelectedGameSlug] = useState<string>(activeGamesList[0]?.id ? String(activeGamesList[0].id) : "");
 
     const featuredGame = activeGamesList.find((g) => String(g?.id) === selectedGameSlug || g?.isFeatured) || activeGamesList[0];
     const filledGear = GEAR_CATEGORIES.filter((cat) => gearData[cat.value]?.trim());
@@ -109,7 +80,7 @@ export const OverviewTab = ({
                         ? "bg-rose-500/20 text-rose-400 hover:bg-rose-500/30"
                         : "bg-[#1688E8]/20 text-[#1688E8] hover:bg-[#1688E8]/30"
                 }`}
-                title={hidden ? "Đã ẩn (Click để hiện)" : "Đang hiện (Click để ẩn)"}
+                title={hidden ? tr("profile.toggleHidden", { defaultValue: "Đã ẩn (Click để hiện)" }) : tr("profile.toggleVisible", { defaultValue: "Đang hiện (Click để ẩn)" })}
             >
                 <FontAwesomeIcon icon={hidden ? faEyeSlash : faEye} className="text-xs" />
             </button>
@@ -158,11 +129,11 @@ export const OverviewTab = ({
                                         {identity.name || "Gamer"}
                                     </span>
                                     <p className="text-xs text-[#8A8F98] italic">
-                                        Chưa thiết lập mô tả tiểu sử character.
+                                        {tr("profile.empty.bioDetail", { defaultValue: "Chưa thiết lập mô tả tiểu sử character." })}
                                     </p>
                                     {isOwnProfile && (
                                         <p className="text-[11px] text-[#666A71]">
-                                            Bấm "Chỉnh sửa hồ sơ" để viết mô tả tiểu sử cho nhân vật.
+                                            {tr("profile.empty.bioEditPrompt", { defaultValue: "Bấm \"Chỉnh sửa hồ sơ\" để viết mô tả tiểu sử cho nhân vật." })}
                                         </p>
                                     )}
                                 </div>
@@ -180,99 +151,136 @@ export const OverviewTab = ({
                     <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                         <div className="flex items-center gap-2">
                             <FontAwesomeIcon icon={faCrown} className="text-[#E5A93D] text-xs" />
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Game Mastery</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">
+                                {tr("profile.gameMastery.title", { defaultValue: "Game Mastery" })}
+                            </h3>
                         </div>
                         <div className="flex items-center gap-2">
                             {renderToggleBtn("gameMastery")}
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#1688E8] bg-[#1688E8]/10 px-2 py-0.5 rounded-[4px]">
-                                Featured Game
-                            </span>
+                            {activeGamesList.length > 0 && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#1688E8] bg-[#1688E8]/10 px-2 py-0.5 rounded-[4px]">
+                                    {tr("profile.gameMastery.featuredGame", { defaultValue: "Featured Game" })}
+                                </span>
+                            )}
                         </div>
                     </div>
 
-                    {/* Featured Game Card */}
-                    {featuredGame ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-[#13161C] rounded-[12px] p-4 sm:p-5 border border-[#1A1F2A]/60 relative overflow-hidden transition-all">
-                            
-                            {/* Artwork & Title Column */}
-                            <div className="lg:col-span-5 flex items-center gap-4 relative z-10">
-                                <img
-                                    src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=240&auto=format&fit=crop&q=80"}
-                                    alt={featuredGame.name || "Game"}
-                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-[10px] object-cover shrink-0 shadow-md border border-[#222834]/60"
-                                />
-                                <div className="flex flex-col gap-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <h4 className="font-extrabold text-[#F0F1F2] text-base sm:text-lg truncate leading-tight">
-                                            {featuredGame.name || "Featured Game"}
-                                        </h4>
-                                        <span className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold text-[#1688E8] bg-[#1688E8]/15 border border-[#1688E8]/30">
-                                            PRIMARY
-                                        </span>
-                                    </div>
-                                    <span className="text-xs font-bold text-[#F0F1F2]">
-                                        {featuredGame.hours || 0} Hours Played
-                                    </span>
-                                    <span className="text-xs font-medium text-[#8A8F98]">
-                                        {featuredGame.rank || "Competitive"} · {featuredGame.ratingScore || "Top Tier"}
-                                    </span>
-                                </div>
+                    {/* Loading State */}
+                    {isLoadingGames ? (
+                        <div className="py-8 px-4 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/60 flex flex-col items-center justify-center gap-2 text-[#8A8F98]">
+                            <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1688E8] text-base" />
+                            <span className="text-xs font-medium">
+                                {tr("profile.gameMastery.loading", { defaultValue: "Đang tải dữ liệu Game Mastery từ hệ thống..." })}
+                            </span>
+                        </div>
+                    ) : activeGamesList.length === 0 ? (
+                        /* Informative Notice Banner when no data/response exists */
+                        <div className="py-7 px-5 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/80 text-center flex flex-col items-center justify-center gap-2.5">
+                            <div className="w-10 h-10 rounded-full bg-[#1688E8]/10 text-[#1688E8] flex items-center justify-center text-base">
+                                <FontAwesomeIcon icon={faGamepad} />
                             </div>
-
-                            {/* Stats & Progress Column */}
-                            <div className="lg:col-span-7 flex flex-col gap-3 relative z-10">
-                                <div className="flex flex-wrap items-center justify-between text-xs font-semibold text-[#F0F1F2] gap-2">
-                                    <span className="text-[#8A8F98] text-[11px]">
-                                        Achievement Progress ({featuredGame.achievements || 0}/{featuredGame.totalAchievements || 100})
-                                    </span>
-                                    <span className="text-[#24C58A] font-bold px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[10px] tracking-wide">
-                                        {featuredGame.keyStat || "MASTERED"}
-                                    </span>
-                                </div>
-
-                                {/* Progress Accent Bar */}
-                                <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                                        style={{ 
-                                            width: `${Math.round(((featuredGame.achievements || 0) / Math.max(1, (featuredGame.totalAchievements || 1))) * 100)}%`
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Skill Stars */}
-                                {featuredGame.skills && featuredGame.skills.length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
-                                        {featuredGame.skills.map((s) => (
-                                            <div key={s.name} className="flex items-center gap-1.5">
-                                                <span className="font-medium text-[#8A8F98] text-[11px]">{s.name}</span>
-                                                <div className="flex items-center gap-0.5 text-[#E5A93D] text-[10px]">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <FontAwesomeIcon
-                                                            key={star}
-                                                            icon={star <= s.stars ? faStarSolid : faStarRegular}
-                                                            className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                            <div className="flex flex-col gap-1">
+                                <h4 className="text-xs font-bold text-[#F0F1F2] uppercase tracking-wider">
+                                    {tr("profile.gameMastery.emptyTitle", { defaultValue: "Chưa có dữ liệu Game Mastery" })}
+                                </h4>
+                                <p className="text-xs text-[#8A8F98] max-w-md leading-relaxed">
+                                    {isOwnProfile
+                                        ? tr("profile.gameMastery.emptyDescOwn", { defaultValue: "Chưa nhận được phản hồi dữ liệu game. Bạn có thể thêm các tựa game và chỉ số vào thư viện." })
+                                        : tr("profile.gameMastery.emptyDescOther", { defaultValue: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery." })}
+                                </p>
                             </div>
+                            {isOwnProfile && onNavigateToGames && (
+                                <button
+                                    type="button"
+                                    onClick={onNavigateToGames}
+                                    className="mt-1 px-3.5 py-1.5 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                                >
+                                    <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                                    <span>{tr("profile.gameMastery.addGameBtn", { defaultValue: "Thêm game vào thư viện" })}</span>
+                                </button>
+                            )}
                         </div>
                     ) : (
-                        /* Intentional Compact Empty State */
-                        <div className="p-4 rounded-[10px] border border-dashed border-[#222834] bg-[#13161C] text-center flex flex-col items-center justify-center gap-1">
-                            <span className="text-xs font-bold text-[#1688E8] uppercase tracking-wider flex items-center gap-1">
-                                <FontAwesomeIcon icon={faPlus} className="text-[10px]" /> FEATURE A GAME
-                            </span>
-                            <span className="text-xs text-[#8A8F98]">Showcase your current game and statistics</span>
-                        </div>
+                        /* Featured Game Card */
+                        featuredGame && (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-[#13161C] rounded-[12px] p-4 sm:p-5 border border-[#1A1F2A]/60 relative overflow-hidden transition-all">
+                                
+                                {/* Artwork & Title Column */}
+                                <div className="lg:col-span-5 flex items-center gap-4 relative z-10">
+                                    <img
+                                        src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=240&auto=format&fit=crop&q=80"}
+                                        alt={featuredGame.name || "Game"}
+                                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-[10px] object-cover shrink-0 shadow-md border border-[#222834]/60"
+                                    />
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h4 className="font-extrabold text-[#F0F1F2] text-base sm:text-lg truncate leading-tight">
+                                                {featuredGame.name || "Featured Game"}
+                                            </h4>
+                                            <span className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold text-[#1688E8] bg-[#1688E8]/15 border border-[#1688E8]/30">
+                                                {tr("profile.gameMastery.primaryBadge", { defaultValue: "PRIMARY" })}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-[#F0F1F2]">
+                                            {tr("profile.gameMastery.hoursPlayed", { hours: featuredGame.hours || 0, defaultValue: "{hours} Hours Played" })}
+                                        </span>
+                                        <span className="text-xs font-medium text-[#8A8F98]">
+                                            {featuredGame.rank || "Competitive"} · {featuredGame.ratingScore || "Top Tier"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Stats & Progress Column */}
+                                <div className="lg:col-span-7 flex flex-col gap-3 relative z-10">
+                                    <div className="flex flex-wrap items-center justify-between text-xs font-semibold text-[#F0F1F2] gap-2">
+                                        <span className="text-[#8A8F98] text-[11px]">
+                                            {tr("profile.gameMastery.achievementProgress", {
+                                                achievements: featuredGame.achievements || 0,
+                                                total: featuredGame.totalAchievements || 100,
+                                                defaultValue: "Achievement Progress ({achievements}/{total})"
+                                            })}
+                                        </span>
+                                        <span className="text-[#24C58A] font-bold px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[10px] tracking-wide">
+                                            {featuredGame.keyStat || "MASTERED"}
+                                        </span>
+                                    </div>
+
+                                    {/* Progress Accent Bar */}
+                                    <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
+                                            style={{ 
+                                                width: `${Math.round(((featuredGame.achievements || 0) / Math.max(1, (featuredGame.totalAchievements || 1))) * 100)}%`
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Skill Stars */}
+                                    {featuredGame.skills && featuredGame.skills.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
+                                            {featuredGame.skills.map((s) => (
+                                                <div key={s.name} className="flex items-center gap-1.5">
+                                                    <span className="font-medium text-[#8A8F98] text-[11px]">{s.name}</span>
+                                                    <div className="flex items-center gap-0.5 text-[#E5A93D] text-[10px]">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <FontAwesomeIcon
+                                                                key={star}
+                                                                icon={star <= s.stars ? faStarSolid : faStarRegular}
+                                                                className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )
                     )}
 
                     {/* Secondary Game Selector Tiles */}
-                    {activeGamesList.length > 1 && (
+                    {!isLoadingGames && activeGamesList.length > 1 && (
                         <div className="flex flex-col gap-2 pt-1">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                                 {activeGamesList.map((game) => {
@@ -298,7 +306,7 @@ export const OverviewTab = ({
                                                     {game.name}
                                                 </h5>
                                                 <span className="text-[10px] text-[#8A8F98]">
-                                                    {game.hours}h played
+                                                    {tr("profile.library.hoursPlayed", { hours: game.hours, defaultValue: "{hours} giờ chơi" })}
                                                 </span>
                                             </div>
                                         </button>
@@ -326,7 +334,7 @@ export const OverviewTab = ({
 
                     {activities.length === 0 ? (
                         <div className="py-3 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
-                            <span>Chưa có hoạt động gần đây.</span>
+                            <span>{tr("profile.empty.activityText", { defaultValue: "Chưa có hoạt động gần đây." })}</span>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -369,7 +377,7 @@ export const OverviewTab = ({
 
                             {reputations.length === 0 ? (
                                 <div className="py-4 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
-                                    <span>Chưa tham gia cộng đồng nào.</span>
+                                    <span>{tr("profile.empty.communitiesText", { defaultValue: "Chưa tham gia cộng đồng nào." })}</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-2">
@@ -434,7 +442,9 @@ export const OverviewTab = ({
                                             <span className="text-xs font-bold text-[#1688E8] uppercase tracking-wider font-mono">
                                                 + BATTLESTATION LOADOUT
                                             </span>
-                                            <span className="text-xs text-[#8A8F98]">Chưa cập nhật thông tin thiết bị góc máy.</span>
+                                            <span className="text-xs text-[#8A8F98]">
+                                                {tr("profile.empty.gear", { defaultValue: "Chưa cập nhật thông tin thiết bị góc máy." })}
+                                            </span>
                                         </div>
                                     ) : (
                                         /* Public Gaming Loadout Presentation */
