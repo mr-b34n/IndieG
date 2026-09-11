@@ -104,14 +104,14 @@ export const CommunityHubSidebar = ({
 
     return (
         <aside
-            className={`flex flex-col justify-between select-none transition-all duration-300 ${
-                isCollapsed ? "w-14 items-center" : "w-full"
+            className={`flex flex-col justify-between select-none ${
+                isCollapsed ? "w-12 items-center" : "w-full"
             }`}
         >
-            <div className="w-full flex flex-col gap-4">
-                {/* Section Title (only if expanded) */}
-                {!isCollapsed && (
-                    <div className="flex items-center justify-between px-2 pt-1">
+            <div className="w-full flex flex-col gap-3">
+                {/* Header Title / Toggle */}
+                {!isCollapsed ? (
+                    <div className="flex items-center justify-between px-2 pt-1 h-8">
                         <span className="text-[11px] font-mono font-bold tracking-widest text-text-faint uppercase">
                             COMMUNITY
                         </span>
@@ -119,21 +119,18 @@ export const CommunityHubSidebar = ({
                             type="button"
                             onClick={onToggleCollapse}
                             title={isVi ? "Thu gọn thanh điều hướng" : "Collapse sidebar"}
-                            className="text-text-faint hover:text-text p-1 rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
+                            className="w-7 h-7 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
                         >
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
                     </div>
-                )}
-
-                {/* Collapsed Toggle Button */}
-                {isCollapsed && (
-                    <div className="flex justify-center pb-1">
+                ) : (
+                    <div className="flex justify-center pt-1 h-8">
                         <button
                             type="button"
                             onClick={onToggleCollapse}
                             title={isVi ? "Mở rộng thanh điều hướng" : "Expand sidebar"}
-                            className="text-text-faint hover:text-text p-2 rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
+                            className="w-7 h-7 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
                         >
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
@@ -155,34 +152,36 @@ export const CommunityHubSidebar = ({
                                     setIsMoreOpen(false);
                                 }}
                                 title={isCollapsed ? label : undefined}
-                                className={`group relative flex items-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer ${
+                                className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                     isCollapsed
-                                        ? "w-10 h-10 justify-center mx-auto"
-                                        : "w-full px-3 py-2 gap-3 text-left"
+                                        ? "w-9 justify-center mx-auto"
+                                        : "w-full px-2.5 gap-2.5 text-left"
                                 } ${
                                     isActive
                                         ? "bg-surface-hover text-text font-bold"
                                         : "text-text-muted hover:text-text hover:bg-surface-hover/50"
                                 }`}
                             >
-                                <FontAwesomeIcon
-                                    icon={item.icon}
-                                    className={`text-sm shrink-0 transition-colors ${
-                                        isActive ? "text-primary" : "text-text-faint group-hover:text-text"
-                                    }`}
-                                />
+                                <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                    <FontAwesomeIcon
+                                        icon={item.icon}
+                                        className={`text-xs shrink-0 transition-colors ${
+                                            isActive ? "text-primary" : "text-text-faint group-hover:text-text"
+                                        }`}
+                                    />
+                                </div>
 
                                 {!isCollapsed && (
-                                    <span className="truncate">{label}</span>
+                                    <span className="truncate flex-1">{label}</span>
                                 )}
 
                                 {isActive && !isCollapsed && (
-                                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                                 )}
 
                                 {/* Collapsed Tooltip */}
                                 {isCollapsed && (
-                                    <div className="absolute left-full ml-3 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                    <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                         {label}
                                     </div>
                                 )}
@@ -196,34 +195,36 @@ export const CommunityHubSidebar = ({
                             type="button"
                             onClick={() => setIsMoreOpen(!isMoreOpen)}
                             title={isCollapsed ? (isVi ? "Thêm" : "More") : undefined}
-                            className={`group relative flex items-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer ${
+                            className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                 isCollapsed
-                                    ? "w-10 h-10 justify-center mx-auto"
-                                    : "w-full px-3 py-2 gap-3 text-left"
+                                    ? "w-9 justify-center mx-auto"
+                                    : "w-full px-2.5 gap-2.5 text-left"
                             } ${
                                 isMoreActive || isMoreOpen
                                     ? "bg-surface-hover text-text font-bold"
                                     : "text-text-muted hover:text-text hover:bg-surface-hover/50"
                             }`}
                         >
-                            <FontAwesomeIcon
-                                icon={faEllipsis}
-                                className={`text-sm shrink-0 transition-colors ${
-                                    isMoreActive || isMoreOpen ? "text-primary" : "text-text-faint group-hover:text-text"
-                                }`}
-                            />
+                            <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                <FontAwesomeIcon
+                                    icon={faEllipsis}
+                                    className={`text-xs shrink-0 transition-colors ${
+                                        isMoreActive || isMoreOpen ? "text-primary" : "text-text-faint group-hover:text-text"
+                                    }`}
+                                />
+                            </div>
 
                             {!isCollapsed && (
-                                <span className="truncate">{isVi ? "Thêm..." : "More"}</span>
+                                <span className="truncate flex-1">{isVi ? "Thêm..." : "More"}</span>
                             )}
 
                             {isMoreActive && !isCollapsed && (
-                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                             )}
 
                             {/* Collapsed Tooltip */}
                             {isCollapsed && (
-                                <div className="absolute left-full ml-3 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                     {isVi ? "Thêm" : "More"}
                                 </div>
                             )}
@@ -294,40 +295,42 @@ export const CommunityHubSidebar = ({
                                             setIsMoreOpen(false);
                                         }}
                                         title={isCollapsed ? label : undefined}
-                                        className={`group relative flex items-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer ${
+                                        className={`group relative flex items-center h-9 rounded-[6px] text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                                             isCollapsed
-                                                ? "w-10 h-10 justify-center mx-auto"
-                                                : "w-full px-3 py-2 gap-3 text-left"
+                                                ? "w-9 justify-center mx-auto"
+                                                : "w-full px-2.5 gap-2.5 text-left"
                                         } ${
                                             isActive
                                                 ? "bg-surface-hover text-text font-bold"
                                                 : "text-text-muted hover:text-text hover:bg-surface-hover/50"
                                         }`}
                                     >
-                                        <FontAwesomeIcon
-                                            icon={item.icon}
-                                            className={`text-sm shrink-0 transition-colors ${
-                                                isActive ? "text-primary" : "text-text-faint group-hover:text-text"
-                                            }`}
-                                        />
+                                        <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                                            <FontAwesomeIcon
+                                                icon={item.icon}
+                                                className={`text-xs shrink-0 transition-colors ${
+                                                    isActive ? "text-primary" : "text-text-faint group-hover:text-text"
+                                                }`}
+                                            />
+                                        </div>
 
                                         {!isCollapsed && (
-                                            <span className="truncate">{label}</span>
+                                            <span className="truncate flex-1">{label}</span>
                                         )}
 
                                         {!isCollapsed && item.badge && (
-                                            <span className="ml-auto px-1.5 py-0.2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-[9px] font-bold">
+                                            <span className="ml-auto px-1.5 py-0.2 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-[9px] font-bold shrink-0">
                                                 {item.badge}
                                             </span>
                                         )}
 
                                         {isActive && !isCollapsed && !item.badge && (
-                                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                                            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                                         )}
 
                                         {/* Collapsed Tooltip */}
                                         {isCollapsed && (
-                                            <div className="absolute left-full ml-3 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                            <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-surface-inner border border-divider-primary rounded text-xs font-bold text-text shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                                 {label}
                                             </div>
                                         )}

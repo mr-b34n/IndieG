@@ -8,7 +8,7 @@ import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
 import { useCreateReportMutation } from "@/shared/api/useQueries";
 
-export const ReportModal = ({ postId, onClose }: ReportModalProps) => {
+export const ReportModal = ({ postId, author = "người dùng", onClose }: ReportModalProps) => {
     const { t } = useTranslation();
     const [selectedReason, setSelectedReason] = useState<string>("");
     const [details, setDetails] = useState("");

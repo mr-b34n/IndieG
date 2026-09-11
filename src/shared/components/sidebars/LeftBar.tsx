@@ -45,7 +45,7 @@ export const LeftBar = () => {
 
     // Automatically fetch joined communities for the current user
     const { data: rawJoinedData } = useCommunitiesQuery(
-        { type: "joined", page: 1, limit: 50 },
+        { type: "joined", page: 1, limit: 9 },
         { enabled: isLoggedIn }
     );
 

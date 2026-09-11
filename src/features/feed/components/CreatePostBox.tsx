@@ -60,20 +60,20 @@ const ToggleSwitch = ({
     <div className="flex items-center justify-between gap-3 px-3 py-2">
         <div className="flex items-center gap-2 text-xs text-text">
             <FontAwesomeIcon icon={icon} className="w-3 text-text-faint" />
-            {label}
+            <span>{label}</span>
         </div>
         <button
             type="button"
             role="switch"
             aria-checked={checked}
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
-                checked ? "bg-primary" : "bg-surface-hover"
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
+                checked ? "bg-primary" : "bg-[#252930]"
             }`}
         >
             <span
-                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                    checked ? "translate-x-4" : "translate-x-1"
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    checked ? "translate-x-4" : "translate-x-0"
                 }`}
             />
         </button>
@@ -159,7 +159,7 @@ const PostSettingsMenu = ({
                     <div
                         ref={menuRef}
                         style={{ top: coords.top, left: coords.left }}
-                        className="fixed z-[9999] w-56 rounded-[6px] bg-surface border border-divider-primary shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-scale-up"
+                        className="fixed z-[9999] w-56 rounded-[6px] bg-surface border border-divider-primary shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-fade-in"
                     >
                         <ToggleSwitch
                             checked={allowComments}
@@ -585,7 +585,7 @@ export const CreatePostBox = ({
                 /* ================= COLLAPSED CLOSED STATE ================= */
                 <div
                     onClick={() => setExpanded(true)}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-[6px] bg-surface-hover/30 hover:bg-surface-hover/60 border border-transparent hover:border-divider-primary transition-all cursor-pointer group"
+                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-[6px] bg-surface-hover/30 hover:bg-surface-hover/60 border border-transparent hover:border-divider-primary transition-colors cursor-pointer group"
                 >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="relative shrink-0">

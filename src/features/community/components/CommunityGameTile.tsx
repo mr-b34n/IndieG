@@ -1,8 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faLock,
-    faPlus,
-    faArrowRight,
+    faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { CommunityData } from "../types";
@@ -21,6 +20,8 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
     const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
+    const isJoined = !!community.joined;
+
     const handleCardClick = () => {
         navigate({
             to: "/community/$communityId",
@@ -28,24 +29,28 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
         });
     };
 
-    const handleJoinClick = (e: React.MouseEvent) => {
+    const handleActionClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!requireVerifiedEmail("tham gia cộng đồng")) return;
-        toggleJoin(community.id);
+        if (isJoined) {
+            handleCardClick();
+        } else {
+            if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+            toggleJoin(community.id);
+        }
     };
 
     return (
         <div
             onClick={handleCardClick}
-            className="group w-full flex flex-col bg-[#14171A] hover:bg-[#20252C] border border-[#23272E]/90 hover:border-[#383F4C] rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-xl hover:shadow-black/60 relative"
+            className="group relative w-full flex flex-col bg-[#0F1216] hover:bg-[#14181F] border border-[#1F242C] hover:border-[#303744] rounded-lg overflow-hidden cursor-pointer transition-all duration-250 ease-out hover:scale-[1.025] hover:shadow-2xl hover:shadow-black/70 select-none"
         >
-            {/* 1. Game Art Canvas */}
-            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-[#181B20]">
+            {/* 1. Game Art Canvas with atmospheric gradient expansion & subtle desaturation on hover */}
+            <div className="relative w-full h-36 sm:h-40 overflow-hidden bg-[#14171D]">
                 {community.backdrop ? (
                     <img
                         src={community.backdrop}
                         alt={`${community.name} artwork`}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover object-center transition-all duration-250 ease-out group-hover:saturate-[0.7] group-hover:brightness-95 group-hover:contrast-105"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary/10">
@@ -53,8 +58,8 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                     </div>
                 )}
 
-                {/* Subtle dark gradient at bottom for contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#14171A] group-hover:from-[#20252C] via-transparent to-transparent pointer-events-none transition-colors duration-200" />
+                {/* Atmospheric gradient: 25% default -> 60% on hover */}
+                <div className="absolute inset-x-0 bottom-0 h-[25%] group-hover:h-[60%] bg-gradient-to-t from-[#0F1216] via-[#0F1216]/60 to-transparent pointer-events-none transition-all duration-250 ease-out" />
 
                 {/* Top Overlay: HOT or LOCKED */}
                 <div className="absolute top-2.5 right-3 z-10 flex items-center gap-1.5">
@@ -73,67 +78,68 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
             </div>
 
             {/* 2. Content Area */}
-            <div className="p-3.5 sm:p-4 flex flex-col gap-3">
-                {/* Identity: Icon + Game Title */}
-                <div className="flex items-center gap-2.5">
+            <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 gap-2.5 relative z-10 bg-transparent">
+                {/* Identity: Icon + Community Name + Persistent Status Indicator */}
+                <div className="flex items-start gap-2.5 min-w-0">
                     <img
                         src={community.logo}
                         alt={community.name}
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-[4px] object-cover bg-surface border border-divider-primary/60 shrink-0"
+                        className="w-8 h-8 rounded-[4px] object-cover bg-surface border border-divider-primary/60 shrink-0 mt-0.5"
                     />
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-base font-black text-text group-hover:text-primary transition-colors duration-150 uppercase tracking-tight truncate leading-tight">
-                            {community.name}
-                        </h3>
+                        <div className="flex items-center gap-1.5">
+                            <h3 className="text-sm sm:text-base font-black text-text group-hover:text-white transition-colors duration-150 uppercase tracking-tight truncate leading-tight flex-1">
+                                {community.name}
+                            </h3>
+
+                            {/* Small persistent status indicator near name */}
+                            {isJoined ? (
+                                <div
+                                    title={t('community.joinedBadge', { defaultValue: 'Đã tham gia' })}
+                                    className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0 text-emerald-400 transition-all duration-200 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.35)]"
+                                >
+                                    <FontAwesomeIcon icon={faCheck} className="text-[8px]" />
+                                </div>
+                            ) : (
+                                <div
+                                    title={t('community.notJoinedYet', { defaultValue: 'Chưa tham gia' })}
+                                    className="w-2 h-2 rounded-full bg-[#383E48] shrink-0 opacity-60"
+                                />
+                            )}
+                        </div>
+
+                        {/* Category */}
+                        <p className="font-semibold text-text-faint uppercase text-[11px] tracking-wide mt-0.5 truncate">
+                            {community.category}
+                        </p>
                     </div>
                 </div>
 
-                {/* Metadata & Social Signals */}
-                <div className="flex flex-col gap-0.5 text-xs text-text-muted">
-                    <p className="font-semibold text-text-faint uppercase text-[11px] tracking-wide">
-                        {community.category}
-                    </p>
-                    <p className="font-medium">
-                        {formatCompactNumber(community.members)} {t('community.membersCount', { defaultValue: 'thành viên' })} · <span className="text-emerald-500 font-semibold">{formatCompactNumber(community.onlineNow)} {t('community.onlineCount', { defaultValue: 'trực tuyến' })}</span>
-                    </p>
+                {/* Metadata: Member count + Online count */}
+                <div className="flex items-center justify-between text-xs text-text-muted">
+                    <div className="flex items-center gap-1.5 font-medium truncate">
+                        <span>{formatCompactNumber(community.members)} {t('community.membersCount', { defaultValue: 'thành viên' })}</span>
+                        <span className="text-text-faint">·</span>
+                        <span className="text-emerald-400 font-semibold">{formatCompactNumber(community.onlineNow)} {t('community.onlineCount', { defaultValue: 'trực tuyến' })}</span>
+                    </div>
                 </div>
 
-                {/* Action & Status Row */}
-                <div className="flex items-center justify-between pt-1 text-xs">
-                    {community.joined ? (
-                        <>
-                            <span className="text-[11px] font-bold text-emerald-400/90 flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                <span>{t('community.joinedBadge', { defaultValue: 'Đã tham gia' })}</span>
-                            </span>
-
-                            <button
-                                type="button"
-                                onClick={handleCardClick}
-                                className="flex items-center gap-1.5 text-xs font-bold text-[#D0D4DC] hover:text-white bg-[#262B33] hover:bg-[#323944] border border-[#3E4552]/60 hover:border-[#525B6C] transition-all uppercase tracking-wider py-1.5 px-3 rounded-[4px] cursor-pointer"
-                            >
-                                <span>{t('community.accessBtn', { defaultValue: 'Truy cập' })}</span>
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-[11px] text-text-faint font-medium">
-                                {t('community.notJoinedYet', { defaultValue: 'Chưa tham gia' })}
-                            </span>
-
-                            <button
-                                type="button"
-                                onClick={handleJoinClick}
-                                className="flex items-center gap-1.5 text-xs font-bold text-white bg-primary hover:bg-primary-hover transition-colors uppercase tracking-wider py-1.5 px-3 rounded-[4px] cursor-pointer shadow-xs shadow-primary/30"
-                            >
-                                <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                                <span>{t('community.joinBtn', { defaultValue: 'Tham gia' })}</span>
-                            </button>
-                        </>
-                    )}
+                {/* 3. Emerging CTA on Hover */}
+                <div className="pt-0.5 flex items-center justify-end min-h-[32px]">
+                    <button
+                        type="button"
+                        onClick={handleActionClick}
+                        className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider py-1.5 px-3.5 rounded-[4px] cursor-pointer transition-all duration-200 ease-out transform ${
+                            isJoined
+                                ? "text-[#D6DAE2] hover:text-white bg-[#222730] hover:bg-[#2C3340] border border-[#3A4250]/70 hover:border-[#4E586B]"
+                                : "text-white bg-primary hover:bg-primary-hover shadow-xs shadow-primary/30"
+                        } opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0`}
+                    >
+                        <span>{isJoined ? "ACCESS →" : "JOIN →"}</span>
+                    </button>
                 </div>
             </div>
         </div>
     );
 };
+

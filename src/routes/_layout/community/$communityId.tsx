@@ -667,8 +667,8 @@ export function CommunityDetailPage() {
             <div className="w-full flex flex-col md:flex-row items-start gap-6 lg:gap-8 min-w-0">
                 {/* LEFT COLUMN: Persistent Navigation Sidebar */}
                 <div
-                    className={`shrink-0 transition-all duration-300 ${
-                        isSidebarCollapsed ? "w-14" : "w-full md:w-[200px] lg:w-[220px]"
+                    className={`shrink-0 transition-[width] duration-200 self-start sticky top-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none ${
+                        isSidebarCollapsed ? "w-12" : "w-full md:w-[200px] lg:w-[220px]"
                     }`}
                 >
                     <CommunityHubSidebar
@@ -803,7 +803,7 @@ export function CommunityDetailPage() {
                 </main>
 
                 {/* RIGHT COLUMN: Lightweight Contextual Rail */}
-                <div className="w-full md:w-[240px] lg:w-[260px] shrink-0 hidden md:block">
+                <div className="w-full md:w-[240px] lg:w-[260px] shrink-0 hidden md:block self-start sticky top-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none">
                     <CommunityHubRightRail
                         communityName={community.name}
                         description={community.description}
