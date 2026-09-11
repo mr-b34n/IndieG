@@ -44,8 +44,12 @@ import {
     useUnfriendMutation,
     useBlockUserMutation,
     useUnblockUserMutation,
+    usePostsQuery,
+    useCommunitiesQuery,
 } from "@/shared/api/useQueries";
-import type { UpdateProfileDto } from "@/shared/api/types";
+import type { UpdateProfileDto, CommunityDto } from "@/shared/api/types";
+import { extractPostList, extractCommunityList, mapPostDtoToPostData } from "@/shared/api";
+import type { PostData } from "@/features/post";
 import { uploadImageToR2 } from "@/shared/services/upload-service";
 import { extractFriendEntry, extractFriendRequest } from "../utils";
 
@@ -251,7 +255,15 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 : (remoteProfile?.bio || "").trim();
 
             if (trimmedBio !== undefined && trimmedBio !== originalBio) {
-                payload.bio = trimmedBio;
+                if ((trimmedBio.startsWith("{") && trimmedBio.endsWith("}")) || (trimmedBio.startsWith("[") && trimmedBio.endsWith("]"))) {
+                    try {
+                        payload.bio = JSON.parse(trimmedBio);
+                    } catch {
+                        payload.bio = trimmedBio;
+                    }
+                } else {
+                    payload.bio = trimmedBio;
+                }
             }
 
             const trimmedName = identity.name?.trim();
@@ -344,32 +356,72 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         setActiveTab(tab);
     };
 
-    // User's posts
+    // Target user ID for API calls
+    const profileUserId = isOwnProfile
+        ? myProfileData?.id || user?.id
+        : otherUserProfileData?.id || (otherUserProfileData as { userId?: string })?.userId || remoteProfile?.id || (remoteProfile as { userId?: string })?.userId;
+
+    // Real API Queries for Posts & Communities
+    const { data: remoteUserPostsData, isLoading: isPostsLoading } = usePostsQuery(
+        profileUserId ? { authorId: profileUserId } : undefined
+    );
+
+    const { data: remoteCommunitiesData, isLoading: isCommunitiesLoading } = useCommunitiesQuery(
+        isOwnProfile ? { type: "joined" } : undefined
+    );
+
+    // User's posts (combining API posts with local posts)
     const allPosts = usePostsStore((state) => state.posts);
-    const displayPosts = allPosts.filter((p) => {
-        const pName = typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "");
-        const pUsername = typeof p.author === "object" ? p.author?.username : "";
-        const pId = typeof p.author === "object" ? p.author?.id : "";
+    const displayPosts = useMemo(() => {
+        const remotePostsList = extractPostList(remoteUserPostsData);
+        const mappedRemotePosts = remotePostsList.map((dto) => mapPostDtoToPostData(dto));
 
-        if (isOwnProfile) {
-            if (pName === identity.name || pName === "Bạn" || pName === currentAuthor) return true;
-            if (user?.id && pId === user.id) return true;
-            if (user?.username && (pUsername === user.username || pName === user.username)) return true;
+        const combinedMap = new Map<string, PostData>();
+
+        mappedRemotePosts.forEach((p) => {
+            if (p.id !== undefined && p.id !== null) {
+                combinedMap.set(String(p.id), p);
+            }
+        });
+
+        allPosts.forEach((p) => {
+            if (p.id !== undefined && p.id !== null && !combinedMap.has(String(p.id))) {
+                combinedMap.set(String(p.id), p);
+            }
+        });
+
+        const combinedList = Array.from(combinedMap.values());
+
+        return combinedList.filter((p) => {
+            const pName = typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "");
+            const pUsername = typeof p.author === "object" ? p.author?.username : "";
+            const pId = typeof p.author === "object" ? p.author?.id : "";
+
+            if (isOwnProfile) {
+                if (pName === identity.name || pName === "Bạn" || pName === currentAuthor) return true;
+                if (user?.id && pId === user.id) return true;
+                if (user?.username && (pUsername === user.username || pName === user.username)) return true;
+                return false;
+            }
+
+            const targetName = identity.name;
+            const targetUsername = cleanUsername || "";
+
+            if (pId && (pId === profileUserId || pId === cleanUsername || pId === userId)) return true;
+            if (pName && (pName === targetName || pName === targetUsername)) return true;
+            if (pUsername && (pUsername === targetUsername || pUsername === targetName)) return true;
+
+            if (pName && targetName && pName.toLowerCase() === targetName.toLowerCase()) return true;
+            if (pUsername && targetUsername && pUsername.toLowerCase() === targetUsername.toLowerCase()) return true;
+
             return false;
-        }
+        });
+    }, [remoteUserPostsData, allPosts, isOwnProfile, identity.name, currentAuthor, user, cleanUsername, profileUserId, userId]);
 
-        const targetName = identity.name;
-        const targetUsername = cleanUsername || "";
-
-        if (pId && (pId === cleanUsername || pId === userId)) return true;
-        if (pName && (pName === targetName || pName === targetUsername)) return true;
-        if (pUsername && (pUsername === targetUsername || pUsername === targetName)) return true;
-
-        if (pName && targetName && pName.toLowerCase() === targetName.toLowerCase()) return true;
-        if (pUsername && targetUsername && pUsername.toLowerCase() === targetUsername.toLowerCase()) return true;
-
-        return false;
-    });
+    // Communities list from API
+    const displayCommunities = useMemo<CommunityDto[]>(() => {
+        return extractCommunityList(remoteCommunitiesData);
+    }, [remoteCommunitiesData]);
 
     // Real Friendships API Queries
     const { data: rawFriends = [], isLoading: isFriendsLoading } = useFriendsQuery(!!user);
@@ -799,7 +851,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 reputationPercent={0}
                 followersCount={friendsList.length}
                 postsCount={displayPosts.length}
-                communitiesCount={COMMUNITY_REPUTATIONS.length}
+                communitiesCount={displayCommunities.length > 0 ? displayCommunities.length : COMMUNITY_REPUTATIONS.length}
                 t={t}
             />
 
@@ -843,6 +895,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         games={displayedLibraryGames}
                         isLoadingGames={isLibraryGamesLoading}
                         reputations={COMMUNITY_REPUTATIONS}
+                        communities={displayCommunities}
+                        isLoadingCommunities={isCommunitiesLoading}
                         activities={RECENT_ACTIVITIES}
                         gearData={gearData}
                         isOwnProfile={isOwnProfile}
@@ -871,9 +925,16 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     />
                 )}
 
-                {activeTab === "communities" && <CommunitiesTab reputations={COMMUNITY_REPUTATIONS} t={t} />}
+                {activeTab === "communities" && (
+                    <CommunitiesTab
+                        reputations={COMMUNITY_REPUTATIONS}
+                        communities={displayCommunities}
+                        isLoading={isCommunitiesLoading}
+                        t={t}
+                    />
+                )}
 
-                {activeTab === "posts" && <PostsTab posts={displayPosts} t={t} />}
+                {activeTab === "posts" && <PostsTab posts={displayPosts} isLoading={isPostsLoading} t={t} />}
 
                 {activeTab === "friends" && (
                     <FriendsTab

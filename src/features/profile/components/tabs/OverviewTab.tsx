@@ -5,6 +5,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
+import type { CommunityDto } from "@/shared/api/types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 import { BioEditor, BioRenderer, isBioEmpty, parseBio } from "../../bio";
@@ -14,6 +15,8 @@ interface OverviewTabProps {
     games: LibraryGame[];
     isLoadingGames?: boolean;
     reputations: CommunityReputation[];
+    communities?: CommunityDto[];
+    isLoadingCommunities?: boolean;
     activities: RecentActivityItem[];
     gearData: Record<string, string>;
     isOwnProfile: boolean;
@@ -35,6 +38,8 @@ export const OverviewTab = ({
     games = [],
     isLoadingGames = false,
     reputations = [],
+    communities = [],
+    isLoadingCommunities = false,
     activities = [],
     gearData = {},
     isOwnProfile,
@@ -48,6 +53,20 @@ export const OverviewTab = ({
 }: OverviewTabProps) => {
     const { t: fallbackT } = useTranslation();
     const tr = t || fallbackT;
+
+    const displayCommunityList = (communities && communities.length > 0)
+        ? communities.map((c) => ({
+              id: c.id,
+              name: c.name,
+              icon: c.logo ? <img src={c.logo} alt={c.name} className="w-5 h-5 rounded-full object-cover border border-[#1A1F2A]" /> : "🎮",
+              tier: c.category || "Member",
+          }))
+        : reputations.map((rep) => ({
+              id: rep.id,
+              name: rep.name,
+              icon: rep.icon,
+              tier: rep.tier,
+          }));
 
     // Real library games from backend API
     const activeGamesList = games || [];
@@ -371,25 +390,30 @@ export const OverviewTab = ({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {renderToggleBtn("communityReputation")}
-                                    <span className="text-[10px] font-medium text-[#8A8F98]">{reputations.length} Joined</span>
+                                    <span className="text-[10px] font-medium text-[#8A8F98]">{displayCommunityList.length} Joined</span>
                                 </div>
                             </div>
 
-                            {reputations.length === 0 ? (
+                            {isLoadingCommunities ? (
+                                <div className="py-4 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40 flex items-center justify-center gap-2">
+                                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1688E8]" />
+                                    <span>{tr("common.loading", { defaultValue: "Đang tải dữ liệu..." })}</span>
+                                </div>
+                            ) : displayCommunityList.length === 0 ? (
                                 <div className="py-4 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
                                     <span>{tr("profile.empty.communitiesText", { defaultValue: "Chưa tham gia cộng đồng nào." })}</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-2">
-                                    {reputations.map((rep) => (
+                                    {displayCommunityList.map((rep) => (
                                         <div
                                             key={rep.id}
                                             className="flex items-center gap-2.5 p-2.5 rounded-[8px] bg-[#13161C] border border-[#1A1F2A]/40 hover:bg-[#1B1F28] transition-all"
                                         >
-                                            <span className="text-xl shrink-0">{rep.icon}</span>
+                                            <span className="text-xl shrink-0 flex items-center justify-center">{rep.icon}</span>
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-xs font-bold text-[#F0F1F2] truncate">{rep.name}</span>
-                                                <span className="text-[10px] font-bold text-[#24C58A]">{rep.tier}</span>
+                                                <span className="text-[10px] font-bold text-[#24C58A] truncate">{rep.tier}</span>
                                             </div>
                                         </div>
                                     ))}

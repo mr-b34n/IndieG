@@ -25,13 +25,17 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
             (remoteProfile as Record<string, unknown> | null)?.cover_url as string | undefined ||
             (remoteProfile as Record<string, unknown> | null)?.cover as string | undefined;
 
+        const resolvedBio = typeof remoteProfile?.bio === "object" && remoteProfile?.bio !== null
+            ? JSON.stringify(remoteProfile.bio)
+            : (remoteProfile?.bio as string) || "";
+
         if (isOwnProfile) {
             return {
                 name: remoteProfile?.name || remoteProfile?.username || currentAuthor,
                 username: remoteProfile?.username
                     ? `@${remoteProfile.username}`
                     : `@${currentAuthor}`,
-                bio: remoteProfile?.bio || "",
+                bio: resolvedBio,
                 status: "online",
                 rank: remoteProfile?.rank ?? null,
                 avatarUrl: resolvedAvatarUrl,
@@ -44,7 +48,7 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
             username: remoteProfile?.username
                 ? `@${remoteProfile.username}`
                 : (userId?.startsWith("@") ? userId : `@${userId || "gamer"}`),
-            bio: remoteProfile?.bio || "",
+            bio: resolvedBio,
             status: "online",
             avatarUrl: resolvedAvatarUrl,
             coverUrl: resolvedCoverUrl,

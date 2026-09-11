@@ -1,17 +1,23 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import { faCommentDots, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { Post, type PostData } from "@/features/post";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 
 interface PostsTabProps {
     posts: PostData[];
+    isLoading?: boolean;
     t: TranslateFn;
 }
 
-export const PostsTab = ({ posts, t }: PostsTabProps) => (
+export const PostsTab = ({ posts, isLoading = false, t }: PostsTabProps) => (
     <div className="flex flex-col gap-4 animate-fade-in">
-        {posts.length > 0 ? (
+        {isLoading ? (
+            <div className="bg-[#0D1220] rounded-[14px] p-12 text-center flex flex-col items-center justify-center gap-3 shadow-md">
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1597FF] text-2xl" />
+                <span className="text-sm text-[#8D97AA]">{t("common.loading", { defaultValue: "Đang tải bài viết từ hệ thống..." })}</span>
+            </div>
+        ) : posts.length > 0 ? (
             posts.map((post) => <Post key={post.id} post={post} />)
         ) : (
             <div className="bg-[#0D1220] rounded-[14px] p-12 text-center flex flex-col items-center justify-center gap-3 shadow-md">

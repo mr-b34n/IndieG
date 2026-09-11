@@ -38,7 +38,7 @@ export interface UserProfileDto {
     name: string;
     avatarUrl?: string;
     coverUrl?: string;
-    bio?: string;
+    bio?: string | Record<string, unknown> | unknown[];
     rank?: string;
     status?: string;
     archived?: boolean;
@@ -52,7 +52,7 @@ export interface UserProfileDto {
 export interface UpdateProfileDto {
     username?: string;
     name?: string;
-    bio?: string;
+    bio?: string | Record<string, unknown> | unknown[];
     avatarUrl?: string;
     coverUrl?: string;
 }

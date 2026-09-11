@@ -344,9 +344,45 @@ export const profilesApi = {
 
     /** Update current user's profile - PATCH /profiles/me */
     updateMyProfile: async (data: UpdateProfileDto) => {
+        const payload: Record<string, unknown> = { ...data };
+
+        // Ensure bio is passed as a nested object/array as expected by backend DTO validators
+        if (payload.bio !== undefined && payload.bio !== null) {
+            if (typeof payload.bio === "string") {
+                const trimmed = payload.bio.trim();
+                if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+                    try {
+                        payload.bio = JSON.parse(trimmed);
+                    } catch {
+                        payload.bio = {
+                            version: 1,
+                            blocks: [
+                                {
+                                    type: "paragraph",
+                                    align: "left",
+                                    spans: [{ text: trimmed, font: "inter", color: "default" }],
+                                },
+                            ],
+                        };
+                    }
+                } else {
+                    payload.bio = {
+                        version: 1,
+                        blocks: [
+                            {
+                                type: "paragraph",
+                                align: "left",
+                                spans: [{ text: trimmed, font: "inter", color: "default" }],
+                            },
+                        ],
+                    };
+                }
+            }
+        }
+
         const res = await apiRequest<UserProfileDto | { success?: boolean; user?: UserProfileDto; profile?: UserProfileDto; data?: UserProfileDto }>("/profiles/me", {
             method: "PATCH",
-            body: data,
+            body: payload,
         });
         if (res && typeof res === "object") {
             if ("user" in res && res.user && typeof res.user === "object") {
