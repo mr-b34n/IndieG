@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { GEAR_CATEGORIES } from "../constants";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
-import { BioRenderer } from "../bio";
+import { BioRenderer, BioEditor } from "../bio";
 
 interface ProfileSidebarProps {
     isOwnProfile: boolean;
@@ -63,13 +63,11 @@ export const ProfileSidebar = ({
 
                 {isEditingBio ? (
                     <div className="flex flex-col gap-2">
-                        <textarea
+                        <BioEditor
                             value={bio}
-                            onChange={(e) => onBioChange(e.target.value)}
-                            rows={4}
-                            className="w-full px-3 py-2.5 rounded-xl bg-surface-hover text-text text-sm focus:outline-none ring-1 ring-border focus:ring-primary/60 resize-none transition-all"
+                            onChange={(serialized) => onBioChange(serialized)}
                         />
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 mt-1">
                             <button onClick={onToggleEditBio}
                                 className="px-3 py-1.5 rounded-lg bg-surface-hover text-text-muted text-xs font-bold hover:text-text transition cursor-pointer">
                                 {t("profile.cancelEdit")}

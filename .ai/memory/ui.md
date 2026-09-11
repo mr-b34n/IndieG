@@ -166,7 +166,7 @@ Implications:
 
 ---
 
-## Decision: Profile Forge (Custom Bio System) & Edit State Recovery
+## Decision: Profile Forge (Custom Bio System) & Compact Inline WYSIWYG Editor
 
 Status: Active
 
@@ -174,19 +174,21 @@ Date: 2026-09-11
 
 Decision:
 
-1. **Controlled Bio Personalization**: Personalization uses a structured JSONB document schema (`{ version: 1, blocks: [...] }`) rather than arbitrary HTML, markdown, or WYSIWYG builders.
+1. **Controlled Bio Personalization**: Personalization uses a structured JSONB document schema (`{ version: 1, blocks: [...] }`) rather than arbitrary HTML, markdown, or page builders.
 2. **Platform Owns Structure, User Owns Expression**:
    - Whitelist typography only: `inter`, `serif`, `mono`, `pixel`, `gothic`, `fantasy`.
    - Semantic theme colors only: `default` (#F0F1F2), `muted` (#8A8F98), `accent` (#1688E8), `highlight` (#E5A93D).
    - Paragraph alignments: `left`, `center`, `right`.
    - Formatting: `bold`, `italic`, `strikethrough`.
    - Presets: `Clean`, `Minimal`, `RPG`, `Terminal`, `Cyber`, `Gothic`.
-3. **Editor Architecture**:
-   - Side-by-side desktop layout (Editor on Left, Live Preview replica on Right).
-   - Tabbed mobile switcher (`[Soạn thảo]` / `[Xem trước]`).
-   - Character counter strictly capped (300 characters limit).
+3. **Editor Architecture (Compact Inline WYSIWYG)**:
+   - Zero separate preview panels: The user customizes their bio directly in place where it appears in Player Identity / Sidebar.
+   - Selection-based contextual floating toolbar: B, I, S, Aa (font selector), Color (semantic palette), and Align pop up directly above highlighted text and format in place instantly.
+   - No permanent toolbar: Retains clean dark gaming aesthetic without visual clutter.
+   - Native input preservation: ContentEditable element preserves native typing, backspace, and IME while synchronizing model to `BioDocument`.
+   - Character counter strictly capped at 300 characters with responsive status styling.
 4. **Profile Edit State Recovery**:
-   - `handleDiscardEdit` in `UserProfile.tsx` must use `setCustomGear(snapshotGear)` to avoid `ReferenceError` on gear restoration.
+   - `handleDiscardEdit` in `UserProfile.tsx` uses `setCustomGear(snapshotGear)` to avoid `ReferenceError` on gear restoration.
 
 
 

@@ -1,19 +1,17 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faBold,
     faItalic,
     faStrikethrough,
-    faPlus,
-    faTrashCan,
+    faAlignLeft,
+    faAlignCenter,
+    faAlignRight,
+    faFont,
     faChevronDown,
     faWandMagicSparkles,
-    faDesktop,
-    faPenToSquare,
-    faEye,
-    faRotateLeft,
 } from "@fortawesome/free-solid-svg-icons";
-import type { BioDocument, BioBlock, BioFont, BioColor, BioAlign, BioPreset } from "./types";
+import type { BioDocument, BioFont, BioColor, BioAlign, BioPreset } from "./types";
 import {
     BIO_FONTS,
     BIO_COLORS,
@@ -25,583 +23,614 @@ import {
     parseBio,
     serializeBio,
     getBioCharacterCount,
-    getBioFontClass,
-    getBioColorClass,
+    bioDocumentToHtml,
+    domToBioDocument,
+    getSelectionOffsets,
+    restoreSelectionInContainer,
+    applyFormattingToDocument,
+    type SelectionOffsets,
+    type BioFormatPatch,
 } from "./utils";
-import { BioRenderer } from "./BioRenderer";
 
 interface BioEditorProps {
     value?: string;
     onChange: (serialized: string) => void;
-    onSave?: () => void;
-    onCancel?: () => void;
+    placeholder?: string;
 }
 
 export const BioEditor: React.FC<BioEditorProps> = ({
     value,
     onChange,
+    placeholder = "Viết tiểu sử gaming của bạn (chọn văn bản để định dạng)...",
 }) => {
-    // Current parsed bio document
+    // Current parsed document
     const [doc, setDoc] = useState<BioDocument>(() => parseBio(value));
-    const [activeLineIndex, setActiveLineIndex] = useState<number>(0);
-    const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
-    const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
-    const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
-    const fontDropdownRef = useRef<HTMLDivElement>(null);
-    const presetDropdownRef = useRef<HTMLDivElement>(null);
-    const lineInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+    const [charCount, setCharCount] = useState<number>(() => getBioCharacterCount(parseBio(value)));
 
-    // Sync from external value if prop changes significantly
+    // Track external value changes during render (recommended React pattern)
     const [prevValue, setPrevValue] = useState(value);
     if (value !== prevValue) {
         setPrevValue(value);
         const next = parseBio(value);
         if (serializeBio(doc) !== serializeBio(next)) {
             setDoc(next);
+            setCharCount(getBioCharacterCount(next));
         }
     }
 
-    // Close dropdowns on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (fontDropdownRef.current && !fontDropdownRef.current.contains(e.target as Node)) {
-                setIsFontDropdownOpen(false);
-            }
-            if (presetDropdownRef.current && !presetDropdownRef.current.contains(e.target as Node)) {
-                setIsPresetDropdownOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+    // Refs
+    const containerRef = useRef<HTMLDivElement>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
+    const toolbarRef = useRef<HTMLDivElement>(null);
 
-    const charCount = useMemo(() => getBioCharacterCount(doc), [doc]);
+    // Floating contextual toolbar state
+    const [isToolbarOpen, setIsToolbarOpen] = useState(false);
+    const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+    const [activeOffsets, setActiveOffsets] = useState<SelectionOffsets | null>(null);
+
+    // Active formatting states on current selection
+    const [isBoldActive, setIsBoldActive] = useState(false);
+    const [isItalicActive, setIsItalicActive] = useState(false);
+    const [isStrikeActive, setIsStrikeActive] = useState(false);
+    const [activeFont, setActiveFont] = useState<BioFont>("inter");
+    const [activeColor, setActiveColor] = useState<BioColor>("default");
+    const [activeAlign, setActiveAlign] = useState<BioAlign>("left");
+
+    // Submenu popovers in toolbar
+    const [fontMenuOpen, setFontMenuOpen] = useState(false);
+    const [colorMenuOpen, setColorMenuOpen] = useState(false);
+    const [alignMenuOpen, setAlignMenuOpen] = useState(false);
+    const [presetMenuOpen, setPresetMenuOpen] = useState(false);
+
     const isOverLimit = charCount > MAX_BIO_CHAR_LIMIT;
 
-    // Helper to update doc and propagate to parent
-    const updateDoc = (newDoc: BioDocument) => {
-        setDoc(newDoc);
-        onChange(serializeBio(newDoc));
-    };
+    // Synchronize DOM with doc when external value prop changes or on initial mount
+    const isFirstMount = useRef(true);
+    useEffect(() => {
+        if (editorRef.current) {
+            if (isFirstMount.current || editorRef.current.innerHTML === "") {
+                editorRef.current.innerHTML = bioDocumentToHtml(doc);
+                isFirstMount.current = false;
+            }
+        }
+    }, [doc]);
 
-    // Safely get active block
-    const safeActiveIndex = Math.min(Math.max(0, activeLineIndex), Math.max(0, doc.blocks.length - 1));
-    const activeBlock: BioBlock = doc.blocks[safeActiveIndex] || {
-        type: "paragraph",
-        align: "left",
-        spans: [{ text: "", font: "inter", color: "default" }],
-    };
+    useEffect(() => {
+        // When external value changes explicitly (like Discard), update DOM
+        if (editorRef.current) {
+            const currentDoc = domToBioDocument(editorRef.current);
+            if (serializeBio(currentDoc) !== serializeBio(doc)) {
+                editorRef.current.innerHTML = bioDocumentToHtml(doc);
+            }
+        }
+    }, [prevValue, doc]);
 
-    // Primary span of active block
-    const activePrimarySpan = activeBlock.spans[0] || {
-        text: "",
-        font: "inter" as BioFont,
-        color: "default" as BioColor,
-    };
+    // Update active toolbar formatting from selection
+    const updateActiveFormatStates = useCallback((currentDoc: BioDocument, offsets: SelectionOffsets) => {
+        let allBold = true;
+        let allItalic = true;
+        let allStrike = true;
+        let primaryFont: BioFont = "inter";
+        let primaryColor: BioColor = "default";
+        let primaryAlign: BioAlign = "left";
+        let foundSpan = false;
 
-    // Handlers for active line formatting
-    const handleSetFont = (font: BioFont) => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[safeActiveIndex] };
-        block.spans = block.spans.map((span) => ({ ...span, font }));
-        updatedBlocks[safeActiveIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
-        setIsFontDropdownOpen(false);
-    };
+        const startBlock = currentDoc.blocks[offsets.startBlockIdx];
+        if (startBlock?.align) {
+            primaryAlign = startBlock.align;
+        }
 
-    const handleSetColor = (color: BioColor) => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[safeActiveIndex] };
-        block.spans = block.spans.map((span) => ({ ...span, color }));
-        updatedBlocks[safeActiveIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
-    };
+        for (let bIdx = offsets.startBlockIdx; bIdx <= offsets.endBlockIdx; bIdx++) {
+            const block = currentDoc.blocks[bIdx];
+            if (!block) continue;
 
-    const handleSetAlign = (align: BioAlign) => {
-        const updatedBlocks = [...doc.blocks];
-        updatedBlocks[safeActiveIndex] = {
-            ...updatedBlocks[safeActiveIndex],
-            align,
+            const blockTextLen = block.spans.reduce((acc, s) => acc + s.text.length, 0);
+            const bStart = bIdx === offsets.startBlockIdx ? offsets.startOffset : 0;
+            const bEnd = bIdx === offsets.endBlockIdx ? offsets.endOffset : blockTextLen;
+
+            let currentPos = 0;
+            for (const span of block.spans) {
+                const sLen = span.text.length;
+                const sStart = currentPos;
+                const sEnd = currentPos + sLen;
+                currentPos += sLen;
+
+                if (sEnd <= bStart || sStart >= bEnd) continue;
+
+                if (!foundSpan) {
+                    primaryFont = span.font || "inter";
+                    primaryColor = span.color || "default";
+                    foundSpan = true;
+                }
+
+                if (!span.bold) allBold = false;
+                if (!span.italic) allItalic = false;
+                if (!span.strikethrough) allStrike = false;
+            }
+        }
+
+        setIsBoldActive(foundSpan && allBold);
+        setIsItalicActive(foundSpan && allItalic);
+        setIsStrikeActive(foundSpan && allStrike);
+        setActiveFont(primaryFont);
+        setActiveColor(primaryColor);
+        setActiveAlign(primaryAlign);
+    }, []);
+
+    // Update floating toolbar position and visibility based on window selection
+    const updateSelectionToolbar = useCallback(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+            setIsToolbarOpen(false);
+            setFontMenuOpen(false);
+            setColorMenuOpen(false);
+            setAlignMenuOpen(false);
+            return;
+        }
+
+        const range = sel.getRangeAt(0);
+        const text = range.toString();
+        if (!text || !text.trim()) {
+            setIsToolbarOpen(false);
+            return;
+        }
+
+        const editorEl = editorRef.current;
+        const containerEl = containerRef.current;
+        if (!editorEl || !containerEl || !editorEl.contains(range.commonAncestorContainer)) {
+            setIsToolbarOpen(false);
+            return;
+        }
+
+        const offsets = getSelectionOffsets(editorEl);
+        if (!offsets) {
+            setIsToolbarOpen(false);
+            return;
+        }
+
+        setActiveOffsets(offsets);
+
+        // Update active states
+        if (editorRef.current) {
+            const currentDoc = domToBioDocument(editorRef.current);
+            updateActiveFormatStates(currentDoc, offsets);
+        }
+
+        // Calculate position relative to container
+        const rangeRect = range.getBoundingClientRect();
+        const containerRect = containerEl.getBoundingClientRect();
+
+        const toolbarEstimatedWidth = 280;
+        const toolbarEstimatedHeight = 44;
+
+        // Position directly above the selected text
+        let top = rangeRect.top - containerRect.top - toolbarEstimatedHeight - 10;
+        let left = rangeRect.left - containerRect.left + rangeRect.width / 2 - toolbarEstimatedWidth / 2;
+
+        // Flip below if too close to the top of the container
+        if (top < 10) {
+            top = rangeRect.bottom - containerRect.top + 10;
+        }
+
+        // Clamp horizontally within container bounds
+        const maxLeft = Math.max(10, containerRect.width - toolbarEstimatedWidth - 12);
+        left = Math.max(12, Math.min(maxLeft, left));
+
+        setToolbarPos({ top, left });
+        setIsToolbarOpen(true);
+    }, [updateActiveFormatStates]);
+
+    // Listen to selectionchange and mouseup
+    useEffect(() => {
+        const handleSelection = () => {
+            updateSelectionToolbar();
         };
-        updateDoc({ ...doc, blocks: updatedBlocks });
+
+        document.addEventListener("selectionchange", handleSelection);
+        return () => {
+            document.removeEventListener("selectionchange", handleSelection);
+        };
+    }, [updateSelectionToolbar]);
+
+    // Close menus on outside click
+    useEffect(() => {
+        const handleMouseDownOutside = (e: MouseEvent) => {
+            if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+                setFontMenuOpen(false);
+                setColorMenuOpen(false);
+                setAlignMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleMouseDownOutside);
+        return () => document.removeEventListener("mousedown", handleMouseDownOutside);
+    }, []);
+
+    // Live typing handler: keeps DOM intact, extracts BioDocument, updates charCount, notifies parent
+    const handleInput = () => {
+        if (!editorRef.current) return;
+        const nextDoc = domToBioDocument(editorRef.current);
+        const count = getBioCharacterCount(nextDoc);
+        setCharCount(count);
+        setDoc(nextDoc);
+        onChange(serializeBio(nextDoc));
     };
 
+    // Apply formatting patch to the current selection in place
+    const applyPatch = (patch: BioFormatPatch) => {
+        if (!editorRef.current || !activeOffsets) return;
+
+        // Parse freshest state from DOM
+        const currentDoc = domToBioDocument(editorRef.current);
+        const newDoc = applyFormattingToDocument(currentDoc, activeOffsets, patch);
+
+        // Update DOM HTML
+        editorRef.current.innerHTML = bioDocumentToHtml(newDoc);
+
+        // Restore user selection
+        restoreSelectionInContainer(editorRef.current, activeOffsets);
+
+        // Update model and propagate
+        setDoc(newDoc);
+        const count = getBioCharacterCount(newDoc);
+        setCharCount(count);
+        onChange(serializeBio(newDoc));
+
+        // Refresh formatting states
+        updateActiveFormatStates(newDoc, activeOffsets);
+    };
+
+    // Formatting action handlers
     const handleToggleBold = () => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[safeActiveIndex] };
-        const nextBold = !block.spans[0]?.bold;
-        block.spans = block.spans.map((span) => ({ ...span, bold: nextBold }));
-        updatedBlocks[safeActiveIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
+        applyPatch({ bold: !isBoldActive });
     };
 
     const handleToggleItalic = () => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[safeActiveIndex] };
-        const nextItalic = !block.spans[0]?.italic;
-        block.spans = block.spans.map((span) => ({ ...span, italic: nextItalic }));
-        updatedBlocks[safeActiveIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
+        applyPatch({ italic: !isItalicActive });
     };
 
     const handleToggleStrike = () => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[safeActiveIndex] };
-        const nextStrike = !block.spans[0]?.strikethrough;
-        block.spans = block.spans.map((span) => ({ ...span, strikethrough: nextStrike }));
-        updatedBlocks[safeActiveIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
+        applyPatch({ strikethrough: !isStrikeActive });
     };
 
-    // Text editing on a line
-    const handleLineTextChange = (lineIndex: number, text: string) => {
-        const updatedBlocks = [...doc.blocks];
-        const block = { ...updatedBlocks[lineIndex] };
-        if (block.spans.length === 0) {
-            block.spans = [{ text, font: "inter", color: "default" }];
-        } else {
-            // Keep first span styling or update single span text
-            block.spans = [{ ...block.spans[0], text }];
-        }
-        updatedBlocks[lineIndex] = block;
-        updateDoc({ ...doc, blocks: updatedBlocks });
+    const handleSelectFont = (font: BioFont) => {
+        applyPatch({ font });
+        setFontMenuOpen(false);
     };
 
-    const handleAddLine = (afterIndex?: number) => {
-        const insertAt = afterIndex !== undefined ? afterIndex + 1 : doc.blocks.length;
-        const previousBlock = doc.blocks[safeActiveIndex];
-        const newBlock: BioBlock = {
-            type: "paragraph",
-            align: previousBlock ? previousBlock.align : "left",
-            spans: [
-                {
-                    text: "",
-                    font: previousBlock?.spans[0]?.font || "inter",
-                    color: previousBlock?.spans[0]?.color || "default",
-                    bold: false,
-                    italic: false,
-                    strikethrough: false,
-                },
-            ],
-        };
-        const updatedBlocks = [...doc.blocks];
-        updatedBlocks.splice(insertAt, 0, newBlock);
-        updateDoc({ ...doc, blocks: updatedBlocks });
-        setActiveLineIndex(insertAt);
-        setTimeout(() => {
-            lineInputsRef.current[insertAt]?.focus();
-        }, 30);
+    const handleSelectColor = (color: BioColor) => {
+        applyPatch({ color });
+        setColorMenuOpen(false);
     };
 
-    const handleDeleteLine = (lineIndex: number) => {
-        if (doc.blocks.length <= 1) {
-            // Clear the single line rather than deleting it
-            handleLineTextChange(0, "");
-            return;
-        }
-        const updatedBlocks = doc.blocks.filter((_, idx) => idx !== lineIndex);
-        updateDoc({ ...doc, blocks: updatedBlocks });
-        const nextActive = Math.max(0, lineIndex - 1);
-        setActiveLineIndex(nextActive);
-        setTimeout(() => {
-            lineInputsRef.current[nextActive]?.focus();
-        }, 30);
+    const handleSelectAlign = (align: BioAlign) => {
+        applyPatch({ align });
+        setAlignMenuOpen(false);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, lineIndex: number) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            handleAddLine(lineIndex);
-        } else if (e.key === "Backspace" && (e.target as HTMLInputElement).value === "" && doc.blocks.length > 1) {
-            e.preventDefault();
-            handleDeleteLine(lineIndex);
-        } else if (e.key === "ArrowUp" && lineIndex > 0) {
-            e.preventDefault();
-            setActiveLineIndex(lineIndex - 1);
-            lineInputsRef.current[lineIndex - 1]?.focus();
-        } else if (e.key === "ArrowDown" && lineIndex < doc.blocks.length - 1) {
-            e.preventDefault();
-            setActiveLineIndex(lineIndex + 1);
-            lineInputsRef.current[lineIndex + 1]?.focus();
+    // Keyboard shortcuts
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.metaKey || e.ctrlKey) {
+            const key = e.key.toLowerCase();
+            if (key === "b") {
+                e.preventDefault();
+                handleToggleBold();
+            } else if (key === "i") {
+                e.preventDefault();
+                handleToggleItalic();
+            } else if (key === "u") {
+                e.preventDefault();
+                handleToggleStrike();
+            }
         }
     };
 
+    // Apply a style preset directly to the editor
     const handleApplyPreset = (preset: BioPreset) => {
-        updateDoc(preset.document);
-        setActiveLineIndex(0);
-        setIsPresetDropdownOpen(false);
+        setDoc(preset.document);
+        const count = getBioCharacterCount(preset.document);
+        setCharCount(count);
+        if (editorRef.current) {
+            editorRef.current.innerHTML = bioDocumentToHtml(preset.document);
+        }
+        onChange(serializeBio(preset.document));
+        setPresetMenuOpen(false);
+        setIsToolbarOpen(false);
     };
 
-    const handleResetToClean = () => {
-        updateDoc({
-            version: 1,
-            blocks: [
-                {
-                    type: "paragraph",
-                    align: "left",
-                    spans: [
-                        {
-                            text: "",
-                            font: "inter",
-                            bold: false,
-                            italic: false,
-                            strikethrough: false,
-                            color: "default",
-                        },
-                    ],
-                },
-            ],
-        });
-        setActiveLineIndex(0);
-    };
+    const activeFontMeta = useMemo(() => {
+        return BIO_FONTS.find((f) => f.value === activeFont) || BIO_FONTS[0];
+    }, [activeFont]);
 
-    const activeFontConfig = BIO_FONTS.find((f) => f.value === activePrimarySpan.font) || BIO_FONTS[0];
+    const activeColorMeta = useMemo(() => {
+        return BIO_COLORS.find((c) => c.value === activeColor) || BIO_COLORS[0];
+    }, [activeColor]);
 
     return (
-        <div className="flex flex-col gap-3.5 w-full bg-[#0D0F14] border border-[#1F2430] rounded-[12px] p-3.5 sm:p-4 shadow-lg text-[#F0F1F2]">
-            {/* ── HEADER: PROFILE FORGE BRANDING & PRESETS ──────── */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1A1F2A]">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-[7px] bg-[#1688E8]/15 border border-[#1688E8]/30 flex items-center justify-center text-[#1688E8]">
-                        <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs" />
-                    </div>
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-black uppercase tracking-wider text-[#F0F1F2]">
-                                Profile Forge
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-[#1688E8]/20 text-[#1688E8]">
-                                Bio Rich Text
-                            </span>
-                        </div>
-                        <span className="text-[11px] text-[#8A8F98]">
-                            Tùy biến tiểu sử cá nhân với font chữ & phong cách game thủ
-                        </span>
-                    </div>
-                </div>
+        <div
+            ref={containerRef}
+            className="relative w-full bg-[#13161C] p-3.5 rounded-[8px] border border-[#1688E8]/40 shadow-inner group focus-within:border-[#1688E8] focus-within:ring-1 focus-within:ring-[#1688E8]/30 transition-all"
+        >
+            {/* ── SELECTION-BASED CONTEXTUAL FLOATING TOOLBAR ── */}
+            {isToolbarOpen && (
+                <div
+                    ref={toolbarRef}
+                    style={{
+                        top: `${toolbarPos.top}px`,
+                        left: `${toolbarPos.left}px`,
+                    }}
+                    className="absolute z-50 flex items-center gap-1 px-1.5 py-1 rounded-[8px] bg-[#141822]/95 border border-[#2A3142] shadow-[0_12px_32px_rgba(0,0,0,0.7)] backdrop-blur-md animate-fade-in text-xs font-semibold select-none"
+                    onMouseDown={(e) => {
+                        // Prevent losing text selection when clicking anywhere inside the toolbar
+                        e.preventDefault();
+                    }}
+                >
+                    {/* Bold */}
+                    <button
+                        type="button"
+                        onClick={handleToggleBold}
+                        title="Bold (Ctrl+B)"
+                        className={`w-7 h-7 rounded-[5px] flex items-center justify-center transition-all cursor-pointer ${
+                            isBoldActive
+                                ? "bg-[#1688E8] text-white shadow-sm"
+                                : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                        }`}
+                    >
+                        <FontAwesomeIcon icon={faBold} className="text-xs" />
+                    </button>
 
-                {/* Presets Button & Character Counter */}
-                <div className="flex items-center gap-2">
-                    {/* Presets dropdown */}
-                    <div className="relative" ref={presetDropdownRef}>
+                    {/* Italic */}
+                    <button
+                        type="button"
+                        onClick={handleToggleItalic}
+                        title="Italic (Ctrl+I)"
+                        className={`w-7 h-7 rounded-[5px] flex items-center justify-center transition-all cursor-pointer ${
+                            isItalicActive
+                                ? "bg-[#1688E8] text-white shadow-sm"
+                                : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                        }`}
+                    >
+                        <FontAwesomeIcon icon={faItalic} className="text-xs" />
+                    </button>
+
+                    {/* Strikethrough */}
+                    <button
+                        type="button"
+                        onClick={handleToggleStrike}
+                        title="Strikethrough"
+                        className={`w-7 h-7 rounded-[5px] flex items-center justify-center transition-all cursor-pointer ${
+                            isStrikeActive
+                                ? "bg-[#1688E8] text-white shadow-sm"
+                                : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                        }`}
+                    >
+                        <FontAwesomeIcon icon={faStrikethrough} className="text-xs" />
+                    </button>
+
+                    <div className="w-[1px] h-4 bg-[#262C3A] mx-0.5" />
+
+                    {/* Font Dropdown (Aa) */}
+                    <div className="relative">
                         <button
                             type="button"
-                            onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] bg-[#171B24] hover:bg-[#202532] border border-[#262C3A] text-xs font-semibold text-[#D4D7DE] transition-all cursor-pointer"
+                            onClick={() => {
+                                setFontMenuOpen((prev) => !prev);
+                                setColorMenuOpen(false);
+                                setAlignMenuOpen(false);
+                            }}
+                            title="Font chữ"
+                            className={`h-7 px-2 rounded-[5px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                                fontMenuOpen
+                                    ? "bg-[#1E2533] text-white"
+                                    : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                            }`}
                         >
-                            <span className="text-xs">⚡</span>
-                            <span>Mẫu Preset</span>
-                            <FontAwesomeIcon icon={faChevronDown} className="text-[10px] opacity-70" />
+                            <FontAwesomeIcon icon={faFont} className="text-[11px]" />
+                            <span className="text-[11px] font-bold truncate max-w-[56px]">
+                                {activeFontMeta.label}
+                            </span>
+                            <FontAwesomeIcon icon={faChevronDown} className="text-[8px] opacity-70" />
                         </button>
 
-                        {isPresetDropdownOpen && (
-                            <div className="absolute right-0 top-full mt-1.5 w-56 bg-[#13161D] border border-[#252B3A] rounded-[10px] shadow-2xl p-1.5 z-40 animate-fade-in flex flex-col gap-1">
-                                <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#666B75]">
-                                    Chọn phong cách mẫu
-                                </span>
-                                {BIO_PRESETS.map((preset) => (
+                        {fontMenuOpen && (
+                            <div className="absolute top-full mt-1.5 left-0 w-36 py-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col">
+                                {BIO_FONTS.map((f) => (
                                     <button
-                                        key={preset.id}
+                                        key={f.value}
                                         type="button"
-                                        onClick={() => handleApplyPreset(preset)}
-                                        className="flex items-center justify-between px-2.5 py-2 rounded-[6px] hover:bg-[#1C212D] text-left transition-colors cursor-pointer group"
+                                        onClick={() => handleSelectFont(f.value)}
+                                        className={`px-3 py-1.5 text-left text-xs flex items-center justify-between hover:bg-[#1E2533] transition-colors cursor-pointer ${
+                                            activeFont === f.value ? "text-[#1688E8] font-bold" : "text-[#E1E4EA]"
+                                        }`}
                                     >
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-[#F0F1F2] group-hover:text-[#1688E8] transition-colors">
-                                                {preset.name}
-                                            </span>
-                                            <span className="text-[10px] text-[#8A8F98] line-clamp-1">
-                                                {preset.description}
-                                            </span>
-                                        </div>
-                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1C212D] text-[#8A8F98] group-hover:text-white">
-                                            {preset.badge}
-                                        </span>
+                                        <span className={f.className}>{f.label}</span>
+                                        {activeFont === f.value && (
+                                            <span className="text-[10px]">●</span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Reset Button */}
+                    {/* Color Dropdown */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setColorMenuOpen((prev) => !prev);
+                                setFontMenuOpen(false);
+                                setAlignMenuOpen(false);
+                            }}
+                            title="Màu sắc phong cách"
+                            className={`h-7 px-2 rounded-[5px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                                colorMenuOpen
+                                    ? "bg-[#1E2533] text-white"
+                                    : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                            }`}
+                        >
+                            <div
+                                className="w-3 h-3 rounded-full border border-white/20 shadow-xs"
+                                style={{ backgroundColor: activeColorMeta.badgeBg }}
+                            />
+                            <FontAwesomeIcon icon={faChevronDown} className="text-[8px] opacity-70" />
+                        </button>
+
+                        {colorMenuOpen && (
+                            <div className="absolute top-full mt-1.5 left-0 w-36 p-1.5 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col gap-1">
+                                {BIO_COLORS.map((c) => (
+                                    <button
+                                        key={c.value}
+                                        type="button"
+                                        onClick={() => handleSelectColor(c.value)}
+                                        className={`px-2.5 py-1.5 rounded-[5px] text-left text-xs flex items-center gap-2 hover:bg-[#1E2533] transition-colors cursor-pointer ${
+                                            activeColor === c.value
+                                                ? "bg-[#1688E8]/10 text-white font-bold"
+                                                : "text-[#E1E4EA]"
+                                        }`}
+                                    >
+                                        <div
+                                            className="w-3 h-3 rounded-full shrink-0 border border-white/20"
+                                            style={{ backgroundColor: c.badgeBg }}
+                                        />
+                                        <span className="truncate">{c.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="w-[1px] h-4 bg-[#262C3A] mx-0.5" />
+
+                    {/* Align Dropdown */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAlignMenuOpen((prev) => !prev);
+                                setFontMenuOpen(false);
+                                setColorMenuOpen(false);
+                            }}
+                            title="Căn chỉnh dòng"
+                            className={`w-7 h-7 rounded-[5px] flex items-center justify-center transition-all cursor-pointer ${
+                                alignMenuOpen
+                                    ? "bg-[#1E2533] text-white"
+                                    : "text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#1E2533]"
+                            }`}
+                        >
+                            <FontAwesomeIcon
+                                icon={
+                                    activeAlign === "center"
+                                        ? faAlignCenter
+                                        : activeAlign === "right"
+                                        ? faAlignRight
+                                        : faAlignLeft
+                                }
+                                className="text-xs"
+                            />
+                        </button>
+
+                        {alignMenuOpen && (
+                            <div className="absolute top-full mt-1.5 right-0 py-1 px-1 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex items-center gap-1">
+                                {BIO_ALIGNMENTS.map((a) => (
+                                    <button
+                                        key={a.value}
+                                        type="button"
+                                        onClick={() => handleSelectAlign(a.value)}
+                                        title={a.label}
+                                        className={`w-7 h-7 rounded-[5px] flex items-center justify-center transition-colors cursor-pointer ${
+                                            activeAlign === a.value
+                                                ? "bg-[#1688E8] text-white"
+                                                : "text-[#9A9DA3] hover:text-white hover:bg-[#1E2533]"
+                                        }`}
+                                    >
+                                        <FontAwesomeIcon
+                                            icon={
+                                                a.value === "center"
+                                                    ? faAlignCenter
+                                                    : a.value === "right"
+                                                    ? faAlignRight
+                                                    : faAlignLeft
+                                            }
+                                            className="text-xs"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── INLINE WYSIWYG CONTENTEDITABLE AREA ── */}
+            <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleInput}
+                onKeyDown={handleKeyDown}
+                data-placeholder={placeholder}
+                className="outline-none min-h-[4.5rem] w-full flex flex-col gap-1 text-sm select-text cursor-text leading-relaxed text-[#F0F1F2] empty:before:content-[attr(data-placeholder)] empty:before:text-[#555A65] empty:before:pointer-events-none"
+            />
+
+            {/* ── SUBTLE BOTTOM META ROW (Presets + Live Character Counter) ── */}
+            <div className="mt-3 pt-2.5 border-t border-[#1F2532]/60 flex items-center justify-between text-[11px] text-[#6A707E] select-none">
+                {/* Presets dropdown chip */}
+                <div className="relative">
                     <button
                         type="button"
-                        onClick={handleResetToClean}
-                        title="Xóa trắng / Làm mới"
-                        className="w-8 h-8 rounded-[6px] bg-[#171B24] hover:bg-[#202532] border border-[#262C3A] text-[#8A8F98] hover:text-[#F0F1F2] flex items-center justify-center transition-all cursor-pointer"
+                        onClick={() => setPresetMenuOpen((prev) => !prev)}
+                        className="flex items-center gap-1.5 px-2 py-0.5 rounded-[5px] bg-[#181D26] hover:bg-[#202735] text-[#9A9FA9] hover:text-[#F0F1F2] border border-[#252C3B]/70 transition-all cursor-pointer text-[10px] font-semibold"
                     >
-                        <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
+                        <FontAwesomeIcon icon={faWandMagicSparkles} className="text-[#1688E8] text-[9px]" />
+                        <span>Mẫu phong cách</span>
+                        <FontAwesomeIcon icon={faChevronDown} className="text-[8px] opacity-70" />
                     </button>
 
-                    {/* Character counter */}
-                    <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] bg-[#13161D] border border-[#1F2430]">
-                        <span className={`text-[11px] font-mono font-bold ${isOverLimit ? "text-rose-500" : charCount >= MAX_BIO_CHAR_LIMIT * 0.85 ? "text-amber-400" : "text-[#8A8F98]"}`}>
-                            {charCount}
-                        </span>
-                        <span className="text-[10px] text-[#666B75] font-mono">/ {MAX_BIO_CHAR_LIMIT}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── MOBILE TABS SWITCHER (Edit vs Preview) ────────── */}
-            <div className="flex md:hidden items-center p-1 bg-[#13161D] rounded-[8px] border border-[#1F2430]">
-                <button
-                    type="button"
-                    onClick={() => setMobileTab("edit")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-[6px] transition-all cursor-pointer ${
-                        mobileTab === "edit"
-                            ? "bg-[#1688E8] text-white shadow-sm"
-                            : "text-[#8A8F98] hover:text-[#F0F1F2]"
-                    }`}
-                >
-                    <FontAwesomeIcon icon={faPenToSquare} className="text-xs" />
-                    <span>Soạn thảo</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setMobileTab("preview")}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-[6px] transition-all cursor-pointer ${
-                        mobileTab === "preview"
-                            ? "bg-[#1688E8] text-white shadow-sm"
-                            : "text-[#8A8F98] hover:text-[#F0F1F2]"
-                    }`}
-                >
-                    <FontAwesomeIcon icon={faEye} className="text-xs" />
-                    <span>Xem trước (Preview)</span>
-                </button>
-            </div>
-
-            {/* ── MAIN WORKSPACE: DESKTOP SIDE-BY-SIDE ──────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* ── LEFT: EDITOR COLUMN ──────────────────────── */}
-                <div className={`flex flex-col gap-3 ${mobileTab === "preview" ? "hidden md:flex" : "flex"}`}>
-                    {/* FORMATTING TOOLBAR */}
-                    <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[#13161D] border border-[#1F2430] rounded-[8px]">
-                        {/* 1. Font Selector Dropdown */}
-                        <div className="relative" ref={fontDropdownRef}>
-                            <button
-                                type="button"
-                                onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[#1A1F2B] hover:bg-[#232938] border border-[#2A3142] text-xs font-semibold text-[#F0F1F2] transition-colors cursor-pointer"
-                                title="Chọn kiểu font"
-                            >
-                                <span className={`text-xs ${activeFontConfig.className}`}>
-                                    {activeFontConfig.label}
-                                </span>
-                                <FontAwesomeIcon icon={faChevronDown} className="text-[9px] opacity-70" />
-                            </button>
-
-                            {isFontDropdownOpen && (
-                                <div className="absolute left-0 top-full mt-1 w-44 bg-[#151922] border border-[#282F40] rounded-[8px] shadow-xl p-1 z-50 animate-fade-in flex flex-col gap-0.5">
-                                    {BIO_FONTS.map((font) => (
-                                        <button
-                                            key={font.value}
-                                            type="button"
-                                            onClick={() => handleSetFont(font.value)}
-                                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-[5px] text-xs transition-colors cursor-pointer ${
-                                                activePrimarySpan.font === font.value
-                                                    ? "bg-[#1688E8]/20 text-[#1688E8] font-bold"
-                                                    : "text-[#D4D7DE] hover:bg-[#1E2432]"
-                                            }`}
-                                        >
-                                            <span className={font.className}>{font.label}</span>
-                                            <span className="text-[10px] text-[#666B75]">{font.preview}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Divider */}
-                        <div className="w-[1px] h-5 bg-[#252B3A] mx-0.5" />
-
-                        {/* 2. Text Styles (Bold, Italic, Strikethrough) */}
-                        <button
-                            type="button"
-                            onClick={handleToggleBold}
-                            className={`w-7 h-7 rounded-[5px] flex items-center justify-center text-xs transition-all cursor-pointer ${
-                                activePrimarySpan.bold
-                                    ? "bg-[#1688E8] text-white shadow-xs"
-                                    : "bg-[#1A1F2B] hover:bg-[#232938] text-[#9A9DA3] hover:text-[#F0F1F2]"
-                            }`}
-                            title="In đậm (Bold)"
-                        >
-                            <FontAwesomeIcon icon={faBold} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleToggleItalic}
-                            className={`w-7 h-7 rounded-[5px] flex items-center justify-center text-xs transition-all cursor-pointer ${
-                                activePrimarySpan.italic
-                                    ? "bg-[#1688E8] text-white shadow-xs"
-                                    : "bg-[#1A1F2B] hover:bg-[#232938] text-[#9A9DA3] hover:text-[#F0F1F2]"
-                            }`}
-                            title="In nghiêng (Italic)"
-                        >
-                            <FontAwesomeIcon icon={faItalic} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleToggleStrike}
-                            className={`w-7 h-7 rounded-[5px] flex items-center justify-center text-xs transition-all cursor-pointer ${
-                                activePrimarySpan.strikethrough
-                                    ? "bg-[#1688E8] text-white shadow-xs"
-                                    : "bg-[#1A1F2B] hover:bg-[#232938] text-[#9A9DA3] hover:text-[#F0F1F2]"
-                            }`}
-                            title="Gạch ngang (Strikethrough)"
-                        >
-                            <FontAwesomeIcon icon={faStrikethrough} />
-                        </button>
-
-                        {/* Divider */}
-                        <div className="w-[1px] h-5 bg-[#252B3A] mx-0.5" />
-
-                        {/* 3. Alignments (Left, Center, Right) */}
-                        {BIO_ALIGNMENTS.map((align) => (
-                            <button
-                                key={align.value}
-                                type="button"
-                                onClick={() => handleSetAlign(align.value)}
-                                className={`w-7 h-7 rounded-[5px] flex items-center justify-center text-xs transition-all cursor-pointer ${
-                                    activeBlock.align === align.value
-                                        ? "bg-[#1688E8] text-white shadow-xs"
-                                        : "bg-[#1A1F2B] hover:bg-[#232938] text-[#9A9DA3] hover:text-[#F0F1F2]"
-                                }`}
-                                title={`Căn ${align.label}`}
-                            >
-                                <FontAwesomeIcon icon={align.icon} />
-                            </button>
-                        ))}
-
-                        {/* Divider */}
-                        <div className="w-[1px] h-5 bg-[#252B3A] mx-0.5" />
-
-                        {/* 4. Semantic Color Chips */}
-                        <div className="flex items-center gap-1 pl-0.5">
-                            {BIO_COLORS.map((color) => {
-                                const isSelected = (activePrimarySpan.color || "default") === color.value;
-                                return (
-                                    <button
-                                        key={color.value}
-                                        type="button"
-                                        onClick={() => handleSetColor(color.value)}
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                                            isSelected ? "ring-2 ring-[#1688E8] ring-offset-1 ring-offset-[#13161D] scale-110" : "opacity-75 hover:opacity-100 hover:scale-105"
-                                        }`}
-                                        title={`Màu ${color.label}`}
-                                    >
-                                        <span className={`w-3.5 h-3.5 rounded-full ${color.bgClass} shadow-xs`} />
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* INTERACTIVE LINES EDITOR */}
-                    <div className="flex flex-col gap-2 min-h-[160px] max-h-[300px] overflow-y-auto p-2 bg-[#0A0C10] border border-[#1A1F2A] rounded-[8px]">
-                        {doc.blocks.map((block, lineIdx) => {
-                            const isFocused = lineIdx === safeActiveIndex;
-                            const currentSpan = block.spans[0] || { text: "", font: "inter", color: "default" };
-                            const fontCls = getBioFontClass(currentSpan.font);
-                            const colorCls = getBioColorClass(currentSpan.color);
-                            const alignCls =
-                                block.align === "center"
-                                    ? "text-center"
-                                    : block.align === "right"
-                                    ? "text-right"
-                                    : "text-left";
-
-                            return (
-                                <div
-                                    key={lineIdx}
-                                    onClick={() => setActiveLineIndex(lineIdx)}
-                                    className={`flex items-center gap-2 p-1.5 rounded-[6px] border transition-all ${
-                                        isFocused
-                                            ? "bg-[#141822] border-[#1688E8]/50 shadow-xs"
-                                            : "bg-[#0F1218] border-transparent hover:border-[#1E2432]"
-                                    }`}
+                    {presetMenuOpen && (
+                        <div className="absolute bottom-full mb-1.5 left-0 w-44 py-1.5 rounded-[8px] bg-[#141822] border border-[#2A3142] shadow-2xl z-50 flex flex-col">
+                            <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[#636875] border-b border-[#202533]">
+                                Mẫu bio có sẵn
+                            </div>
+                            {BIO_PRESETS.map((p) => (
+                                <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => handleApplyPreset(p)}
+                                    className="px-2.5 py-1.5 text-left text-xs hover:bg-[#1E2533] transition-colors flex items-center gap-2 cursor-pointer group/btn"
                                 >
-                                    {/* Line Number indicator */}
-                                    <span className="w-5 text-[10px] font-mono text-[#555B66] text-right shrink-0 select-none">
-                                        {lineIdx + 1}
-                                    </span>
-
-                                    {/* Line Input */}
-                                    <input
-                                        ref={(el) => (lineInputsRef.current[lineIdx] = el)}
-                                        type="text"
-                                        value={currentSpan.text}
-                                        onFocus={() => setActiveLineIndex(lineIdx)}
-                                        onChange={(e) => handleLineTextChange(lineIdx, e.target.value)}
-                                        onKeyDown={(e) => handleKeyDown(e, lineIdx)}
-                                        placeholder={lineIdx === 0 ? "Nhập dòng đầu tiên của Bio..." : "Dòng tiếp theo..."}
-                                        className={`flex-1 bg-transparent border-none outline-none text-xs leading-relaxed ${alignCls} ${fontCls} ${colorCls} ${
-                                            currentSpan.bold ? "font-bold" : ""
-                                        } ${currentSpan.italic ? "italic" : ""} ${
-                                            currentSpan.strikethrough ? "line-through" : ""
-                                        }`}
-                                    />
-
-                                    {/* Quick Line Delete */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteLine(lineIdx);
-                                        }}
-                                        className="w-5 h-5 rounded flex items-center justify-center text-[#555B66] hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
-                                        title="Xóa dòng"
-                                    >
-                                        <FontAwesomeIcon icon={faTrashCan} className="text-[10px]" />
-                                    </button>
-                                </div>
-                            );
-                        })}
-
-                        {/* + Add Line Button */}
-                        <button
-                            type="button"
-                            onClick={() => handleAddLine()}
-                            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[6px] border border-dashed border-[#242A38] hover:border-[#1688E8]/50 bg-transparent hover:bg-[#141822] text-xs font-semibold text-[#8A8F98] hover:text-[#1688E8] transition-all cursor-pointer mt-1"
-                        >
-                            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                            <span>Thêm dòng mới (Enter)</span>
-                        </button>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-[#666B75] px-1">
-                        <span>Nhấn <b>Enter</b> để xuống dòng mới • <b>Backspace</b> để xóa dòng trống</span>
-                        <span>Đã lưu tự động</span>
-                    </div>
+                                    <span className="text-sm">{p.icon}</span>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[#E1E4EA] group-hover/btn:text-white font-bold leading-tight truncate">
+                                            {p.name}
+                                        </span>
+                                        <span className="text-[10px] text-[#717684] truncate">
+                                            {p.description}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* ── RIGHT: LIVE PREVIEW COLUMN ───────────────── */}
-                <div className={`flex flex-col gap-2 ${mobileTab === "edit" ? "hidden md:flex" : "flex"}`}>
-                    <div className="flex items-center justify-between px-1">
-                        <div className="flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faDesktop} className="text-xs text-[#1688E8]" />
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#A0A5AF]">
-                                Xem trước trực tiếp (Live Preview)
-                            </span>
-                        </div>
-                        <span className="text-[10px] font-medium text-[#666B75]">
-                            Cách hiển thị trên hồ sơ
+                {/* Character Counter */}
+                <div className="flex items-center gap-1.5">
+                    <span
+                        className={`font-mono font-medium transition-colors ${
+                            isOverLimit
+                                ? "text-rose-500 font-bold"
+                                : charCount > 250
+                                ? "text-amber-400 font-bold"
+                                : "text-[#717684]"
+                        }`}
+                    >
+                        {charCount} / {MAX_BIO_CHAR_LIMIT}
+                    </span>
+                    {isOverLimit && (
+                        <span className="text-rose-500 text-[10px] font-bold">
+                            (Vượt quá giới hạn)
                         </span>
-                    </div>
-
-                    {/* Replica of Profile Identity Bio Container */}
-                    <div className="flex flex-col justify-center min-h-[190px] bg-[#0A0C0E] border border-[#181C24] rounded-[10px] p-4 relative overflow-hidden shadow-inner">
-                        {/* Ambient subtle glow */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#1688E8]/5 rounded-full blur-2xl pointer-events-none" />
-
-                        <div className="bg-[#13161C] p-3.5 rounded-[8px] border border-[#1A1F2A] relative z-10">
-                            <BioRenderer bio={doc} emptyPlaceholder="Tiểu sử hiển thị tại đây khi bạn nhập nội dung..." />
-                        </div>
-                    </div>
-
-                    <p className="text-[10px] text-[#666B75] italic px-1 text-center">
-                        Màu sắc và font chữ sẽ hiển thị chuẩn xác theo preset bạn chọn trên mọi thiết bị.
-                    </p>
+                    )}
                 </div>
             </div>
         </div>
