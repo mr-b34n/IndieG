@@ -231,3 +231,43 @@ a.bg-primary,
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
     -webkit-font-smoothing: antialiased;
 }
+
+/* ── Custom Profile Bio Typography System ──────────────── */
+.font-bio-inter {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.font-bio-serif {
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+}
+.font-bio-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.font-bio-pixel {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    letter-spacing: -0.02em;
+}
+.font-bio-gothic {
+    font-family: 'UnifrakturMaguntia', 'Cinzel', serif;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+}
+.font-bio-fantasy {
+    font-family: 'Cinzel', Georgia, serif;
+    letter-spacing: 0.04em;
+}
+
+.text-bio-default {
+    color: #F0F1F2;
+}
+.text-bio-muted {
+    color: #8A8F98;
+}
+.text-bio-accent {
+    color: #1688E8;
+}
+.text-bio-highlight {
+    color: #E5A93D;
+}

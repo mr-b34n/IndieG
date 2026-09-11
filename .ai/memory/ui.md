@@ -164,5 +164,30 @@ Implications:
 4. **Header Stewardship Indicator**: Subtle "Admin / Owner" / "Moderator" badge and direct "Quản lý" / "Manage" button.
 5. **Role Perspective Toggle**: Top-bar test switcher enables previewing Member, Moderator, and Admin experiences seamlessly.
 
+---
+
+## Decision: Profile Forge (Custom Bio System) & Edit State Recovery
+
+Status: Active
+
+Date: 2026-09-11
+
+Decision:
+
+1. **Controlled Bio Personalization**: Personalization uses a structured JSONB document schema (`{ version: 1, blocks: [...] }`) rather than arbitrary HTML, markdown, or WYSIWYG builders.
+2. **Platform Owns Structure, User Owns Expression**:
+   - Whitelist typography only: `inter`, `serif`, `mono`, `pixel`, `gothic`, `fantasy`.
+   - Semantic theme colors only: `default` (#F0F1F2), `muted` (#8A8F98), `accent` (#1688E8), `highlight` (#E5A93D).
+   - Paragraph alignments: `left`, `center`, `right`.
+   - Formatting: `bold`, `italic`, `strikethrough`.
+   - Presets: `Clean`, `Minimal`, `RPG`, `Terminal`, `Cyber`, `Gothic`.
+3. **Editor Architecture**:
+   - Side-by-side desktop layout (Editor on Left, Live Preview replica on Right).
+   - Tabbed mobile switcher (`[Soạn thảo]` / `[Xem trước]`).
+   - Character counter strictly capped (300 characters limit).
+4. **Profile Edit State Recovery**:
+   - `handleDiscardEdit` in `UserProfile.tsx` must use `setCustomGear(snapshotGear)` to avoid `ReferenceError` on gear restoration.
+
+
 
 

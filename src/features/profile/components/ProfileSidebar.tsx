@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { GEAR_CATEGORIES } from "../constants";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
+import { BioRenderer } from "../bio";
 
 interface ProfileSidebarProps {
     isOwnProfile: boolean;
@@ -81,9 +82,7 @@ export const ProfileSidebar = ({
                         </div>
                     </div>
                 ) : (
-                    <p className="text-sm text-text-muted leading-relaxed">
-                        {bio || <span className="text-text-faint italic">{t("profile.empty.bio")}</span>}
-                    </p>
+                    <BioRenderer bio={bio} emptyPlaceholder={t("profile.empty.bio")} />
                 )}
 
                 {/* Connected platforms */}

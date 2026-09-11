@@ -7,6 +7,7 @@ import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
+import { BioEditor, BioRenderer } from "../../bio";
 
 interface OverviewTabProps {
     identity: ProfileIdentity;
@@ -101,40 +102,19 @@ export const OverviewTab = ({
                             </div>
                         </div>
 
-                        {/* Inline Bio Editing */}
+                        {/* Inline Bio Editing / Rich Profile Forge */}
                         {isCustomizeMode ? (
-                            <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[8px] animate-fade-in">
-                                <div className="flex flex-col gap-1.5">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[10px] font-bold text-[#8A8F98]">Tiểu sử (Bio):</label>
-                                        <span className={`text-[10px] font-medium ${(identity.bio?.length || 0) >= 240 ? "text-[#E05252]" : "text-[#8A8F98]"}`}>
-                                            {identity.bio?.length || 0} / 250
-                                        </span>
-                                    </div>
-                                    <textarea
-                                        value={identity.bio || ""}
-                                        onChange={(e) => onIdentityChange?.({ bio: e.target.value })}
-                                        maxLength={250}
-                                        rows={3}
-                                        placeholder="Nhập tiểu sử ngắn của bạn (tối đa 250 ký tự)..."
-                                        className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] p-2 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors resize-none"
-                                    />
-                                </div>
-                            </div>
+                            <BioEditor
+                                value={identity.bio}
+                                onChange={(serialized) => onIdentityChange?.({ bio: serialized })}
+                            />
                         ) : (
-                            <>
-                                {identity.bio ? (
-                                    <div className="bg-[#13161C] p-3 rounded-[8px]">
-                                        <p className="text-xs text-[#9A9DA3] leading-relaxed">
-                                            {identity.bio}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-[#13161C] p-3 rounded-[8px] text-center">
-                                        <p className="text-xs text-[#666A71] italic">{t("profile.empty.bio")}</p>
-                                    </div>
-                                )}
-                            </>
+                            <div className="bg-[#13161C] p-3.5 rounded-[8px] border border-[#1A1F2A]/60">
+                                <BioRenderer
+                                    bio={identity.bio}
+                                    emptyPlaceholder={t("profile.empty.bio", { defaultValue: "Chưa có tiểu sử." })}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>

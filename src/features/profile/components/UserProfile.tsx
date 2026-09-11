@@ -307,7 +307,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleDiscardEdit = () => {
         if (snapshotIdentity) setIdentity(snapshotIdentity);
-        if (snapshotGear) setGearData(snapshotGear);
+        if (snapshotGear) setCustomGear(snapshotGear);
         if (snapshotHiddenSections) setHiddenSections(snapshotHiddenSections);
         setIsCustomizeMode(false);
         setSnapshotIdentity(null);
