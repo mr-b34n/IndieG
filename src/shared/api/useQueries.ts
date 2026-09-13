@@ -340,8 +340,8 @@ export function useSearchCommunityMembersQuery(communityId: string, params: Sear
 export function useApproveJoinRequestMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.approveJoinRequest(communityId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.approveJoinRequest(communityId, memberId || data?.memberId || data?.userId, data),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
         },
@@ -351,8 +351,8 @@ export function useApproveJoinRequestMutation() {
 export function useRejectJoinRequestMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.rejectJoinRequest(communityId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.rejectJoinRequest(communityId, memberId || data?.memberId || data?.userId, data),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
         },
@@ -362,8 +362,19 @@ export function useRejectJoinRequestMutation() {
 export function useMuteMemberMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.muteMember(communityId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.muteMember(communityId, memberId || data?.memberId || data?.userId, data),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useUnmuteMemberMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, memberId }: { communityId: string; memberId: string }) =>
+            communityMembersApi.unmuteMember(communityId, memberId),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
         },
@@ -373,10 +384,44 @@ export function useMuteMemberMutation() {
 export function useBanMemberMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, data }: { communityId: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.banMember(communityId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
+            communityMembersApi.banMember(communityId, memberId || data?.memberId || data?.userId, data),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useUnbanMemberMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, memberId }: { communityId: string; memberId: string }) =>
+            communityMembersApi.unbanMember(communityId, memberId),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useChangeMemberRoleMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, memberId, role }: { communityId: string; memberId: string; role: "member" | "moderator" | "owner" }) =>
+            communityMembersApi.changeRole(communityId, memberId, role),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useTransferCommunityOwnershipMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, newOwnerId }: { communityId: string; newOwnerId: string }) =>
+            communityMembersApi.transferOwnership(communityId, newOwnerId),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId] });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
         },
     });
 }

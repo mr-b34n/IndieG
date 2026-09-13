@@ -487,13 +487,13 @@ export const communitiesApi = {
 
     /** Get community by ID - GET /communities/{id} */
     getById: (id: string) =>
-        apiRequest<CommunityDto>(`/communities/${id}`, {
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}`, {
             method: "GET",
         }),
 
     /** Update community - PATCH /communities/{id} (supports query params per OpenAPI and body) */
     update: (id: string, data: UpdateCommunityDto) =>
-        apiRequest<CommunityDto>(`/communities/${id}`, {
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}`, {
             method: "PATCH",
             params: {
                 name: data.name,
@@ -503,39 +503,57 @@ export const communitiesApi = {
                 description: data.description,
                 tags: data.tags,
                 featured: data.featured,
+                privacy: data.privacy,
+                rules: data.rules,
             },
             body: data,
         }),
 
     /** Delete community - DELETE /communities/{id} */
     delete: (id: string) =>
-        apiRequest<{ message?: string }>(`/communities/${id}`, {
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(id)}`, {
             method: "DELETE",
+        }),
+
+    /** Suspend community - PATCH /communities/{id}/suspend */
+    suspend: (id: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(id)}/suspend`, {
+            method: "PATCH",
+        }),
+
+    /** Archive community - PATCH /communities/{id}/archive */
+    archive: (id: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(id)}/archive`, {
+            method: "PATCH",
+        }),
+
+    /** Reactivate community - PATCH /communities/{id}/reactivate */
+    reactivate: (id: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(id)}/reactivate`, {
+            method: "PATCH",
         }),
 
     /** Join community - POST /communities/{communityId}/members */
     join: (communityId: string) =>
-        apiRequest<CommunityMemberDto>(`/communities/${communityId}/members`, {
+        apiRequest<CommunityMemberDto>(`/communities/${encodeURIComponent(communityId)}/members`, {
             method: "POST",
         }),
 
     /** Leave community - PATCH /communities/{communityId}/members */
     leave: (communityId: string) =>
-        apiRequest<{ message?: string } | void>(`/communities/${communityId}/members`, {
+        apiRequest<{ message?: string } | void>(`/communities/${encodeURIComponent(communityId)}/members`, {
             method: "PATCH",
         }),
 
     /** Get/Search community members - GET /communities/{communityId}/members */
-    getMembers: (communityId: string, params?: GetCommunityMembersParams) => {
-        const query = new URLSearchParams();
-        if (params?.keyword !== undefined) query.set("keyword", params.keyword);
-        if (params?.page !== undefined) query.set("page", String(params.page));
-        if (params?.limit !== undefined) query.set("limit", String(params.limit));
-        const qs = query.toString() ? `?${query.toString()}` : "";
-        return apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
-            `/communities/${communityId}/members${qs}`
-        );
-    },
+    getMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
 };
 
 /**
@@ -602,37 +620,91 @@ export const communityMembersApi = {
             method: "GET",
         }),
 
-    /** Approve member join request - PATCH /communities/{communityId}/members/approve */
-    approveJoinRequest: (communityId: string, data?: CommunityMemberActionDto) =>
-        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/approve`, {
+    /** Approve member join request - PATCH /communities/{communityId}/members/{memberId}/approve */
+    approveJoinRequest: (communityId: string, memberIdOrData?: string | CommunityMemberActionDto, data?: CommunityMemberActionDto) => {
+        const memberId = typeof memberIdOrData === "string" ? memberIdOrData : memberIdOrData?.memberId || memberIdOrData?.userId || "";
+        const endpoint = memberId
+            ? `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/approve`
+            : `/communities/${encodeURIComponent(communityId)}/members/approve`;
+        const body = typeof memberIdOrData === "object" ? memberIdOrData : data;
+        return apiRequest<{ message?: string }>(endpoint, {
             method: "PATCH",
-            body: data,
+            body,
+        });
+    },
+
+    /** Reject member join request - PATCH /communities/{communityId}/members/{memberId}/reject */
+    rejectJoinRequest: (communityId: string, memberIdOrData?: string | CommunityMemberActionDto, data?: CommunityMemberActionDto) => {
+        const memberId = typeof memberIdOrData === "string" ? memberIdOrData : memberIdOrData?.memberId || memberIdOrData?.userId || "";
+        const endpoint = memberId
+            ? `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/reject`
+            : `/communities/${encodeURIComponent(communityId)}/members/reject`;
+        const body = typeof memberIdOrData === "object" ? memberIdOrData : data;
+        return apiRequest<{ message?: string }>(endpoint, {
+            method: "PATCH",
+            body,
+        });
+    },
+
+    /** Mute a member - PATCH /communities/{communityId}/members/{memberId}/mute */
+    muteMember: (communityId: string, memberIdOrData?: string | CommunityMemberActionDto, data?: CommunityMemberActionDto) => {
+        const memberId = typeof memberIdOrData === "string" ? memberIdOrData : memberIdOrData?.memberId || memberIdOrData?.userId || "";
+        const payload = typeof memberIdOrData === "object" ? memberIdOrData : data;
+        const endpoint = memberId
+            ? `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/mute`
+            : `/communities/${encodeURIComponent(communityId)}/members/mute`;
+        return apiRequest<{ message?: string }>(endpoint, {
+            method: "PATCH",
+            body: payload,
+        });
+    },
+
+    /** Unmute a member - PATCH /communities/{communityId}/members/{memberId}/unmute */
+    unmuteMember: (communityId: string, memberId: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/unmute`, {
+            method: "PATCH",
         }),
 
-    /** Reject member join request - PATCH /communities/{communityId}/members/reject */
-    rejectJoinRequest: (communityId: string, data?: CommunityMemberActionDto) =>
-        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/reject`, {
-            method: "PATCH",
-            body: data,
-        }),
-
-    /** Toggle mute a member - PATCH /communities/{communityId}/members/toggle-mute */
+    /** Toggle mute a member */
     toggleMute: (communityId: string, data?: CommunityMemberActionDto) =>
-        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/toggle-mute`, {
+        communityMembersApi.muteMember(communityId, data),
+
+    /** Ban a member - PATCH /communities/{communityId}/members/{memberId}/ban */
+    banMember: (communityId: string, memberIdOrData?: string | CommunityMemberActionDto, data?: CommunityMemberActionDto) => {
+        const memberId = typeof memberIdOrData === "string" ? memberIdOrData : memberIdOrData?.memberId || memberIdOrData?.userId || "";
+        const payload = typeof memberIdOrData === "object" ? memberIdOrData : data;
+        const endpoint = memberId
+            ? `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/ban`
+            : `/communities/${encodeURIComponent(communityId)}/members/ban`;
+        return apiRequest<{ message?: string }>(endpoint, {
             method: "PATCH",
-            body: data,
+            body: payload,
+        });
+    },
+
+    /** Unban a member - PATCH /communities/{communityId}/members/{memberId}/unban */
+    unbanMember: (communityId: string, memberId: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/unban`, {
+            method: "PATCH",
         }),
 
-    /** Backward-compatible alias for toggleMute */
-    muteMember: (communityId: string, data?: CommunityMemberActionDto) =>
-        communityMembersApi.toggleMute(communityId, data),
-
-    /** Ban a member - PATCH /communities/{communityId}/members/ban */
-    banMember: (communityId: string, data?: CommunityMemberActionDto) =>
-        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/ban`, {
+    /** Change member role - PATCH /communities/{communityId}/members/{memberId}/role */
+    changeRole: (communityId: string, memberId: string, roleOrData: "member" | "moderator" | "owner" | { role: "member" | "moderator" | "owner" }) => {
+        const body = typeof roleOrData === "string" ? { role: roleOrData } : roleOrData;
+        return apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/role`, {
             method: "PATCH",
-            body: data,
-        }),
+            body,
+        });
+    },
+
+    /** Transfer community ownership - PATCH /communities/{communityId}/members/transfer-ownership */
+    transferOwnership: (communityId: string, newOwnerIdOrData: string | { newOwnerId: string }) => {
+        const body = typeof newOwnerIdOrData === "string" ? { newOwnerId: newOwnerIdOrData } : newOwnerIdOrData;
+        return apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/transfer-ownership`, {
+            method: "PATCH",
+            body,
+        });
+    },
 };
 
 /**

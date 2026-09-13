@@ -146,7 +146,7 @@ export const CommunityManageModeration = ({
 
     const handleApproveRequest = async (id: string, name: string) => {
         try {
-            await approveMutation.mutateAsync({ communityId: communityId || "" });
+            await approveMutation.mutateAsync({ communityId: communityId || "", memberId: id });
             refetchPending();
             showToast(isVi ? `Đã phê duyệt ${name} vào cộng đồng!` : `Approved ${name}'s join request.`);
         } catch {
@@ -156,7 +156,7 @@ export const CommunityManageModeration = ({
 
     const handleRejectRequest = async (id: string, name: string) => {
         try {
-            await rejectMutation.mutateAsync({ communityId: communityId || "" });
+            await rejectMutation.mutateAsync({ communityId: communityId || "", memberId: id });
             refetchPending();
             showToast(isVi ? `Đã từ chối yêu cầu của ${name}.` : `Rejected ${name}'s request.`);
         } catch {

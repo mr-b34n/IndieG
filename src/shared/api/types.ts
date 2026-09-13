@@ -95,6 +95,9 @@ export interface CommunityDto {
 
 export interface CreateCommunityDto {
     name: string;
+    gameId?: string;
+    privacy?: "public" | "private" | "invite_only";
+    rules?: string;
     logo?: string;
     backdrop?: string;
     category?: string;
@@ -110,6 +113,8 @@ export interface UpdateCommunityDto {
     description?: string;
     tags?: string[];
     featured?: boolean;
+    privacy?: "public" | "private" | "invite_only";
+    rules?: string;
 }
 
 export interface GetCommunitiesParams {
@@ -157,8 +162,13 @@ export interface SearchCommunityMembersParams {
 
 export interface CommunityMemberActionDto {
     userId?: string;
-    duration?: string;
+    memberId?: string;
+    muteMinutes?: number;
     reason?: string;
+    durationMinutes?: number;
+    role?: "member" | "moderator" | "owner";
+    newOwnerId?: string;
+    duration?: string;
 }
 
 export interface CommunityMembersResponseDto {

@@ -21,7 +21,10 @@ import {
     usePendingMembersQuery,
     useProfilesListQuery,
     useMuteMemberMutation,
+    useUnmuteMemberMutation,
     useBanMemberMutation,
+    useUnbanMemberMutation,
+    useChangeMemberRoleMutation,
 } from "@/shared/api/useQueries";
 import { extractMemberList } from "@/shared/api";
 import type { CommunityMemberDto } from "@/shared/api/types";
@@ -88,7 +91,10 @@ export const CommunityManageMembers = ({
     const { data: pendingMembersData } = usePendingMembersQuery(communityId || "");
     const { data: profilesData } = useProfilesListQuery();
     const muteMutation = useMuteMemberMutation();
+    const unmuteMutation = useUnmuteMemberMutation();
     const banMutation = useBanMemberMutation();
+    const unbanMutation = useUnbanMemberMutation();
+    const roleMutation = useChangeMemberRoleMutation();
 
     const profilesMap = useMemo(() => {
         const map = new Map<string, { name?: string; username?: string; avatar?: string }>();
@@ -185,14 +191,19 @@ export const CommunityManageMembers = ({
         setActiveMenuMemberId(null);
         if (communityId) {
             try {
-                await muteMutation.mutateAsync({
-                    communityId,
-                    data: {
-                        userId: id,
-                        duration: isMuted ? "0" : "24h",
-                        reason: isMuted ? "Unmuted" : "Muted 24h",
-                    },
-                });
+                if (isMuted) {
+                    await unmuteMutation.mutateAsync({ communityId, memberId: id });
+                } else {
+                    await muteMutation.mutateAsync({
+                        communityId,
+                        memberId: id,
+                        data: {
+                            userId: id,
+                            muteMinutes: 1440,
+                            reason: "Muted 24h",
+                        },
+                    });
+                }
             } catch {
                 // query will re-sync
             }
@@ -217,13 +228,19 @@ export const CommunityManageMembers = ({
         setActiveMenuMemberId(null);
         if (communityId) {
             try {
-                await banMutation.mutateAsync({
-                    communityId,
-                    data: {
-                        userId: id,
-                        reason: isBanned ? "Unbanned" : "Banned by moderation",
-                    },
-                });
+                if (isBanned) {
+                    await unbanMutation.mutateAsync({ communityId, memberId: id });
+                } else {
+                    await banMutation.mutateAsync({
+                        communityId,
+                        memberId: id,
+                        data: {
+                            userId: id,
+                            reason: "Banned by moderation",
+                            durationMinutes: 10080,
+                        },
+                    });
+                }
             } catch {
                 // query will re-sync
             }
@@ -235,17 +252,24 @@ export const CommunityManageMembers = ({
         );
     };
 
-    const handlePromoteToModerator = (id: string, name: string) => {
+    const handlePromoteToModerator = async (id: string, name: string) => {
         if (!isOwner) return;
         setLocalOverrides((prev) => ({
             ...prev,
             [id]: { role: "Moderator" as const },
         }));
         setActiveMenuMemberId(null);
+        if (communityId) {
+            try {
+                await roleMutation.mutateAsync({ communityId, memberId: id, role: "moderator" });
+            } catch {
+                // query will re-sync
+            }
+        }
         showToast(isVi ? `Đã thăng cấp ${name} làm Điều hành viên!` : `Promoted ${name} to Moderator.`);
     };
 
-    const handleRemoveModerator = (id: string, name: string) => {
+    const handleRemoveModerator = async (id: string, name: string) => {
         if (!isOwner) return;
         if (!window.confirm(isVi ? `Hạ cấp ${name} xuống thành viên thông thường?` : `Remove ${name} from Moderator role?`)) {
             return;
@@ -255,6 +279,13 @@ export const CommunityManageMembers = ({
             [id]: { role: "Member" as const },
         }));
         setActiveMenuMemberId(null);
+        if (communityId) {
+            try {
+                await roleMutation.mutateAsync({ communityId, memberId: id, role: "member" });
+            } catch {
+                // query will re-sync
+            }
+        }
         showToast(isVi ? `Đã chuyển ${name} về Thành viên.` : `Demoted ${name} to Member.`);
     };
 
