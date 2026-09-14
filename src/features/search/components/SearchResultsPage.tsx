@@ -87,16 +87,16 @@ export const SearchResultsPage = () => {
 
     // Sync input value when route search params change
     useEffect(() => {
-        if (searchParams.q !== undefined) {
+        if (searchParams.q !== undefined && searchParams.q !== inputValue) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setInputValue(searchParams.q);
         }
-    }, [searchParams.q]);
+    }, [searchParams.q, inputValue]);
 
-    // Automatically update search route when debouncedInputValue changes
+    // Automatically update search route when debouncedInputValue changes and matches current inputValue
     useEffect(() => {
         const cleanDebounced = debouncedInputValue.trim();
-        if (cleanDebounced !== (searchParams.q || "").trim()) {
+        if (debouncedInputValue === inputValue && cleanDebounced !== (searchParams.q || "").trim()) {
             startTransition(() => {
                 navigate({
                     to: "/search",
@@ -104,7 +104,7 @@ export const SearchResultsPage = () => {
                 });
             });
         }
-    }, [debouncedInputValue, searchParams.q, activeTab, pageSize, navigate]);
+    }, [debouncedInputValue, inputValue, searchParams.q, activeTab, pageSize, navigate]);
 
     // Fetch search results from /api/search
     useEffect(() => {
@@ -173,13 +173,19 @@ export const SearchResultsPage = () => {
         );
     };
 
+    const totalAllCount =
+        searchData.meta.totalGames +
+        searchData.meta.totalCommunities +
+        searchData.meta.totalUsers +
+        searchData.meta.totalPosts;
+
     const tabsList: {
         key: SearchTabCategory;
         label: string;
         icon: import("@fortawesome/fontawesome-svg-core").IconDefinition;
         count: number;
     }[] = [
-        { key: "all", label: t("search.tabAll", { defaultValue: "Tất cả" }), icon: faFilter, count: searchData.pagination.total },
+        { key: "all", label: t("search.tabAll", { defaultValue: "Tất cả" }), icon: faFilter, count: totalAllCount || searchData.pagination.total },
         { key: "games", label: t("search.tabGames", { defaultValue: "Game" }), icon: faGamepad, count: searchData.meta.totalGames },
         { key: "communities", label: t("search.tabCommunities", { defaultValue: "Cộng đồng" }), icon: faUsers, count: searchData.meta.totalCommunities },
         { key: "users", label: t("search.tabUsers", { defaultValue: "Người dùng" }), icon: faUser, count: searchData.meta.totalUsers },

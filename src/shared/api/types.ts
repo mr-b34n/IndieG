@@ -628,15 +628,20 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
 
 export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
     const raw = dto as Record<string, unknown>;
-    const slug = (raw.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(raw.appid || "game"));
+    const appidNum = typeof raw.appid === "number" ? raw.appid : (typeof raw.appid === "string" && !isNaN(Number(raw.appid)) ? parseInt(raw.appid, 10) : undefined);
+    const slug = (raw.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(appidNum || "game"));
+
+    const defaultSteamHeader = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/header.jpg` : "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&auto=format&fit=crop&q=80";
+    const defaultSteamHero = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/library_hero.jpg` : "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80";
+
     return {
         slug,
-        appid: typeof raw.appid === "number" ? raw.appid : (typeof raw.appid === "string" ? parseInt(raw.appid, 10) : undefined),
+        appid: appidNum,
         id: String(raw.id || raw.appid || slug),
         name: (raw.name as string) || "Game",
         tag: (raw.tag as string) || (raw.name as string) || "Game",
         communityId: (raw.communityId as string) || undefined,
-        steamUrl: (raw.steamUrl as string) || undefined,
+        steamUrl: (raw.steamUrl as string) || (appidNum ? `https://store.steampowered.com/app/${appidNum}` : undefined),
         developer: (raw.developer as string) || "Indie Dev",
         publisher: (raw.publisher as string) || "Indie Publisher",
         releaseDate: (raw.releaseDate as string) || "2024",
@@ -647,8 +652,8 @@ export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
         sentiment: (raw.sentiment as "Overwhelmingly Positive" | "Very Positive" | "Positive" | "Mixed") || "Positive",
         sentimentVi: (raw.sentimentVi as string) || undefined,
         activePlayers: typeof raw.activePlayers === "number" ? raw.activePlayers : 0,
-        logoUrl: (raw.logoUrl as string) || (raw.logo as string) || (raw.bannerUrl as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
-        bannerUrl: (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.logoUrl as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+        logoUrl: (raw.logoUrl as string) || (raw.logo as string) || (raw.header as string) || defaultSteamHeader,
+        bannerUrl: (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.backdrop as string) || (raw.libraryHero as string) || defaultSteamHero,
         description: (raw.description as string) || (raw.descriptionVi as string) || "",
         descriptionVi: (raw.descriptionVi as string) || (raw.description as string) || "",
         features: Array.isArray(raw.features) ? (raw.features as string[]) : [],
@@ -804,6 +809,29 @@ export interface SearchParams {
     type?: SearchType;
     page?: number;
     limit?: number;
+}
+
+export interface SearchGroupMetaDto {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface SearchEntityGroupDto<T = unknown> {
+    data: T[];
+    meta: SearchGroupMetaDto;
+}
+
+export interface SearchApiResponseDto {
+    query: string;
+    results: {
+        game?: SearchEntityGroupDto<GameDto>;
+        community?: SearchEntityGroupDto<CommunityDto>;
+        profile?: SearchEntityGroupDto<UserProfileDto>;
+        post?: SearchEntityGroupDto<PostDto>;
+        [key: string]: SearchEntityGroupDto | unknown;
+    };
 }
 
 export interface SearchGlobalResultDto {

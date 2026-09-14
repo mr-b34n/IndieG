@@ -121,7 +121,82 @@ function parseSearchResponse(
     limit: number,
     searchType?: string
 ): SearchResponse {
-    // If backend already formatted as standard SearchResponse
+    // 1. Check for standard backend format: { query: string, results: { game, community, profile, post } }
+    const resultsObj = (
+        raw.results && typeof raw.results === "object" && !Array.isArray(raw.results)
+            ? raw.results
+            : raw.data && typeof raw.data === "object" && (raw.data as Record<string, unknown>).results
+            ? ((raw.data as Record<string, unknown>).results as Record<string, unknown>)
+            : null
+    ) as Record<string, unknown> | null;
+
+    if (resultsObj) {
+        const gameGroup = resultsObj.game as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
+        const commGroup = resultsObj.community as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
+        const profileGroup = (resultsObj.profile || resultsObj.user) as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
+        const postGroup = resultsObj.post as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
+
+        const games = Array.isArray(gameGroup?.data) ? gameGroup.data.map((g) => mapGameDtoToGameData(g as GameDto)) : [];
+        const communities = Array.isArray(commGroup?.data) ? commGroup.data.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto)) : [];
+        const users = Array.isArray(profileGroup?.data) ? profileGroup.data.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto)) : [];
+        const posts = Array.isArray(postGroup?.data) ? postGroup.data.map((p) => mapPostDtoToPost(p as PostDto)) : [];
+
+        const totalGames = typeof gameGroup?.meta?.total === "number" ? gameGroup.meta.total : games.length;
+        const totalCommunities = typeof commGroup?.meta?.total === "number" ? commGroup.meta.total : communities.length;
+        const totalUsers = typeof profileGroup?.meta?.total === "number" ? profileGroup.meta.total : users.length;
+        const totalPosts = typeof postGroup?.meta?.total === "number" ? postGroup.meta.total : posts.length;
+
+        let activeTotal = totalGames + totalCommunities + totalUsers + totalPosts;
+        let activePage = page;
+        let activeTotalPages = Math.max(1, Math.ceil(activeTotal / limit));
+
+        if (tab === "games" || searchType === "game") {
+            activeTotal = totalGames;
+            activePage = gameGroup?.meta?.page ?? page;
+            activeTotalPages = gameGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+        } else if (tab === "communities" || searchType === "community") {
+            activeTotal = totalCommunities;
+            activePage = commGroup?.meta?.page ?? page;
+            activeTotalPages = commGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+        } else if (tab === "users" || searchType === "profile") {
+            activeTotal = totalUsers;
+            activePage = profileGroup?.meta?.page ?? page;
+            activeTotalPages = profileGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+        } else if (tab === "posts" || searchType === "post") {
+            activeTotal = totalPosts;
+            activePage = postGroup?.meta?.page ?? page;
+            activeTotalPages = postGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+        }
+
+        const hasMore = activeTotal > 0 && activePage < activeTotalPages;
+
+        return {
+            success: true,
+            query: (raw.query as string) || query,
+            type: tab,
+            pagination: {
+                page: activePage,
+                size: limit,
+                total: activeTotal,
+                totalPages: activeTotal === 0 ? 0 : activeTotalPages,
+                hasMore,
+            },
+            data: {
+                posts,
+                users,
+                communities,
+                games,
+            },
+            meta: {
+                totalPosts,
+                totalUsers,
+                totalCommunities,
+                totalGames,
+            },
+        };
+    }
+
+    // 2. If backend formatted as legacy SearchResponse { data: { posts, communities, games, users }, meta: { totalPosts... } }
     if (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data) && (raw.data as Record<string, unknown>).posts) {
         const existingData = raw.data as Record<string, unknown>;
         const posts = Array.isArray(existingData.posts) ? existingData.posts.map(mapPostDtoToPost) : [];
@@ -148,39 +223,40 @@ function parseSearchResponse(
 
         return {
             success: true,
-            query,
+            query: (raw.query as string) || query,
             type: tab,
             pagination: {
                 page,
                 size: limit,
                 total,
-                totalPages,
-                hasMore: page < totalPages,
+                totalPages: total === 0 ? 0 : totalPages,
+                hasMore: total > 0 && page < totalPages,
             },
             data: { posts, users, communities, games },
             meta: { totalPosts, totalUsers, totalCommunities, totalGames },
         };
     }
 
-    // Scoped list responses (when type is specified in GET /search)
+    // 3. Fallback: Flat or scoped item list responses (e.g. { data: [...], meta: { total... } })
     const rawList: unknown[] = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.items)
         ? raw.items
         : Array.isArray(raw.data)
         ? (raw.data as unknown[])
-        : Array.isArray(raw.results)
-        ? (raw.results as unknown[])
         : [];
 
-    const totalFromApi = typeof raw.total === "number" ? raw.total : typeof raw.count === "number" ? raw.count : rawList.length;
+    const metaObj = raw.meta as Record<string, unknown> | undefined;
+    const totalFromApi = typeof raw.total === "number" ? raw.total : typeof metaObj?.total === "number" ? metaObj.total : typeof raw.count === "number" ? raw.count : rawList.length;
+    const totalPagesFromApi = typeof raw.totalPages === "number" ? raw.totalPages : typeof metaObj?.totalPages === "number" ? (metaObj.totalPages as number) : Math.max(1, Math.ceil(totalFromApi / limit));
+    const pageFromApi = typeof raw.page === "number" ? raw.page : typeof metaObj?.page === "number" ? (metaObj.page as number) : page;
 
     let posts: Post[] = [];
     let communities: CommunityData[] = [];
     let games: GameData[] = [];
     let users: SearchUser[] = [];
 
-    // Check if raw payload has entity arrays at root (Global Search Preview)
+    // Check if raw payload has entity arrays at root
     const rawGames = (raw.games || (raw.data && (raw.data as Record<string, unknown>).games)) as unknown[];
     const rawCommunities = (raw.communities || (raw.data && (raw.data as Record<string, unknown>).communities)) as unknown[];
     const rawProfiles = (raw.profiles || raw.users || (raw.data && ((raw.data as Record<string, unknown>).profiles || (raw.data as Record<string, unknown>).users))) as unknown[];
@@ -221,18 +297,18 @@ function parseSearchResponse(
     if (tab === "games") total = totalGames;
     if (tab === "users") total = totalUsers;
 
-    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const totalPages = totalPagesFromApi || Math.max(1, Math.ceil(total / limit));
 
     return {
         success: true,
-        query,
+        query: (raw.query as string) || query,
         type: tab,
         pagination: {
-            page,
+            page: pageFromApi,
             size: limit,
             total,
-            totalPages,
-            hasMore: page < totalPages,
+            totalPages: total === 0 ? 0 : totalPages,
+            hasMore: total > 0 && pageFromApi < totalPages,
         },
         data: {
             posts,
