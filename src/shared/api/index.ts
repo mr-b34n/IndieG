@@ -1298,6 +1298,25 @@ export const friendshipsApi = {
         apiRequest<FriendshipDto[]>("/friendships/blocked"),
 };
 
+// -------------------------------------------------------------
+// Search API (/search)
+// -------------------------------------------------------------
+export const searchApi = {
+    /**
+     * Unified search endpoint - GET /search
+     * Throttle: 20 requests / 60 seconds
+     * @param params.q Search query string (min 2, max 100)
+     * @param params.type Optional scope: "game" | "community" | "profile" | "post". Omit for global search (up to 5 preview results per type).
+     * @param params.page Page number (min 1, default 1)
+     * @param params.limit Page limit (min 1, max 50, default 10)
+     */
+    search: <T = unknown>(params: import("./types").SearchParams) =>
+        apiRequest<T>("/search", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
+};
+
 export const storageApi = {
     /** Get presigned URL for upload - POST /storage/presigned-url */
     getPresignedUrl: (data: { type: import("../utils/image-processor").UploadType; originalSize: number; originalMimeType: string; postId?: string }) =>

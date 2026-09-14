@@ -608,6 +608,8 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
     };
 }
 
+export const mapPostDtoToPost = mapPostDtoToPostData;
+
 export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
     return {
         id: dto.id,
@@ -621,6 +623,56 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
         tags: dto.tags || [],
         joined: dto.joined === true || dto.isJoined === true,
         featured: dto.featured ?? false,
+    };
+}
+
+export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
+    const raw = dto as Record<string, unknown>;
+    const slug = (raw.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(raw.appid || "game"));
+    return {
+        slug,
+        appid: typeof raw.appid === "number" ? raw.appid : (typeof raw.appid === "string" ? parseInt(raw.appid, 10) : undefined),
+        id: String(raw.id || raw.appid || slug),
+        name: (raw.name as string) || "Game",
+        tag: (raw.tag as string) || (raw.name as string) || "Game",
+        communityId: (raw.communityId as string) || undefined,
+        steamUrl: (raw.steamUrl as string) || undefined,
+        developer: (raw.developer as string) || "Indie Dev",
+        publisher: (raw.publisher as string) || "Indie Publisher",
+        releaseDate: (raw.releaseDate as string) || "2024",
+        platforms: Array.isArray(raw.platforms) ? (raw.platforms as string[]) : ["PC"],
+        genre: Array.isArray(raw.genre) ? (raw.genre as string[]) : typeof raw.genre === "string" ? [(raw.genre as string)] : ["Indie"],
+        ratingScore: typeof raw.ratingScore === "number" ? raw.ratingScore : typeof raw.rating === "number" ? raw.rating : 5,
+        totalReviewsCount: typeof raw.totalReviewsCount === "number" ? raw.totalReviewsCount : 0,
+        sentiment: (raw.sentiment as "Overwhelmingly Positive" | "Very Positive" | "Positive" | "Mixed") || "Positive",
+        sentimentVi: (raw.sentimentVi as string) || undefined,
+        activePlayers: typeof raw.activePlayers === "number" ? raw.activePlayers : 0,
+        logoUrl: (raw.logoUrl as string) || (raw.logo as string) || (raw.bannerUrl as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+        bannerUrl: (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.logoUrl as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+        description: (raw.description as string) || (raw.descriptionVi as string) || "",
+        descriptionVi: (raw.descriptionVi as string) || (raw.description as string) || "",
+        features: Array.isArray(raw.features) ? (raw.features as string[]) : [],
+        screenshots: Array.isArray(raw.screenshots) ? (raw.screenshots as string[]) : [],
+        guides: Array.isArray(raw.guides) ? (raw.guides as import("@/features/game/types").GameGuide[]) : [],
+        reviews: Array.isArray(raw.reviews) ? (raw.reviews as import("@/features/game/types").GameReview[]) : [],
+    };
+}
+
+export function mapUserProfileDtoToSearchUser(dto: UserProfileDto | Record<string, unknown>) {
+    const raw = dto as Record<string, unknown>;
+    const id = String(raw.id || raw.userId || "");
+    const username = (raw.username as string) || "gamer";
+    const formattedUsername = username.startsWith("@") ? username : `@${username}`;
+    const bioText = typeof raw.bio === "string" ? raw.bio : "";
+    return {
+        id,
+        name: (raw.name as string) || (raw.displayName as string) || username || "Gamer",
+        username: formattedUsername,
+        avatar: (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+        bio: bioText,
+        status: (raw.status === "in-game" ? "in-game" : raw.status === "online" ? "online" : "offline") as "online" | "in-game" | "offline",
+        game: (raw.game as string) || (raw.currentGame as string) || null,
+        isFriend: Boolean(raw.isFriend || raw.friendStatus === "accepted"),
     };
 }
 
@@ -741,4 +793,36 @@ export interface FriendshipDto {
 export interface CreateFriendshipRequestDto {
     addresseeId: string;
 }
+
+// -------------------------------------------------------------
+// Search DTOs (/search)
+// -------------------------------------------------------------
+export type SearchType = "game" | "community" | "profile" | "post";
+
+export interface SearchParams {
+    q: string;
+    type?: SearchType;
+    page?: number;
+    limit?: number;
+}
+
+export interface SearchGlobalResultDto {
+    games?: GameDto[];
+    communities?: CommunityDto[];
+    profiles?: UserProfileDto[];
+    users?: UserProfileDto[];
+    posts?: PostDto[];
+    [key: string]: unknown;
+}
+
+export interface SearchScopedResultDto<T = unknown> {
+    items?: T[];
+    data?: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+    [key: string]: unknown;
+}
+
 

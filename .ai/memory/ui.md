@@ -243,6 +243,28 @@ Key Validation Rules:
 5. **Guestbook**: Comment min length 6. Submit button disabled when invalid.
 6. **Localization**: All error warnings use parameterized translation keys (e.g. `comment.minLenError`, `feed.titleMinLenError`, `community.nameMinLenError`, `report.detailsMinLenError`, `profile.guestbookMinLenError`) supporting English and Vietnamese.
 
+---
+
+## Decision: Search Debouncing & Rate Throttling
+
+Status: Active
+
+Date: 2026-09-13
+
+Decision:
+
+All live search inputs (`Search.tsx` and `SearchResultsPage.tsx`) use `useDebounce` (300ms - 400ms delay) to prevent spamming search calculations and network API requests on every single keystroke.
+
+Why:
+
+Prevents excessive state re-renders and unnecessary backend server/API requests during rapid typing.
+
+Implications:
+
+- Header live preview (`Search.tsx`) uses `useDebounce(value, 300)`.
+- Search page route sync (`SearchResultsPage.tsx`) uses `useDebounce(inputValue, 400)`.
+- Hot Keywords section on `SearchResultsPage.tsx` removed per product requirement.
+
 
 
 

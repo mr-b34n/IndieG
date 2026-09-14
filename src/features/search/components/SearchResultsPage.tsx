@@ -13,32 +13,19 @@ import {
     faPlus,
     faChevronRight,
     faFilter,
-    faWandMagicSparkles,
     faUser,
     faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useGameStore } from "@/features/game";
 import { fetchSearchResults } from "../api/searchApi";
 import { MOCK_USERS } from "../mockUsers";
-import { type SearchTabCategory, type SearchResponse, type SearchUser } from "../types";
+import { type SearchTabCategory, type SearchResponse, type SearchUser, normalizeTabCategory } from "../types";
 import { formatCompactNumber } from "@/features/community/constants";
 import { Pagination } from "@/shared/components/ui/Pagination";
-
-const POPULAR_TAGS = [
-    "#cs2",
-    "#fps",
-    "#survival",
-    "#raft",
-    "#esports",
-    "#rdr2",
-    "#ghostrider",
-    "#s1mple",
-    "#highlight",
-    "#mods",
-];
 
 export const SearchResultsPage = () => {
     const { t } = useTranslation();
@@ -49,12 +36,13 @@ export const SearchResultsPage = () => {
         type?: SearchTabCategory;
         page?: number;
         size?: number;
+        limit?: number;
     };
 
     const initialQuery = searchParams.q || "";
-    const activeTab = searchParams.type || searchParams.tab || "all";
+    const activeTab = normalizeTabCategory(searchParams.type || searchParams.tab || "all");
     const currentPage = Number(searchParams.page) || 1;
-    const pageSize = Number(searchParams.size) || 10;
+    const pageSize = Math.min(50, Math.max(1, Number(searchParams.size || searchParams.limit) || 10));
 
     const [inputValue, setInputValue] = useState(initialQuery);
     const [, startTransition] = useTransition();
@@ -95,6 +83,8 @@ export const SearchResultsPage = () => {
 
     const [isLoading, setIsLoading] = useState(false);
 
+    const debouncedInputValue = useDebounce(inputValue, 400);
+
     // Sync input value when route search params change
     useEffect(() => {
         if (searchParams.q !== undefined) {
@@ -102,6 +92,19 @@ export const SearchResultsPage = () => {
             setInputValue(searchParams.q);
         }
     }, [searchParams.q]);
+
+    // Automatically update search route when debouncedInputValue changes
+    useEffect(() => {
+        const cleanDebounced = debouncedInputValue.trim();
+        if (cleanDebounced !== (searchParams.q || "").trim()) {
+            startTransition(() => {
+                navigate({
+                    to: "/search",
+                    search: { q: cleanDebounced, type: activeTab, page: 1, size: pageSize },
+                });
+            });
+        }
+    }, [debouncedInputValue, searchParams.q, activeTab, pageSize, navigate]);
 
     // Fetch search results from /api/search
     useEffect(() => {
@@ -132,17 +135,6 @@ export const SearchResultsPage = () => {
             navigate({
                 to: "/search",
                 search: { q: clean, type: activeTab, page: 1, size: pageSize },
-            });
-        });
-    };
-
-    const handleTagClick = (tag: string) => {
-        const cleanTag = tag.replace("#", "");
-        setInputValue(cleanTag);
-        startTransition(() => {
-            navigate({
-                to: "/search",
-                search: { q: cleanTag, type: "all", page: 1, size: pageSize },
             });
         });
     };
@@ -239,26 +231,6 @@ export const SearchResultsPage = () => {
                         </button>
                     </div>
                 </form>
-
-                {/* Popular Hot Keywords */}
-                <div className="flex items-center gap-2 flex-wrap text-xs pt-0.5">
-                    <span className="font-bold text-[#656A72] flex items-center gap-1.5 shrink-0">
-                        <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-400 text-xs" />
-                        <span>{t("search.hotKeywords", { defaultValue: "Từ khóa hot:" })}</span>
-                    </span>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        {POPULAR_TAGS.map((tag) => (
-                            <button
-                                key={tag}
-                                type="button"
-                                onClick={() => handleTagClick(tag)}
-                                className="px-3 py-1 rounded-full bg-[#121416] hover:bg-[#191C20] text-[#979BA2] hover:text-[#ECEDEF] text-xs font-semibold transition-colors cursor-pointer"
-                            >
-                                {tag}
-                            </button>
-                        ))}
-                    </div>
-                </div>
             </div>
 
             {/* Target Category Filter Tabs - Pill Style, No Borders */}

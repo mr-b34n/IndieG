@@ -8,6 +8,7 @@ import {
     type SearchTabCategory,
     type SearchResponse,
     type SearchResults,
+    normalizeTabCategory,
 } from "../types";
 
 export function performSearchAPI(
@@ -21,6 +22,7 @@ export function performSearchAPI(
     customGames: GameData[] = []
 ): SearchResponse {
     const q = (query || "").trim().toLowerCase();
+    const normalizedType = normalizeTabCategory(type);
     const currentPage = Math.max(1, page);
     const pageSize = Math.min(50, Math.max(1, size));
 
@@ -34,7 +36,7 @@ export function performSearchAPI(
         return {
             success: true,
             query: "",
-            type,
+            type: normalizedType,
             pagination: {
                 page: currentPage,
                 size: pageSize,
@@ -136,16 +138,16 @@ export function performSearchAPI(
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
 
-    if (type === "posts") {
+    if (normalizedType === "posts") {
         totalItems = matchedPosts.length;
         paginatedPosts = matchedPosts.slice(startIndex, endIndex);
-    } else if (type === "users") {
+    } else if (normalizedType === "users") {
         totalItems = matchedUsers.length;
         paginatedUsers = matchedUsers.slice(startIndex, endIndex);
-    } else if (type === "communities") {
+    } else if (normalizedType === "communities") {
         totalItems = matchedCommunities.length;
         paginatedCommunities = matchedCommunities.slice(startIndex, endIndex);
-    } else if (type === "games") {
+    } else if (normalizedType === "games") {
         totalItems = matchedGames.length;
         paginatedGames = matchedGames.slice(startIndex, endIndex);
     } else {
@@ -162,7 +164,7 @@ export function performSearchAPI(
     return {
         success: true,
         query: q,
-        type,
+        type: normalizedType,
         pagination: {
             page: currentPage,
             size: pageSize,

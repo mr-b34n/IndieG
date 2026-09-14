@@ -12,11 +12,14 @@ import {
     faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useSquadStore } from "@/features/squad";
 import { performSearch } from "@/features/search";
+import { fetchSearchResults } from "@/features/search/api/searchApi";
 import { formatCompactNumber } from "@/features/community/constants";
+import { type SearchResults } from "@/features/search/types";
 
 const RECENT_SEARCHES_KEY = "gamerhub_recent_searches";
 
@@ -85,10 +88,44 @@ export const Search = () => {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    // Perform Search for live preview
-    const searchResults = useMemo(() => {
-        return performSearch(value, posts, communities, squads);
-    }, [value, posts, communities, squads]);
+    const debouncedValue = useDebounce(value, 300);
+
+    // Immediate client search fallback
+    const clientResults = useMemo(() => {
+        return performSearch(debouncedValue, posts, communities, squads);
+    }, [debouncedValue, posts, communities, squads]);
+
+    // Live API search results
+    const [liveResults, setLiveResults] = useState<SearchResults | null>(null);
+
+    useEffect(() => {
+        const clean = debouncedValue.trim();
+        if (clean.length < 2) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setLiveResults(null);
+            return;
+        }
+
+        let isMounted = true;
+        fetchSearchResults(clean, "all", 1, 5, { posts, communities }).then((res) => {
+            if (isMounted && res.success) {
+                setLiveResults({
+                    games: res.data.games,
+                    communities: res.data.communities,
+                    posts: res.data.posts,
+                    users: res.data.users,
+                    squads: [],
+                    totalCount: res.pagination.total || (res.data.games.length + res.data.communities.length + res.data.posts.length + res.data.users.length),
+                });
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [debouncedValue, posts, communities]);
+
+    const searchResults = liveResults || clientResults;
 
     const handleExecuteSearch = (queryToSearch?: string) => {
         const query = (queryToSearch !== undefined ? queryToSearch : value).trim();

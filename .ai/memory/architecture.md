@@ -109,3 +109,30 @@ Implications:
 - Do not call native `fetch()` for backend API requests.
 - Add new endpoints to `src/shared/api/index.ts` and React Query hooks to `src/shared/api/useQueries.ts`.
 - The only acceptable uses of native `fetch` are in `apiRequest` itself, direct PUT to Cloudflare R2 bucket via pre-signed URL, and reading local browser `blob:` URLs.
+
+---
+
+## Decision: Unified Search API Integration (`GET /search`)
+
+Status: Active
+
+Date: 2026-09-13
+
+Decision:
+
+All search operations (both header live preview and `/search` full results page) route through `searchApi.search` calling `GET /search` with schema constraints:
+- `q`: string, min 2, max 100 characters.
+- `type`: optional scope (`game`, `community`, `profile`, `post`). Omitted for global search preview.
+- `page`: min 1, default 1.
+- `limit`: min 1, max 50, default 10.
+
+Why:
+
+Ensures unified, accurate backend search results across games, communities, user profiles, and posts while respecting rate limiting (20 req/60s) via input debouncing (300ms–400ms) and min-length guards.
+
+Implications:
+
+- Calls are debounced with `useDebounce` to prevent rate-limit throttling.
+- If query length < 2 characters, client-side fallback/empty state is returned to prevent 400 Bad Request errors.
+- Tab names are normalized (`games`/`game` -> `game`, `communities`/`community` -> `community`, `users`/`profile` -> `profile`, `posts`/`post` -> `post`, `all` -> omitted).
+

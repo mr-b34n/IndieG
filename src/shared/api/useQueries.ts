@@ -17,6 +17,7 @@ import {
     bookmarksApi,
     libraryGamesApi,
     friendshipsApi,
+    searchApi,
 } from "./index";
 import type {
     CreateCommunityDto,
@@ -50,6 +51,7 @@ import type {
     CreateLibraryGameDto,
     UpdateLibraryGameDto,
     CreateFriendshipRequestDto,
+    SearchParams,
 } from "./types";
 
 
@@ -120,6 +122,9 @@ export const QUERY_KEYS = {
     friendRequestsIncoming: ["friendships", "requests", "incoming"] as const,
     friendRequestsOutgoing: ["friendships", "requests", "outgoing"] as const,
     friendshipsBlocked: ["friendships", "blocked"] as const,
+
+    // Search
+    search: (params: SearchParams) => ["search", params] as const,
 };
 
 // -------------------------------------------------------------
@@ -1094,6 +1099,19 @@ export function useUnblockUserMutation() {
     });
 }
 
+// -------------------------------------------------------------
+// 10. Hooks for Search (GET /search)
+// -------------------------------------------------------------
+export function useSearchQuery(params: SearchParams, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.search(params),
+        queryFn: () => searchApi.search(params),
+        enabled: (options?.enabled ?? true) && !!params.q && params.q.trim().length >= 2,
+        staleTime: 1000 * 30, // 30s cache
+        placeholderData: keepPreviousData,
+    });
+}
+
 // Export API modules & query client
 export {
     postsApi,
@@ -1113,5 +1131,6 @@ export {
     bookmarksApi,
     libraryGamesApi,
     friendshipsApi,
+    searchApi,
 };
 
