@@ -12,7 +12,6 @@ import {
     faCheck,
     faPlus,
     faChevronRight,
-    faFilter,
     faUser,
     faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
@@ -27,6 +26,8 @@ import { type SearchTabCategory, type SearchResponse, type SearchUser, normalize
 import { formatCompactNumber } from "@/features/community/constants";
 import { Pagination } from "@/shared/components/ui/Pagination";
 
+const PAGE_SIZE = 10;
+
 export const SearchResultsPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -35,14 +36,11 @@ export const SearchResultsPage = () => {
         tab?: SearchTabCategory;
         type?: SearchTabCategory;
         page?: number;
-        size?: number;
-        limit?: number;
     };
 
     const initialQuery = searchParams.q || "";
     const activeTab = normalizeTabCategory(searchParams.type || searchParams.tab || "all");
     const currentPage = Number(searchParams.page) || 1;
-    const pageSize = Math.min(50, Math.max(1, Number(searchParams.size || searchParams.limit) || 10));
 
     const [inputValue, setInputValue] = useState(initialQuery);
     const [, startTransition] = useTransition();
@@ -55,6 +53,12 @@ export const SearchResultsPage = () => {
     // Local state for friends management in user search results
     const [usersList, setUsersList] = useState<SearchUser[]>(MOCK_USERS);
 
+    // Keep client context in ref to avoid re-triggering search effect on background store changes
+    const clientContextRef = useRef({ posts, communities, users: usersList });
+    useEffect(() => {
+        clientContextRef.current = { posts, communities, users: usersList };
+    }, [posts, communities, usersList]);
+
     // Response state from API
     const [searchData, setSearchData] = useState<SearchResponse>({
         success: true,
@@ -62,7 +66,7 @@ export const SearchResultsPage = () => {
         type: activeTab,
         pagination: {
             page: currentPage,
-            size: pageSize,
+            size: PAGE_SIZE,
             total: 0,
             totalPages: 0,
             hasMore: false,
@@ -81,10 +85,19 @@ export const SearchResultsPage = () => {
         },
     });
 
+    // Persistent category counts across tab switches for current query
+    const [categoryCounts, setCategoryCounts] = useState({
+        totalPosts: 0,
+        totalUsers: 0,
+        totalCommunities: 0,
+        totalGames: 0,
+    });
+    const lastQueryForCountsRef = useRef(initialQuery.trim());
+
     const [isLoading, setIsLoading] = useState(false);
 
     const lastNavigatedQRef = useRef(searchParams.q || "");
-    const debouncedInputValue = useDebounce(inputValue, 400);
+    const debouncedInputValue = useDebounce(inputValue, 1000);
 
     // Sync input value when route search params change from external navigation (e.g. browser back/forward or top search)
     useEffect(() => {
@@ -104,33 +117,57 @@ export const SearchResultsPage = () => {
             startTransition(() => {
                 navigate({
                     to: "/search",
-                    search: { q: cleanDebounced, type: activeTab, page: 1, size: pageSize },
+                    search: { q: cleanDebounced, type: activeTab, page: 1 },
                 });
             });
         }
-    }, [debouncedInputValue, searchParams.q, activeTab, pageSize, navigate]);
+    }, [debouncedInputValue, searchParams.q, activeTab, navigate]);
 
-    // Fetch search results from /api/search
+    // Fetch search results from /api/search (Single execution per query/tab/page)
     useEffect(() => {
+        const cleanQuery = initialQuery.trim();
         let isMounted = true;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsLoading(true);
 
-        fetchSearchResults(initialQuery, activeTab, currentPage, pageSize, {
-            posts,
-            communities,
-            users: usersList,
-        }).then((res) => {
-            if (isMounted) {
-                setSearchData(res);
-                setIsLoading(false);
-            }
+        Promise.resolve().then(() => {
+            if (isMounted) setIsLoading(true);
         });
+
+        fetchSearchResults(cleanQuery, activeTab, currentPage, PAGE_SIZE, clientContextRef.current)
+            .then((res) => {
+                if (isMounted) {
+                    setSearchData(res);
+                    setIsLoading(false);
+
+                    // Update and persist category counts across tab transitions
+                    setCategoryCounts((prev) => {
+                        if (cleanQuery !== lastQueryForCountsRef.current) {
+                            lastQueryForCountsRef.current = cleanQuery;
+                            return {
+                                totalGames: res.meta.totalGames,
+                                totalCommunities: res.meta.totalCommunities,
+                                totalUsers: res.meta.totalUsers,
+                                totalPosts: res.meta.totalPosts,
+                            };
+                        }
+                        return {
+                            totalGames: activeTab === "all" || activeTab === "games" ? res.meta.totalGames : (prev.totalGames || res.meta.totalGames),
+                            totalCommunities: activeTab === "all" || activeTab === "communities" ? res.meta.totalCommunities : (prev.totalCommunities || res.meta.totalCommunities),
+                            totalUsers: activeTab === "all" || activeTab === "users" ? res.meta.totalUsers : (prev.totalUsers || res.meta.totalUsers),
+                            totalPosts: activeTab === "all" || activeTab === "posts" ? res.meta.totalPosts : (prev.totalPosts || res.meta.totalPosts),
+                        };
+                    });
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            });
 
         return () => {
             isMounted = false;
         };
-    }, [initialQuery, activeTab, currentPage, pageSize, posts, communities, usersList]);
+    }, [initialQuery, activeTab, currentPage]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -139,7 +176,7 @@ export const SearchResultsPage = () => {
         startTransition(() => {
             navigate({
                 to: "/search",
-                search: { q: clean, type: activeTab, page: 1, size: pageSize },
+                search: { q: clean, type: activeTab, page: 1 },
             });
         });
     };
@@ -148,7 +185,7 @@ export const SearchResultsPage = () => {
         startTransition(() => {
             navigate({
                 to: "/search",
-                search: { q: inputValue, type, page: 1, size: pageSize },
+                search: { q: inputValue, type, page: 1 },
             });
         });
     };
@@ -158,16 +195,7 @@ export const SearchResultsPage = () => {
         startTransition(() => {
             navigate({
                 to: "/search",
-                search: { q: inputValue, type: activeTab, page: newPage, size: pageSize },
-            });
-        });
-    };
-
-    const handleSizeChange = (newSize: number) => {
-        startTransition(() => {
-            navigate({
-                to: "/search",
-                search: { q: inputValue, type: activeTab, page: 1, size: newSize },
+                search: { q: inputValue, type: activeTab, page: newPage },
             });
         });
     };
@@ -179,22 +207,21 @@ export const SearchResultsPage = () => {
     };
 
     const totalAllCount =
-        searchData.meta.totalGames +
-        searchData.meta.totalCommunities +
-        searchData.meta.totalUsers +
-        searchData.meta.totalPosts;
+        categoryCounts.totalGames +
+        categoryCounts.totalCommunities +
+        categoryCounts.totalUsers +
+        categoryCounts.totalPosts;
 
     const tabsList: {
         key: SearchTabCategory;
         label: string;
-        icon: import("@fortawesome/fontawesome-svg-core").IconDefinition;
         count: number;
     }[] = [
-        { key: "all", label: t("search.tabAll", { defaultValue: "Tất cả" }), icon: faFilter, count: totalAllCount || searchData.pagination.total },
-        { key: "games", label: t("search.tabGames", { defaultValue: "Game" }), icon: faGamepad, count: searchData.meta.totalGames },
-        { key: "communities", label: t("search.tabCommunities", { defaultValue: "Cộng đồng" }), icon: faUsers, count: searchData.meta.totalCommunities },
-        { key: "users", label: t("search.tabUsers", { defaultValue: "Người dùng" }), icon: faUser, count: searchData.meta.totalUsers },
-        { key: "posts", label: t("search.tabPosts", { defaultValue: "Bài viết" }), icon: faFileLines, count: searchData.meta.totalPosts },
+        { key: "all", label: t("search.tabAll", { defaultValue: "Tất cả" }), count: totalAllCount || searchData.pagination.total },
+        { key: "games", label: t("search.tabGames", { defaultValue: "Game" }), count: categoryCounts.totalGames },
+        { key: "communities", label: t("search.tabCommunities", { defaultValue: "Cộng đồng" }), count: categoryCounts.totalCommunities },
+        { key: "users", label: t("search.tabUsers", { defaultValue: "Người dùng" }), count: categoryCounts.totalUsers },
+        { key: "posts", label: t("search.tabPosts", { defaultValue: "Bài viết" }), count: categoryCounts.totalPosts },
     ];
 
     const { posts: resPosts, users: resUsers, communities: resCommunities, games: resGames } = searchData.data;
@@ -227,7 +254,7 @@ export const SearchResultsPage = () => {
                                     setInputValue("");
                                     lastNavigatedQRef.current = "";
                                     startTransition(() => {
-                                        navigate({ to: "/search", search: { q: "", type: activeTab, page: 1, size: pageSize } });
+                                        navigate({ to: "/search", search: { q: "", type: activeTab, page: 1 } });
                                     });
                                 }}
                                 className="p-1 rounded-full text-[#656A72] hover:text-[#ECEDEF] transition-colors text-xs cursor-pointer"
@@ -245,50 +272,32 @@ export const SearchResultsPage = () => {
                 </form>
             </div>
 
-            {/* Target Category Filter Tabs - Pill Style, No Borders */}
-            <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
-                <div className="flex items-center gap-2 shrink-0">
+            {/* Target Category Filter Tabs - Unified Segmented Control */}
+            <div className="flex items-center overflow-x-auto no-scrollbar py-1">
+                <div className="inline-flex items-center p-1 bg-[#131517] rounded-xl border border-[#1A1C1F]/60 gap-1 shrink-0">
                     {tabsList.map((tab) => {
                         const isActive = activeTab === tab.key;
                         return (
                             <button
                                 key={tab.key}
+                                type="button"
                                 onClick={() => handleTabChange(tab.key)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
+                                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
                                     isActive
-                                        ? "bg-[#1688E8] text-white shadow-md shadow-[#1688E8]/20"
-                                        : "bg-[#121416] hover:bg-[#191C20] text-[#979BA2] hover:text-[#ECEDEF]"
+                                        ? "bg-[#1E2126] text-[#ECEDEF] font-semibold shadow-sm"
+                                        : "bg-transparent text-[#979BA2] hover:text-[#ECEDEF] hover:bg-[#1A1D22]/50"
                                 }`}
                             >
-                                <FontAwesomeIcon icon={tab.icon} className={isActive ? "text-white text-xs" : "text-[#656A72] text-xs"} />
                                 <span>{tab.label}</span>
-                                <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                                        isActive ? "bg-white/20 text-white" : "bg-[#17191C] text-[#656A72]"
-                                    }`}
-                                >
-                                    {tab.count}
-                                </span>
+                                {tab.count > 0 && (
+                                    <span className={`text-xs ${isActive ? "text-[#979BA2]" : "text-[#656A72]"}`}>
+                                        | {tab.count}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
                 </div>
-
-                {/* Page Size selector (Only shown on specific category tabs) */}
-                {activeTab !== "all" && (
-                    <div className="hidden md:flex items-center gap-2 shrink-0 text-xs font-medium text-[#979BA2] bg-[#121416] px-3.5 py-1.5 rounded-full">
-                        <span>{t("search.pageSize", { defaultValue: "Hiển thị" })}:</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => handleSizeChange(Number(e.target.value))}
-                            className="bg-transparent text-[#ECEDEF] font-bold focus:outline-none cursor-pointer"
-                        >
-                            <option value={5} className="bg-[#111315] text-[#ECEDEF]">5</option>
-                            <option value={10} className="bg-[#111315] text-[#ECEDEF]">10</option>
-                            <option value={20} className="bg-[#111315] text-[#ECEDEF]">20</option>
-                        </select>
-                    </div>
-                )}
             </div>
 
             {/* Back Button Header when viewing a specific category tab */}
@@ -348,76 +357,94 @@ export const SearchResultsPage = () => {
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faGamepad} className="text-[#1688E8]" />
-                                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#ECEDEF]">
-                                        GAME · {searchData.meta.totalGames}
+                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                        {t("search.gamesTitle", { defaultValue: "Game liên quan" })}
                                     </h2>
                                 </div>
+                                {activeTab === "all" && categoryCounts.totalGames > 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("games")}
+                                        className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <span>Xem tất cả ({categoryCounts.totalGames})</span>
+                                        <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                                    </button>
+                                )}
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                {resGames.slice(0, activeTab === "all" ? 3 : undefined).map((game) => {
-                                    const isFollowed = followedSlugs.includes(game.slug.toLowerCase());
+                                {resGames.map((game) => {
+                                    const isFollowed = followedSlugs.includes(game.slug);
                                     return (
                                         <div
-                                            key={game.slug}
-                                            onClick={() => navigate({ to: "/game/$gameSlug", params: { gameSlug: game.slug } })}
-                                            className="group flex items-center justify-between gap-3 p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
+                                            key={game.id}
+                                            onClick={() => navigate({ to: `/game/${game.slug}` })}
+                                            className="group flex items-center justify-between p-2.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                         >
-                                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                <img
-                                                    src={game.bannerUrl || game.logoUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
-                                                    alt={game.name}
-                                                    className="w-12 h-12 rounded-lg object-cover shrink-0"
-                                                />
+                                            <div className="flex items-center gap-3.5 min-w-0">
+                                                <div className="w-14 h-9 sm:w-16 sm:h-10 rounded-lg overflow-hidden shrink-0 bg-[#17191C]">
+                                                    <img
+                                                        src={game.coverUrl || game.headerImage}
+                                                        alt={game.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        loading="lazy"
+                                                    />
+                                                </div>
                                                 <div className="flex flex-col min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <h3 className="text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-xs sm:text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
                                                             {game.name}
                                                         </h3>
-                                                        <span className="text-[10px] font-bold text-[#1688E8] uppercase tracking-wider bg-[#1688E8]/10 px-2 py-0.5 rounded">
-                                                            {Array.isArray(game.genre) ? game.genre.join(", ") : game.genre || "Game"}
-                                                        </span>
+                                                        {game.steamRating && (
+                                                            <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1688E8]/10 text-[#1688E8]">
+                                                                ★ {game.steamRating}%
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <p className="text-xs text-[#979BA2] mt-0.5 line-clamp-1">
-                                                        {game.descriptionVi || game.description}
-                                                    </p>
+                                                    <div className="flex items-center gap-2 text-[11px] text-[#656A72] truncate">
+                                                        <span>{game.genre}</span>
+                                                        <span>•</span>
+                                                        <span>{formatCompactNumber(game.followersCount)} theo dõi</span>
+                                                        {game.developer && (
+                                                            <>
+                                                                <span className="hidden sm:inline">•</span>
+                                                                <span className="hidden sm:inline truncate">{game.developer}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-3 shrink-0">
-                                                <span className="text-xs font-semibold text-[#656A72] hidden sm:inline">
-                                                    ★ {game.ratingScore ?? 5} / 5
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleFollowGame(game.slug);
-                                                    }}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                                        isFollowed
-                                                            ? "bg-[#17191C] text-[#979BA2]"
-                                                            : "bg-[#1688E8]/10 text-[#1688E8] hover:bg-[#1688E8] hover:text-white"
-                                                    }`}
-                                                >
-                                                    <FontAwesomeIcon icon={isFollowed ? faCheck : faPlus} className="text-[10px]" />
-                                                    <span>{isFollowed ? "Đã theo dõi" : "Theo dõi"}</span>
-                                                </button>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleFollowGame(game.slug);
+                                                }}
+                                                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                    isFollowed
+                                                        ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
+                                                        : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
+                                                }`}
+                                            >
+                                                <FontAwesomeIcon icon={isFollowed ? faCheck : faPlus} className="text-[10px]" />
+                                                <span className="hidden sm:inline">{isFollowed ? "Đã theo dõi" : "Theo dõi"}</span>
+                                            </button>
                                         </div>
                                     );
                                 })}
                             </div>
 
-                            {/* View All games link (Rule: Only if count > 3 in all mode) */}
-                            {activeTab === "all" && searchData.meta.totalGames > 3 && (
+                            {/* View All games link (Rule: Only if count > 5 in all mode) */}
+                            {activeTab === "all" && categoryCounts.totalGames > 5 && (
                                 <div className="flex justify-center pt-1">
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("games")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {searchData.meta.totalGames} game</span>
+                                        <span>Xem tất cả {categoryCounts.totalGames} game</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -425,79 +452,84 @@ export const SearchResultsPage = () => {
                         </div>
                     )}
 
-                    {/* 🌐 COMMUNITIES SECTION - Content Row Format */}
+                    {/* 👥 COMMUNITIES SECTION - Compact Row Layout */}
                     {(activeTab === "all" || activeTab === "communities") && resCommunities.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUsers} className="text-[#1688E8]" />
-                                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#ECEDEF]">
-                                        CỘNG ĐỒNG · {searchData.meta.totalCommunities}
+                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                        {t("search.communitiesTitle", { defaultValue: "Cộng đồng" })}
                                     </h2>
                                 </div>
+                                {activeTab === "all" && categoryCounts.totalCommunities > 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("communities")}
+                                        className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <span>Xem tất cả ({categoryCounts.totalCommunities})</span>
+                                        <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                {resCommunities.slice(0, activeTab === "all" ? 3 : undefined).map((comm) => (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {resCommunities.map((comm) => (
                                     <div
                                         key={comm.id}
-                                        onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } })}
-                                        className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
+                                        onClick={() => navigate({ to: `/community` })}
+                                        className="group flex items-center justify-between p-3 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                     >
-                                        <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                                            <img
-                                                src={comm.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
-                                                alt={comm.name}
-                                                className="w-12 h-12 rounded-xl object-cover shrink-0"
-                                            />
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[#17191C]">
+                                                <img
+                                                    src={comm.avatarUrl}
+                                                    alt={comm.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                    loading="lazy"
+                                                />
+                                            </div>
                                             <div className="flex flex-col min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h3 className="text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
-                                                        {comm.name}
-                                                    </h3>
-                                                    <span className="text-[11px] font-semibold text-[#656A72]">
-                                                        · {formatCompactNumber(comm.members)} thành viên
-                                                    </span>
+                                                <h3 className="text-xs sm:text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
+                                                    {comm.name}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-[11px] text-[#656A72]">
+                                                    <span>{formatCompactNumber(comm.membersCount)} thành viên</span>
+                                                    <span>•</span>
+                                                    <span>{comm.gameCategory}</span>
                                                 </div>
-                                                <p className="text-xs text-[#979BA2] mt-0.5 line-clamp-1 leading-relaxed">
-                                                    {comm.description || `Cộng đồng thảo luận ${comm.name}`}
-                                                </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#656A72] bg-[#17191C] px-2.5 py-1 rounded-md">
-                                                {comm.category}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleJoinCommunity(comm.id);
-                                                }}
-                                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                                    comm.joined
-                                                        ? "bg-[#17191C] text-[#979BA2] hover:text-[#ECEDEF]"
-                                                        : "bg-[#1688E8] text-white hover:bg-[#1688E8]/90"
-                                                }`}
-                                            >
-                                                <FontAwesomeIcon icon={comm.joined ? faCheck : faPlus} className="text-[10px]" />
-                                                <span>{comm.joined ? "Đã tham gia" : "+ Tham gia"}</span>
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleJoinCommunity(comm.id);
+                                            }}
+                                            className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                comm.isJoined
+                                                    ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
+                                                    : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={comm.isJoined ? faCheck : faPlus} className="text-[10px]" />
+                                            <span className="hidden sm:inline">{comm.isJoined ? "Đã tham gia" : "Tham gia"}</span>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* View All communities link (Rule: Only if count > 3 in all mode) */}
-                            {activeTab === "all" && searchData.meta.totalCommunities > 3 && (
+                            {/* View All communities link (Rule: Only if count > 4 in all mode) */}
+                            {activeTab === "all" && categoryCounts.totalCommunities > 4 && (
                                 <div className="flex justify-center pt-1">
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("communities")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {searchData.meta.totalCommunities} cộng đồng</span>
+                                        <span>Xem tất cả {categoryCounts.totalCommunities} cộng đồng</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -505,88 +537,98 @@ export const SearchResultsPage = () => {
                         </div>
                     )}
 
-                    {/* 👤 USERS SECTION - 2-Column Desktop, 1-Column Mobile Layout */}
+                    {/* 👤 USERS SECTION - Horizontal User Cards */}
                     {(activeTab === "all" || activeTab === "users") && resUsers.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUser} className="text-[#1688E8]" />
-                                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#ECEDEF]">
-                                        NGƯỜI DÙNG · {searchData.meta.totalUsers}
+                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                        {t("search.usersTitle", { defaultValue: "Người dùng" })}
                                     </h2>
                                 </div>
+                                {activeTab === "all" && categoryCounts.totalUsers > 4 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("users")}
+                                        className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <span>Xem tất cả ({categoryCounts.totalUsers})</span>
+                                        <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                                    </button>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {resUsers.slice(0, activeTab === "all" ? 4 : undefined).map((u) => (
+                                {resUsers.map((user) => (
                                     <div
-                                        key={u.id}
-                                        onClick={() => navigate({ to: "/profile/$userId", params: { userId: u.id || "me" } })}
-                                        className="group flex flex-col justify-between p-3.5 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
+                                        key={user.id}
+                                        onClick={() => navigate({ to: `/profile/${user.id}` })}
+                                        className="group flex items-center justify-between p-3 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="relative shrink-0">
-                                                    <img
-                                                        src={u.avatar}
-                                                        alt={u.name}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                    <span
-                                                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-[#111315] ${
-                                                            u.status === "online"
-                                                                ? "bg-[#20B77A]"
-                                                                : u.status === "in-game"
-                                                                ? "bg-amber-500"
-                                                                : "bg-gray-500"
-                                                        }`}
-                                                    />
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <h3 className="text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
-                                                        {u.name}
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#17191C]">
+                                                <img
+                                                    src={user.avatarUrl}
+                                                    alt={user.name}
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                                {user.isOnline && (
+                                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111315]" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <h3 className="text-xs sm:text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
+                                                        {user.name}
                                                     </h3>
-                                                    <span className="text-xs text-[#656A72] font-mono">
-                                                        {u.username}
-                                                    </span>
+                                                    {user.badge && (
+                                                        <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-[#1688E8]/10 text-[#1688E8]">
+                                                            {user.badge}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-[11px] text-[#656A72] truncate">
+                                                    <span>{user.username}</span>
+                                                    {user.favoriteGame && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="text-[#1688E8]/80 truncate">{user.favoriteGame}</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
-
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleFriendStatus(u.id);
-                                                }}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                                                    u.isFriend
-                                                        ? "bg-[#17191C] text-[#20B77A]"
-                                                        : "bg-[#1688E8]/10 text-[#1688E8] hover:bg-[#1688E8] hover:text-white"
-                                                }`}
-                                            >
-                                                <FontAwesomeIcon icon={u.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
-                                                <span>{u.isFriend ? t("search.friend", { defaultValue: "Bạn bè" }) : t("search.addFriend", { defaultValue: "+ Kết bạn" })}</span>
-                                            </button>
                                         </div>
 
-                                        {u.bio && (
-                                            <p className="text-xs text-[#979BA2] mt-2 line-clamp-1 leading-relaxed">
-                                                {u.bio}
-                                            </p>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleFriendStatus(user.id);
+                                            }}
+                                            className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                user.isFriend
+                                                    ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
+                                                    : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
+                                            }`}
+                                        >
+                                            <FontAwesomeIcon icon={user.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
+                                            <span className="hidden sm:inline">{user.isFriend ? "Bạn bè" : "Kết bạn"}</span>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
 
                             {/* View All users link (Rule: Only if count > 4 in all mode) */}
-                            {activeTab === "all" && searchData.meta.totalUsers > 4 && (
+                            {activeTab === "all" && categoryCounts.totalUsers > 4 && (
                                 <div className="flex justify-center pt-1">
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("users")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {searchData.meta.totalUsers} người dùng</span>
+                                        <span>Xem tất cả {categoryCounts.totalUsers} người dùng</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -594,100 +636,102 @@ export const SearchResultsPage = () => {
                         </div>
                     )}
 
-                    {/* 📝 POSTS SECTION - Feed Style */}
+                    {/* 📝 POSTS SECTION - Feed-like Cards */}
                     {(activeTab === "all" || activeTab === "posts") && resPosts.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faFileLines} className="text-[#1688E8]" />
-                                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#ECEDEF]">
-                                        BÀI VIẾT · {searchData.meta.totalPosts}
+                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                        {t("search.postsTitle", { defaultValue: "Bài viết & Thảo luận" })}
                                     </h2>
                                 </div>
+                                {activeTab === "all" && categoryCounts.totalPosts > 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTabChange("posts")}
+                                        className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <span>Xem tất cả ({categoryCounts.totalPosts})</span>
+                                        <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="flex flex-col">
-                                {resPosts.slice(0, activeTab === "all" ? 3 : undefined).map((post, idx, arr) => {
-                                    const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
-                                    const authorName = authorObj ? (authorObj.name || authorObj.username || "Vô danh") : (typeof post.author === "string" ? post.author : "Vô danh");
-                                    const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl) : post.authorAvatar;
-
+                            <div className="flex flex-col gap-3">
+                                {resPosts.map((post) => {
                                     return (
                                         <div
                                             key={post.id}
-                                            onClick={() => navigate({ to: "/post/$postId", params: { postId: String(post.id) } })}
-                                            className={`group flex flex-col py-3 px-2 hover:bg-[#121416]/50 transition-all cursor-pointer ${
-                                                idx !== arr.length - 1 ? "border-b border-[#1A1C1F]" : ""
-                                            }`}
+                                            onClick={() => navigate({ to: `/post/${post.id}` })}
+                                            className="group flex flex-col p-4 rounded-2xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2.5">
-                                                    <img
-                                                        src={authorAvatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"}
-                                                        alt={authorName}
-                                                        className="w-7 h-7 rounded-full object-cover"
-                                                    />
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors">
-                                                            {authorName}
-                                                        </span>
-                                                    {post.communityName && (
+                                                    <div className="w-7 h-7 rounded-full overflow-hidden bg-[#17191C]">
+                                                        <img
+                                                            src={post.author.avatarUrl}
+                                                            alt={post.author.name}
+                                                            className="w-full h-full object-cover"
+                                                            loading="lazy"
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors">
+                                                        {post.author.name}
+                                                    </span>
+                                                    {post.community && (
                                                         <>
-                                                            <span className="text-[#656A72] text-[10px]">·</span>
-                                                            <span className="text-[11px] font-semibold text-[#1688E8]">
-                                                                {post.communityName}
+                                                            <span className="text-xs text-[#656A72]">trong</span>
+                                                            <span className="text-xs font-bold text-[#1688E8]">
+                                                                {post.community.name}
                                                             </span>
                                                         </>
                                                     )}
-                                                    <span className="text-[#656A72] text-[10px]">·</span>
-                                                    <span className="text-[10px] text-[#656A72]">
-                                                        {post.timestamp}
-                                                    </span>
                                                 </div>
+                                                <span className="text-[11px] text-[#656A72]">{post.createdAt}</span>
+                                            </div>
+
+                                            {post.title && (
+                                                <h3 className="text-sm sm:text-base font-bold text-[#ECEDEF] mt-2 group-hover:text-[#1688E8] transition-colors line-clamp-1">
+                                                    {post.title}
+                                                </h3>
+                                            )}
+
+                                            <p className="text-xs sm:text-sm text-[#979BA2] mt-1 line-clamp-2 leading-relaxed">
+                                                {post.content}
+                                            </p>
+
+                                            <div className="flex items-center gap-5 pt-2 mt-1 text-xs text-[#656A72] font-medium">
+                                                <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
+                                                    ♥ {post.likes}
+                                                </span>
+                                                <span className="flex items-center gap-1 hover:text-[#1688E8] transition-colors">
+                                                    💬 {post.commentsCount || 0}
+                                                </span>
+                                                {post.hashtags && post.hashtags.length > 0 && (
+                                                    <div className="flex items-center gap-2 ml-auto">
+                                                        {post.hashtags.map((h) => (
+                                                            <span key={h} className="text-[11px] font-mono text-[#1688E8]">
+                                                                {h}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-
-                                        {post.title && (
-                                            <h3 className="text-sm sm:text-base font-bold text-[#ECEDEF] mt-2 group-hover:text-[#1688E8] transition-colors line-clamp-1">
-                                                {post.title}
-                                            </h3>
-                                        )}
-
-                                        <p className="text-xs sm:text-sm text-[#979BA2] mt-1 line-clamp-2 leading-relaxed">
-                                            {post.content}
-                                        </p>
-
-                                        <div className="flex items-center gap-5 pt-2 mt-1 text-xs text-[#656A72] font-medium">
-                                            <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
-                                                ♥ {post.likes}
-                                            </span>
-                                            <span className="flex items-center gap-1 hover:text-[#1688E8] transition-colors">
-                                                💬 {post.commentsCount || 0}
-                                            </span>
-                                            {post.hashtags && post.hashtags.length > 0 && (
-                                                <div className="flex items-center gap-2 ml-auto">
-                                                    {post.hashtags.map((h) => (
-                                                        <span key={h} className="text-[11px] font-mono text-[#1688E8]">
-                                                            {h}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                             </div>
 
                             {/* View All posts link (Rule: Only if count > 3 in all mode) */}
-                            {activeTab === "all" && searchData.meta.totalPosts > 3 && (
+                            {activeTab === "all" && categoryCounts.totalPosts > 3 && (
                                 <div className="flex justify-center pt-1">
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("posts")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {searchData.meta.totalPosts} bài viết</span>
+                                        <span>Xem tất cả {categoryCounts.totalPosts} bài viết</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -696,13 +740,13 @@ export const SearchResultsPage = () => {
                     )}
 
                     {/* Pagination Bar (Only for specific category tabs) */}
-                    {activeTab !== "all" && (
+                    {activeTab !== "all" && searchData.pagination.totalPages > 1 && (
                         <Pagination
                             currentPage={searchData.pagination.page}
                             totalPages={searchData.pagination.totalPages}
                             onPageChange={handlePageChange}
                             totalItems={searchData.pagination.total}
-                            itemsPerPage={searchData.pagination.size}
+                            itemsPerPage={PAGE_SIZE}
                         />
                     )}
                 </div>
@@ -710,5 +754,3 @@ export const SearchResultsPage = () => {
         </div>
     );
 };
-
-
