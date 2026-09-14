@@ -35,7 +35,7 @@ import { formatTimeAgo } from "@/shared/utils/formatTimeAgo"
 import { type PostFileAttachment, type PostData } from "../types";
 import { POST_BADGE_MAP } from "../constants";
 import { getGameBySlug } from "@/features/game";
-import { useLikeInteraction, useBookmarkInteraction } from "../api/interaction-api";
+import { usePostVoteInteraction, useBookmarkInteraction } from "../api/interaction-api";
 
 
 export type { PostData, PostFileAttachment };
@@ -163,7 +163,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const [downvoteCount, setDownvoteCount] = useState(post.downvotes ?? 0);
 
     const navigate = useNavigate();
-    const likeMutation = useLikeInteraction(post.id);
+    const voteMutation = usePostVoteInteraction(post.id);
     const bookmarkMutation = useBookmarkInteraction(post.id);
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
@@ -179,7 +179,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         if (isLiked) {
             setIsLiked(false);
             setUpvoteCount((prev) => Math.max(0, prev - 1));
-            likeMutation.mutate(false);
+            voteMutation.mutate(null);
         } else {
             setIsLiked(true);
             setUpvoteCount((prev) => prev + 1);
@@ -187,7 +187,7 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
                 setIsDownvoted(false);
                 setDownvoteCount((prev) => Math.max(0, prev - 1));
             }
-            likeMutation.mutate(true);
+            voteMutation.mutate(1);
         }
     };
 
@@ -202,14 +202,15 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         if (isDownvoted) {
             setIsDownvoted(false);
             setDownvoteCount((prev) => Math.max(0, prev - 1));
+            voteMutation.mutate(null);
         } else {
             setIsDownvoted(true);
             setDownvoteCount((prev) => prev + 1);
             if (isLiked) {
                 setIsLiked(false);
                 setUpvoteCount((prev) => Math.max(0, prev - 1));
-                likeMutation.mutate(false);
             }
+            voteMutation.mutate(-1);
         }
     };
 

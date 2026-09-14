@@ -136,3 +136,30 @@ Implications:
 - If query length < 2 characters, client-side fallback/empty state is returned to prevent 400 Bad Request errors.
 - Tab names are normalized (`games`/`game` -> `game`, `communities`/`community` -> `community`, `users`/`profile` -> `profile`, `posts`/`post` -> `post`, `all` -> omitted).
 
+---
+
+## Decision: Post Voting API Contract (`POST /votes/post/{postId}`)
+
+Status: Active
+
+Date: 2026-09-14
+
+Decision:
+
+Voting on posts uses `POST /votes/post/{postId}` with a JSON request body `{ voteType: 1 | -1 }` where:
+- `1` represents an upvote.
+- `-1` represents a downvote.
+- Removing a vote / unvoting uses `DELETE /votes/{postId}/post`.
+
+Why:
+
+Matches backend VoteController specification for unified vote type handling per post.
+
+Implications:
+
+- In `src/shared/api/types.ts`: declared `VoteType = 1 | -1` and `VotePostDto { voteType: VoteType }`.
+- In `src/shared/api/index.ts`: `votesApi.votePost(postId, voteType)` sends `POST /votes/post/{postId}` with `{ voteType }`. Convenience helpers `upVotePost` and `downVotePost` delegate to `votePost`.
+- In `src/features/post/api/interaction-api.ts`: `usePostVoteInteraction(postId)` accepts `1`, `-1`, or `null` to update or remove votes.
+- In `src/features/post/components/Post.tsx`: `handleLike` and `handleDownvote` dispatch the corresponding `1` or `-1` (or `null` when toggling off).
+
+

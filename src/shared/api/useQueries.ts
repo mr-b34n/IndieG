@@ -52,6 +52,7 @@ import type {
     UpdateLibraryGameDto,
     CreateFriendshipRequestDto,
     SearchParams,
+    VoteType,
 } from "./types";
 
 
@@ -577,10 +578,33 @@ export function usePostVoteQuery(postId: string | number) {
     });
 }
 
+export function useVotePostMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ postId, voteType }: { postId: string | number; voteType: VoteType }) =>
+            votesApi.votePost(postId, voteType),
+        onSuccess: (_data, variables) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(variables.postId) });
+            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
 export function useUpVotePostMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (postId: string | number) => votesApi.upVotePost(postId),
+        mutationFn: (postId: string | number) => votesApi.votePost(postId, 1),
+        onSuccess: (_data, postId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
+            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
+export function useDownVotePostMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (postId: string | number) => votesApi.votePost(postId, -1),
         onSuccess: (_data, postId) => {
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
             void queryClient.invalidateQueries({ queryKey: ["posts"] });

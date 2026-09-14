@@ -28,6 +28,8 @@ import {
     type SearchCommunityMembersParams,
     type CommunityMemberActionDto,
     type VoteDto,
+    type VoteType,
+    type VotePostDto,
     type GameDto,
     type CreateGameDto,
     type UpdateGameDto,
@@ -874,14 +876,25 @@ export const votesApi = {
             }
         ),
 
-    /** Upvote a post - POST /votes/post/{postId} */
-    upVotePost: (postId: string | number) =>
-        apiRequest<{ message?: string; success?: boolean }>(
+    /** Vote for a post (upvote: 1, downvote: -1) - POST /votes/post/{postId} */
+    votePost: (postId: string | number, voteType: VoteType = 1) => {
+        const payload: VotePostDto = { voteType };
+        return apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(
             `/votes/post/${encodeURIComponent(postId)}`,
             {
                 method: "POST",
+                body: payload,
             }
-        ),
+        );
+    },
+
+    /** Upvote a post (convenience wrapper: voteType = 1) - POST /votes/post/{postId} */
+    upVotePost: (postId: string | number) =>
+        votesApi.votePost(postId, 1),
+
+    /** Downvote a post (convenience wrapper: voteType = -1) - POST /votes/post/{postId} */
+    downVotePost: (postId: string | number) =>
+        votesApi.votePost(postId, -1),
 
     /** Delete vote for a post - DELETE /votes/{postId}/post */
     deleteVotePost: (postId: string | number) =>

@@ -364,12 +364,19 @@ export interface CommunitySearchParams {
     featured?: boolean;
 }
 
+export type VoteType = 1 | -1;
+
+export interface VotePostDto {
+    voteType: VoteType;
+}
+
 export interface VoteDto {
     id?: string;
     postId?: string;
     commentId?: string;
     userId?: string;
     type?: "up" | "down" | number;
+    voteType?: VoteType;
     createdAt?: string;
     [key: string]: unknown;
 }
