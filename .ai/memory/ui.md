@@ -263,6 +263,7 @@ Implications:
 
 - Header live preview (`Search.tsx`) uses `useDebounce(value, 300)`.
 - Search page route sync (`SearchResultsPage.tsx`) uses `useDebounce(inputValue, 400)`.
+- Search page uses `lastNavigatedQRef` to synchronize external route changes without immediately overriding local typing/backspacing states.
 - Hot Keywords section on `SearchResultsPage.tsx` removed per product requirement.
 
 

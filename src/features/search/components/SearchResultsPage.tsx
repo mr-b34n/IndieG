@@ -1,4 +1,4 @@
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -83,20 +83,24 @@ export const SearchResultsPage = () => {
 
     const [isLoading, setIsLoading] = useState(false);
 
+    const lastNavigatedQRef = useRef(searchParams.q || "");
     const debouncedInputValue = useDebounce(inputValue, 400);
 
-    // Sync input value when route search params change
+    // Sync input value when route search params change from external navigation (e.g. browser back/forward or top search)
     useEffect(() => {
-        if (searchParams.q !== undefined && searchParams.q !== inputValue) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setInputValue(searchParams.q);
+        const urlQ = searchParams.q || "";
+        if (urlQ !== lastNavigatedQRef.current) {
+            lastNavigatedQRef.current = urlQ;
+            setInputValue(urlQ);
         }
-    }, [searchParams.q, inputValue]);
+    }, [searchParams.q]);
 
-    // Automatically update search route when debouncedInputValue changes and matches current inputValue
+    // Automatically update search route when debouncedInputValue changes
     useEffect(() => {
         const cleanDebounced = debouncedInputValue.trim();
-        if (debouncedInputValue === inputValue && cleanDebounced !== (searchParams.q || "").trim()) {
+        const currentUrlQ = (searchParams.q || "").trim();
+        if (cleanDebounced !== currentUrlQ) {
+            lastNavigatedQRef.current = cleanDebounced;
             startTransition(() => {
                 navigate({
                     to: "/search",
@@ -104,7 +108,7 @@ export const SearchResultsPage = () => {
                 });
             });
         }
-    }, [debouncedInputValue, inputValue, searchParams.q, activeTab, pageSize, navigate]);
+    }, [debouncedInputValue, searchParams.q, activeTab, pageSize, navigate]);
 
     // Fetch search results from /api/search
     useEffect(() => {
@@ -131,6 +135,7 @@ export const SearchResultsPage = () => {
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const clean = inputValue.trim();
+        lastNavigatedQRef.current = clean;
         startTransition(() => {
             navigate({
                 to: "/search",
@@ -220,6 +225,7 @@ export const SearchResultsPage = () => {
                                 type="button"
                                 onClick={() => {
                                     setInputValue("");
+                                    lastNavigatedQRef.current = "";
                                     startTransition(() => {
                                         navigate({ to: "/search", search: { q: "", type: activeTab, page: 1, size: pageSize } });
                                     });
