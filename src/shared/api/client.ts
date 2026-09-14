@@ -237,10 +237,6 @@ export async function apiRequest<T = unknown>(
     const normalizedEndpoint = `/${cleanEndpoint}`;
     const url = buildSafeApiUrl(endpoint, params);
 
-    if (typeof window !== "undefined" && import.meta.env.DEV) {
-        console.log(`[IndieG API] ${method} ${url}`);
-    }
-
     const response = await fetch(url, {
         ...customOptions,
         headers,

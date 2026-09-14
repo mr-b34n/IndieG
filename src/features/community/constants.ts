@@ -20,13 +20,20 @@ export const COMMUNITY_TABS: { key: CommunityTabKey; label: string; icon: typeof
 
 export const INITIAL_COMMUNITIES: CommunityData[] = [];
 
-export const formatCompactNumber = (num: number): string => {
-    if (num >= 1_000_000) {
-        return (num / 1_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'M';
+export const formatCompactNumber = (num?: number | null | string): string => {
+    if (num === null || num === undefined) {
+        return "0";
     }
-    if (num >= 1_000) {
-        return (num / 1_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'k';
+    const val = typeof num === "number" ? num : Number(num);
+    if (isNaN(val)) {
+        return "0";
     }
-    return num.toString();
+    if (val >= 1_000_000) {
+        return (val / 1_000_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'M';
+    }
+    if (val >= 1_000) {
+        return (val / 1_000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + 'k';
+    }
+    return val.toString();
 };
 
