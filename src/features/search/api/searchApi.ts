@@ -28,6 +28,15 @@ interface SearchContext {
     customGames?: GameData[];
 }
 
+// In-flight request deduplication & short response cache to prevent duplicate burst requests (e.g. on page reload / StrictMode)
+const inFlightSearchRequests = new Map<string, Promise<SearchResponse>>();
+const searchCache = new Map<string, { timestamp: number; data: SearchResponse }>();
+const SEARCH_CACHE_TTL_MS = 20_000; // 20 seconds
+
+export function clearSearchCache() {
+    searchCache.clear();
+}
+
 /**
  * Executes unified search request against backend GET /search
  *
@@ -42,7 +51,8 @@ export async function fetchSearchResults(
     type: SearchTabCategory = "all",
     page: number = 1,
     size: number = 10,
-    clientContext?: SearchContext
+    clientContext?: SearchContext,
+    options?: { forceRefresh?: boolean }
 ): Promise<SearchResponse> {
     const cleanQuery = (query || "").trim().slice(0, 100);
     const normalizedTab = normalizeTabCategory(type);
@@ -81,33 +91,63 @@ export async function fetchSearchResults(
         );
     }
 
-    const searchType = mapTabToSearchType(type);
+    const cacheKey = `${cleanQuery.toLowerCase()}::${normalizedTab}::${validPage}::${validLimit}`;
 
-    try {
-        const response = await searchApi.search<Record<string, unknown>>({
-            q: cleanQuery,
-            type: searchType,
-            page: validPage,
-            limit: validLimit,
-        });
-
-        if (response && typeof response === "object") {
-            return parseSearchResponse(response, cleanQuery, normalizedTab, validPage, validLimit, searchType);
+    // 1. Return fresh cached response if available
+    if (!options?.forceRefresh) {
+        const cached = searchCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+            return cached.data;
         }
-    } catch {
-        // Fall back gracefully to local client stores when backend is unreachable
     }
 
-    return performSearchAPI(
-        cleanQuery,
-        normalizedTab,
-        validPage,
-        validLimit,
-        clientContext?.posts,
-        clientContext?.communities,
-        clientContext?.users,
-        clientContext?.customGames
-    );
+    // 2. Return in-flight promise if an identical request is already pending
+    const existingInflight = inFlightSearchRequests.get(cacheKey);
+    if (existingInflight) {
+        return existingInflight;
+    }
+
+    // 3. Initiate request with in-flight deduplication
+    const searchPromise = (async () => {
+        const searchType = mapTabToSearchType(type);
+
+        try {
+            const response = await searchApi.search<Record<string, unknown>>({
+                q: cleanQuery,
+                type: searchType,
+                page: validPage,
+                limit: validLimit,
+            });
+
+            if (response && typeof response === "object") {
+                const parsed = parseSearchResponse(response, cleanQuery, normalizedTab, validPage, validLimit, searchType);
+                searchCache.set(cacheKey, { timestamp: Date.now(), data: parsed });
+                return parsed;
+            }
+        } catch {
+            // Fall back gracefully to local client stores when backend is unreachable
+        }
+
+        return performSearchAPI(
+            cleanQuery,
+            normalizedTab,
+            validPage,
+            validLimit,
+            clientContext?.posts,
+            clientContext?.communities,
+            clientContext?.users,
+            clientContext?.customGames
+        );
+    })();
+
+    inFlightSearchRequests.set(cacheKey, searchPromise);
+
+    try {
+        const result = await searchPromise;
+        return result;
+    } finally {
+        inFlightSearchRequests.delete(cacheKey);
+    }
 }
 
 /**

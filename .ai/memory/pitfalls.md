@@ -77,3 +77,37 @@ Prevention:
 
 Always provide dynamic API Base URL overrides (`indieg_custom_api_url`), wrap upload pipeline steps with detailed console logging and error diagnostics, and provide a dedicated test sandbox in Developer tools for direct endpoint testing.
 
+---
+
+## Pitfall: Duplicate Concurrent GET Requests on Reload & StrictMode
+
+Status: Active
+
+Problem:
+
+On page reload or in development React StrictMode, effects can trigger multiple identical GET requests within milliseconds. This bursts backend API endpoints, exhausting rate limits (429 Too Many Requests) and causing degraded user experience.
+
+Prevention:
+
+1. Use in-flight request deduplication (`inFlightGetRequests` / `inFlightSearchRequests`) in both central API client (`apiRequest`) and domain fetch functions to coalesce concurrent requests into a single promise.
+2. Maintain short-lived response caches (15-20s TTL) for read-heavy search operations.
+3. Guard route synchronization effects with `isInitialMountRef` to prevent redundant navigations on mount.
+
+---
+
+## Pitfall: External CDN (Steam/Akamai) Image Hotlink Protection (403 Forbidden)
+
+Status: Active
+
+Problem:
+
+External CDN hosts (such as Steam's `cdn.akamai.steamstatic.com` and `shared.fastly.steamstatic.com`) block hotlinked images with 403 Forbidden when requests contain third-party `Referer` headers, causing `<img>` elements to break.
+
+Prevention:
+
+1. Always specify `<meta name="referrer" content="no-referrer" />` in `index.html` to suppress the referer header globally for cross-origin media requests.
+2. Use `referrerPolicy="no-referrer"` explicitly on `<img>` tags displaying external game assets, banners, screenshots, or community avatars.
+3. Provide fallback image handling via `onError` handlers so images never show broken icons if an external asset is unavailable.
+
+
+

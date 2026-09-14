@@ -133,6 +133,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     <img
                         src={game.bannerUrl || game.logoUrl}
                         alt={game.name}
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover object-top sm:object-center opacity-90"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/40 to-transparent" />
@@ -151,6 +152,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                 <img
                                     src={game.logoUrl}
                                     alt={game.name}
+                                    referrerPolicy="no-referrer"
                                     className="w-full h-full object-cover rounded-xl"
                                 />
                             </div>
@@ -309,7 +311,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                                         onClick={() => setLightboxIndex(idx)}
                                         className="rounded-2xl overflow-hidden border border-border/80 group aspect-video relative bg-surface-hover shadow-sm cursor-pointer"
                                     >
-                                        <img src={img} alt={`${game.name} screenshot ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <img src={img} alt={`${game.name} screenshot ${idx + 1}`} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <FontAwesomeIcon icon={faEye} className="text-white text-xl" />
                                         </div>

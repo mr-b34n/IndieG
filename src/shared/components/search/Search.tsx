@@ -247,6 +247,7 @@ export const Search = () => {
                                                     <img
                                                         src={comm.logo}
                                                         alt={comm.name}
+                                                        referrerPolicy="no-referrer"
                                                         className="w-8 h-8 rounded-xl object-cover shrink-0"
                                                     />
                                                     <div className="flex flex-col min-w-0">
@@ -282,6 +283,7 @@ export const Search = () => {
                                                     <img
                                                         src={u.avatar}
                                                         alt={u.name}
+                                                        referrerPolicy="no-referrer"
                                                         className="w-7 h-7 rounded-full object-cover shrink-0"
                                                     />
                                                     <div className="flex flex-col min-w-0">

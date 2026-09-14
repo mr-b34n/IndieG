@@ -190,6 +190,9 @@ export function isMockToken(token?: string | null): boolean {
     return token === "mock_guest";
 }
 
+// In-flight GET request deduplication to prevent duplicate concurrent network requests
+const inFlightGetRequests = new Map<string, Promise<unknown>>();
+
 /**
  * Universal API Request Function
  */
@@ -237,100 +240,118 @@ export async function apiRequest<T = unknown>(
     const normalizedEndpoint = `/${cleanEndpoint}`;
     const url = buildSafeApiUrl(endpoint, params);
 
-    const response = await fetch(url, {
-        ...customOptions,
-        headers,
-        body: serializedBody,
-        credentials: "include", // Supports refresh_token cookies
-    });
+    // If this is a GET/HEAD request and not a retry, deduplicate concurrent identical requests
+    const dedupeKey = isGetOrHead && !_retry ? `${method}:${url}:${token || ""}` : null;
+    if (dedupeKey && inFlightGetRequests.has(dedupeKey)) {
+        return inFlightGetRequests.get(dedupeKey) as Promise<T>;
+    }
 
-    if (!response.ok) {
-        let errorData: Record<string, unknown> | null = null;
-        let errorMessage = `Request failed with status ${response.status} (${response.statusText})`;
+    const executeRequest = async (): Promise<T> => {
+        const response = await fetch(url, {
+            ...customOptions,
+            headers,
+            body: serializedBody,
+            credentials: "include", // Supports refresh_token cookies
+        });
 
-        try {
-            const text = await response.text();
-            if (text) {
-                try {
-                    errorData = JSON.parse(text) as Record<string, unknown>;
-                    errorMessage =
-                        (typeof errorData.message === "string" && errorData.message) ||
-                        (typeof errorData.error === "string" && errorData.error) ||
-                        (Array.isArray(errorData.errors) ? errorData.errors.join(", ") : text);
-                } catch {
-                    errorMessage = text;
+        if (!response.ok) {
+            let errorData: Record<string, unknown> | null = null;
+            let errorMessage = `Request failed with status ${response.status} (${response.statusText})`;
+
+            try {
+                const text = await response.text();
+                if (text) {
+                    try {
+                        errorData = JSON.parse(text) as Record<string, unknown>;
+                        errorMessage =
+                            (typeof errorData.message === "string" && errorData.message) ||
+                            (typeof errorData.error === "string" && errorData.error) ||
+                            (Array.isArray(errorData.errors) ? errorData.errors.join(", ") : text);
+                    } catch {
+                        errorMessage = text;
+                    }
                 }
-            }
-        } catch {
-            // Keep default message
-        }
-
-        // Handle 401 Unauthorized token refresh & expiration flow
-        if (response.status === 401) {
-            const isAuthEndpoint =
-                normalizedEndpoint.includes("/auth/login") ||
-                normalizedEndpoint.includes("/auth/register") ||
-                normalizedEndpoint.includes("/auth/forgot-password") ||
-                normalizedEndpoint.includes("/auth/reset-password") ||
-                normalizedEndpoint.includes("/auth/verify-email") ||
-                normalizedEndpoint.includes("/auth/resend-verification");
-
-            const isRefreshEndpoint = normalizedEndpoint.includes("/auth/refresh");
-
-            // If refresh endpoint itself failed with 401 or request was already retried:
-            if (isRefreshEndpoint || _retry) {
-                handleSessionExpired();
-                throw new ApiError(errorMessage, response.status, errorData);
+            } catch {
+                // Keep default message
             }
 
-            // Normal form endpoints (e.g. wrong password during login): do not refresh, return error
-            if (isAuthEndpoint || skipAuthRefresh) {
-                throw new ApiError(errorMessage, response.status, errorData);
-            }
+            // Handle 401 Unauthorized token refresh & expiration flow
+            if (response.status === 401) {
+                const isAuthEndpoint =
+                    normalizedEndpoint.includes("/auth/login") ||
+                    normalizedEndpoint.includes("/auth/register") ||
+                    normalizedEndpoint.includes("/auth/forgot-password") ||
+                    normalizedEndpoint.includes("/auth/reset-password") ||
+                    normalizedEndpoint.includes("/auth/verify-email") ||
+                    normalizedEndpoint.includes("/auth/resend-verification");
 
-            // If user has a real token, attempt token refresh
-            const currentToken =
-                typeof window !== "undefined"
-                    ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
-                    : null;
+                const isRefreshEndpoint = normalizedEndpoint.includes("/auth/refresh");
 
-            if (currentToken && !isMockToken(currentToken) && !currentToken.startsWith("mock_")) {
-                const refreshedToken = await performTokenRefresh();
-
-                if (refreshedToken) {
-                    const retriedHeaders = {
-                        ...(customHeaders as Record<string, string>),
-                        Authorization: `Bearer ${refreshedToken}`,
-                    };
-                    return apiRequest<T>(endpoint, {
-                        ...options,
-                        headers: retriedHeaders,
-                        _retry: true,
-                    });
-                } else {
-                    // Refresh token also failed/expired -> redirect to login with session expired alert
+                // If refresh endpoint itself failed with 401 or request was already retried:
+                if (isRefreshEndpoint || _retry) {
                     handleSessionExpired();
                     throw new ApiError(errorMessage, response.status, errorData);
                 }
+
+                // Normal form endpoints (e.g. wrong password during login): do not refresh, return error
+                if (isAuthEndpoint || skipAuthRefresh) {
+                    throw new ApiError(errorMessage, response.status, errorData);
+                }
+
+                // If user has a real token, attempt token refresh
+                const currentToken =
+                    typeof window !== "undefined"
+                        ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
+                        : null;
+
+                if (currentToken && !isMockToken(currentToken) && !currentToken.startsWith("mock_")) {
+                    const refreshedToken = await performTokenRefresh();
+
+                    if (refreshedToken) {
+                        const retriedHeaders = {
+                            ...(customHeaders as Record<string, string>),
+                            Authorization: `Bearer ${refreshedToken}`,
+                        };
+                        return apiRequest<T>(endpoint, {
+                            ...options,
+                            headers: retriedHeaders,
+                            _retry: true,
+                        });
+                    } else {
+                        // Refresh token also failed/expired -> redirect to login with session expired alert
+                        handleSessionExpired();
+                        throw new ApiError(errorMessage, response.status, errorData);
+                    }
+                }
             }
+
+            throw new ApiError(errorMessage, response.status, errorData);
         }
 
-        throw new ApiError(errorMessage, response.status, errorData);
+        // Handle 204 No Content or empty bodies
+        if (response.status === 204) {
+            return {} as T;
+        }
+
+        const text = await response.text();
+        if (!text) {
+            return {} as T;
+        }
+
+        try {
+            return JSON.parse(text) as T;
+        } catch {
+            return text as unknown as T;
+        }
+    };
+
+    if (dedupeKey) {
+        const promise = executeRequest().finally(() => {
+            inFlightGetRequests.delete(dedupeKey);
+        });
+        inFlightGetRequests.set(dedupeKey, promise);
+        return promise;
     }
 
-    // Handle 204 No Content or empty bodies
-    if (response.status === 204) {
-        return {} as T;
-    }
-
-    const text = await response.text();
-    if (!text) {
-        return {} as T;
-    }
-
-    try {
-        return JSON.parse(text) as T;
-    } catch {
-        return text as unknown as T;
-    }
+    return executeRequest();
 }
