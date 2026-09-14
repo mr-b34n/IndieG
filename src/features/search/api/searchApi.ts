@@ -171,41 +171,80 @@ function parseSearchResponse(
     ) as Record<string, unknown> | null;
 
     if (resultsObj) {
-        const gameGroup = resultsObj.game as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
-        const commGroup = resultsObj.community as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
-        const profileGroup = (resultsObj.profile || resultsObj.user) as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
-        const postGroup = resultsObj.post as { data?: unknown[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number } } | undefined;
+        const gameGroup = (resultsObj.game || resultsObj.games) as { data?: unknown[]; items?: unknown[]; meta?: { total?: number; count?: number; page?: number; limit?: number; totalPages?: number } } | unknown[] | undefined;
+        const commGroup = (resultsObj.community || resultsObj.communities) as { data?: unknown[]; items?: unknown[]; meta?: { total?: number; count?: number; page?: number; limit?: number; totalPages?: number } } | unknown[] | undefined;
+        const profileGroup = (resultsObj.profile || resultsObj.user || resultsObj.profiles || resultsObj.users) as { data?: unknown[]; items?: unknown[]; meta?: { total?: number; count?: number; page?: number; limit?: number; totalPages?: number } } | unknown[] | undefined;
+        const postGroup = (resultsObj.post || resultsObj.posts) as { data?: unknown[]; items?: unknown[]; meta?: { total?: number; count?: number; page?: number; limit?: number; totalPages?: number } } | unknown[] | undefined;
 
-        const games = Array.isArray(gameGroup?.data) ? gameGroup.data.map((g) => mapGameDtoToGameData(g as GameDto)) : [];
-        const communities = Array.isArray(commGroup?.data) ? commGroup.data.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto)) : [];
-        const users = Array.isArray(profileGroup?.data) ? profileGroup.data.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto)) : [];
-        const posts = Array.isArray(postGroup?.data) ? postGroup.data.map((p) => mapPostDtoToPost(p as PostDto)) : [];
+        const rawGameList = Array.isArray(gameGroup) ? gameGroup : Array.isArray(gameGroup?.data) ? gameGroup.data : Array.isArray((gameGroup as { items?: unknown[] })?.items) ? (gameGroup as { items: unknown[] }).items : [];
+        const rawCommList = Array.isArray(commGroup) ? commGroup : Array.isArray(commGroup?.data) ? commGroup.data : Array.isArray((commGroup as { items?: unknown[] })?.items) ? (commGroup as { items: unknown[] }).items : [];
+        const rawProfileList = Array.isArray(profileGroup) ? profileGroup : Array.isArray(profileGroup?.data) ? profileGroup.data : Array.isArray((profileGroup as { items?: unknown[] })?.items) ? (profileGroup as { items: unknown[] }).items : [];
+        const rawPostList = Array.isArray(postGroup) ? postGroup : Array.isArray(postGroup?.data) ? postGroup.data : Array.isArray((postGroup as { items?: unknown[] })?.items) ? (postGroup as { items: unknown[] }).items : [];
 
-        const totalGames = typeof gameGroup?.meta?.total === "number" ? gameGroup.meta.total : games.length;
-        const totalCommunities = typeof commGroup?.meta?.total === "number" ? commGroup.meta.total : communities.length;
-        const totalUsers = typeof profileGroup?.meta?.total === "number" ? profileGroup.meta.total : users.length;
-        const totalPosts = typeof postGroup?.meta?.total === "number" ? postGroup.meta.total : posts.length;
+        const games = rawGameList.map((g) => mapGameDtoToGameData(g as GameDto));
+        const communities = rawCommList.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto));
+        const users = rawProfileList.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto));
+        const posts = rawPostList.map((p) => mapPostDtoToPost(p as PostDto));
+
+        const getGroupTotal = (group: unknown, defaultLen: number, metaKey: string): number => {
+            if (group && typeof group === "object") {
+                const g = group as Record<string, unknown>;
+                const meta = g.meta as Record<string, unknown> | undefined;
+                if (typeof meta?.total === "number") return meta.total;
+                if (typeof meta?.count === "number") return meta.count;
+                if (typeof g.total === "number") return g.total;
+                if (typeof g.count === "number") return g.count;
+            }
+            if (raw.meta && typeof raw.meta === "object") {
+                const rm = raw.meta as Record<string, unknown>;
+                if (typeof rm[metaKey] === "number") return rm[metaKey] as number;
+            }
+            if (typeof (raw as Record<string, unknown>)[metaKey] === "number") {
+                return (raw as Record<string, unknown>)[metaKey] as number;
+            }
+            return defaultLen;
+        };
+
+        const totalGames = getGroupTotal(gameGroup, games.length, "totalGames");
+        const totalCommunities = getGroupTotal(commGroup, communities.length, "totalCommunities");
+        const totalUsers = getGroupTotal(profileGroup, users.length, "totalUsers");
+        const totalPosts = getGroupTotal(postGroup, posts.length, "totalPosts");
 
         let activeTotal = totalGames + totalCommunities + totalUsers + totalPosts;
         let activePage = page;
         let activeTotalPages = Math.max(1, Math.ceil(activeTotal / limit));
 
+        const getGroupPage = (group: unknown): { page: number; totalPages: number } => {
+            if (group && typeof group === "object") {
+                const g = group as Record<string, unknown>;
+                const meta = g.meta as Record<string, unknown> | undefined;
+                const p = typeof meta?.page === "number" ? meta.page : typeof g.page === "number" ? g.page : page;
+                const tp = typeof meta?.totalPages === "number" ? meta.totalPages : typeof g.totalPages === "number" ? g.totalPages : 0;
+                return { page: p, totalPages: tp };
+            }
+            return { page, totalPages: 0 };
+        };
+
         if (tab === "games" || searchType === "game") {
             activeTotal = totalGames;
-            activePage = gameGroup?.meta?.page ?? page;
-            activeTotalPages = gameGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+            const gp = getGroupPage(gameGroup);
+            activePage = gp.page;
+            activeTotalPages = gp.totalPages || (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
         } else if (tab === "communities" || searchType === "community") {
             activeTotal = totalCommunities;
-            activePage = commGroup?.meta?.page ?? page;
-            activeTotalPages = commGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+            const gp = getGroupPage(commGroup);
+            activePage = gp.page;
+            activeTotalPages = gp.totalPages || (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
         } else if (tab === "users" || searchType === "profile") {
             activeTotal = totalUsers;
-            activePage = profileGroup?.meta?.page ?? page;
-            activeTotalPages = profileGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+            const gp = getGroupPage(profileGroup);
+            activePage = gp.page;
+            activeTotalPages = gp.totalPages || (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
         } else if (tab === "posts" || searchType === "post") {
             activeTotal = totalPosts;
-            activePage = postGroup?.meta?.page ?? page;
-            activeTotalPages = postGroup?.meta?.totalPages ?? (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
+            const gp = getGroupPage(postGroup);
+            activePage = gp.page;
+            activeTotalPages = gp.totalPages || (activeTotal === 0 ? 0 : Math.max(1, Math.ceil(activeTotal / limit)));
         }
 
         const hasMore = activeTotal > 0 && activePage < activeTotalPages;
@@ -316,13 +355,13 @@ function parseSearchResponse(
     }
 
     // Handle scoped list mapping
-    if (searchType === "game" && rawList.length > 0) {
+    if ((searchType === "game" || tab === "games") && rawList.length > 0) {
         games = rawList.map((g) => mapGameDtoToGameData(g as GameDto));
-    } else if (searchType === "community" && rawList.length > 0) {
+    } else if ((searchType === "community" || tab === "communities") && rawList.length > 0) {
         communities = rawList.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto));
-    } else if (searchType === "profile" && rawList.length > 0) {
+    } else if ((searchType === "profile" || searchType === "user" || tab === "users") && rawList.length > 0) {
         users = rawList.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto));
-    } else if (searchType === "post" && rawList.length > 0) {
+    } else if ((searchType === "post" || tab === "posts") && rawList.length > 0) {
         posts = rawList.map((p) => mapPostDtoToPost(p as PostDto));
     }
 

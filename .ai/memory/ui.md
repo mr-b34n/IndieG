@@ -266,6 +266,20 @@ Implications:
 - Search page uses `lastNavigatedQRef` to synchronize external route changes without immediately overriding local typing/backspacing states.
 - Hot Keywords section on `SearchResultsPage.tsx` removed per product requirement.
 
+---
+
+## Decision: Search Results Page Section Headers & Feed Cards
+
+Status: Active
+
+Date: 2026-09-14
+
+Decision:
+
+1. **Clean Section Headers**: Section headers on `SearchResultsPage.tsx` (Games, Communities, Users, Posts) display clean bold typography with NO icons beside the title text.
+2. **Posts Section Label & Voting**: Posts section is labeled "Posts" ("Bài viết" in Vietnamese). Post cards display Reddit-style upvote (`faArrowUp`), downvote (`faArrowDown`), and comments count (`faComment`) instead of like hearts.
+3. **Count Localization**: Category titles (e.g. `Users`) never hardcode `{count}` in the title text; count values are rendered cleanly in view-all controls and tabs with full EN/VI translations.
+
 
 
 

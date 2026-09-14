@@ -3,17 +3,16 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faMagnifyingGlass,
-    faGamepad,
-    faUsers,
-    faFileLines,
     faUserCheck,
     faUserPlus,
     faXmark,
     faCheck,
     faPlus,
     faChevronRight,
-    faUser,
     faArrowLeft,
+    faArrowUp,
+    faArrowDown,
+    faComment,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
@@ -328,7 +327,7 @@ export const SearchResultsPage = () => {
                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1.5 cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="text-[10px]" />
-                        <span>Quay lại tất cả</span>
+                        <span>{t("search.backToAll", { defaultValue: "Quay lại tất cả" })}</span>
                     </button>
                 </div>
             )}
@@ -337,7 +336,7 @@ export const SearchResultsPage = () => {
             {isLoading && (
                 <div className="flex items-center justify-center p-8 text-[#1688E8] gap-2 font-bold text-sm">
                     <span className="w-4 h-4 rounded-full border-2 border-[#1688E8] border-t-transparent animate-spin" />
-                    <span>Đang tìm kiếm...</span>
+                    <span>{t("search.searching", { defaultValue: "Đang tìm kiếm..." })}</span>
                 </div>
             )}
 
@@ -348,9 +347,9 @@ export const SearchResultsPage = () => {
                         <div className="w-14 h-14 rounded-2xl bg-[#1688E8]/10 text-[#1688E8] flex items-center justify-center text-xl font-bold mb-1">
                             <FontAwesomeIcon icon={faMagnifyingGlass} />
                         </div>
-                        <h3 className="text-base font-bold text-[#ECEDEF]">Hãy nhập từ khóa để tìm kiếm</h3>
+                        <h3 className="text-base font-bold text-[#ECEDEF]">{t("search.emptyPromptTitle", { defaultValue: "Hãy nhập từ khóa để tìm kiếm" })}</h3>
                         <p className="text-xs text-[#979BA2] max-w-md">
-                            Bạn có thể tìm kiếm tựa game, cộng đồng thảo luận, bài viết kinh nghiệm hoặc tài khoản người dùng trên hệ thống.
+                            {t("search.emptyPromptDesc", { defaultValue: "Bạn có thể tìm kiếm tựa game, cộng đồng thảo luận, bài viết kinh nghiệm hoặc tài khoản người dùng trên hệ thống." })}
                         </p>
                     </div>
                 ) : searchData.pagination.total === 0 ? (
@@ -369,19 +368,16 @@ export const SearchResultsPage = () => {
                     {(activeTab === "all" || activeTab === "games") && resGames.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
-                                <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faGamepad} className="text-[#1688E8]" />
-                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
-                                        {t("search.gamesTitle", { defaultValue: "Game liên quan" })}
-                                    </h2>
-                                </div>
+                                <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                    {t("search.gamesTitle", { defaultValue: "Game liên quan" })}
+                                </h2>
                                 {activeTab === "all" && categoryCounts.totalGames > 5 && (
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("games")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả ({categoryCounts.totalGames})</span>
+                                        <span>{t("search.viewAllWithCount", { count: categoryCounts.totalGames, defaultValue: `Xem tất cả (${categoryCounts.totalGames})` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 )}
@@ -424,7 +420,7 @@ export const SearchResultsPage = () => {
                                                     <div className="flex items-center gap-2 text-[11px] text-[#656A72] truncate">
                                                         <span>{game.genre}</span>
                                                         <span>•</span>
-                                                        <span>{formatCompactNumber(game.followersCount)} theo dõi</span>
+                                                        <span>{t("search.followers", { count: formatCompactNumber(game.followersCount), defaultValue: `${formatCompactNumber(game.followersCount)} theo dõi` })}</span>
                                                         {game.developer && (
                                                             <>
                                                                 <span className="hidden sm:inline">•</span>
@@ -448,7 +444,7 @@ export const SearchResultsPage = () => {
                                                 }`}
                                             >
                                                 <FontAwesomeIcon icon={isFollowed ? faCheck : faPlus} className="text-[10px]" />
-                                                <span className="hidden sm:inline">{isFollowed ? "Đã theo dõi" : "Theo dõi"}</span>
+                                                <span className="hidden sm:inline">{isFollowed ? t("game.followed", { defaultValue: "Đã theo dõi" }) : t("game.follow", { defaultValue: "Theo dõi" })}</span>
                                             </button>
                                         </div>
                                     );
@@ -463,7 +459,7 @@ export const SearchResultsPage = () => {
                                         onClick={() => handleTabChange("games")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {categoryCounts.totalGames} game</span>
+                                        <span>{t("search.viewAllGames", { count: categoryCounts.totalGames, defaultValue: `Xem tất cả ${categoryCounts.totalGames} game` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -475,19 +471,16 @@ export const SearchResultsPage = () => {
                     {(activeTab === "all" || activeTab === "communities") && resCommunities.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
-                                <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faUsers} className="text-[#1688E8]" />
-                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
-                                        {t("search.communitiesTitle", { defaultValue: "Cộng đồng" })}
-                                    </h2>
-                                </div>
+                                <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                    {t("search.communitiesTitle", { defaultValue: "Cộng đồng" })}
+                                </h2>
                                 {activeTab === "all" && categoryCounts.totalCommunities > 4 && (
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("communities")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả ({categoryCounts.totalCommunities})</span>
+                                        <span>{t("search.viewAllWithCount", { count: categoryCounts.totalCommunities, defaultValue: `Xem tất cả (${categoryCounts.totalCommunities})` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 )}
@@ -515,7 +508,7 @@ export const SearchResultsPage = () => {
                                                     {comm.name}
                                                 </h3>
                                                 <div className="flex items-center gap-2 text-[11px] text-[#656A72]">
-                                                    <span>{formatCompactNumber(comm.membersCount)} thành viên</span>
+                                                    <span>{t("search.members", { count: formatCompactNumber(comm.membersCount), defaultValue: `${formatCompactNumber(comm.membersCount)} thành viên` })}</span>
                                                     <span>•</span>
                                                     <span>{comm.gameCategory}</span>
                                                 </div>
@@ -535,7 +528,7 @@ export const SearchResultsPage = () => {
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={comm.isJoined ? faCheck : faPlus} className="text-[10px]" />
-                                            <span className="hidden sm:inline">{comm.isJoined ? "Đã tham gia" : "Tham gia"}</span>
+                                            <span className="hidden sm:inline">{comm.isJoined ? t("community.joinedButton", { defaultValue: "Đã tham gia" }) : t("community.join", { defaultValue: "Tham gia" })}</span>
                                         </button>
                                     </div>
                                 ))}
@@ -549,7 +542,7 @@ export const SearchResultsPage = () => {
                                         onClick={() => handleTabChange("communities")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {categoryCounts.totalCommunities} cộng đồng</span>
+                                        <span>{t("search.viewAllCommunities", { count: categoryCounts.totalCommunities, defaultValue: `Xem tất cả ${categoryCounts.totalCommunities} cộng đồng` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -561,19 +554,16 @@ export const SearchResultsPage = () => {
                     {(activeTab === "all" || activeTab === "users") && resUsers.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
-                                <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faUser} className="text-[#1688E8]" />
-                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
-                                        {t("search.usersTitle", { defaultValue: "Người dùng" })}
-                                    </h2>
-                                </div>
+                                <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                    {t("search.usersTitle", { defaultValue: "Người dùng" })}
+                                </h2>
                                 {activeTab === "all" && categoryCounts.totalUsers > 4 && (
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("users")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả ({categoryCounts.totalUsers})</span>
+                                        <span>{t("search.viewAllWithCount", { count: categoryCounts.totalUsers, defaultValue: `Xem tất cả (${categoryCounts.totalUsers})` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 )}
@@ -635,7 +625,7 @@ export const SearchResultsPage = () => {
                                             }`}
                                         >
                                             <FontAwesomeIcon icon={user.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
-                                            <span className="hidden sm:inline">{user.isFriend ? "Bạn bè" : "Kết bạn"}</span>
+                                            <span className="hidden sm:inline">{user.isFriend ? t("search.friend", { defaultValue: "Bạn bè" }) : t("search.addFriend", { defaultValue: "Kết bạn" })}</span>
                                         </button>
                                     </div>
                                 ))}
@@ -649,7 +639,7 @@ export const SearchResultsPage = () => {
                                         onClick={() => handleTabChange("users")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {categoryCounts.totalUsers} người dùng</span>
+                                        <span>{t("search.viewAllUsers", { count: categoryCounts.totalUsers, defaultValue: `Xem tất cả ${categoryCounts.totalUsers} người dùng` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
@@ -661,19 +651,16 @@ export const SearchResultsPage = () => {
                     {(activeTab === "all" || activeTab === "posts") && resPosts.length > 0 && (
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between pb-2 border-b border-[#1A1C1F]">
-                                <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faFileLines} className="text-[#1688E8]" />
-                                    <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
-                                        {t("search.postsTitle", { defaultValue: "Bài viết & Thảo luận" })}
-                                    </h2>
-                                </div>
+                                <h2 className="text-sm sm:text-base font-bold text-[#ECEDEF]">
+                                    {t("search.postsTitle", { defaultValue: "Bài viết" })}
+                                </h2>
                                 {activeTab === "all" && categoryCounts.totalPosts > 3 && (
                                     <button
                                         type="button"
                                         onClick={() => handleTabChange("posts")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả ({categoryCounts.totalPosts})</span>
+                                        <span>{t("search.viewAllWithCount", { count: categoryCounts.totalPosts, defaultValue: `Xem tất cả (${categoryCounts.totalPosts})` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 )}
@@ -703,7 +690,7 @@ export const SearchResultsPage = () => {
                                                     </span>
                                                     {post.community && (
                                                         <>
-                                                            <span className="text-xs text-[#656A72]">trong</span>
+                                                            <span className="text-xs text-[#656A72]">{t("search.inCommunity", { defaultValue: "trong" })}</span>
                                                             <span className="text-xs font-bold text-[#1688E8]">
                                                                 {post.community.name}
                                                             </span>
@@ -723,12 +710,20 @@ export const SearchResultsPage = () => {
                                                 {post.content}
                                             </p>
 
-                                            <div className="flex items-center gap-5 pt-2 mt-1 text-xs text-[#656A72] font-medium">
-                                                <span className="flex items-center gap-1 hover:text-rose-400 transition-colors">
-                                                    ♥ {post.likes}
-                                                </span>
-                                                <span className="flex items-center gap-1 hover:text-[#1688E8] transition-colors">
-                                                    💬 {post.commentsCount || 0}
+                                            <div className="flex items-center gap-4 pt-2 mt-1 text-xs text-[#656A72] font-medium">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="flex items-center gap-1.5 hover:text-[#1688E8] transition-colors">
+                                                        <FontAwesomeIcon icon={faArrowUp} className="text-[11px]" />
+                                                        <span>{post.upvotes ?? post.likes ?? 0}</span>
+                                                    </span>
+                                                    <span className="flex items-center gap-1.5 hover:text-rose-400 transition-colors">
+                                                        <FontAwesomeIcon icon={faArrowDown} className="text-[11px]" />
+                                                        <span>{post.downvotes ?? 0}</span>
+                                                    </span>
+                                                </div>
+                                                <span className="flex items-center gap-1.5 hover:text-[#1688E8] transition-colors">
+                                                    <FontAwesomeIcon icon={faComment} className="text-[11px]" />
+                                                    <span>{post.commentsCount ?? post.comments ?? 0}</span>
                                                 </span>
                                                 {post.hashtags && post.hashtags.length > 0 && (
                                                     <div className="flex items-center gap-2 ml-auto">
@@ -753,7 +748,7 @@ export const SearchResultsPage = () => {
                                         onClick={() => handleTabChange("posts")}
                                         className="text-xs font-bold text-[#1688E8] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        <span>Xem tất cả {categoryCounts.totalPosts} bài viết</span>
+                                        <span>{t("search.viewAllPosts", { count: categoryCounts.totalPosts, defaultValue: `Xem tất cả ${categoryCounts.totalPosts} bài viết` })}</span>
                                         <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
                                     </button>
                                 </div>
