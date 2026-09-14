@@ -611,14 +611,22 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
 export const mapPostDtoToPost = mapPostDtoToPostData;
 
 export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
+    const raw = dto as Record<string, unknown>;
+    const resolvedLogo = dto.logo || (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150";
+    const resolvedBackdrop = dto.backdrop || (raw.bannerUrl as string) || (raw.coverUrl as string) || "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200";
+    const resolvedMembers = dto.membersCount ?? dto.members ?? 1;
+
     return {
         id: dto.id,
         name: dto.name || "Cộng đồng",
-        logo: dto.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150",
-        backdrop: dto.backdrop || "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200",
+        logo: resolvedLogo,
+        avatarUrl: resolvedLogo,
+        backdrop: resolvedBackdrop,
+        bannerUrl: resolvedBackdrop,
         category: dto.category || "Indie",
         description: dto.description || "",
-        members: dto.membersCount ?? dto.members ?? 1,
+        members: resolvedMembers,
+        membersCount: resolvedMembers,
         onlineNow: dto.onlineNow ?? 1,
         tags: dto.tags || [],
         joined: dto.joined === true || dto.isJoined === true,
@@ -669,15 +677,22 @@ export function mapUserProfileDtoToSearchUser(dto: UserProfileDto | Record<strin
     const username = (raw.username as string) || "gamer";
     const formattedUsername = username.startsWith("@") ? username : `@${username}`;
     const bioText = typeof raw.bio === "string" ? raw.bio : "";
+    const resolvedAvatar = (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
+    const status = (raw.status === "in-game" ? "in-game" : raw.status === "online" ? "online" : "offline") as "online" | "in-game" | "offline";
+    const isOnline = Boolean(raw.isOnline ?? (status === "online" || status === "in-game"));
     return {
         id,
         name: (raw.name as string) || (raw.displayName as string) || username || "Gamer",
         username: formattedUsername,
-        avatar: (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+        avatar: resolvedAvatar,
+        avatarUrl: resolvedAvatar,
         bio: bioText,
-        status: (raw.status === "in-game" ? "in-game" : raw.status === "online" ? "online" : "offline") as "online" | "in-game" | "offline",
+        status,
+        isOnline,
         game: (raw.game as string) || (raw.currentGame as string) || null,
+        favoriteGame: (raw.favoriteGame as string) || (raw.game as string) || null,
         isFriend: Boolean(raw.isFriend || raw.friendStatus === "accepted"),
+        badge: (raw.badge as string) || undefined,
     };
 }
 

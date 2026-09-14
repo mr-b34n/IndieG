@@ -10,10 +10,14 @@ export interface SearchUser {
     name: string;
     username: string;
     avatar: string;
+    avatarUrl?: string;
     bio: string;
     status: "online" | "in-game" | "offline";
     game?: string | null;
+    favoriteGame?: string | null;
     isFriend?: boolean;
+    isOnline?: boolean;
+    badge?: string;
 }
 
 export interface PaginationInfo {

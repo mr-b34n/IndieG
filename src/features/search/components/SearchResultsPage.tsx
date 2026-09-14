@@ -497,13 +497,13 @@ export const SearchResultsPage = () => {
                                 {resCommunities.map((comm) => (
                                     <div
                                         key={comm.id}
-                                        onClick={() => navigate({ to: `/community` })}
+                                        onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } })}
                                         className="group flex items-center justify-between p-3 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[#17191C]">
                                                 <img
-                                                    src={comm.avatarUrl}
+                                                    src={comm.avatarUrl || comm.logo}
                                                     alt={comm.name}
                                                     referrerPolicy="no-referrer"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
@@ -589,7 +589,7 @@ export const SearchResultsPage = () => {
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#17191C]">
                                                 <img
-                                                    src={user.avatarUrl}
+                                                    src={user.avatarUrl || user.avatar}
                                                     alt={user.name}
                                                     referrerPolicy="no-referrer"
                                                     className="w-full h-full object-cover"
@@ -691,7 +691,7 @@ export const SearchResultsPage = () => {
                                                 <div className="flex items-center gap-2.5">
                                                     <div className="w-7 h-7 rounded-full overflow-hidden bg-[#17191C]">
                                                         <img
-                                                            src={post.author.avatarUrl}
+                                                            src={post.author.avatarUrl || post.author.avatar || post.authorAvatar}
                                                             alt={post.author.name}
                                                             referrerPolicy="no-referrer"
                                                             className="w-full h-full object-cover"

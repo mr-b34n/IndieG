@@ -109,5 +109,20 @@ Prevention:
 2. Use `referrerPolicy="no-referrer"` explicitly on `<img>` tags displaying external game assets, banners, screenshots, or community avatars.
 3. Provide fallback image handling via `onError` handlers so images never show broken icons if an external asset is unavailable.
 
+---
+
+## Pitfall: DTO Image Field Mismatch Across Features
+
+Status: Active
+
+Problem:
+
+Backend API entities often name image fields differently across endpoints (e.g. `logo` vs `avatarUrl`, `backdrop` vs `bannerUrl`). When client UI components read `comm.avatarUrl` but the mapper only assigned `dto.logo`, images become `undefined` and render broken icons in search results even though the detail page renders them via fallback aliases.
+
+Prevention:
+
+1. In mapper functions (`mapCommunityDtoToCommunityData`, `mapUserProfileDtoToSearchUser`), populate both canonical aliases (`logo` and `avatarUrl`, `backdrop` and `bannerUrl`).
+2. In UI components, always provide fallback chains on `img` `src` (e.g., `comm.avatarUrl || comm.logo`).
+
 
 
