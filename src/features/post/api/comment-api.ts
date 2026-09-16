@@ -32,8 +32,5 @@ export const useAddComment = (postId: string) => {
     onError: (err, newComment, context) => {
       queryClient.setQueryData(['comments', postId], context?.previousComments);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-    },
   });
 };

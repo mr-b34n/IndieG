@@ -162,4 +162,22 @@ Implications:
 - In `src/features/post/api/interaction-api.ts`: `usePostVoteInteraction(postId)` accepts `1`, `-1`, or `null` to update or remove votes.
 - In `src/features/post/components/Post.tsx`: `handleLike` and `handleDownvote` dispatch the corresponding `1` or `-1` (or `null` when toggling off).
 
+---
+
+## Decision: Optimistic State Updates & Query Refetch Elimination for Votes & Comments
+
+Status: Active
+
+Date: 2026-09-16
+
+Decision:
+
+1. **Post & Comment Voting**: Voting applies optimistic state updates directly in local component state and `usePostsStore` immediately. TanStack Query cache is directly updated with `queryClient.setQueryData` for the target post/comment vote key, without invalidating or refetching post feeds (`queryKey: ['posts']`).
+2. **Comment Submission & Tree Updates**: New comments and sub-replies appear instantly via optimistic state. When the creation API succeeds, the server-assigned ID replaces the temporary ID in-place and post comment count is incremented in `usePostsStore`. `useCreateCommentMutation` does not invalidate or refetch the entire comment list (`queryKey: ['comments']`), saving unnecessary network roundtrips.
+
+Why:
+
+Prevents aggressive network refetches, eliminates UI flickering, saves API rate limits and bandwidth, and provides a snappy Messenger-like user experience.
+
+
 

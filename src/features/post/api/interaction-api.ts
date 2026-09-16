@@ -20,10 +20,17 @@ export const usePostVoteInteraction = (postId: string | number) => {
       }
       return voteType;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['post', postId] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['votes', 'post', String(postId)] });
+    onSuccess: (voteType) => {
+      // Optimistically update vote status cache without refetching all posts
+      queryClient.setQueryData(['votes', 'post', String(postId)], () => {
+        if (voteType === 1 || voteType === true) {
+          return { voteType: 1, type: 'up' };
+        }
+        if (voteType === -1) {
+          return { voteType: -1, type: 'down' };
+        }
+        return null;
+      });
     },
   });
 };

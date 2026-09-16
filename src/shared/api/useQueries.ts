@@ -456,33 +456,21 @@ export function useReplyCommentsQuery(parentId: string | number, cursor?: string
 }
 
 export function useCreateCommentMutation() {
-    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: CreateCommentDto) => commentsApi.create(data),
-        onSuccess: (_data, variables) => {
-            void queryClient.invalidateQueries({ queryKey: ["comments", variables.postId] });
-        },
     });
 }
 
 export function useUpdateCommentMutation() {
-    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ id, content }: { id: string; content: string }) =>
             commentsApi.update(id, { content }),
-        onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["comments"] });
-        },
     });
 }
 
 export function useDeleteCommentMutation() {
-    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => commentsApi.delete(id),
-        onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ["comments"] });
-        },
     });
 }
 
@@ -584,8 +572,10 @@ export function useVotePostMutation() {
         mutationFn: ({ postId, voteType }: { postId: string | number; voteType: VoteType }) =>
             votesApi.votePost(postId, voteType),
         onSuccess: (_data, variables) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(variables.postId) });
-            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+            queryClient.setQueryData(QUERY_KEYS.postVote(variables.postId), {
+                voteType: variables.voteType,
+                type: variables.voteType === 1 ? "up" : "down",
+            });
         },
     });
 }
@@ -595,8 +585,10 @@ export function useUpVotePostMutation() {
     return useMutation({
         mutationFn: (postId: string | number) => votesApi.votePost(postId, 1),
         onSuccess: (_data, postId) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
-            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+            queryClient.setQueryData(QUERY_KEYS.postVote(postId), {
+                voteType: 1,
+                type: "up",
+            });
         },
     });
 }
@@ -606,8 +598,10 @@ export function useDownVotePostMutation() {
     return useMutation({
         mutationFn: (postId: string | number) => votesApi.votePost(postId, -1),
         onSuccess: (_data, postId) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
-            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+            queryClient.setQueryData(QUERY_KEYS.postVote(postId), {
+                voteType: -1,
+                type: "down",
+            });
         },
     });
 }
@@ -617,8 +611,7 @@ export function useDeleteVotePostMutation() {
     return useMutation({
         mutationFn: (postId: string | number) => votesApi.deleteVotePost(postId),
         onSuccess: (_data, postId) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.postVote(postId) });
-            void queryClient.invalidateQueries({ queryKey: ["posts"] });
+            queryClient.setQueryData(QUERY_KEYS.postVote(postId), null);
         },
     });
 }
@@ -637,8 +630,10 @@ export function useUpVoteCommentMutation() {
     return useMutation({
         mutationFn: (commentId: string | number) => votesApi.upVoteComment(commentId),
         onSuccess: (_data, commentId) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.commentVote(commentId) });
-            void queryClient.invalidateQueries({ queryKey: ["comments"] });
+            queryClient.setQueryData(QUERY_KEYS.commentVote(commentId), {
+                type: "up",
+                voteType: 1,
+            });
         },
     });
 }
@@ -648,8 +643,7 @@ export function useDeleteVoteCommentMutation() {
     return useMutation({
         mutationFn: (commentId: string | number) => votesApi.deleteVoteComment(commentId),
         onSuccess: (_data, commentId) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.commentVote(commentId) });
-            void queryClient.invalidateQueries({ queryKey: ["comments"] });
+            queryClient.setQueryData(QUERY_KEYS.commentVote(commentId), null);
         },
     });
 }

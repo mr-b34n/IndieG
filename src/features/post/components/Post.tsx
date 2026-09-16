@@ -176,19 +176,32 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         }
         if (!requireVerifiedEmail("upvote bài viết")) return;
 
+        let nextUp: number;
+        let nextDown = downvoteCount;
+
         if (isLiked) {
             setIsLiked(false);
-            setUpvoteCount((prev) => Math.max(0, prev - 1));
+            nextUp = Math.max(0, upvoteCount - 1);
+            setUpvoteCount(nextUp);
             voteMutation.mutate(null);
         } else {
             setIsLiked(true);
-            setUpvoteCount((prev) => prev + 1);
+            nextUp = upvoteCount + 1;
+            setUpvoteCount(nextUp);
             if (isDownvoted) {
                 setIsDownvoted(false);
-                setDownvoteCount((prev) => Math.max(0, prev - 1));
+                nextDown = Math.max(0, downvoteCount - 1);
+                setDownvoteCount(nextDown);
             }
             voteMutation.mutate(1);
         }
+
+        // Optimistically update store data immediately without refetching
+        usePostsStore.getState().updatePost(post.id, {
+            upvotes: nextUp,
+            downvotes: nextDown,
+            likes: nextUp,
+        });
     };
 
     const handleDownvote = (e: React.MouseEvent) => {
@@ -199,19 +212,32 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
         }
         if (!requireVerifiedEmail("downvote bài viết")) return;
 
+        let nextUp = upvoteCount;
+        let nextDown: number;
+
         if (isDownvoted) {
             setIsDownvoted(false);
-            setDownvoteCount((prev) => Math.max(0, prev - 1));
+            nextDown = Math.max(0, downvoteCount - 1);
+            setDownvoteCount(nextDown);
             voteMutation.mutate(null);
         } else {
             setIsDownvoted(true);
-            setDownvoteCount((prev) => prev + 1);
+            nextDown = downvoteCount + 1;
+            setDownvoteCount(nextDown);
             if (isLiked) {
                 setIsLiked(false);
-                setUpvoteCount((prev) => Math.max(0, prev - 1));
+                nextUp = Math.max(0, upvoteCount - 1);
+                setUpvoteCount(nextUp);
             }
             voteMutation.mutate(-1);
         }
+
+        // Optimistically update store data immediately without refetching
+        usePostsStore.getState().updatePost(post.id, {
+            upvotes: nextUp,
+            downvotes: nextDown,
+            likes: nextUp,
+        });
     };
 
     const handleToggleBookmark = async (e: React.MouseEvent) => {

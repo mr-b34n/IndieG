@@ -994,8 +994,9 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             (user?.user_metadata?.avatar_url as string | undefined) ||
             (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
 
+        const tempId = `${postId}-${Date.now()}`;
         const newComment: CommentData = {
-            id: `${postId}-${Date.now()}`,
+            id: tempId,
             postId: String(postId),
             authorId: user?.id ? String(user.id) : undefined,
             author: authorName,
@@ -1016,11 +1017,27 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         mainImage.clear();
         if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
 
+        // Optimistically increment post comment count in local store
+        const currentPost = usePostsStore.getState().getPostById(postId);
+        if (currentPost) {
+            const currentCount = currentPost.commentsCount ?? currentPost.comments ?? 0;
+            usePostsStore.getState().updatePost(postId, {
+                commentsCount: currentCount + 1,
+                comments: currentCount + 1,
+            });
+        }
+
         try {
-            await createCommentMutation.mutateAsync({
+            const createdRes = await createCommentMutation.mutateAsync({
                 postId: String(postId),
                 content: textContent || "[Ảnh đính kèm]",
             });
+            if (createdRes && (createdRes.id || (createdRes as unknown as { _id?: string })._id)) {
+                const realId = createdRes.id || (createdRes as unknown as { _id?: string })._id!;
+                setComments((prev) =>
+                    prev.map((c) => (c.id === tempId ? { ...c, id: realId, createdAt: createdRes.createdAt } : c))
+                );
+            }
         } catch {
             // Local optimistic state is already applied
         }
@@ -1035,8 +1052,9 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             (user?.user_metadata?.avatar_url as string | undefined) ||
             (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
 
+        const tempSubId = `sub-${Date.now()}`;
         const newSubReply: CommentData = {
-            id: `sub-${Date.now()}`,
+            id: tempSubId,
             postId: String(postId),
             parentId: String(parentId),
             authorId: user?.id ? String(user.id) : undefined,
@@ -1055,12 +1073,36 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));
 
+        // Optimistically increment post comment count in local store
+        const currentPost = usePostsStore.getState().getPostById(postId);
+        if (currentPost) {
+            const currentCount = currentPost.commentsCount ?? currentPost.comments ?? 0;
+            usePostsStore.getState().updatePost(postId, {
+                commentsCount: currentCount + 1,
+                comments: currentCount + 1,
+            });
+        }
+
         try {
-            await createCommentMutation.mutateAsync({
+            const createdRes = await createCommentMutation.mutateAsync({
                 postId: String(postId),
                 parentId: String(parentId),
                 content: text,
             });
+            if (createdRes && (createdRes.id || (createdRes as unknown as { _id?: string })._id)) {
+                const realId = createdRes.id || (createdRes as unknown as { _id?: string })._id!;
+                const replaceSubId = (list: CommentData[]): CommentData[] =>
+                    list.map((item) => {
+                        if (item.id === tempSubId) {
+                            return { ...item, id: realId, createdAt: createdRes.createdAt };
+                        }
+                        if (item.replies && item.replies.length > 0) {
+                            return { ...item, replies: replaceSubId(item.replies) };
+                        }
+                        return item;
+                    });
+                setComments((prev) => replaceSubId(prev));
+            }
         } catch {
             // Local optimistic state is applied
         }
