@@ -208,6 +208,7 @@ export interface PostDto {
     createdAt: string;
     updatedAt: string;
     deletedAt?: string | null;
+    currentUserVoteType?: number | null;
 }
 
 export interface CreatePostDto {
@@ -610,6 +611,7 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
         commentsCount: dto.commentsCount ?? 0,
         pinned: dto.pinned ?? false,
         allowComments: dto.allowComments ?? true,
+        currentUserVoteType: typeof dto.currentUserVoteType === "number" ? dto.currentUserVoteType : 0,
         timeAgo: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
         privacy: "public" as const,
     };

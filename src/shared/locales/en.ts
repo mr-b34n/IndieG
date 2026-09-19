@@ -609,7 +609,13 @@ export const en = {
         pagination: "Page {page} of {totalPages} (Total {total} results)",
         prevPage: "Previous",
         nextPage: "Next",
-        queryTooShort: "Please enter at least 2 characters to search"
+        queryTooShort: "Please enter at least 2 characters to search",
+        noResultsFor: "No matching results found for \"{value}\"",
+        viewAllResultsFor: "View all {count} results for \"{value}\"",
+        recentHistory: "Search History",
+        postedBy: "Posted by {author}",
+        postedByIn: "Posted by {author} in {community}",
+        discussionsAndPosts: "Discussions & Posts"
     },
     profile: {
         title: "User Profile",

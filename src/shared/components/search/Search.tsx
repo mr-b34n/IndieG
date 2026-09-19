@@ -97,28 +97,38 @@ export const Search = () => {
 
     // Live API search results
     const [liveResults, setLiveResults] = useState<SearchResults | null>(null);
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         const clean = debouncedValue.trim();
         if (clean.length < 2) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setLiveResults(null);
+            setIsSearching(false);
             return;
         }
 
         let isMounted = true;
-        fetchSearchResults(clean, "all", 1, 5, { posts, communities }).then((res) => {
-            if (isMounted && res.success) {
-                setLiveResults({
-                    games: res.data.games,
-                    communities: res.data.communities,
-                    posts: res.data.posts,
-                    users: res.data.users,
-                    squads: [],
-                    totalCount: res.pagination.total || (res.data.games.length + res.data.communities.length + res.data.posts.length + res.data.users.length),
-                });
-            }
-        });
+        setIsSearching(true);
+        fetchSearchResults(clean, "all", 1, 5, { posts, communities })
+            .then((res) => {
+                if (isMounted) {
+                    setIsSearching(false);
+                    if (res.success) {
+                        setLiveResults({
+                            games: res.data.games,
+                            communities: res.data.communities,
+                            posts: res.data.posts,
+                            users: res.data.users,
+                            squads: [],
+                            totalCount: res.pagination.total || (res.data.games.length + res.data.communities.length + res.data.posts.length + res.data.users.length),
+                        });
+                    }
+                }
+            })
+            .catch(() => {
+                if (isMounted) setIsSearching(false);
+            });
 
         return () => {
             isMounted = false;
@@ -221,9 +231,14 @@ export const Search = () => {
                     {/* Scenario A: Live search results when typing */}
                     {value.trim() ? (
                         <div className="flex flex-col py-2">
-                            {searchResults.totalCount === 0 ? (
+                            {isSearching ? (
+                                <div className="flex items-center justify-center p-6 text-[#1688E8] gap-2 font-bold text-xs">
+                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-[#1688E8] border-t-transparent animate-spin" />
+                                    <span>{t("search.searching", { defaultValue: "Đang tìm kiếm..." })}</span>
+                                </div>
+                            ) : searchResults.totalCount === 0 ? (
                                 <div className="p-6 text-center text-xs text-[#656A72]">
-                                    Không tìm thấy kết quả phù hợp cho "<span className="text-[#ECEDEF] font-bold">{value}</span>"
+                                    {t("search.noResultsFor", { value, defaultValue: `Không tìm thấy kết quả phù hợp cho "${value}"` })}
                                 </div>
                             ) : (
                                 <>
@@ -232,7 +247,7 @@ export const Search = () => {
                                         <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faUsers} className="text-[#1688E8]" />
-                                                <span>Cộng đồng ({(searchResults.communities || []).length})</span>
+                                                <span>{t("search.communitiesTitle", { defaultValue: "Cộng đồng" })} ({(searchResults.communities || []).length})</span>
                                             </p>
                                             {searchResults.communities.slice(0, 3).map((comm) => (
                                                 <button
@@ -255,7 +270,7 @@ export const Search = () => {
                                                             {comm.name}
                                                         </span>
                                                         <span className="text-[10px] text-[#979BA2]">
-                                                            {formatCompactNumber(comm.members)} thành viên • {comm.category}
+                                                            {t("search.members", { count: formatCompactNumber(comm.members), defaultValue: `${formatCompactNumber(comm.members)} thành viên` })} • {comm.category}
                                                         </span>
                                                     </div>
                                                 </button>
@@ -268,34 +283,37 @@ export const Search = () => {
                                         <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faUser} className="text-[#1688E8]" />
-                                                <span>Người dùng ({(searchResults.users || []).length})</span>
+                                                <span>{t("search.usersTitle", { defaultValue: "Người dùng" })} ({(searchResults.users || []).length})</span>
                                             </p>
-                                            {searchResults.users.slice(0, 3).map((u) => (
-                                                <button
-                                                    key={u.id}
-                                                    onClick={() => {
-                                                        saveRecentSearch(u.name);
-                                                        setFocused(false);
-                                                        navigate({ to: "/profile/$userId", params: { userId: u.id || "me" } });
-                                                    }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
-                                                >
-                                                    <img
-                                                        src={u.avatar}
-                                                        alt={u.name}
-                                                        referrerPolicy="no-referrer"
-                                                        className="w-7 h-7 rounded-full object-cover shrink-0"
-                                                    />
-                                                    <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-[#ECEDEF] truncate">
-                                                            {u.name}
-                                                        </span>
-                                                        <span className="text-[10px] text-[#979BA2] truncate">
-                                                            {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                            {searchResults.users.slice(0, 3).map((u) => {
+                                                const profileParam = u.username ? u.username.replace(/^@/, '') : (u.id || "me");
+                                                return (
+                                                    <button
+                                                        key={u.id}
+                                                        onClick={() => {
+                                                            saveRecentSearch(u.name);
+                                                            setFocused(false);
+                                                            navigate({ to: "/profile/$userId", params: { userId: profileParam } });
+                                                        }}
+                                                        className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
+                                                    >
+                                                        <img
+                                                            src={u.avatar}
+                                                            alt={u.name}
+                                                            referrerPolicy="no-referrer"
+                                                            className="w-7 h-7 rounded-full object-cover shrink-0"
+                                                        />
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="text-xs font-bold text-[#ECEDEF] truncate">
+                                                                {u.name}
+                                                            </span>
+                                                            <span className="text-[10px] text-[#979BA2] truncate">
+                                                                {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     )}
 
@@ -304,26 +322,31 @@ export const Search = () => {
                                         <div className="flex flex-col pb-2">
                                             <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faFileLines} className="text-[#1688E8]" />
-                                                <span>Thảo luận & Bài viết ({(searchResults.posts || []).length})</span>
+                                                <span>{t("search.discussionsAndPosts", { defaultValue: "Thảo luận & Bài viết" })} ({(searchResults.posts || []).length})</span>
                                             </p>
-                                            {searchResults.posts.slice(0, 3).map((post) => (
-                                                <button
-                                                    key={post.id}
-                                                    onClick={() => {
-                                                        saveRecentSearch(post.title || post.content.slice(0, 20));
-                                                        setFocused(false);
-                                                        navigate({ to: "/post/$postId", params: { postId: String(post.id) } });
-                                                    }}
-                                                    className="flex flex-col gap-0.5 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
-                                                >
-                                                    <span className="text-xs font-bold text-[#ECEDEF] line-clamp-1">
-                                                        {post.title || post.content}
-                                                    </span>
-                                                    <span className="text-[10px] text-[#979BA2]">
-                                                        Đăng bởi {typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || "Vô danh") : (post.author || "Vô danh")} {post.communityName ? `trong ${post.communityName}` : ""}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                            {searchResults.posts.slice(0, 3).map((post) => {
+                                                const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || "Vô danh") : (post.author || "Vô danh");
+                                                return (
+                                                    <button
+                                                        key={post.id}
+                                                        onClick={() => {
+                                                            saveRecentSearch(post.title || post.content.slice(0, 20));
+                                                            setFocused(false);
+                                                            navigate({ to: "/post/$postId", params: { postId: String(post.id) } });
+                                                        }}
+                                                        className="flex flex-col gap-0.5 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
+                                                    >
+                                                        <span className="text-xs font-bold text-[#ECEDEF] line-clamp-1">
+                                                            {post.title || post.content}
+                                                        </span>
+                                                        <span className="text-[10px] text-[#979BA2]">
+                                                            {post.communityName
+                                                                ? t("search.postedByIn", { author: authorName, community: post.communityName, defaultValue: `Đăng bởi ${authorName} trong ${post.communityName}` })
+                                                                : t("search.postedBy", { author: authorName, defaultValue: `Đăng bởi ${authorName}` })}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     )}
 
@@ -333,7 +356,7 @@ export const Search = () => {
                                         onClick={() => handleExecuteSearch()}
                                         className="flex items-center justify-between px-4 py-3 bg-[#1688E8]/10 hover:bg-[#1688E8]/20 text-[#1688E8] font-bold text-xs transition-colors cursor-pointer border-t border-[#1A1C1F]"
                                     >
-                                        <span>Xem tất cả {searchResults.totalCount} kết quả cho "{value}"</span>
+                                        <span>{t("search.viewAllResultsFor", { count: searchResults.totalCount, value, defaultValue: `Xem tất cả ${searchResults.totalCount} kết quả cho "${value}"` })}</span>
                                         <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
                                     </button>
                                 </>
@@ -345,7 +368,7 @@ export const Search = () => {
                             <div className="flex items-center justify-between px-4 pt-2 pb-1.5">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
                                     <FontAwesomeIcon icon={faHistory} className="text-xs" />
-                                    <span>Lịch sử tìm kiếm</span>
+                                    <span>{t("search.recentHistory", { defaultValue: "Lịch sử tìm kiếm" })}</span>
                                 </span>
                                 {recentSearches.length > 0 && (
                                     <button

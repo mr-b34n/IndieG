@@ -54,6 +54,16 @@ export const FeedList = () => {
                             ...mapped,
                             communityId: dto.communityId,
                         } as PostDataWithSettings);
+                    } else if (typeof dto.currentUserVoteType === "number") {
+                        const existing = posts.find((p) => String(p.id) === String(dto.id));
+                        if (existing && existing.currentUserVoteType === undefined) {
+                            updatePost(dto.id, {
+                                currentUserVoteType: dto.currentUserVoteType,
+                                upvotes: dto.upvotes ?? dto.likes ?? existing.upvotes,
+                                downvotes: dto.downvotes ?? existing.downvotes,
+                                likes: dto.upvotes ?? dto.likes ?? existing.likes,
+                            });
+                        }
                     }
                 });
             }

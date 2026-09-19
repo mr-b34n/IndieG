@@ -46,6 +46,7 @@ export interface PostData {
     pinned?: boolean;
     allowComments?: boolean;
     isSpoiler?: boolean;
+    currentUserVoteType?: number;
 }
 
 export type Post = PostData;

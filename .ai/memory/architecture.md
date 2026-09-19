@@ -174,6 +174,7 @@ Decision:
 
 1. **Post & Comment Voting**: Voting applies optimistic state updates directly in local component state and `usePostsStore` immediately. TanStack Query cache is directly updated with `queryClient.setQueryData` for the target post/comment vote key, without invalidating or refetching post feeds (`queryKey: ['posts']`).
 2. **Comment Submission & Tree Updates**: New comments and sub-replies appear instantly via optimistic state. When the creation API succeeds, the server-assigned ID replaces the temporary ID in-place and post comment count is incremented in `usePostsStore`. `useCreateCommentMutation` does not invalidate or refetch the entire comment list (`queryKey: ['comments']`), saving unnecessary network roundtrips.
+3. **`currentUserVoteType` Field Handling**: All post responses include `currentUserVoteType` with values `[-1, 0, 1]` (`-1`: downvoted, `0`: no vote, `1`: upvoted). Post UI dynamically derives vote status from `currentUserVoteType`, and clicking up/down toggles colors, counts, and opposite vote cancellation identically to Facebook/Reddit reaction mechanisms.
 
 Why:
 

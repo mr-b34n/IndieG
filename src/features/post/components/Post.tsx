@@ -157,10 +157,10 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
     const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
 
-    const [isLiked, setIsLiked] = useState(false);
-    const [isDownvoted, setIsDownvoted] = useState(false);
-    const [upvoteCount, setUpvoteCount] = useState(post.upvotes ?? post.likes ?? 0);
-    const [downvoteCount, setDownvoteCount] = useState(post.downvotes ?? 0);
+    const isLiked = post.currentUserVoteType === 1;
+    const isDownvoted = post.currentUserVoteType === -1;
+    const upvoteCount = post.upvotes ?? post.likes ?? 0;
+    const downvoteCount = post.downvotes ?? 0;
 
     const navigate = useNavigate();
     const voteMutation = usePostVoteInteraction(post.id);
@@ -178,30 +178,33 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
         let nextUp: number;
         let nextDown = downvoteCount;
+        let nextVoteType: number;
 
         if (isLiked) {
-            setIsLiked(false);
             nextUp = Math.max(0, upvoteCount - 1);
-            setUpvoteCount(nextUp);
+            nextVoteType = 0;
             voteMutation.mutate(null);
         } else {
-            setIsLiked(true);
             nextUp = upvoteCount + 1;
-            setUpvoteCount(nextUp);
             if (isDownvoted) {
-                setIsDownvoted(false);
                 nextDown = Math.max(0, downvoteCount - 1);
-                setDownvoteCount(nextDown);
             }
+            nextVoteType = 1;
             voteMutation.mutate(1);
         }
 
-        // Optimistically update store data immediately without refetching
-        usePostsStore.getState().updatePost(post.id, {
+        const updates = {
             upvotes: nextUp,
             downvotes: nextDown,
             likes: nextUp,
-        });
+            score: nextUp - nextDown,
+            currentUserVoteType: nextVoteType,
+        };
+
+        usePostsStore.getState().updatePost(post.id, updates);
+        if (onEdit) {
+            onEdit(post.id, updates);
+        }
     };
 
     const handleDownvote = (e: React.MouseEvent) => {
@@ -214,30 +217,33 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
         let nextUp = upvoteCount;
         let nextDown: number;
+        let nextVoteType: number;
 
         if (isDownvoted) {
-            setIsDownvoted(false);
             nextDown = Math.max(0, downvoteCount - 1);
-            setDownvoteCount(nextDown);
+            nextVoteType = 0;
             voteMutation.mutate(null);
         } else {
-            setIsDownvoted(true);
             nextDown = downvoteCount + 1;
-            setDownvoteCount(nextDown);
             if (isLiked) {
-                setIsLiked(false);
                 nextUp = Math.max(0, upvoteCount - 1);
-                setUpvoteCount(nextUp);
             }
+            nextVoteType = -1;
             voteMutation.mutate(-1);
         }
 
-        // Optimistically update store data immediately without refetching
-        usePostsStore.getState().updatePost(post.id, {
+        const updates = {
             upvotes: nextUp,
             downvotes: nextDown,
             likes: nextUp,
-        });
+            score: nextUp - nextDown,
+            currentUserVoteType: nextVoteType,
+        };
+
+        usePostsStore.getState().updatePost(post.id, updates);
+        if (onEdit) {
+            onEdit(post.id, updates);
+        }
     };
 
     const handleToggleBookmark = async (e: React.MouseEvent) => {
@@ -566,32 +572,32 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             {/* Action Row */}
             <div className="flex flex-row items-center gap-4 sm:gap-6 pt-3 mt-1 text-xs text-text-muted">
                 {/* Upvote & Downvote */}
-                <div className="flex flex-row items-center gap-3">
+                <div className="flex flex-row items-center gap-1.5 sm:gap-2">
                     <button
                         onClick={handleLike}
                         className={`
-                            flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
+                            flex flex-row items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
                             ${isLiked 
-                                ? "text-primary font-bold" 
-                                : "hover:text-text"}
+                                ? "text-primary bg-primary/10 font-bold hover:bg-primary/20" 
+                                : "text-text-muted hover:text-text hover:bg-surface-hover"}
                         `}
-                        title={isLiked ? "Đã upvote" : "Upvote"}
+                        title={isLiked ? "Bỏ upvote" : "Upvote"}
                     >
-                        <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
+                        <FontAwesomeIcon icon={faArrowUp} className={`text-xs transition-transform duration-150 ${isLiked ? "scale-110 text-primary" : ""}`} />
                         <span>{upvoteCount}</span>
                     </button>
 
                     <button
                         onClick={handleDownvote}
                         className={`
-                            flex flex-row items-center gap-1.5 font-semibold transition-colors cursor-pointer
+                            flex flex-row items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
                             ${isDownvoted 
-                                ? "text-rose-500 font-bold" 
-                                : "hover:text-text"}
+                                ? "text-rose-500 bg-rose-500/10 font-bold hover:bg-rose-500/20" 
+                                : "text-text-muted hover:text-text hover:bg-surface-hover"}
                         `}
-                        title={isDownvoted ? "Đã downvote" : "Downvote"}
+                        title={isDownvoted ? "Bỏ downvote" : "Downvote"}
                     >
-                        <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
+                        <FontAwesomeIcon icon={faArrowDown} className={`text-xs transition-transform duration-150 ${isDownvoted ? "scale-110 text-rose-500" : ""}`} />
                         <span>{downvoteCount}</span>
                     </button>
                 </div>

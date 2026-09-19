@@ -95,7 +95,8 @@ function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
         downvotes: downvotes,
         score: dto.score ?? (upvotes - downvotes),
         repostsCount: 0,
-        isLiked: false,
+        isLiked: dto.currentUserVoteType === 1,
+        currentUserVoteType: typeof dto.currentUserVoteType === "number" ? dto.currentUserVoteType : 0,
         images: dto.images && dto.images.length > 0 ? dto.images : undefined,
         tags: dto.tags || [],
     };

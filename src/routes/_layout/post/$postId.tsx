@@ -33,8 +33,15 @@ function PostDetail() {
         if (postDto && !localPost) {
             const mapped = mapPostDtoToPostData(postDto);
             addPost(mapped);
+        } else if (postDto && localPost && localPost.currentUserVoteType === undefined && typeof postDto.currentUserVoteType === "number") {
+            updatePost(postId, {
+                currentUserVoteType: postDto.currentUserVoteType,
+                upvotes: postDto.upvotes ?? postDto.likes,
+                downvotes: postDto.downvotes,
+                likes: postDto.upvotes ?? postDto.likes,
+            });
         }
-    }, [postDto, localPost, addPost]);
+    }, [postDto, localPost, addPost, updatePost, postId]);
 
     const post = useMemo(() => {
         if (localPost) return localPost;

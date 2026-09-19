@@ -31,6 +31,7 @@ export interface CommunityFeedPost {
     isLiked?: boolean;
     isReposted?: boolean;
     isBookmarked?: boolean;
+    currentUserVoteType?: number;
     images?: string[];
     pollOptions?: { id: string; label: string; votes: number }[];
     userVotedPollId?: string;
@@ -92,6 +93,7 @@ function mapFeedPostToPostData(
         commentsCount: p.repliesCount,
         pinned: p.isPinned,
         privacy: "public",
+        currentUserVoteType: p.currentUserVoteType ?? (p.isLiked ? 1 : 0),
         timeAgo: p.createdAt,
         communityId: communityId,
         communityName: communityName,

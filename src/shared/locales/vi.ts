@@ -609,7 +609,13 @@ export const vi = {
         pagination: "Trang {page} / {totalPages} (Tổng {total} kết quả)",
         prevPage: "Trang trước",
         nextPage: "Trang sau",
-        queryTooShort: "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm"
+        queryTooShort: "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm",
+        noResultsFor: "Không tìm thấy kết quả phù hợp cho \"{value}\"",
+        viewAllResultsFor: "Xem tất cả {count} kết quả cho \"{value}\"",
+        recentHistory: "Lịch sử tìm kiếm",
+        postedBy: "Đăng bởi {author}",
+        postedByIn: "Đăng bởi {author} trong {community}",
+        discussionsAndPosts: "Thảo luận & Bài viết"
     },
     profile: {
         title: "Hồ sơ cá nhân",

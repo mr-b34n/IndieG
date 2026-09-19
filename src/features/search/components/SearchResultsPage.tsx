@@ -22,6 +22,7 @@ import { useGameStore } from "@/features/game";
 import { fetchSearchResults } from "../api/searchApi";
 import { MOCK_USERS } from "../mockUsers";
 import { type SearchTabCategory, type SearchResponse, type SearchUser, normalizeTabCategory } from "../types";
+import { useSendFriendRequestMutation, useUnfriendMutation } from "@/shared/api/useQueries";
 import { formatCompactNumber } from "@/features/community/constants";
 import { Pagination } from "@/shared/components/ui/Pagination";
 
@@ -30,6 +31,8 @@ const PAGE_SIZE = 10;
 export const SearchResultsPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const sendFriendRequestMutation = useSendFriendRequestMutation();
+    const unfriendMutation = useUnfriendMutation();
     const searchParams = useSearch({ strict: false }) as {
         q?: string;
         tab?: SearchTabCategory;
@@ -213,10 +216,31 @@ export const SearchResultsPage = () => {
         });
     };
 
-    const toggleFriendStatus = (userId: string) => {
+    const toggleFriendStatus = (targetUser: SearchUser) => {
+        const nextIsFriend = !targetUser.isFriend;
+
+        // 1. Optimistically update search response data so UI updates immediately
+        setSearchData((prev) => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                users: prev.data.users.map((u) =>
+                    u.id === targetUser.id ? { ...u, isFriend: nextIsFriend } : u
+                ),
+            },
+        }));
+
+        // 2. Update local fallback list state
         setUsersList((prev) =>
-            prev.map((u) => (u.id === userId ? { ...u, isFriend: !u.isFriend } : u))
+            prev.map((u) => (u.id === targetUser.id ? { ...u, isFriend: nextIsFriend } : u))
         );
+
+        // 3. Trigger API mutation
+        if (!targetUser.isFriend) {
+            sendFriendRequestMutation.mutate({ addresseeId: targetUser.id });
+        } else {
+            unfriendMutation.mutate(targetUser.id);
+        }
     };
 
     const totalAllCount =
@@ -570,65 +594,68 @@ export const SearchResultsPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {resUsers.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        onClick={() => navigate({ to: `/profile/${user.id}` })}
-                                        className="group flex items-center justify-between p-3 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#17191C]">
-                                                <img
-                                                    src={user.avatarUrl || user.avatar}
-                                                    alt={user.name}
-                                                    referrerPolicy="no-referrer"
-                                                    className="w-full h-full object-cover"
-                                                    loading="lazy"
-                                                />
-                                                {user.isOnline && (
-                                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111315]" />
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col min-w-0">
-                                                <div className="flex items-center gap-1.5">
-                                                    <h3 className="text-xs sm:text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
-                                                        {user.name}
-                                                    </h3>
-                                                    {user.badge && (
-                                                        <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-[#1688E8]/10 text-[#1688E8]">
-                                                            {user.badge}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-[11px] text-[#656A72] truncate">
-                                                    <span>{user.username}</span>
-                                                    {user.favoriteGame && (
-                                                        <>
-                                                            <span>•</span>
-                                                            <span className="text-[#1688E8]/80 truncate">{user.favoriteGame}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleFriendStatus(user.id);
-                                            }}
-                                            className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                                user.isFriend
-                                                    ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
-                                                    : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
-                                            }`}
+                                {resUsers.map((user) => {
+                                    const profileParam = user.username ? user.username.replace(/^@/, '') : user.id;
+                                    return (
+                                        <div
+                                            key={user.id}
+                                            onClick={() => navigate({ to: "/profile/$userId", params: { userId: profileParam } })}
+                                            className="group flex items-center justify-between p-3 rounded-xl bg-[#111315] hover:bg-[#151719] transition-all cursor-pointer"
                                         >
-                                            <FontAwesomeIcon icon={user.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
-                                            <span className="hidden sm:inline">{user.isFriend ? t("search.friend", { defaultValue: "Bạn bè" }) : t("search.addFriend", { defaultValue: "Kết bạn" })}</span>
-                                        </button>
-                                    </div>
-                                ))}
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#17191C]">
+                                                    <img
+                                                        src={user.avatarUrl || user.avatar}
+                                                        alt={user.name}
+                                                        referrerPolicy="no-referrer"
+                                                        className="w-full h-full object-cover"
+                                                        loading="lazy"
+                                                    />
+                                                    {user.isOnline && (
+                                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111315]" />
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <h3 className="text-xs sm:text-sm font-bold text-[#ECEDEF] group-hover:text-[#1688E8] transition-colors truncate">
+                                                            {user.name}
+                                                        </h3>
+                                                        {user.badge && (
+                                                            <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-[#1688E8]/10 text-[#1688E8]">
+                                                                {user.badge}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[11px] text-[#656A72] truncate">
+                                                        <span>{user.username}</span>
+                                                        {user.favoriteGame && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span className="text-[#1688E8]/80 truncate">{user.favoriteGame}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleFriendStatus(user);
+                                                }}
+                                                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                    user.isFriend
+                                                        ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
+                                                        : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
+                                                }`}
+                                            >
+                                                <FontAwesomeIcon icon={user.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
+                                                <span className="hidden sm:inline">{user.isFriend ? t("search.friend", { defaultValue: "Bạn bè" }) : t("search.addFriend", { defaultValue: "Kết bạn" })}</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             {/* View All users link (Rule: Only if count > 4 in all mode) */}
