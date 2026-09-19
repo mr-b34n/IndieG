@@ -4,8 +4,8 @@ import {
     faComment,
 } from "@fortawesome/free-regular-svg-icons";
 import {
-    faArrowUp,
-    faArrowDown,
+    faCaretUp,
+    faCaretDown,
     faEye,
     faFire,
     faClock,
@@ -170,38 +170,39 @@ export const CommunityHubDiscussions = ({
                                 {/* Engagement & Meta Row */}
                                 <div className="flex items-center justify-between text-xs text-text-muted pl-11">
                                     <div className="flex items-center gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => handleLikeToggle(e, thread.id, thread.likesCount)}
-                                            className={`flex items-center gap-1.5 transition-colors cursor-pointer text-xs font-semibold ${
-                                                likesState.liked
-                                                    ? "text-primary font-bold"
-                                                    : "text-text-muted hover:text-primary"
-                                            }`}
-                                            title="Upvote"
-                                        >
-                                            <FontAwesomeIcon
-                                                icon={faArrowUp}
-                                                className="text-[11px]"
-                                            />
-                                            <span className="font-mono text-[11px]">{likesState.count}</span>
-                                        </button>
+                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-hover/30 border border-border/30">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleLikeToggle(e, thread.id, thread.likesCount)}
+                                                className={`p-0.5 transition-colors cursor-pointer text-xs ${
+                                                    likesState.liked
+                                                        ? "text-primary font-bold scale-110"
+                                                        : "text-text-muted hover:text-primary"
+                                                }`}
+                                                title="Upvote"
+                                            >
+                                                <FontAwesomeIcon icon={faCaretUp} className="text-sm" />
+                                            </button>
 
-                                        <button
-                                            type="button"
-                                            onClick={(e) => handleDownvoteToggle(e, thread.id, thread.likesCount)}
-                                            className={`flex items-center transition-colors cursor-pointer text-xs font-semibold ${
-                                                localDownvotes[thread.id]
-                                                    ? "text-rose-500 font-bold"
-                                                    : "text-text-muted hover:text-rose-500"
-                                            }`}
-                                            title="Downvote"
-                                        >
-                                            <FontAwesomeIcon
-                                                icon={faArrowDown}
-                                                className="text-[11px]"
-                                            />
-                                        </button>
+                                            <span className={`font-mono text-[11px] font-bold px-1 min-w-[1rem] text-center ${
+                                                likesState.liked ? "text-primary" : localDownvotes[thread.id] ? "text-rose-500" : "text-text-muted"
+                                            }`}>
+                                                {likesState.count - (localDownvotes[thread.id] ? 1 : 0)}
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleDownvoteToggle(e, thread.id, thread.likesCount)}
+                                                className={`p-0.5 transition-colors cursor-pointer text-xs ${
+                                                    localDownvotes[thread.id]
+                                                        ? "text-rose-500 font-bold scale-110"
+                                                        : "text-text-muted hover:text-rose-500"
+                                                }`}
+                                                title="Downvote"
+                                            >
+                                                <FontAwesomeIcon icon={faCaretDown} className="text-sm" />
+                                            </button>
+                                        </div>
 
                                         <div className="flex items-center gap-1.5 text-text-muted hover:text-text text-xs">
                                             <FontAwesomeIcon icon={faComment} className="text-[11px]" />

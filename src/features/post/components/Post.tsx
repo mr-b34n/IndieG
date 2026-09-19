@@ -5,8 +5,8 @@ import {
 } from "@fortawesome/free-regular-svg-icons"
 import {
     faBookmark as faBookmarkSolid,
-    faArrowUp,
-    faArrowDown,
+    faCaretUp,
+    faCaretDown,
     faShare,
     faEllipsis,
     faEyeSlash,
@@ -157,10 +157,28 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
     const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
 
-    const isLiked = post.currentUserVoteType === 1;
-    const isDownvoted = post.currentUserVoteType === -1;
-    const upvoteCount = post.upvotes ?? post.likes ?? 0;
-    const downvoteCount = post.downvotes ?? 0;
+    const [localVoteOverride, setLocalVoteOverride] = useState<{
+        postId: string | number;
+        voteType: number;
+        upvotes: number;
+        downvotes: number;
+    } | null>(null);
+
+    const currentVoteType = (localVoteOverride && String(localVoteOverride.postId) === String(post.id))
+        ? localVoteOverride.voteType
+        : (post.currentUserVoteType ?? 0);
+
+    const upvoteCount = (localVoteOverride && String(localVoteOverride.postId) === String(post.id))
+        ? localVoteOverride.upvotes
+        : (post.upvotes ?? post.likes ?? 0);
+
+    const downvoteCount = (localVoteOverride && String(localVoteOverride.postId) === String(post.id))
+        ? localVoteOverride.downvotes
+        : (post.downvotes ?? 0);
+
+    const isLiked = currentVoteType === 1;
+    const isDownvoted = currentVoteType === -1;
+    const score = upvoteCount - downvoteCount;
 
     const navigate = useNavigate();
     const voteMutation = usePostVoteInteraction(post.id);
@@ -192,6 +210,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             nextVoteType = 1;
             voteMutation.mutate(1);
         }
+
+        setLocalVoteOverride({
+            postId: post.id,
+            voteType: nextVoteType,
+            upvotes: nextUp,
+            downvotes: nextDown,
+        });
 
         const updates = {
             upvotes: nextUp,
@@ -231,6 +256,13 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
             nextVoteType = -1;
             voteMutation.mutate(-1);
         }
+
+        setLocalVoteOverride({
+            postId: post.id,
+            voteType: nextVoteType,
+            upvotes: nextUp,
+            downvotes: nextDown,
+        });
 
         const updates = {
             upvotes: nextUp,
@@ -571,34 +603,36 @@ export const Post = ({ post, isOwner = false, onDelete, onEdit, isDetailView = f
 
             {/* Action Row */}
             <div className="flex flex-row items-center gap-4 sm:gap-6 pt-3 mt-1 text-xs text-text-muted">
-                {/* Upvote & Downvote */}
-                <div className="flex flex-row items-center gap-1.5 sm:gap-2">
+                {/* Upvote & Downvote (Product Hunt Style) */}
+                <div className="flex flex-row items-center gap-1 px-2 py-1 rounded-lg bg-surface-hover/30 border border-border/30 hover:border-border/60 transition-colors">
                     <button
                         onClick={handleLike}
-                        className={`
-                            flex flex-row items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
-                            ${isLiked 
-                                ? "text-primary bg-primary/10 font-bold hover:bg-primary/20" 
-                                : "text-text-muted hover:text-text hover:bg-surface-hover"}
-                        `}
+                        className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                            isLiked 
+                                ? "text-primary scale-110" 
+                                : "text-text-muted hover:text-text hover:bg-surface-hover/50"
+                        }`}
                         title={isLiked ? "Bỏ upvote" : "Upvote"}
                     >
-                        <FontAwesomeIcon icon={faArrowUp} className={`text-xs transition-transform duration-150 ${isLiked ? "scale-110 text-primary" : ""}`} />
-                        <span>{upvoteCount}</span>
+                        <FontAwesomeIcon icon={faCaretUp} className="text-sm sm:text-base" />
                     </button>
+
+                    <span className={`text-xs font-bold px-1 min-w-[1.25rem] text-center select-none transition-colors ${
+                        isLiked ? "text-primary font-extrabold" : isDownvoted ? "text-rose-500 font-extrabold" : "text-text-muted"
+                    }`}>
+                        {score}
+                    </span>
 
                     <button
                         onClick={handleDownvote}
-                        className={`
-                            flex flex-row items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer
-                            ${isDownvoted 
-                                ? "text-rose-500 bg-rose-500/10 font-bold hover:bg-rose-500/20" 
-                                : "text-text-muted hover:text-text hover:bg-surface-hover"}
-                        `}
+                        className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                            isDownvoted 
+                                ? "text-rose-500 scale-110" 
+                                : "text-text-muted hover:text-text hover:bg-surface-hover/50"
+                        }`}
                         title={isDownvoted ? "Bỏ downvote" : "Downvote"}
                     >
-                        <FontAwesomeIcon icon={faArrowDown} className={`text-xs transition-transform duration-150 ${isDownvoted ? "scale-110 text-rose-500" : ""}`} />
-                        <span>{downvoteCount}</span>
+                        <FontAwesomeIcon icon={faCaretDown} className="text-sm sm:text-base" />
                     </button>
                 </div>
 

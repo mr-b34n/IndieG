@@ -10,8 +10,8 @@ import {
     faPlus,
     faChevronRight,
     faArrowLeft,
-    faArrowUp,
-    faArrowDown,
+    faCaretUp,
+    faCaretDown,
     faComment,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -738,15 +738,12 @@ export const SearchResultsPage = () => {
                                             </p>
 
                                             <div className="flex items-center gap-4 pt-2 mt-1 text-xs text-[#656A72] font-medium">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="flex items-center gap-1.5 hover:text-[#1688E8] transition-colors">
-                                                        <FontAwesomeIcon icon={faArrowUp} className="text-[11px]" />
-                                                        <span>{post.upvotes ?? post.likes ?? 0}</span>
+                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#17191C] border border-[#26282C]">
+                                                    <FontAwesomeIcon icon={faCaretUp} className="text-xs text-[#979BA2]" />
+                                                    <span className="text-[11px] font-bold text-[#ECEDEF] min-w-[1rem] text-center">
+                                                        {(post.upvotes ?? post.likes ?? 0) - (post.downvotes ?? 0)}
                                                     </span>
-                                                    <span className="flex items-center gap-1.5 hover:text-rose-400 transition-colors">
-                                                        <FontAwesomeIcon icon={faArrowDown} className="text-[11px]" />
-                                                        <span>{post.downvotes ?? 0}</span>
-                                                    </span>
+                                                    <FontAwesomeIcon icon={faCaretDown} className="text-xs text-[#979BA2]" />
                                                 </div>
                                                 <span className="flex items-center gap-1.5 hover:text-[#1688E8] transition-colors">
                                                     <FontAwesomeIcon icon={faComment} className="text-[11px]" />

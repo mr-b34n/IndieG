@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faArrowDown, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faCaretUp, faCaretDown, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -567,23 +567,29 @@ const CommentItem = ({
 
                     {/* Actions */}
                     <div className="flex flex-row items-center gap-4 mt-1 text-xs font-medium text-text-faint">
-                        <button 
-                            onClick={toggleLike} 
-                            className={`flex flex-row items-center gap-1.5 hover:text-primary transition-colors ${liked ? "text-primary font-bold" : ""}`}
-                            title={liked ? "Đã upvote" : "Upvote"}
-                        >
-                            <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
-                            <span>{likeCount > 0 ? likeCount : ""}</span>
-                        </button>
+                        <div className="flex flex-row items-center gap-0.5 px-1.5 py-0.5 rounded bg-surface-hover/20 border border-border/20">
+                            <button 
+                                onClick={toggleLike} 
+                                className={`p-0.5 hover:text-primary transition-colors ${liked ? "text-primary font-bold scale-110" : ""}`}
+                                title={liked ? "Đã upvote" : "Upvote"}
+                            >
+                                <FontAwesomeIcon icon={faCaretUp} className="text-xs sm:text-sm" />
+                            </button>
 
-                        <button 
-                            onClick={toggleDownvote} 
-                            className={`flex flex-row items-center gap-1.5 hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold" : ""}`}
-                            title={downvoted ? "Đã downvote" : "Downvote"}
-                        >
-                            <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
-                            <span>{downvoteCount > 0 ? downvoteCount : ""}</span>
-                        </button>
+                            <span className={`text-[11px] font-bold px-1 min-w-[1rem] text-center select-none ${
+                                liked ? "text-primary" : downvoted ? "text-rose-500" : "text-text-muted"
+                            }`}>
+                                {likeCount - downvoteCount}
+                            </span>
+
+                            <button 
+                                onClick={toggleDownvote} 
+                                className={`p-0.5 hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold scale-110" : ""}`}
+                                title={downvoted ? "Đã downvote" : "Downvote"}
+                            >
+                                <FontAwesomeIcon icon={faCaretDown} className="text-xs sm:text-sm" />
+                            </button>
+                        </div>
 
                         {isCommentsAllowed && (
                             <button 
