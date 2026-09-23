@@ -202,15 +202,6 @@ export const CommunityHubRightRail = ({
                         <span>{isVi ? "Thành viên" : "Members"}</span>
                         <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                     </button>
-
-                    <button
-                        type="button"
-                        onClick={() => onNavigateNav("leaderboard")}
-                        className="flex items-center justify-between text-text-muted hover:text-primary transition-colors cursor-pointer py-0.5 text-left"
-                    >
-                        <span>{isVi ? "Bảng xếp hạng" : "Leaderboard"}</span>
-                        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                    </button>
                 </div>
             </div>
 

@@ -761,7 +761,7 @@ export function CommunityDetailPage() {
                             userRole={userRole}
                             isVi={isVi}
                         />
-                    ) : activeNav === "members" || activeNav === "leaderboard" ? (
+                    ) : activeNav === "members" ? (
                         <CommunityHubMembers
                             communityId={community.id}
                             communityName={community.name}

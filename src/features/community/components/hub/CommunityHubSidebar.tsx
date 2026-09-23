@@ -11,7 +11,6 @@ import {
     faChevronRight,
     faChevronDown,
     faUsers,
-    faTrophy,
     faFileLines,
     faLink,
     faShieldHalved,
@@ -59,7 +58,6 @@ export const CommunityHubSidebar = ({
     // Secondary items hidden under "More"
     const moreNavItems = [
         { id: "members", labelVi: "Thành viên", labelEn: "Members", icon: faUsers },
-        { id: "leaderboard", labelVi: "Bảng xếp hạng", labelEn: "Leaderboard", icon: faTrophy },
         { id: "wiki", labelVi: "Wiki & Tài liệu", labelEn: "Wiki", icon: faFileLines },
         { id: "links", labelVi: "Liên kết cộng đồng", labelEn: "Links", icon: faLink },
         { id: "rules", labelVi: "Quy tắc cộng đồng", labelEn: "Rules", icon: faShieldHalved },

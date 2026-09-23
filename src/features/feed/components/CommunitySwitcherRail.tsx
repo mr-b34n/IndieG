@@ -1,15 +1,15 @@
 import { useState, useMemo } from "react";
 import { type CommunityData } from "@/features/community";
 import { CommunityDrawerModal } from "./CommunityDrawerModal";
-import { FeedSortDropdown, type FeedSortOption } from "./FeedSortDropdown";
+import { type FeedSortOption } from "./FeedSortDropdown";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface CommunitySwitcherRailProps {
     joinedCommunities: CommunityData[];
     activeCommunityId: string | null;
     onSelectCommunity: (id: string | null) => void;
-    sortOrder: FeedSortOption;
-    onSortChange: (sort: FeedSortOption) => void;
+    sortOrder?: FeedSortOption;
+    onSortChange?: (sort: FeedSortOption) => void;
 }
 
 const MAX_VISIBLE_COMMUNITIES = 3;
@@ -18,8 +18,6 @@ export const CommunitySwitcherRail = ({
     joinedCommunities,
     activeCommunityId,
     onSelectCommunity,
-    sortOrder,
-    onSortChange,
 }: CommunitySwitcherRailProps) => {
     const { t } = useTranslation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -134,14 +132,6 @@ export const CommunitySwitcherRail = ({
                             <span>{t('feed.moreCommunities', { count: hiddenCount, defaultValue: `+${hiddenCount} more` })}</span>
                         </button>
                     )}
-                </div>
-
-                {/* Sort Dropdown on the right */}
-                <div className="shrink-0 pb-1.5">
-                    <FeedSortDropdown
-                        value={sortOrder}
-                        onChange={onSortChange}
-                    />
                 </div>
             </div>
 

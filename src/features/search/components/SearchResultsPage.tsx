@@ -5,6 +5,7 @@ import {
     faMagnifyingGlass,
     faUserCheck,
     faUserPlus,
+    faClock,
     faXmark,
     faCheck,
     faPlus,
@@ -22,7 +23,7 @@ import { useGameStore } from "@/features/game";
 import { fetchSearchResults } from "../api/searchApi";
 import { MOCK_USERS } from "../mockUsers";
 import { type SearchTabCategory, type SearchResponse, type SearchUser, normalizeTabCategory } from "../types";
-import { useSendFriendRequestMutation, useUnfriendMutation } from "@/shared/api/useQueries";
+import { useSendFriendRequestMutation, useCancelFriendRequestMutation, useUnfriendMutation } from "@/shared/api/useQueries";
 import { formatCompactNumber } from "@/features/community/constants";
 import { Pagination } from "@/shared/components/ui/Pagination";
 
@@ -32,6 +33,7 @@ export const SearchResultsPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const sendFriendRequestMutation = useSendFriendRequestMutation();
+    const cancelFriendRequestMutation = useCancelFriendRequestMutation();
     const unfriendMutation = useUnfriendMutation();
     const searchParams = useSearch({ strict: false }) as {
         q?: string;
@@ -217,7 +219,20 @@ export const SearchResultsPage = () => {
     };
 
     const toggleFriendStatus = (targetUser: SearchUser) => {
-        const nextIsFriend = !targetUser.isFriend;
+        const isFriend = Boolean(targetUser.isFriend);
+        const isPending = Boolean(targetUser.isPending);
+
+        const nextIsFriend = false;
+        let nextIsPending = false;
+
+        if (isFriend) {
+            unfriendMutation.mutate(targetUser.id);
+        } else if (isPending) {
+            cancelFriendRequestMutation.mutate(targetUser.id);
+        } else {
+            nextIsPending = true;
+            sendFriendRequestMutation.mutate({ addresseeId: targetUser.id });
+        }
 
         // 1. Optimistically update search response data so UI updates immediately
         setSearchData((prev) => ({
@@ -225,22 +240,15 @@ export const SearchResultsPage = () => {
             data: {
                 ...prev.data,
                 users: prev.data.users.map((u) =>
-                    u.id === targetUser.id ? { ...u, isFriend: nextIsFriend } : u
+                    u.id === targetUser.id ? { ...u, isFriend: nextIsFriend, isPending: nextIsPending } : u
                 ),
             },
         }));
 
         // 2. Update local fallback list state
         setUsersList((prev) =>
-            prev.map((u) => (u.id === targetUser.id ? { ...u, isFriend: nextIsFriend } : u))
+            prev.map((u) => (u.id === targetUser.id ? { ...u, isFriend: nextIsFriend, isPending: nextIsPending } : u))
         );
-
-        // 3. Trigger API mutation
-        if (!targetUser.isFriend) {
-            sendFriendRequestMutation.mutate({ addresseeId: targetUser.id });
-        } else {
-            unfriendMutation.mutate(targetUser.id);
-        }
     };
 
     const totalAllCount =
@@ -647,11 +655,19 @@ export const SearchResultsPage = () => {
                                                 className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                                                     user.isFriend
                                                         ? "bg-[#17191C] text-[#979BA2] hover:text-rose-400"
+                                                        : user.isPending
+                                                        ? "bg-[#E5A93D]/20 text-[#E5A93D] hover:bg-[#E5A93D]/30 border border-[#E5A93D]/30"
                                                         : "bg-[#1688E8] hover:bg-[#1688E8]/90 text-white"
                                                 }`}
                                             >
-                                                <FontAwesomeIcon icon={user.isFriend ? faUserCheck : faUserPlus} className="text-[10px]" />
-                                                <span className="hidden sm:inline">{user.isFriend ? t("search.friend", { defaultValue: "Bạn bè" }) : t("search.addFriend", { defaultValue: "Kết bạn" })}</span>
+                                                <FontAwesomeIcon icon={user.isFriend ? faUserCheck : user.isPending ? faClock : faUserPlus} className="text-[10px]" />
+                                                <span className="hidden sm:inline">
+                                                    {user.isFriend
+                                                        ? t("search.friend", { defaultValue: "Bạn bè" })
+                                                        : user.isPending
+                                                        ? t("search.pendingRequest", { defaultValue: "Đã gửi lời mời" })
+                                                        : t("search.addFriend", { defaultValue: "Kết bạn" })}
+                                                </span>
                                             </button>
                                         </div>
                                     );

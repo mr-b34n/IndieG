@@ -2,12 +2,10 @@ import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faSearch,
-    faTrophy,
     faUsers,
     faCrown,
     faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
-import type { ContributorItem } from "./CommunityHubRightRail";
 import { useCommunityMembersQuery, useProfilesListQuery } from "@/shared/api/useQueries";
 import { extractMemberList } from "@/shared/api";
 
@@ -25,7 +23,7 @@ interface MemberItem {
 interface CommunityHubMembersProps {
     communityId?: string;
     communityName: string;
-    contributors: ContributorItem[];
+    contributors?: ContributorItem[];
     isVi: boolean;
 }
 
@@ -57,10 +55,9 @@ interface GenericMemberObj {
 
 export const CommunityHubMembers = ({
     communityId,
-    contributors,
     isVi,
 }: CommunityHubMembersProps) => {
-    const [subTab, setSubTab] = useState<"all" | "staff" | "leaderboard">("all");
+    const [subTab, setSubTab] = useState<"all" | "staff">("all");
     const [searchQuery, setSearchQuery] = useState("");
 
     // Query API endpoint GET /communities/{communityId}/members?keyword=...
@@ -231,19 +228,6 @@ export const CommunityHubMembers = ({
                         <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
                         <span>{isVi ? "Ban quản trị" : "Staff & Mods"}</span>
                     </button>
-
-                    <button
-                        type="button"
-                        onClick={() => setSubTab("leaderboard")}
-                        className={`px-3 py-1.5 rounded-[4px] text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                            subTab === "leaderboard"
-                                ? "bg-primary text-white"
-                                : "text-text-muted hover:text-text bg-surface border border-divider-primary/60"
-                        }`}
-                    >
-                        <FontAwesomeIcon icon={faTrophy} className="text-xs text-amber-400" />
-                        <span>{isVi ? "Bảng xếp hạng" : "Leaderboard"}</span>
-                    </button>
                 </div>
 
                 {/* Search Bar */}
@@ -263,49 +247,7 @@ export const CommunityHubMembers = ({
             </div>
 
             {/* View Render */}
-            {subTab === "leaderboard" ? (
-                <div className="flex flex-col gap-3">
-                    <div className="p-4 rounded-[4px] bg-gradient-to-r from-amber-500/10 via-surface to-surface border border-amber-500/30 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-base">
-                                <FontAwesomeIcon icon={faTrophy} />
-                            </div>
-                            <div>
-                                <h3 className="font-extrabold text-sm text-text">{isVi ? "Bảng Vinh Danh Đóng Góp" : "Top Community Contributors"}</h3>
-                                <p className="text-xs text-text-muted">{isVi ? "Điểm thưởng từ việc viết guide, trả lời câu hỏi và tương tác." : "Ranked by helpful replies, guides written and community impact."}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col divide-y divide-divider-primary/40">
-                        {contributors.map((c, idx) => (
-                            <div key={c.id} className="py-3 px-2 flex items-center justify-between hover:bg-surface-hover/30 rounded-[4px] transition-colors">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <span className={`w-6 text-center font-mono font-black text-sm ${
-                                        idx === 0 ? "text-amber-400" : idx === 1 ? "text-slate-300" : idx === 2 ? "text-amber-600" : "text-text-faint"
-                                    }`}>
-                                        #{idx + 1}
-                                    </span>
-                                    <img
-                                        src={c.avatar}
-                                        alt={c.name}
-                                        className="w-9 h-9 rounded-full object-cover border border-divider-primary shrink-0"
-                                    />
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-xs text-text truncate">{c.name}</span>
-                                        <span className="text-[11px] font-mono text-text-muted">{c.handle}</span>
-                                    </div>
-                                </div>
-
-                                <span className="font-mono text-xs font-bold text-primary">
-                                    {c.points} pts
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            ) : (
-                filteredMembers.length === 0 ? (
+            {filteredMembers.length === 0 ? (
                     <div className="w-full py-12 flex flex-col items-center justify-center text-center p-6 bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
                         <span className="text-xs text-text-muted">
                             {isVi ? "Không tìm thấy thành viên phù hợp." : "No community members found."}
@@ -350,8 +292,7 @@ export const CommunityHubMembers = ({
                             </div>
                         ))}
                     </div>
-                )
-            )}
+                )}
         </div>
     );
 };

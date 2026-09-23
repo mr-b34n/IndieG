@@ -512,8 +512,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         }) || null;
     }, [isOwnProfile, blockedUsersList, targetUserId, targetUserHandle, targetUserName]);
 
+    const [localPendingSent, setLocalPendingSent] = useState(false);
+
     const isFriend = !!currentFriendEntry;
-    const isPendingOutgoing = !!outgoingRequestEntry;
+    const isPendingOutgoing = !!outgoingRequestEntry || localPendingSent;
     const isPendingIncoming = !!incomingRequestEntry;
     const isBlocked = !!blockedEntry;
 
@@ -528,10 +530,12 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const handleAddFriend = async (friendTarget?: FriendEntry | string) => {
         const targetId = typeof friendTarget === "object" ? (friendTarget.userId || friendTarget.id) : (targetUserId || (typeof friendTarget === "string" ? friendTarget : ""));
         if (!targetId) return;
+        setLocalPendingSent(true);
         try {
             await sendFriendRequestMutation.mutateAsync({ addresseeId: targetId });
             triggerToast();
         } catch (e) {
+            setLocalPendingSent(false);
             console.error("Failed to send friend request:", e);
         }
     };
@@ -577,6 +581,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleCancelOutgoingRequest = async (id?: string) => {
         const reqId = id || outgoingRequestEntry?.id;
+        setLocalPendingSent(false);
         if (!reqId) return;
         try {
             await cancelFriendRequestMutation.mutateAsync(reqId);
