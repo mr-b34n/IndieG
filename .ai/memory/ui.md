@@ -280,6 +280,29 @@ Decision:
 2. **Posts Section Label & Voting**: Posts section is labeled "Posts" ("Bài viết" in Vietnamese). Post cards display Reddit-style upvote (`faArrowUp`), downvote (`faArrowDown`), and comments count (`faComment`) instead of like hearts.
 3. **Count Localization**: Category titles (e.g. `Users`) never hardcode `{count}` in the title text; count values are rendered cleanly in view-all controls and tabs with full EN/VI translations.
 
+---
+
+## Decision: Pure Black Background & Ambient Gradient Removal
+
+Status: Active
+
+Date: 2026-09-24
+
+Decision:
+
+The application background theme uses pure solid black (`#000000`), and all ambient background gradient blur blobs across `_layout.tsx` and `auth.tsx` are removed.
+
+Why:
+
+Eliminates gradient glare and color bleed, providing a true pitch-black, distraction-free environment for gaming content and OLED screens.
+
+Implications:
+
+- `--color-bg: #000000;` in `App.css` and `body { background-color: #000000; }`.
+- Header background aligns to pure black (`bg-black`).
+- No ambient colored blur/gradient blobs placed on background wrappers.
+
+
 
 
 

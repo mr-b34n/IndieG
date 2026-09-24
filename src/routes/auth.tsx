@@ -412,13 +412,6 @@ const AuthPage = () => {
 
     return (
         <div className="relative min-h-screen w-full bg-bg text-text flex flex-col justify-between overflow-x-hidden selection:bg-primary/20 selection:text-primary">
-            {/* Ambient Background Glows */}
-            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
-                <div className="absolute -top-40 -left-40 w-160 h-160 bg-primary/20 dark:bg-primary/25 rounded-full blur-[140px]" />
-                <div className="absolute top-1/2 -right-40 w-160 h-160 bg-accent-500/15 dark:bg-accent-500/20 rounded-full blur-[140px]" />
-                <div className="absolute -bottom-40 left-1/3 w-140 h-140 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-[120px]" />
-            </div>
-
             {/* Top Navigation Header */}
             <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between">
                 {/* Brand Logo */}

@@ -70,7 +70,7 @@ export const Header = () => {
     };
 
     return (
-        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-[#090A0B] border-b border-[#1C1F22] select-none">
+        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-black border-b border-[#1C1F22] select-none">
 
             {/* LEFT: Logo & Mobile Toggle */}
             <div className="flex items-center gap-3 shrink-0">

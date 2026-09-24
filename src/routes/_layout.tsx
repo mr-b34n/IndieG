@@ -90,12 +90,6 @@ function MainLayout() {
 
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
-            {/* Background */}
-            <div className="absolute inset-0 pointer-events-none select-none">
-                <div className="absolute -top-32 -left-32 w-125 h-125 bg-primary/10 dark:bg-primary/15 rounded-full blur-[100px]" />
-                <div className="absolute -bottom-32 -right-32 w-125 h-125 bg-accent-500/8 dark:bg-accent-500/12 rounded-full blur-[100px]" />
-            </div>
-
             <Header />
             <UnverifiedBanner />
 
