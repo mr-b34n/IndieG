@@ -25,6 +25,12 @@ export interface AuthResendVerificationDto {
     email: string;
 }
 
+export interface AuthGoogleLoginDto {
+    idToken?: string;
+    credential?: string;
+    accessToken?: string;
+}
+
 export interface AuthLoginResponse {
     accessToken?: string;
     token?: string;
@@ -176,6 +182,21 @@ export interface CommunityMembersResponseDto {
     total?: number;
     page?: number;
     limit?: number;
+}
+
+export interface CommunityInviteDto {
+    id: string;
+    communityId: string;
+    userId?: string;
+    email?: string;
+    status: "pending" | "accepted" | "declined" | "expired";
+    invitedBy?: string;
+    createdAt: string;
+}
+
+export interface CreateCommunityInviteDto {
+    userId?: string;
+    email?: string;
 }
 
 export interface PostDto {
@@ -331,7 +352,11 @@ export interface ReportDto {
 }
 
 export interface CreateReportDto {
-    postId: string;
+    postId?: string;
+    commentId?: string;
+    userId?: string;
+    targetId?: string;
+    type?: "post" | "comment" | "user" | string;
     reason: string;
 }
 
@@ -369,6 +394,17 @@ export type VoteType = 1 | -1;
 
 export interface VotePostDto {
     voteType: VoteType;
+}
+
+export interface VoteCommentDto {
+    voteType: VoteType;
+}
+
+export interface PostActionResponse {
+    message?: string;
+    success?: boolean;
+    pinned?: boolean;
+    locked?: boolean;
 }
 
 export interface VoteDto {
@@ -556,6 +592,12 @@ export interface CreateGamePatchNoteDto {
     postId?: number;
 }
 
+export interface SteamSyncResponse {
+    success?: boolean;
+    message?: string;
+    game?: GameDto;
+}
+
 export interface UpdateGamePatchNoteDto {
     version?: string;
     title?: string;
@@ -735,6 +777,10 @@ export interface CreateGuestbookCommentDto {
     content: string;
 }
 
+export interface UpdateGuestbookCommentDto {
+    content: string;
+}
+
 // -------------------------------------------------------------
 // Bookmarks DTOs
 // -------------------------------------------------------------
@@ -821,6 +867,38 @@ export interface FriendshipDto {
 
 export interface CreateFriendshipRequestDto {
     addresseeId: string;
+}
+
+export interface FriendshipStatusDto {
+    status: "none" | "pending_incoming" | "pending_outgoing" | "accepted" | "friends" | "blocked";
+    friendshipId?: string;
+}
+
+// -------------------------------------------------------------
+// Notifications DTOs (/notifications/*)
+// -------------------------------------------------------------
+export interface NotificationDto {
+    id: string;
+    userId: string;
+    type: "comment" | "reply" | "like" | "community" | "mention" | "system" | "friend_request" | "friend_accepted";
+    referenceId?: string;
+    title?: string;
+    message: string;
+    avatarUrl?: string;
+    link?: string;
+    read?: boolean;
+    isRead?: boolean;
+    createdAt: string;
+}
+
+export interface CreateNotificationDto {
+    userId?: string;
+    type: "comment" | "reply" | "like" | "community" | "mention" | "system" | "friend_request" | "friend_accepted";
+    referenceId?: string;
+    title?: string;
+    message: string;
+    avatarUrl?: string;
+    link?: string;
 }
 
 // -------------------------------------------------------------

@@ -180,5 +180,28 @@ Why:
 
 Prevents aggressive network refetches, eliminates UI flickering, saves API rate limits and bandwidth, and provides a snappy Messenger-like user experience.
 
+---
+
+## Decision: Comprehensive 8-Domain API Synchronization
+
+Status: Active
+
+Date: 2026-09-26
+
+Decision:
+
+Complete coverage for all 8 backend API modules (Auth, Users & Profiles, Communities & Members, Content, Games & Guides/Reviews/Patch Notes, Search, Social, and Storage) is centralized in `src/shared/api/index.ts` with strongly-typed DTOs in `src/shared/api/types.ts` and TanStack React Query hooks in `src/shared/api/useQueries.ts`:
+- **Auth**: Added `me` (`GET /auth/me`) and `googleLogin` (`POST /auth/google`).
+- **Users & Profiles**: Added `usersApi.getById`, `revokeAllSessions`, `deleteAccount`, and `profilesApi.getById`, `search`.
+- **Communities & Members**: Added `getBySlug`, `getFeatured`, `getMyCommunities`, `kickMember`, `getBannedMembers`, `getMutedMembers`, `sendInvite`, and `getInvites`.
+- **Content**: Added `postsApi.getFeed`, `getByCommunity`, `getByAuthor`, `pinPost`, `unpinPost`, `lockPost`, `unlockPost`, `getPostVoters`; `commentsApi.getReplies`, `pinComment`, `unpinComment`, `getPostComments`; `reportsApi.resolve`, `dismiss`, `reportPost`, `reportComment`, `reportUser`; `votesApi.voteComment`, `upVoteComment`, `downVoteComment`.
+- **Games**: Added `gamesApi.getFeatured`, `getPopular`, `getRecent`, `syncSteam`; `gameGuidesApi.unlike`, `recordView`; `gameReviewsApi.unlike`, `getMyReview`; `gamePatchNotesApi.getLatest`.
+- **Social**: Added `guestbookCommentsApi.update`, `like`; `bookmarksApi.deleteById`, `getMyBookmarks`; `libraryGamesApi.getMyLibrary`, `getById`; `friendshipsApi.rejectRequest`, `checkStatus`, `unblockUser`; and centralized `notificationsApi` (getAll, create, markAsRead, markAllAsRead, delete, getUnreadCount).
+- **Storage**: Added `storageApi.deleteFile` and `confirmUpload`.
+
+Why:
+
+Guarantees complete frontend-to-backend alignment with zero missing endpoints, preventing unhandled 404/405 errors and enabling robust type safety across all application features.
+
 
 

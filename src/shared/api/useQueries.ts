@@ -18,10 +18,12 @@ import {
     libraryGamesApi,
     friendshipsApi,
     searchApi,
+    notificationsApi,
 } from "./index";
 import type {
     CreateCommunityDto,
     UpdateCommunityDto,
+    CreateCommunityInviteDto,
     GetCommunityMembersParams,
     SearchCommunityMembersParams,
     CommunityMemberActionDto,
@@ -44,6 +46,7 @@ import type {
     UpdateGamePatchNoteDto,
     GetGamePatchNotesParams,
     CreateGuestbookCommentDto,
+    UpdateGuestbookCommentDto,
     CreateBookmarkDto,
     GetBookmarksParams,
     CheckBookmarkParams,
@@ -51,6 +54,7 @@ import type {
     CreateLibraryGameDto,
     UpdateLibraryGameDto,
     CreateFriendshipRequestDto,
+    CreateNotificationDto,
     SearchParams,
     VoteType,
 } from "./types";
@@ -67,6 +71,7 @@ export const QUERY_KEYS = {
 
     // Posts
     posts: (params?: Record<string, unknown>) => ["posts", params || {}] as const,
+    postsFeed: (params?: Record<string, unknown>) => ["posts", "feed", params || {}] as const,
     postById: (id: string) => ["posts", "detail", id] as const,
 
     // Communities
@@ -74,6 +79,9 @@ export const QUERY_KEYS = {
     communityById: (id: string) => ["communities", "detail", id] as const,
     communitySearch: (params?: Record<string, unknown>) => ["communities", "search", params || {}] as const,
     communityMembers: (communityId: string, params?: Record<string, unknown>) => ["communities", communityId, "members", params || {}] as const,
+    communityBannedMembers: (communityId: string, params?: Record<string, unknown>) => ["communities", communityId, "members", "banned", params || {}] as const,
+    communityMutedMembers: (communityId: string, params?: Record<string, unknown>) => ["communities", communityId, "members", "muted", params || {}] as const,
+    communityInvites: (communityId: string) => ["communities", communityId, "invites"] as const,
     communityMemberMe: (communityId: string) => ["communities", communityId, "members", "me"] as const,
     communityMembersSearch: (communityId: string, keyword: string, params?: Record<string, unknown>) =>
         ["communities", communityId, "members", "search", keyword, params || {}] as const,
@@ -103,10 +111,12 @@ export const QUERY_KEYS = {
     // Game Reviews
     gameReviews: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "reviews", params || {}] as const,
     gameReviewById: (appid: number | string, id: string) => ["games", String(appid), "reviews", "detail", id] as const,
+    gameReviewMe: (appid: number | string) => ["games", String(appid), "reviews", "me"] as const,
 
     // Game Patch Notes
     gamePatchNotes: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "patch-notes", params || {}] as const,
     gamePatchNoteById: (appid: number | string, id: string) => ["games", String(appid), "patch-notes", "detail", id] as const,
+    gamePatchNoteLatest: (appid: number | string) => ["games", String(appid), "patch-notes", "latest"] as const,
 
     // Guestbook
     guestbookComments: (profileId: string) => ["guestbook", profileId] as const,
@@ -117,12 +127,18 @@ export const QUERY_KEYS = {
 
     // Library Games
     libraryGames: (userId: string) => ["library-games", userId] as const,
+    myLibraryGames: ["library-games", "me"] as const,
 
     // Friendships
     friends: ["friendships", "friends"] as const,
     friendRequestsIncoming: ["friendships", "requests", "incoming"] as const,
     friendRequestsOutgoing: ["friendships", "requests", "outgoing"] as const,
     friendshipsBlocked: ["friendships", "blocked"] as const,
+    friendshipStatus: (targetUserId: string) => ["friendships", "status", targetUserId] as const,
+
+    // Notifications
+    notifications: (params?: Record<string, unknown>) => ["notifications", params || {}] as const,
+    notificationsUnreadCount: ["notifications", "unread-count"] as const,
 
     // Search
     search: (params: SearchParams) => ["search", params] as const,
@@ -922,6 +938,17 @@ export function useDeleteGuestbookCommentMutation() {
     });
 }
 
+export function useUpdateGuestbookCommentMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ profileId, id, data }: { profileId: string; id: string; data: UpdateGuestbookCommentDto }) =>
+            guestbookCommentsApi.update(profileId, id, data),
+        onSuccess: (_data, { profileId }) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.guestbookComments(profileId) });
+        },
+    });
+}
+
 // -------------------------------------------------------------
 // 11. Hooks for Bookmarks
 // -------------------------------------------------------------
@@ -1130,6 +1157,220 @@ export function useSearchQuery(params: SearchParams, options?: { enabled?: boole
     });
 }
 
+// -------------------------------------------------------------
+// 11. Extended Hooks for Posts Feed, Pin, Lock & Voters
+// -------------------------------------------------------------
+export function usePostsFeedQuery(params?: { page?: number; limit?: number; filter?: string }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.postsFeed(params),
+        queryFn: () => postsApi.getFeed(params),
+    });
+}
+
+export function usePinPostMutation(postId: string | number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => postsApi.pinPost(postId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
+export function useLockPostMutation(postId: string | number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => postsApi.lockPost(postId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 12. Extended Community & Members Hooks
+// -------------------------------------------------------------
+export function useKickCommunityMemberMutation(communityId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (memberId: string) => communityMembersApi.kickMember(communityId, memberId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        },
+    });
+}
+
+export function useCommunityBannedMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityBannedMembers(communityId, params),
+        queryFn: () => communityMembersApi.getBannedMembers(communityId, params),
+        enabled: !!communityId,
+    });
+}
+
+export function useCommunityMutedMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityMutedMembers(communityId, params),
+        queryFn: () => communityMembersApi.getMutedMembers(communityId, params),
+        enabled: !!communityId,
+    });
+}
+
+export function useCommunityInvitesQuery(communityId: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityInvites(communityId),
+        queryFn: () => communityMembersApi.getInvites(communityId),
+        enabled: !!communityId,
+    });
+}
+
+export function useSendCommunityInviteMutation(communityId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreateCommunityInviteDto) => communityMembersApi.sendInvite(communityId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityInvites(communityId) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 13. Extended Friendship Hooks
+// -------------------------------------------------------------
+export function useRejectFriendRequestMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (requestId: string) => friendshipsApi.rejectRequest(requestId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendRequestsIncoming });
+        },
+    });
+}
+
+export function useFriendshipStatusQuery(targetUserId: string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.friendshipStatus(targetUserId),
+        queryFn: () => friendshipsApi.checkStatus(targetUserId),
+        enabled: (options?.enabled ?? true) && !!targetUserId,
+    });
+}
+
+export function useUnblockTargetUserMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (targetUserId: string) => friendshipsApi.unblockUser(targetUserId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.friendshipsBlocked });
+            queryClient.invalidateQueries({ queryKey: ["friendships"] });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 14. Extended Games & Reviews Hooks
+// -------------------------------------------------------------
+export function useMyGameReviewQuery(appid: number | string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gameReviewMe(appid),
+        queryFn: () => gameReviewsApi.getMyReview(appid),
+        enabled: (options?.enabled ?? true) && !!appid,
+    });
+}
+
+export function useLatestGamePatchNoteQuery(appid: number | string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.gamePatchNoteLatest(appid),
+        queryFn: () => gamePatchNotesApi.getLatest(appid),
+        enabled: (options?.enabled ?? true) && !!appid,
+    });
+}
+
+export function useSyncSteamMutation(appid: number | string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => gamesApi.syncSteam(appid),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["games"] });
+        },
+    });
+}
+
+export function useMyLibraryGamesQuery(options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.myLibraryGames,
+        queryFn: () => libraryGamesApi.getMyLibrary(),
+        enabled: options?.enabled ?? true,
+    });
+}
+
+export function useVoteCommentMutation(commentId: string | number) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (voteType: VoteType) => votesApi.voteComment(commentId, voteType),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.commentVote(commentId) });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 15. Notifications Hooks
+// -------------------------------------------------------------
+export function useNotificationsQuery(params?: { userId?: string; page?: number; limit?: number }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.notifications(params),
+        queryFn: () => notificationsApi.getAll(params),
+    });
+}
+
+export function useNotificationUnreadCountQuery(userId?: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.notificationsUnreadCount,
+        queryFn: () => notificationsApi.getUnreadCount(userId),
+        refetchInterval: 30_000,
+    });
+}
+
+export function useMarkNotificationReadMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => notificationsApi.markAsRead(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+}
+
+export function useMarkAllNotificationsReadMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (userId?: string) => notificationsApi.markAllAsRead(userId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+}
+
+export function useDeleteNotificationMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => notificationsApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+}
+
+export function useCreateNotificationMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreateNotificationDto) => notificationsApi.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+}
+
 // Export API modules & query client
 export {
     postsApi,
@@ -1150,5 +1391,6 @@ export {
     libraryGamesApi,
     friendshipsApi,
     searchApi,
+    notificationsApi,
 };
 

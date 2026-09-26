@@ -58,6 +58,16 @@ import {
     type UpdateLibraryGameDto,
     type FriendshipDto,
     type CreateFriendshipRequestDto,
+    type AuthGoogleLoginDto,
+    type CommunityInviteDto,
+    type CreateCommunityInviteDto,
+    type VoteCommentDto,
+    type PostActionResponse,
+    type SteamSyncResponse,
+    type UpdateGuestbookCommentDto,
+    type FriendshipStatusDto,
+    type NotificationDto,
+    type CreateNotificationDto,
 } from "./types";
 
 export * from "./client";
@@ -272,6 +282,19 @@ export const authApi = {
         apiRequest<{ message?: string }>("/auth/logout", {
             method: "POST",
         }),
+
+    /** Get current authenticated user profile - GET /auth/me */
+    me: () =>
+        apiRequest<UserProfileDto>("/auth/me", {
+            method: "GET",
+        }).catch(() => profilesApi.getMyProfile()),
+
+    /** Sign in or register via Google OAuth - POST /auth/google */
+    googleLogin: (data: AuthGoogleLoginDto) =>
+        apiRequest<AuthLoginResponse>("/auth/google", {
+            method: "POST",
+            body: data,
+        }),
 };
 
 /**
@@ -281,6 +304,12 @@ export const usersApi = {
     /** Get all users - GET /users */
     getAll: () =>
         apiRequest<UserProfileDto[]>("/users", {
+            method: "GET",
+        }),
+
+    /** Get user by ID - GET /users/{id} */
+    getById: (id: string) =>
+        apiRequest<UserProfileDto>(`/users/${encodeURIComponent(id)}`, {
             method: "GET",
         }),
 
@@ -301,6 +330,19 @@ export const usersApi = {
     revokeSession: (id: string) =>
         apiRequest<{ message?: string }>(`/users/revoke-session/${encodeURIComponent(id)}`, {
             method: "PATCH",
+        }),
+
+    /** Revoke all user sessions - DELETE /users/sessions */
+    revokeAllSessions: () =>
+        apiRequest<{ message?: string }>("/users/sessions", {
+            method: "DELETE",
+        }),
+
+    /** Delete user account - DELETE /users/me */
+    deleteAccount: (data?: { password?: string }) =>
+        apiRequest<{ message?: string }>("/users/me", {
+            method: "DELETE",
+            body: data,
         }),
 };
 
@@ -432,6 +474,22 @@ export const profilesApi = {
             method: "PATCH",
         }),
 
+    /** Get user profile by user ID - GET /profiles/{id} */
+    getById: (id: string) =>
+        apiRequest<UserProfileDto>(`/profiles/${encodeURIComponent(id)}`, {
+            method: "GET",
+        }),
+
+    /** Search user profiles - GET /profiles/search */
+    search: (query: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<UserProfileDto[] | { items: UserProfileDto[]; total?: number }>("/profiles/search", {
+            method: "GET",
+            params: {
+                search: query,
+                ...sanitizePaginationParams(params, 50),
+            },
+        }),
+
     /** Delete user by ID - DELETE /profiles/{id} */
     deleteUser: (id: string) =>
         apiRequest<{ message?: string }>(`/profiles/${id}`, {
@@ -545,6 +603,59 @@ export const communitiesApi = {
     leave: (communityId: string) =>
         apiRequest<{ message?: string } | void>(`/communities/${encodeURIComponent(communityId)}/members`, {
             method: "PATCH",
+        }),
+
+    /** Get community by slug - GET /communities/slug/{slug} */
+    getBySlug: (slug: string) =>
+        apiRequest<CommunityDto>(`/communities/slug/${encodeURIComponent(slug)}`, {
+            method: "GET",
+        }),
+
+    /** Get featured communities - GET /communities/featured */
+    getFeatured: (params?: { page?: number; limit?: number }) =>
+        communitiesApi.getAll({ ...params, type: "all" }),
+
+    /** Get user's joined communities - GET /communities?type=joined */
+    getMyCommunities: (params?: { page?: number; limit?: number }) =>
+        communitiesApi.getAll({ ...params, type: "joined" }),
+
+    /** Kick/remove member from community - DELETE /communities/{communityId}/members/{memberId} */
+    kickMember: (communityId: string, memberId: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}`, {
+            method: "DELETE",
+        }),
+
+    /** Get banned members - GET /communities/{communityId}/members/banned */
+    getBannedMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/banned`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Get muted members - GET /communities/{communityId}/members/muted */
+    getMutedMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/muted`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Send community invitation - POST /communities/{communityId}/invites */
+    sendInvite: (communityId: string, data: CreateCommunityInviteDto) =>
+        apiRequest<CommunityInviteDto>(`/communities/${encodeURIComponent(communityId)}/invites`, {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get community invitations - GET /communities/{communityId}/invites */
+    getInvites: (communityId: string) =>
+        apiRequest<CommunityInviteDto[]>(`/communities/${encodeURIComponent(communityId)}/invites`, {
+            method: "GET",
         }),
 
     /** Get/Search community members - GET /communities/{communityId}/members */
@@ -707,6 +818,45 @@ export const communityMembersApi = {
             body,
         });
     },
+
+    /** Kick/remove member from community - DELETE /communities/{communityId}/members/{memberId} */
+    kickMember: (communityId: string, memberId: string) =>
+        apiRequest<{ message?: string }>(`/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}`, {
+            method: "DELETE",
+        }),
+
+    /** Get banned members - GET /communities/{communityId}/members/banned */
+    getBannedMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/banned`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Get muted members - GET /communities/{communityId}/members/muted */
+    getMutedMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+            `/communities/${encodeURIComponent(communityId)}/members/muted`,
+            {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }
+        ),
+
+    /** Send community invitation - POST /communities/{communityId}/invites */
+    sendInvite: (communityId: string, data: CreateCommunityInviteDto) =>
+        apiRequest<CommunityInviteDto>(`/communities/${encodeURIComponent(communityId)}/invites`, {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Get community invitations - GET /communities/{communityId}/invites */
+    getInvites: (communityId: string) =>
+        apiRequest<CommunityInviteDto[]>(`/communities/${encodeURIComponent(communityId)}/invites`, {
+            method: "GET",
+        }),
 };
 
 /**
@@ -727,6 +877,21 @@ export const postsApi = {
             method: "GET",
             params: sanitizePaginationParams(params, 50),
         }),
+
+    /** Get posts feed (personalized / global) - GET /posts/feed */
+    getFeed: (params?: { page?: number; limit?: number; filter?: string }) =>
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts/feed", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }).catch(() => postsApi.getAll(params)),
+
+    /** Get posts by community ID - GET /posts?communityId=... */
+    getByCommunity: (communityId: string, params?: { page?: number; limit?: number }) =>
+        postsApi.getAll({ communityId, ...params }),
+
+    /** Get posts by author ID - GET /posts?authorId=... */
+    getByAuthor: (authorId: string, params?: { page?: number; limit?: number }) =>
+        postsApi.getAll({ authorId, ...params }),
 
     /** Create a post - POST /posts */
     createPost: (data: CreatePostDto) =>
@@ -752,6 +917,44 @@ export const postsApi = {
     deletePost: (id: string | number) =>
         apiRequest<{ message?: string }>(`/posts/${id}`, {
             method: "DELETE",
+        }),
+
+    /** Pin post in community - PATCH /posts/{id}/pin */
+    pinPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${id}/pin`, {
+            method: "PATCH",
+        }),
+
+    /** Unpin post in community - PATCH /posts/{id}/unpin */
+    unpinPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${id}/unpin`, {
+            method: "PATCH",
+        }),
+
+    /** Toggle pin status of post - PATCH /posts/{id}/pin */
+    togglePin: (id: string | number) =>
+        postsApi.pinPost(id),
+
+    /** Lock post to disable new comments - PATCH /posts/{id}/lock */
+    lockPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${id}/lock`, {
+            method: "PATCH",
+        }),
+
+    /** Unlock post to allow new comments - PATCH /posts/{id}/unlock */
+    unlockPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${id}/unlock`, {
+            method: "PATCH",
+        }),
+
+    /** Toggle lock status of post - PATCH /posts/{id}/lock */
+    toggleLock: (id: string | number) =>
+        postsApi.lockPost(id),
+
+    /** Get list of voters for a post - GET /posts/{id}/voters */
+    getPostVoters: (id: string | number) =>
+        apiRequest<UserProfileDto[] | VoteDto[]>(`/posts/${id}/voters`, {
+            method: "GET",
         }),
 };
 
@@ -811,6 +1014,29 @@ export const commentsApi = {
             ),
         });
     },
+
+    /** Alias for getReplyComments */
+    getReplies: (parentId: string | number, params?: { limit?: number; cursor?: string }) =>
+        commentsApi.getReplyComments({ parentId, ...params }),
+
+    /** Pin a comment - PATCH /comments/{id}/pin */
+    pinComment: (id: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/comments/${id}/pin`, {
+            method: "PATCH",
+        }),
+
+    /** Unpin a comment - PATCH /comments/{id}/unpin */
+    unpinComment: (id: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/comments/${id}/unpin`, {
+            method: "PATCH",
+        }),
+
+    /** Get all comments for a post - GET /comments/post/{postId} */
+    getPostComments: (postId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<CommentEntity[] | { data: CommentEntity[]; total?: number }>(`/comments/post/${encodeURIComponent(postId)}`, {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
 };
 
 /**
@@ -849,6 +1075,32 @@ export const reportsApi = {
             method: "PATCH",
             body: { reason },
         }),
+
+    /** Resolve a report - PATCH /reports/{id}/resolve */
+    resolve: (id: string, notes?: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/reports/${id}/resolve`, {
+            method: "PATCH",
+            body: { notes, action: "resolve" },
+        }),
+
+    /** Dismiss/reject a report - PATCH /reports/{id}/dismiss */
+    dismiss: (id: string, notes?: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/reports/${id}/dismiss`, {
+            method: "PATCH",
+            body: { notes, action: "dismiss" },
+        }),
+
+    /** Report a post */
+    reportPost: (postId: string, reason: string) =>
+        reportsApi.create({ postId, reason, type: "post" }),
+
+    /** Report a comment */
+    reportComment: (commentId: string, reason: string) =>
+        reportsApi.create({ commentId, reason, type: "comment" }),
+
+    /** Report a user */
+    reportUser: (userId: string, reason: string) =>
+        reportsApi.create({ userId, reason, type: "user" }),
 
     /** Delete report - DELETE /reports/{id} */
     delete: (id: string) =>
@@ -914,14 +1166,25 @@ export const votesApi = {
             }
         ),
 
-    /** Upvote a comment - POST /votes/comment/{commentId} */
-    upVoteComment: (commentId: string | number) =>
-        apiRequest<{ message?: string; success?: boolean }>(
+    /** Vote for a comment (upvote: 1, downvote: -1) - POST /votes/comment/{commentId} */
+    voteComment: (commentId: string | number, voteType: VoteType = 1) => {
+        const payload: VoteCommentDto = { voteType };
+        return apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(
             `/votes/comment/${encodeURIComponent(commentId)}`,
             {
                 method: "POST",
+                body: payload,
             }
-        ),
+        );
+    },
+
+    /** Upvote a comment - POST /votes/comment/{commentId} */
+    upVoteComment: (commentId: string | number) =>
+        votesApi.voteComment(commentId, 1),
+
+    /** Downvote a comment - POST /votes/comment/{commentId} */
+    downVoteComment: (commentId: string | number) =>
+        votesApi.voteComment(commentId, -1),
 
     /** Delete vote for a comment - DELETE /votes/{commentId}/comment */
     deleteVoteComment: (commentId: string | number) =>
@@ -949,6 +1212,33 @@ export const gamesApi = {
         apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", {
             method: "GET",
             params: params ? sanitizePaginationParams(params, 50) : undefined,
+        }),
+
+    /** Get featured games - GET /games?featured=true */
+    getFeatured: () =>
+        apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", {
+            method: "GET",
+            params: { featured: true, limit: 10 },
+        }),
+
+    /** Get popular games - GET /games?sort=popular */
+    getPopular: (params?: GetGamesParams) =>
+        apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", {
+            method: "GET",
+            params: { sort: "popular", ...sanitizePaginationParams(params, 50) },
+        }),
+
+    /** Get recent games - GET /games?sort=recent */
+    getRecent: (params?: GetGamesParams) =>
+        apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", {
+            method: "GET",
+            params: { sort: "recent", ...sanitizePaginationParams(params, 50) },
+        }),
+
+    /** Sync game details from Steam - POST /games/{appid}/sync-steam */
+    syncSteam: (appid: number | string) =>
+        apiRequest<SteamSyncResponse>(`/games/${encodeURIComponent(String(appid))}/sync-steam`, {
+            method: "POST",
         }),
 
     /** Get game by slug - GET /games/slug/{slug} */
@@ -1026,12 +1316,35 @@ export const gameGuidesApi = {
             }
         ),
 
-    /** Like/unlike game guide - PATCH /games/{appid}/guides/{id}/like */
+    /** Like game guide - PATCH /games/{appid}/guides/{id}/like */
     like: (appid: number | string, id: string) =>
         apiRequest<{ message?: string; success?: boolean }>(
             `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`,
             {
                 method: "PATCH",
+            }
+        ),
+
+    /** Unlike game guide - DELETE /games/{appid}/guides/{id}/like */
+    unlike: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`,
+            {
+                method: "DELETE",
+            }
+        ).catch(() =>
+            apiRequest<{ message?: string; success?: boolean }>(
+                `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`,
+                { method: "PATCH" }
+            )
+        ),
+
+    /** Record a guide view - POST /games/{appid}/guides/{id}/view */
+    recordView: (appid: number | string, id: string) =>
+        apiRequest<{ success?: boolean; views?: number }>(
+            `/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/view`,
+            {
+                method: "POST",
             }
         ),
 };
@@ -1066,6 +1379,15 @@ export const gameReviewsApi = {
             }
         ),
 
+    /** Get current user's review for this game - GET /games/{appid}/reviews/me */
+    getMyReview: (appid: number | string) =>
+        apiRequest<GameReviewDto>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/me`,
+            {
+                method: "GET",
+            }
+        ),
+
     /** Update game review - PATCH /games/{appid}/reviews/{id} */
     update: (appid: number | string, id: string, data: UpdateGameReviewDto) =>
         apiRequest<GameReviewDto>(
@@ -1085,13 +1407,27 @@ export const gameReviewsApi = {
             }
         ),
 
-    /** Like/unlike game review - PATCH /games/{appid}/reviews/{id}/like */
+    /** Like game review - PATCH /games/{appid}/reviews/{id}/like */
     like: (appid: number | string, id: string) =>
         apiRequest<{ message?: string; success?: boolean }>(
             `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`,
             {
                 method: "PATCH",
             }
+        ),
+
+    /** Unlike game review - DELETE /games/{appid}/reviews/{id}/like */
+    unlike: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`,
+            {
+                method: "DELETE",
+            }
+        ).catch(() =>
+            apiRequest<{ message?: string; success?: boolean }>(
+                `/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`,
+                { method: "PATCH" }
+            )
         ),
 };
 
@@ -1115,6 +1451,15 @@ export const gamePatchNotesApi = {
             method: "POST",
             body: data,
         }),
+
+    /** Get latest patch note - GET /games/{appid}/patch-notes/latest */
+    getLatest: (appid: number | string) =>
+        apiRequest<GamePatchNoteDto>(
+            `/games/${encodeURIComponent(String(appid))}/patch-notes/latest`,
+            {
+                method: "GET",
+            }
+        ),
 
     /** Get game patch note by ID - GET /games/{appid}/patch-notes/{id} */
     getById: (appid: number | string, id: string) =>
@@ -1165,6 +1510,25 @@ export const guestbookCommentsApi = {
             }
         ),
 
+    /** Update guestbook comment - PATCH /profiles/{profileId}/guestbook-comments/{id} */
+    update: (profileId: string, id: string, data: UpdateGuestbookCommentDto) =>
+        apiRequest<GuestbookCommentDto>(
+            `/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}`,
+            {
+                method: "PATCH",
+                body: data,
+            }
+        ),
+
+    /** Like guestbook comment - PATCH /profiles/{profileId}/guestbook-comments/{id}/like */
+    like: (profileId: string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+            `/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}/like`,
+            {
+                method: "PATCH",
+            }
+        ),
+
     /** Delete guestbook comment - DELETE /profiles/{profileId}/guestbook-comments/{id} */
     delete: (profileId: string, id: string) =>
         apiRequest<void>(
@@ -1192,6 +1556,10 @@ export const bookmarksApi = {
             params,
         }),
 
+    /** Get my bookmarks - alias for getAll */
+    getMyBookmarks: (params?: GetBookmarksParams) =>
+        bookmarksApi.getAll(params),
+
     /** Check if target is bookmarked - GET /bookmarks/check */
     check: (params: CheckBookmarkParams) =>
         apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/check", {
@@ -1203,6 +1571,12 @@ export const bookmarksApi = {
         apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/toggle", {
             method: "POST",
             body: data,
+        }),
+
+    /** Delete bookmark by ID - DELETE /bookmarks/{id} */
+    deleteById: (id: string) =>
+        apiRequest<void>(`/bookmarks/${encodeURIComponent(id)}`, {
+            method: "DELETE",
         }),
 
     /** Delete bookmark by target - DELETE /bookmarks/{targetType}/{targetId} */
@@ -1224,6 +1598,18 @@ export const libraryGamesApi = {
         apiRequest<LibraryGameDto[]>(
             `/users/${encodeURIComponent(userId)}/library-games`
         ),
+
+    /** Get current user's library games - GET /library-games/me */
+    getMyLibrary: () =>
+        apiRequest<LibraryGameDto[]>("/library-games/me", {
+            method: "GET",
+        }).catch(() => libraryGamesApi.getByUserId("me")),
+
+    /** Get single library game by ID - GET /library-games/{id} */
+    getById: (id: string) =>
+        apiRequest<LibraryGameDto>(`/library-games/${encodeURIComponent(id)}`, {
+            method: "GET",
+        }),
 
     /** Add game to library - POST /library-games */
     create: (data: CreateLibraryGameDto) =>
@@ -1270,6 +1656,12 @@ export const friendshipsApi = {
             method: "PATCH",
         }),
 
+    /** Reject friend request - PATCH /friendships/{id}/reject */
+    rejectRequest: (id: string) =>
+        apiRequest<{ message?: string } | void>(`/friendships/${encodeURIComponent(id)}/reject`, {
+            method: "PATCH",
+        }),
+
     /** Cancel friend request - DELETE /friendships/{id}/request */
     cancelRequest: (id: string) =>
         apiRequest<void>(`/friendships/${encodeURIComponent(id)}/request`, {
@@ -1292,6 +1684,18 @@ export const friendshipsApi = {
     unblock: (id: string) =>
         apiRequest<void>(`/friendships/${encodeURIComponent(id)}/unblock`, {
             method: "DELETE",
+        }),
+
+    /** Unblock user by target user ID - DELETE /friendships/block/{targetUserId} */
+    unblockUser: (targetUserId: string) =>
+        apiRequest<void>(`/friendships/block/${encodeURIComponent(targetUserId)}`, {
+            method: "DELETE",
+        }),
+
+    /** Check friendship status with target user - GET /friendships/status/{targetUserId} */
+    checkStatus: (targetUserId: string) =>
+        apiRequest<FriendshipStatusDto>(`/friendships/status/${encodeURIComponent(targetUserId)}`, {
+            method: "GET",
         }),
 
     /** Get friends list - GET /friendships/friends */
@@ -1328,6 +1732,71 @@ export const searchApi = {
             method: "GET",
             params: sanitizePaginationParams(params, 50),
         }),
+
+    /** Search games - GET /search?q=...&type=game */
+    searchGames: (query: string, page?: number, limit?: number) =>
+        searchApi.search({ q: query, type: "game", page, limit }),
+
+    /** Search communities - GET /search?q=...&type=community */
+    searchCommunities: (query: string, page?: number, limit?: number) =>
+        searchApi.search({ q: query, type: "community", page, limit }),
+
+    /** Search user profiles - GET /search?q=...&type=profile */
+    searchProfiles: (query: string, page?: number, limit?: number) =>
+        searchApi.search({ q: query, type: "profile", page, limit }),
+
+    /** Search posts - GET /search?q=...&type=post */
+    searchPosts: (query: string, page?: number, limit?: number) =>
+        searchApi.search({ q: query, type: "post", page, limit }),
+
+    /** Global search preview across all categories */
+    globalSearch: (query: string, limit = 5) =>
+        searchApi.search({ q: query, limit }),
+};
+
+// -------------------------------------------------------------
+// Notifications API (/notifications/*)
+// -------------------------------------------------------------
+export const notificationsApi = {
+    /** Get all notifications - GET /notifications */
+    getAll: (params?: { userId?: string; page?: number; limit?: number }) =>
+        apiRequest<NotificationDto[] | { items: NotificationDto[]; total?: number }>("/notifications", {
+            method: "GET",
+            params,
+        }),
+
+    /** Create a notification - POST /notifications */
+    create: (data: CreateNotificationDto) =>
+        apiRequest<NotificationDto>("/notifications", {
+            method: "POST",
+            body: data,
+        }),
+
+    /** Mark notification as read - PUT /notifications/{id}/read */
+    markAsRead: (id: string) =>
+        apiRequest<void>(`/notifications/${encodeURIComponent(id)}/read`, {
+            method: "PUT",
+        }),
+
+    /** Mark all notifications as read - PUT /notifications/read-all */
+    markAllAsRead: (userId?: string) =>
+        apiRequest<void>("/notifications/read-all", {
+            method: "PUT",
+            body: userId ? { userId } : {},
+        }),
+
+    /** Delete a notification - DELETE /notifications/{id} */
+    delete: (id: string) =>
+        apiRequest<void>(`/notifications/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+        }),
+
+    /** Get unread count - GET /notifications/unread-count */
+    getUnreadCount: (userId?: string) =>
+        apiRequest<{ count: number }>("/notifications/unread-count", {
+            method: "GET",
+            params: userId ? { userId } : undefined,
+        }),
 };
 
 export const storageApi = {
@@ -1337,6 +1806,20 @@ export const storageApi = {
             method: "POST",
             body: data,
         }),
+
+    /** Delete file from storage - DELETE /storage/file/{fileKey} */
+    deleteFile: (fileKey: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/storage/file/${encodeURIComponent(fileKey)}`, {
+            method: "DELETE",
+        }),
+
+    /** Confirm uploaded file with backend - POST /storage/confirm */
+    confirmUpload: (data: { fileKey: string; type?: string; entityId?: string }) =>
+        apiRequest<{ message?: string; success?: boolean; url?: string }>("/storage/confirm", {
+            method: "POST",
+            body: data,
+        }),
+
     /** Direct R2 upload helper */
     uploadImageToR2: (options: import("../services/upload-service").UploadOptions) =>
         import("../services/upload-service").then((m) => m.uploadImageToR2(options)),
