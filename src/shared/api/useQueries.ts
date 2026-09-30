@@ -31,6 +31,7 @@ import type {
     UpdatePostDto,
     CreateCommentDto,
     CreateReportDto,
+    ResolveReportDto,
     UpdateProfileDto,
     ChangePasswordDto,
     CreateGameDto,
@@ -93,16 +94,21 @@ export const QUERY_KEYS = {
     // Reports
     reports: (params?: Record<string, unknown>) => ["reports", params || {}] as const,
     reportById: (id: string) => ["reports", "detail", id] as const,
+    reportHistory: (id: string) => ["reports", id, "history"] as const,
 
     // Votes
     votesList: ["votes", "list"] as const,
     postVote: (postId: string | number) => ["votes", "post", String(postId)] as const,
+    postVoteMe: (postId: string | number) => ["votes", "post", String(postId), "me"] as const,
     commentVote: (commentId: string | number) => ["votes", "comment", String(commentId)] as const,
+    commentVoteMe: (commentId: string | number) => ["votes", "comment", String(commentId), "me"] as const,
 
     // Games
     games: (params?: Record<string, unknown>) => ["games", params || {}] as const,
     gameBySlug: (slug: string) => ["games", "slug", slug] as const,
     gameByAppid: (appid: number | string) => ["games", "appid", String(appid)] as const,
+    steamSearch: (q: string) => ["games", "steam", "search", q] as const,
+    externalGameData: (appid: number | string) => ["games", String(appid), "external"] as const,
 
     // Game Guides
     gameGuides: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "guides", params || {}] as const,
@@ -1367,6 +1373,91 @@ export function useCreateNotificationMutation() {
         mutationFn: (data: CreateNotificationDto) => notificationsApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+}
+
+// -------------------------------------------------------------
+// 16. Extended Reports, Votes Me & Steam External Game Hooks
+// -------------------------------------------------------------
+export function useReportHistoryQuery(reportId: string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.reportHistory(reportId),
+        queryFn: () => reportsApi.getHistory(reportId),
+        enabled: (options?.enabled ?? true) && !!reportId,
+    });
+}
+
+export function useResolveReportMutation(reportId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: ResolveReportDto | string) => reportsApi.resolve(reportId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.reportById(reportId) });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.reportHistory(reportId) });
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+        },
+    });
+}
+
+export function useMyPostVoteQuery(postId: string | number, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.postVoteMe(postId),
+        queryFn: () => votesApi.getMyPostVote(postId),
+        enabled: (options?.enabled ?? true) && !!postId,
+    });
+}
+
+export function useMyCommentVoteQuery(commentId: string | number, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.commentVoteMe(commentId),
+        queryFn: () => votesApi.getMyCommentVote(commentId),
+        enabled: (options?.enabled ?? true) && !!commentId,
+    });
+}
+
+export function useSteamSearchQuery(q: string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.steamSearch(q),
+        queryFn: () => gamesApi.searchSteam(q),
+        enabled: (options?.enabled ?? true) && !!q && q.trim().length >= 2,
+    });
+}
+
+export function useImportSteamSearchMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (q: string) => gamesApi.importSteamSearch(q),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["games"] });
+        },
+    });
+}
+
+export function useImportGameByAppidMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (appid: number | string) => gamesApi.importByAppid(appid),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["games"] });
+        },
+    });
+}
+
+export function useExternalGameDataQuery(appid: number | string, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.externalGameData(appid),
+        queryFn: () => gamesApi.getExternalData(appid),
+        enabled: (options?.enabled ?? true) && !!appid,
+    });
+}
+
+export function useRefreshExternalGameDataMutation(appid: number | string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => gamesApi.refreshExternalData(appid),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.externalGameData(appid) });
         },
     });
 }

@@ -331,12 +331,39 @@ export interface UpdateCommentDto {
     content: string;
 }
 
+export type ReportTargetType = "post" | "comment";
+export type ReportStatus = "pending" | "in_review" | "resolved" | "dismissed";
+export type ModerationAction = "none" | "warning" | "content_removed" | "user_banned" | "no_action";
+
+export interface ReportHistoryItemDto {
+    id: string;
+    reportId?: string;
+    action: string;
+    status?: ReportStatus;
+    moderatorId?: string;
+    moderatorNote?: string;
+    moderator?: {
+        id?: string;
+        username?: string;
+        name?: string;
+        avatarUrl?: string;
+    };
+    createdAt: string;
+}
+
 export interface ReportDto {
     id: string;
+    targetType?: ReportTargetType;
+    targetId?: string;
     postId?: string;
+    commentId?: string;
     reporterId?: string;
-    reason?: string;
+    status?: ReportStatus;
+    reason: string;
+    moderatorNote?: string;
+    moderationAction?: ModerationAction;
     createdAt?: string;
+    updatedAt?: string;
     reporter?: {
         id?: string;
         username?: string;
@@ -349,13 +376,19 @@ export interface ReportDto {
         title?: string;
         content?: string;
     };
+    comment?: {
+        id?: string;
+        content?: string;
+    };
+    history?: ReportHistoryItemDto[];
 }
 
 export interface CreateReportDto {
+    targetType?: ReportTargetType | string;
+    targetId?: string;
     postId?: string;
     commentId?: string;
     userId?: string;
-    targetId?: string;
     type?: "post" | "comment" | "user" | string;
     reason: string;
 }
@@ -364,9 +397,18 @@ export interface UpdateReportDto {
     reason: string;
 }
 
+export interface ResolveReportDto {
+    status: ReportStatus;
+    moderationAction?: ModerationAction;
+    moderatorNote?: string;
+}
+
 export interface GetReportsParams {
+    targetType?: ReportTargetType | string;
+    targetId?: string;
     postId?: string;
     reporterId?: string;
+    status?: ReportStatus | string;
     reason?: string;
     page?: number;
     limit?: number;
@@ -435,6 +477,32 @@ export interface GameDto {
     communityId?: string;
     createdAt?: string;
     updatedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface SteamSearchResultDto {
+    appid: number;
+    name: string;
+    icon?: string;
+    logo?: string;
+    [key: string]: unknown;
+}
+
+export interface ExternalGameDataDto {
+    appid: number;
+    name?: string;
+    headerImage?: string;
+    description?: string;
+    genres?: string[];
+    developers?: string[];
+    publishers?: string[];
+    releaseDate?: string;
+    priceOverview?: {
+        currency?: string;
+        initial?: number;
+        final?: number;
+        discountPercent?: number;
+    };
     [key: string]: unknown;
 }
 

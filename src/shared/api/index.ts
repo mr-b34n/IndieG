@@ -68,6 +68,10 @@ import {
     type FriendshipStatusDto,
     type NotificationDto,
     type CreateNotificationDto,
+    type ReportHistoryItemDto,
+    type ResolveReportDto,
+    type SteamSearchResultDto,
+    type ExternalGameDataDto,
 } from "./types";
 
 export * from "./client";
@@ -1044,67 +1048,75 @@ export const commentsApi = {
  */
 export const reportsApi = {
     /** Get all reports - GET /reports (max limit 50) */
-    getAll: (params?: {
-        postId?: string;
-        reporterId?: string;
-        reason?: string;
-        page?: number;
-        limit?: number;
-    }) =>
+    getAll: (params?: import("./types").GetReportsParams) =>
         apiRequest<ReportDto[] | { items: ReportDto[]; total?: number }>("/reports", {
             method: "GET",
             params: sanitizePaginationParams(params, 50),
         }),
 
-    /** Create a report - POST /reports */
-    create: (data: CreateReportDto) =>
-        apiRequest<ReportDto>("/reports", {
+    /** Create a report - POST /reports (requires targetType: 'post' | 'comment', targetId, reason) */
+    create: (data: CreateReportDto) => {
+        const targetType = data.targetType || (data.commentId ? "comment" : "post");
+        const targetId = data.targetId || data.postId || data.commentId || data.userId || "";
+        const payload = {
+            targetType,
+            targetId,
+            reason: data.reason,
+            ...data,
+        };
+        return apiRequest<ReportDto>("/reports", {
             method: "POST",
-            body: data,
-        }),
+            body: payload,
+        });
+    },
 
     /** Get report by ID - GET /reports/{id} */
     getOne: (id: string) =>
-        apiRequest<ReportDto>(`/reports/${id}`, {
+        apiRequest<ReportDto>(`/reports/${encodeURIComponent(id)}`, {
+            method: "GET",
+        }),
+
+    /** Get report history - GET /reports/{id}/history */
+    getHistory: (id: string) =>
+        apiRequest<ReportHistoryItemDto[]>(`/reports/${encodeURIComponent(id)}/history`, {
             method: "GET",
         }),
 
     /** Update report reason - PATCH /reports/{id} */
     update: (id: string, reason: string) =>
-        apiRequest<ReportDto>(`/reports/${id}`, {
+        apiRequest<ReportDto>(`/reports/${encodeURIComponent(id)}`, {
             method: "PATCH",
             body: { reason },
         }),
 
-    /** Resolve a report - PATCH /reports/{id}/resolve */
-    resolve: (id: string, notes?: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/reports/${id}/resolve`, {
+    /** Resolve a report - PATCH /reports/{id}/resolve (requires status: pending | in_review | resolved | dismissed) */
+    resolve: (id: string, data: ResolveReportDto | string) => {
+        const body = typeof data === "string" ? { status: "resolved" as const, moderatorNote: data } : data;
+        return apiRequest<{ message?: string; success?: boolean; report?: ReportDto }>(`/reports/${encodeURIComponent(id)}/resolve`, {
             method: "PATCH",
-            body: { notes, action: "resolve" },
-        }),
+            body,
+        });
+    },
 
-    /** Dismiss/reject a report - PATCH /reports/{id}/dismiss */
+    /** Dismiss/reject a report - PATCH /reports/{id}/resolve with status="dismissed" */
     dismiss: (id: string, notes?: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/reports/${id}/dismiss`, {
-            method: "PATCH",
-            body: { notes, action: "dismiss" },
-        }),
+        reportsApi.resolve(id, { status: "dismissed", moderatorNote: notes, moderationAction: "no_action" }),
 
     /** Report a post */
     reportPost: (postId: string, reason: string) =>
-        reportsApi.create({ postId, reason, type: "post" }),
+        reportsApi.create({ targetType: "post", targetId: postId, postId, reason }),
 
     /** Report a comment */
     reportComment: (commentId: string, reason: string) =>
-        reportsApi.create({ commentId, reason, type: "comment" }),
+        reportsApi.create({ targetType: "comment", targetId: commentId, commentId, reason }),
 
     /** Report a user */
     reportUser: (userId: string, reason: string) =>
-        reportsApi.create({ userId, reason, type: "user" }),
+        reportsApi.create({ targetType: "post", targetId: userId, userId, reason }),
 
     /** Delete report - DELETE /reports/{id} */
     delete: (id: string) =>
-        apiRequest<{ message?: string }>(`/reports/${id}`, {
+        apiRequest<{ message?: string }>(`/reports/${encodeURIComponent(id)}`, {
             method: "DELETE",
         }),
 };
@@ -1123,6 +1135,15 @@ export const votesApi = {
     getByPost: (postId: string | number) =>
         apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(
             `/votes/post/${encodeURIComponent(postId)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Get current user's vote status for a post - GET /votes/post/{postId}/me */
+    getMyPostVote: (postId: string | number) =>
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number } | VoteDto>(
+            `/votes/post/${encodeURIComponent(postId)}/me`,
             {
                 method: "GET",
             }
@@ -1161,6 +1182,15 @@ export const votesApi = {
     getByComment: (commentId: string | number) =>
         apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(
             `/votes/comment/${encodeURIComponent(commentId)}`,
+            {
+                method: "GET",
+            }
+        ),
+
+    /** Get current user's vote status for a comment - GET /votes/comment/{commentId}/me */
+    getMyCommentVote: (commentId: string | number) =>
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number } | VoteDto>(
+            `/votes/comment/${encodeURIComponent(commentId)}/me`,
             {
                 method: "GET",
             }
@@ -1238,6 +1268,38 @@ export const gamesApi = {
     /** Sync game details from Steam - POST /games/{appid}/sync-steam */
     syncSteam: (appid: number | string) =>
         apiRequest<SteamSyncResponse>(`/games/${encodeURIComponent(String(appid))}/sync-steam`, {
+            method: "POST",
+        }),
+
+    /** Search games on Steam - GET /games/search/steam?q=... */
+    searchSteam: (q: string) =>
+        apiRequest<SteamSearchResultDto[]>("/games/search/steam", {
+            method: "GET",
+            params: { q },
+        }),
+
+    /** Search games on Steam and import - POST /games/search/steam/import?q=... */
+    importSteamSearch: (q: string) =>
+        apiRequest<GameDto | GameDto[]>("/games/search/steam/import", {
+            method: "POST",
+            params: { q },
+        }),
+
+    /** Import game by appid - POST /games/{appid}/import */
+    importByAppid: (appid: number | string) =>
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}/import`, {
+            method: "POST",
+        }),
+
+    /** Get external game data from Steam/store - GET /games/{appid}/external */
+    getExternalData: (appid: number | string) =>
+        apiRequest<ExternalGameDataDto>(`/games/${encodeURIComponent(String(appid))}/external`, {
+            method: "GET",
+        }),
+
+    /** Refresh external game data - POST /games/{appid}/external/refresh */
+    refreshExternalData: (appid: number | string) =>
+        apiRequest<ExternalGameDataDto | { message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/external/refresh`, {
             method: "POST",
         }),
 
