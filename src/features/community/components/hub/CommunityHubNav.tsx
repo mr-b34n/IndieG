@@ -11,16 +11,18 @@ export const CommunityHubNav = ({
     isVi,
 }: CommunityHubNavProps) => {
     const tabs = [
-        { id: "home", labelVi: "Home", labelEn: "Home" },
-        { id: "discussions", labelVi: "Discussions", labelEn: "Discussions" },
-        { id: "guides", labelVi: "Guides", labelEn: "Guides" },
+        { id: "home", labelVi: "Trang chủ", labelEn: "Home" },
+        { id: "discussions", labelVi: "Thảo luận", labelEn: "Discussions" },
+        { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides" },
         { id: "media", labelVi: "Media", labelEn: "Media" },
-        { id: "events", labelVi: "Events", labelEn: "Events" },
-        { id: "members", labelVi: "Members", labelEn: "Members" },
+        { id: "events", labelVi: "Sự kiện", labelEn: "Events" },
+        { id: "members", labelVi: "Thành viên", labelEn: "Members" },
+        { id: "rules", labelVi: "Quy tắc", labelEn: "Rules" },
+        { id: "links", labelVi: "Liên kết", labelEn: "Links" },
     ];
 
     return (
-        <div className="w-full flex items-center gap-6 border-b border-divider-primary select-none pt-2 overflow-x-auto scrollbar-none">
+        <div className="w-full flex items-center gap-5 sm:gap-7 border-b border-border/60 select-none pt-2 overflow-x-auto scrollbar-none">
             {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -29,12 +31,12 @@ export const CommunityHubNav = ({
                         type="button"
                         onClick={() => onTabChange(tab.id)}
                         className={`relative pb-2.5 text-xs font-bold transition-colors cursor-pointer tracking-wider uppercase whitespace-nowrap ${
-                            isActive ? "text-primary font-black" : "text-text-muted hover:text-text"
+                            isActive ? "text-primary" : "text-text-muted hover:text-text"
                         }`}
                     >
                         <span>{isVi ? tab.labelVi : tab.labelEn}</span>
                         {isActive && (
-                            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
+                            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-t-sm" />
                         )}
                     </button>
                 );

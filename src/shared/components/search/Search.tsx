@@ -160,17 +160,17 @@ export const Search = () => {
 
     return (
         <div ref={containerRef} className="relative w-full max-w-full">
-            {/* Search Input Bar - Quiet Dark: No default border, surface #151719 */}
+            {/* Search Input Bar */}
             <div
                 className={`
                 flex flex-row items-center gap-2.5 px-3.5 h-[38px]
-                w-full bg-[#151719] hover:bg-[#17191C]
+                w-full bg-surface-hover hover:bg-surface-active border border-border/40
                 rounded-xl text-xs sm:text-sm
                 transition-all duration-150 cursor-text
                 ${
                     focused
-                        ? "bg-[#191B1E] text-[#ECEDEF]"
-                        : "text-[#979BA2]"
+                        ? "bg-surface text-text border-primary/70 shadow-xs"
+                        : "text-text-muted"
                 }
             `}
                 onClick={() => inputRef.current?.focus()}
@@ -178,7 +178,7 @@ export const Search = () => {
                 <FontAwesomeIcon
                     icon={faMagnifyingGlass}
                     className={`text-xs shrink-0 transition-colors duration-150 ${
-                        focused ? "text-[#1688E8]" : "text-[#656A72]"
+                        focused ? "text-primary" : "text-text-faint"
                     }`}
                 />
 
@@ -194,11 +194,11 @@ export const Search = () => {
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder={t("search.placeholder", { defaultValue: "Tìm kiếm game, cộng đồng, bài viết..." })}
-                    className="w-full focus:outline-none bg-transparent text-xs sm:text-sm text-[#ECEDEF] placeholder:text-[#656A72]"
+                    className="w-full focus:outline-none bg-transparent text-xs sm:text-sm text-text placeholder:text-text-faint"
                 />
 
                 {!focused && !value && (
-                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-[#656A72] bg-[#111315]">
+                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
                         /
                     </kbd>
                 )}
@@ -210,20 +210,20 @@ export const Search = () => {
                             setValue("");
                             inputRef.current?.focus();
                         }}
-                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-[#656A72] hover:text-[#ECEDEF] transition-colors text-xs cursor-pointer"
+                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full text-text-faint hover:text-text transition-colors text-xs cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faXmark} />
                     </button>
                 )}
             </div>
 
-            {/* Dropdown Popover - Quiet Dark: Surface #111315, borderless or subtle divider */}
+            {/* Dropdown Popover */}
             {focused && (
                 <div
                     onMouseDown={(e) => e.preventDefault()}
                     className="
                         absolute top-full left-0 mt-2 w-full z-40
-                        bg-[#111315] border border-[#1A1C1F]
+                        bg-surface border border-border
                         rounded-2xl overflow-hidden
                         shadow-2xl max-h-[75vh] overflow-y-auto animate-scale-up
                     "
@@ -232,21 +232,21 @@ export const Search = () => {
                     {value.trim() ? (
                         <div className="flex flex-col py-2">
                             {isSearching ? (
-                                <div className="flex items-center justify-center p-6 text-[#1688E8] gap-2 font-bold text-xs">
-                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-[#1688E8] border-t-transparent animate-spin" />
+                                <div className="flex items-center justify-center p-6 text-primary gap-2 font-bold text-xs">
+                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                                     <span>{t("search.searching", { defaultValue: "Đang tìm kiếm..." })}</span>
                                 </div>
                             ) : searchResults.totalCount === 0 ? (
-                                <div className="p-6 text-center text-xs text-[#656A72]">
+                                <div className="p-6 text-center text-xs text-text-faint">
                                     {t("search.noResultsFor", { value, defaultValue: `Không tìm thấy kết quả phù hợp cho "${value}"` })}
                                 </div>
                             ) : (
                                 <>
                                     {/* Communities preview */}
                                     {(searchResults.communities || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUsers} className="text-[#1688E8]" />
+                                        <div className="flex flex-col border-b border-border pb-2 mb-2">
+                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                                <FontAwesomeIcon icon={faUsers} className="text-primary" />
                                                 <span>{t("search.communitiesTitle", { defaultValue: "Cộng đồng" })} ({(searchResults.communities || []).length})</span>
                                             </p>
                                             {searchResults.communities.slice(0, 3).map((comm) => (
@@ -257,7 +257,7 @@ export const Search = () => {
                                                         setFocused(false);
                                                         navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } });
                                                     }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
+                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
                                                 >
                                                     <img
                                                         src={comm.logo}
@@ -266,7 +266,7 @@ export const Search = () => {
                                                         className="w-8 h-8 rounded-xl object-cover shrink-0"
                                                     />
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-[#ECEDEF] truncate">
+                                                        <span className="text-xs font-bold text-text truncate">
                                                             {comm.name}
                                                         </span>
                                                         <span className="text-[10px] text-[#979BA2]">

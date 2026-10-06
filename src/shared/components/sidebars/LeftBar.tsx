@@ -1,34 +1,38 @@
-import { useEffect } from "react";
+import { useNavigate, useLocation } from "@tanstack/react-router";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faUsers, faHouse,
+    faHouse,
+    faUsers,
+    faCompass,
+    faGamepad,
     faGear,
-    faPlus,
-    faRightFromBracket
-} from "@fortawesome/free-solid-svg-icons"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useNavigate, useLocation } from "@tanstack/react-router"
-
+    faRightFromBracket,
+    faShieldHalved,
+    faFlag,
+} from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useCommunitiesStore } from "@/features/community/store/useCommunitiesStore";
 import { useAuthStore } from "@/features/auth";
 import { getCurrentAuthor } from "@/features/post";
-import { useCommunitiesStore } from "@/features/community";
-import { useTranslation } from "@/shared/hooks/useTranslate";
-import { useCommunitiesQuery } from "@/shared/api/useQueries";
+import { useEffect, useMemo } from "react";
+import { useCommunitiesQuery, useReportsQuery } from "@/shared/api/useQueries";
+import { extractReportList } from "@/shared/api";
 
 const navItem = `
     w-full flex flex-row items-center gap-3 px-3 py-2
-    rounded-lg text-xs sm:text-sm font-medium text-[#8B9097]
-    hover:text-[#E8E9EA] hover:bg-[#14171A]
+    rounded-lg text-xs sm:text-sm font-medium text-text-muted
+    hover:text-text hover:bg-surface-hover
     transition-colors duration-150 cursor-pointer select-none
 `;
 const navItemActive = `
     w-full flex flex-row items-center gap-2.5 pl-2.5 pr-3 py-2
     rounded-r-lg text-xs sm:text-sm font-bold
-    bg-[#14171A] text-[#E8E9EA] border-l-2 border-[#1688E8]
+    bg-surface-hover text-text border-l-2 border-primary
     cursor-pointer select-none transition-colors duration-150
 `;
 const sectionLabel = `
     px-3 pt-3 pb-1.5
-    text-[10px] font-bold uppercase tracking-wider text-[#5F646B]
+    text-[10px] font-bold uppercase tracking-wider text-text-faint
 `;
 
 export const LeftBar = () => {
@@ -43,20 +47,21 @@ export const LeftBar = () => {
     const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user || mockLogin;
 
-    // Automatically fetch joined communities for the current user
-    const { data: rawJoinedData } = useCommunitiesQuery(
-        { type: "joined", page: 1, limit: 9 },
-        { enabled: isLoggedIn }
-    );
+    const { data: remoteCommunities } = useCommunitiesQuery();
 
     useEffect(() => {
-        if (rawJoinedData) {
-            syncJoinedCommunities(rawJoinedData);
+        if (remoteCommunities) {
+            const list = Array.isArray(remoteCommunities) ? remoteCommunities : (remoteCommunities as { items?: unknown[] }).items || [];
+            if (Array.isArray(list) && list.length > 0) {
+                syncJoinedCommunities(list as Parameters<typeof syncJoinedCommunities>[0]);
+            }
         }
-    }, [rawJoinedData, syncJoinedCommunities]);
+    }, [remoteCommunities, syncJoinedCommunities]);
 
-    const isHomeActive = pathname === "/" || pathname.startsWith("/post");
+    const isHomeActive = pathname === "/";
     const isCommunityActive = pathname.startsWith("/community");
+    const isExploreActive = pathname.startsWith("/explore");
+    const isSquadActive = pathname.startsWith("/squad");
     const isSettingsActive = pathname.startsWith("/settings");
 
     const displayName = user?.name || user?.username || getCurrentAuthor();
@@ -67,9 +72,22 @@ export const LeftBar = () => {
         (user?.user_metadata?.avatar_url as string | undefined) ||
         "";
 
-    const handleProfileClick = () => {
-        navigate({ to: "/profile/$userId", params: { userId: "me" } });
-    };
+    const isAdmin = Boolean(
+        user?.role === "admin" ||
+        user?.id === "usr_admin" ||
+        user?.username === "IndieAdmin" ||
+        user?.email === "admin@indieg.com"
+    );
+
+    const { data: reportsData } = useReportsQuery(undefined, { enabled: isAdmin });
+    const pendingReportsCount = useMemo(() => {
+        if (!isAdmin) return 0;
+        return extractReportList(reportsData).filter((r) => r.status === "pending").length;
+    }, [isAdmin, reportsData]);
+
+    const joinedCommunities = useMemo(() => {
+        return communities.filter((c) => c.joined || c.isJoined);
+    }, [communities]);
 
     const handleLogout = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -77,16 +95,14 @@ export const LeftBar = () => {
         navigate({ to: "/auth" });
     };
 
-    const joinedCommunities = communities.filter((c) => c.joined);
-
     return (
-        <div className="w-full flex flex-col gap-1 py-1 text-text select-none">
-            {/* User Profile Mini Snippet */}
+        <div className="w-full flex flex-col gap-0 select-none py-1">
+            {/* MINI PROFILE ROW / LOGIN REMINDER */}
             {isLoggedIn ? (
                 <div
-                    onClick={handleProfileClick}
-                    className="flex flex-row items-center gap-3 px-3 py-2.5 mb-1
-                        rounded-md cursor-pointer hover:bg-surface-hover/70 transition-colors group"
+                    onClick={() => navigate({ to: "/profile/$userId", params: { userId: "me" } })}
+                    className="flex items-center gap-3 px-3 py-2 mb-2 rounded-xl bg-surface/50 hover:bg-surface-hover/80 border border-border/40 transition-colors cursor-pointer group"
+                    title={t('common.viewProfile', { defaultValue: 'Xem trang cá nhân của bạn' })}
                 >
                     {avatarUrl ? (
                         <img
@@ -98,7 +114,7 @@ export const LeftBar = () => {
                             }}
                         />
                     ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 shrink-0 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                        <div className="w-8 h-8 rounded-full bg-surface-hover ring-1 ring-border/80 shrink-0 flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
                             {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
                         </div>
                     )}
@@ -115,7 +131,7 @@ export const LeftBar = () => {
                         type="button"
                         onClick={handleLogout}
                         title={t('common.logout', { defaultValue: 'Đăng xuất' })}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-text-faint hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-text-faint hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0 opacity-80 group-hover:opacity-100"
                     >
                         <FontAwesomeIcon icon={faRightFromBracket} className="text-xs" />
                     </button>
@@ -143,7 +159,7 @@ export const LeftBar = () => {
                     onClick={() => navigate({to: "/"})}
                     className={isHomeActive ? navItemActive : navItem}
                 >
-                    <FontAwesomeIcon icon={faHouse} className={`w-4 shrink-0 ${isHomeActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
+                    <FontAwesomeIcon icon={faHouse} className={`w-4 shrink-0 ${isHomeActive ? 'text-primary' : 'text-text-muted'}`} />
                     <span>{t('common.home')}</span>
                 </button>
 
@@ -152,26 +168,35 @@ export const LeftBar = () => {
                     onClick={() => navigate({ to: "/community" })}
                     className={isCommunityActive ? navItemActive : navItem}
                 >
-                    <FontAwesomeIcon icon={faUsers} className={`w-4 shrink-0 ${isCommunityActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
+                    <FontAwesomeIcon icon={faUsers} className={`w-4 shrink-0 ${isCommunityActive ? 'text-primary' : 'text-text-muted'}`} />
                     <span>{t('common.community')}</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/explore" })}
+                    className={isExploreActive ? navItemActive : navItem}
+                >
+                    <FontAwesomeIcon icon={faCompass} className={`w-4 shrink-0 ${isExploreActive ? 'text-primary' : 'text-text-muted'}`} />
+                    <span>{t('common.explore', { defaultValue: 'Khám phá' })}</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/squad" })}
+                    className={isSquadActive ? navItemActive : navItem}
+                >
+                    <FontAwesomeIcon icon={faGamepad} className={`w-4 shrink-0 ${isSquadActive ? 'text-primary' : 'text-text-muted'}`} />
+                    <span>{t('squad.title', { defaultValue: 'Tổ đội' })}</span>
                 </button>
             </div>
 
             {/* SECTION: YOUR SHORTCUTS (LỐI TẮT CỦA BẠN - FB STYLE) */}
-            <div className="border-t border-[#1C1F22] pt-3 mt-2">
+            <div className="border-t border-border pt-3 mt-2">
                 <div className="flex items-center justify-between px-3 pb-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5F646B]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-faint">
                         {t('common.yourShortcuts', { defaultValue: 'Lối tắt của bạn' })}
                     </p>
-                    <button
-                        type="button"
-                        onClick={() => navigate({ to: "/community" })}
-                        className="text-[10px] font-bold text-[#1688E8] hover:underline cursor-pointer flex items-center gap-1"
-                        title={t('common.explore', { defaultValue: 'Khám phá' })}
-                    >
-                        <FontAwesomeIcon icon={faPlus} className="text-[9px]" />
-                        <span>{t('common.explore', { defaultValue: 'Khám phá' })}</span>
-                    </button>
                 </div>
 
                 <div className="flex flex-col gap-0.5 px-1 pb-1">
@@ -186,22 +211,22 @@ export const LeftBar = () => {
                                         onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(c.id) } })}
                                         className={`w-full flex items-center gap-2.5 py-1.5 px-2.5 rounded-lg text-xs transition-colors cursor-pointer group ${
                                             isThisCommActive
-                                                ? "bg-[#14171A] text-[#E8E9EA] font-bold border-l-2 border-[#1688E8]"
-                                                : "text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] font-medium"
+                                                ? "bg-surface-hover text-text font-bold border-l-2 border-primary"
+                                                : "text-text-muted hover:text-text hover:bg-surface-hover font-medium"
                                         }`}
                                     >
                                         {c.logo ? (
                                             <img
                                                 src={c.logo}
                                                 alt={c.name}
-                                                className="w-5 h-5 rounded-[5px] object-cover bg-[#1C1F26] shrink-0 border border-[#2B303C]/40"
+                                                className="w-5 h-5 rounded-[5px] object-cover bg-surface-hover shrink-0 border border-border/40"
                                             />
                                         ) : (
-                                            <span className="w-5 h-5 rounded-[5px] bg-[#1688E8]/15 text-[#1688E8] flex items-center justify-center font-bold text-[10px] shrink-0">
+                                            <span className="w-5 h-5 rounded-[5px] bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
                                                 {c.name.charAt(0).toUpperCase()}
                                             </span>
                                         )}
-                                        <span className="truncate flex-1 text-left">{c.name}</span>
+                                        <span className="truncate flex-1 text-left text-[12px] sm:text-[13px]">{c.name}</span>
                                     </button>
                                 );
                             })}
@@ -210,31 +235,98 @@ export const LeftBar = () => {
                                 <button
                                     type="button"
                                     onClick={() => navigate({ to: "/community" })}
-                                    className="w-full text-left px-3 py-1.5 text-[11px] font-bold text-[#1688E8] hover:underline cursor-pointer transition-colors"
+                                    className="w-full text-left px-3 py-1.5 text-[11px] font-bold text-primary hover:underline cursor-pointer transition-colors"
                                 >
                                     {t('common.seeAllCommunities', { defaultValue: `Xem tất cả` })} ({joinedCommunities.length})
                                 </button>
                             )}
                         </>
                     ) : (
-                        <div className="px-3 py-2 text-xs text-[#5F646B]">
+                        <div className="px-3 py-2 text-xs text-text-faint">
                             {t('common.noCommunitiesJoined', { defaultValue: 'Chưa tham gia cộng đồng nào' })}
                         </div>
                     )}
                 </div>
             </div>
 
+            {/* ADMIN / MODERATION (Only visible for Admins) */}
+            {isAdmin && (
+                <div className="border-t border-border pt-3 mt-2 px-1 flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between px-3 pb-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400">
+                            {t('common.adminSection', { defaultValue: 'Quản trị hệ thống' })}
+                        </p>
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                            ADMIN
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
+                                ? pathname.split("/")[2]
+                                : "cs2-vietnam";
+                            navigate({
+                                to: "/community/$communityId",
+                                params: { communityId: targetId },
+                                search: { nav: "manage-reports" },
+                            });
+                        }}
+                        className={`w-full flex items-center justify-between py-2 px-3 rounded-lg text-xs font-semibold transition-colors cursor-pointer group ${
+                            pathname.includes("manage-reports")
+                                ? "bg-rose-500/15 text-rose-400 border-l-2 border-rose-500 font-bold"
+                                : "text-text-muted hover:text-text hover:bg-surface-hover"
+                        }`}
+                        title={t('common.manageReports', { defaultValue: 'Xem các báo cáo vi phạm cần xử lý' })}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <FontAwesomeIcon icon={faFlag} className="w-4 shrink-0 text-rose-400" />
+                            <span className="truncate">{t('common.reports', { defaultValue: 'Báo cáo vi phạm' })}</span>
+                        </div>
+                        {pendingReportsCount > 0 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono font-bold">
+                                {pendingReportsCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
+                                ? pathname.split("/")[2]
+                                : "cs2-vietnam";
+                            navigate({
+                                to: "/community/$communityId",
+                                params: { communityId: targetId },
+                                search: { nav: "manage-moderation" },
+                            });
+                        }}
+                        className={`w-full flex items-center gap-2.5 py-2 px-3 rounded-lg text-xs font-semibold transition-colors cursor-pointer group ${
+                            pathname.includes("manage-moderation")
+                                ? "bg-primary/15 text-primary border-l-2 border-primary font-bold"
+                                : "text-text-muted hover:text-text hover:bg-surface-hover"
+                        }`}
+                        title={t('common.moderationCenter', { defaultValue: 'Trung tâm kiểm duyệt' })}
+                    >
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 shrink-0 text-primary" />
+                        <span className="truncate">{t('common.moderationHub', { defaultValue: 'Trung tâm kiểm duyệt' })}</span>
+                    </button>
+                </div>
+            )}
+
             {/* SYSTEM SETTINGS */}
-            <div className="border-t border-[#1C1F22] pt-3 mt-2 px-1 flex flex-col gap-0.5">
+            <div className="border-t border-border pt-3 mt-2 px-1 flex flex-col gap-0.5">
                 <button
                     type="button"
                     onClick={() => navigate({to: "/settings"})}
                     className={`${isSettingsActive ? navItemActive : navItem}`}
                 >
-                    <FontAwesomeIcon icon={faGear} className={`w-4 shrink-0 ${isSettingsActive ? 'text-[#1688E8]' : 'text-[#8B9097]'}`} />
+                    <FontAwesomeIcon icon={faGear} className={`w-4 shrink-0 ${isSettingsActive ? 'text-primary' : 'text-text-muted'}`} />
                     <span>{t('common.settings')}</span>
                 </button>
             </div>
         </div>
-    )
-}
+    );
+};

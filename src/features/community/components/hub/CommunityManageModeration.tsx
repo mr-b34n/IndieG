@@ -85,7 +85,19 @@ export const CommunityManageModeration = ({
     onNavigateRules,
     userRole = "owner",
 }: CommunityManageModerationProps) => {
-    const [subTab, setSubTab] = useState<"requests" | "reports" | "moderators" | "history">(initialTab);
+    const [subTabOverride, setSubTabOverride] = useState<"requests" | "reports" | "moderators" | "history" | null>(null);
+    const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+
+    if (prevInitialTab !== initialTab) {
+        setPrevInitialTab(initialTab);
+        setSubTabOverride(null);
+    }
+
+    const subTab = subTabOverride || initialTab;
+    const setSubTab = (tab: "requests" | "reports" | "moderators" | "history") => {
+        setSubTabOverride(tab);
+    };
+    const [reportFilter, setReportFilter] = useState<"all" | "pending" | "resolved" | "dismissed">("all");
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const isOwner = userRole === "owner" || userRole === "admin";
@@ -175,17 +187,34 @@ export const CommunityManageModeration = ({
             const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
             const reporterHandle = r.reporter?.username ? `@${r.reporter.username}` : reporterProfile?.username ? `@${reporterProfile.username}` : (r.reporterId ? `@user_${r.reporterId.slice(0, 6)}` : "@reporter");
 
+            const targetType = (r.targetType || (r.postId ? "post" : r.commentId ? "comment" : "user")) as "post" | "comment" | "user";
+            const targetTitle =
+                r.post?.title ||
+                (targetType === "user"
+                    ? (isVi ? `Báo cáo người dùng: ${r.targetId || "Tài khoản"}` : `Reported User: ${r.targetId || "Account"}`)
+                    : r.postId
+                    ? `Post #${r.postId.slice(0, 8)}`
+                    : `Comment #${(r.commentId || r.id).slice(0, 8)}`);
+            const targetExcerpt =
+                r.post?.content?.slice(0, 120) ||
+                r.comment?.content?.slice(0, 120) ||
+                r.reason ||
+                (isVi ? "Nội dung bị báo cáo" : "Reported content");
+            const status = (
+                r.status === "resolved" ? "resolved" : r.status === "dismissed" ? "dismissed" : "pending"
+            ) as "pending" | "resolved" | "dismissed";
+
             return {
                 id: r.id,
-                targetType: (r.postId ? "post" : "comment") as "post" | "comment" | "user",
-                targetTitle: r.post?.title || (r.postId ? `Post #${r.postId.slice(0, 8)}` : `Report #${r.id.slice(0, 6)}`),
-                targetExcerpt: r.post?.content?.slice(0, 100) || r.reason || (isVi ? "Nội dung bị báo cáo" : "Reported content"),
+                targetType,
+                targetTitle,
+                targetExcerpt,
                 authorName: reporterName,
                 authorHandle: reporterHandle,
                 reporterName: reporterHandle,
                 reason: r.reason || (isVi ? "Vi phạm quy tắc ứng xử" : "Community rule violation"),
                 createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Gần đây" : "Recent"),
-                status: "pending" as const,
+                status,
             };
         });
     }, [reportsData, profilesMap, isVi]);
@@ -475,18 +504,49 @@ export const CommunityManageModeration = ({
             {/* TAB CONTENT 2: COMMUNITY REPORTS */}
             {subTab === "reports" && (
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between text-xs text-text-muted px-1">
-                        <span>{reports.filter((r) => r.status === "pending").length} {isVi ? "báo cáo đang chờ giải quyết" : "reports pending review"}</span>
-                        <span className="text-text-faint text-[11px]">{isVi ? "Ngưỡng tự động ẩn: 3 báo cáo" : "Auto-flag threshold: 3 reports"}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted px-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {(["all", "pending", "resolved", "dismissed"] as const).map((mode) => {
+                                const count =
+                                    mode === "all"
+                                        ? reports.length
+                                        : reports.filter((r) => r.status === mode).length;
+                                const label =
+                                    mode === "all"
+                                        ? (isVi ? "Tất cả" : "All")
+                                        : mode === "pending"
+                                        ? (isVi ? "Chờ xử lý" : "Pending")
+                                        : mode === "resolved"
+                                        ? (isVi ? "Đã xử lý" : "Resolved")
+                                        : (isVi ? "Đã bác bỏ" : "Dismissed");
+                                const isActive = reportFilter === mode;
+                                return (
+                                    <button
+                                        key={mode}
+                                        type="button"
+                                        onClick={() => setReportFilter(mode)}
+                                        className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                            isActive
+                                                ? "bg-primary text-white shadow-xs"
+                                                : "bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-divider-primary/60"
+                                        }`}
+                                    >
+                                        <span>{label}</span>
+                                        <span className={`text-[10px] font-mono px-1 rounded ${isActive ? "bg-black/30" : "bg-surface-hover"}`}>{count}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <span className="text-text-faint text-[11px]">{isVi ? "Toàn quyền quản trị Admin" : "Full Admin Access"}</span>
                     </div>
 
-                    {reports.length === 0 ? (
+                    {reports.filter((r) => reportFilter === "all" || r.status === reportFilter).length === 0 ? (
                         <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
-                            <p className="text-xs text-text-muted">{isVi ? "Không có báo cáo vi phạm nào cần xử lý." : "No pending reports."}</p>
+                            <p className="text-xs text-text-muted">{isVi ? "Không có báo cáo vi phạm nào phù hợp bộ lọc." : "No reports matching filter."}</p>
                         </div>
                     ) : (
                         <div className="flex flex-col gap-3">
-                            {reports.map((rep) => (
+                            {reports.filter((r) => reportFilter === "all" || r.status === reportFilter).map((rep) => (
                                 <div
                                     key={rep.id}
                                     className={`p-4 rounded-[6px] border transition-all flex flex-col gap-3 ${
@@ -594,9 +654,9 @@ export const CommunityManageModeration = ({
                         </div>
                     ) : (
                         <div className="divide-y divide-divider-primary/30 border border-divider-primary/50 bg-surface-inner/40 rounded-[6px] overflow-hidden">
-                            {moderators.map((mod) => (
+                            {moderators.map((mod, idx) => (
                                 <div
-                                    key={mod.id}
+                                    key={`${mod.id}-${idx}`}
                                     className="p-3.5 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">

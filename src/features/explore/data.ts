@@ -1,11 +1,141 @@
 import type { FeaturedStory, NewsItem, EventItem, ViralMediaTile, TrendingTag } from "./types";
+import { CS2_BANNER, RAFT_BANNER, RDR2_BANNER, CS2_SCREENSHOTS } from "@/shared/constants/images";
 
-export const FEATURED_STORIES: FeaturedStory[] = [];
+export const FEATURED_STORIES: FeaturedStory[] = [
+    {
+        id: "feat-1",
+        title: "Counter-Strike 2: Đỉnh cao bắn súng chiến thuật trên Source 2",
+        slug: "counter-strike-2",
+        category: "FPS ESPORTS",
+        genres: ["Action", "FPS", "Esports"],
+        artworkUrl: CS2_BANNER,
+        description: "Bản nâng cấp toàn diện mang tính lịch sử với cơ chế khói tương tác sinh động và hệ thống sub-tick vượt trội.",
+        activePlayers: "1.4M người chơi",
+        rating: "4.8",
+        communityName: "Counter-Strike 2 Vietnam",
+        communityMembers: "34.5k",
+    },
+    {
+        id: "feat-2",
+        title: "Elden Ring: Shadow of the Erdtree - Bản mở rộng xuất sắc nhất năm",
+        slug: "elden-ring",
+        category: "ACTION RPG",
+        genres: ["Souls-like", "RPG", "Open World"],
+        artworkUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_616x353.jpg",
+        description: "Khám phá vùng đất Realm of Shadow đầy hiểm nguy cùng những trận chiến boss kinh điển làm say lòng game thủ toàn cầu.",
+        activePlayers: "450k người chơi",
+        rating: "4.9",
+        communityName: "Elden Ring & Souls-like VN",
+        communityMembers: "28.9k",
+    },
+];
 
-export const VIETNAMESE_NEWS_ITEMS: NewsItem[] = [];
+export const VIETNAMESE_NEWS_ITEMS: NewsItem[] = [
+    {
+        id: "news-1",
+        title: "Valve công bố giải đấu Major CS2 tiếp theo với tổng giải thưởng 1.25 triệu USD",
+        developer: "Valve Corporation",
+        genre: "Esports",
+        status: "NÓNG HỔI",
+        rating: "5.0",
+        date: "Hôm nay, 14:30",
+        description: "Giải đấu Major danh giá nhất mùa thu sẽ quy tụ 24 đội tuyển CS2 mạnh nhất thế giới tranh tài.",
+        imageUrl: CS2_BANNER,
+        linkSlug: "counter-strike-2",
+        tags: ["CS2", "Major", "Esports"],
+        isHighlight: true,
+    },
+    {
+        id: "news-2",
+        title: "Nhóm phát triển Indie Việt công bố dự án game kinh dị lấy bối cảnh làng quê",
+        developer: "Indie Studio VN",
+        genre: "Horror / Adventure",
+        status: "SẮP RA MẮT",
+        rating: "4.8",
+        date: "Hôm qua",
+        description: "Dự án gây ấn tượng mạnh với đồ họa Unreal Engine 5 tái hiện sống động không gian văn hóa dân gian Việt Nam.",
+        imageUrl: RAFT_BANNER,
+        linkSlug: "raft",
+        tags: ["IndieVN", "Horror", "UnrealEngine5"],
+        isHighlight: false,
+    },
+];
 
-export const ONGOING_EVENTS: EventItem[] = [];
+export const ONGOING_EVENTS: EventItem[] = [
+    {
+        id: "event-1",
+        title: "Giải đấu CS2 Premier League Vietnam Mùa 1",
+        subtitle: "Tranh tài 5v5 trực tiếp mỗi cuối tuần",
+        date: "20 Tháng 10 - 05 Tháng 11",
+        statusText: "Đang mở đăng ký",
+        isLive: true,
+        imageUrl: CS2_SCREENSHOTS[0],
+        tags: ["CS2", "Tournament", "Premier"],
+    },
+    {
+        id: "event-2",
+        title: "Cuộc thi chụp ảnh Photo Mode - Miền Viễn Tây RDR2",
+        subtitle: "Khoe tác phẩm nghệ thuật nhận quà Steam Wallet",
+        date: "01 Tháng 10 - 15 Tháng 10",
+        statusText: "Đang diễn ra",
+        imageUrl: RDR2_BANNER,
+        tags: ["RDR2", "Contest", "PhotoMode"],
+    },
+];
 
-export const TRENDING_TAGS: TrendingTag[] = [];
+export const TRENDING_TAGS: TrendingTag[] = [
+    { id: "tag-1", name: "CS2Clutch", count: "1.2k bài viết", isHot: true },
+    { id: "tag-2", name: "EldenRingDLC", count: "890 bài viết", isHot: true },
+    { id: "tag-3", name: "Cyberpunk2077", count: "540 bài viết", isHot: false },
+    { id: "tag-4", name: "RaftCoop", count: "320 bài viết", isHot: false },
+    { id: "tag-5", name: "IndieGameVN", count: "280 bài viết", isHot: true },
+];
 
-export const VIRAL_TILES: ViralMediaTile[] = [];
+export const VIRAL_TILES: ViralMediaTile[] = [
+    {
+        id: "viral-1",
+        author: "ShadowHunter",
+        authorAvatar: "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowHunter",
+        title: "Pha xử lý AWP vẩy tâm thần sầu round đấu match point",
+        contentType: "VIDEO",
+        imageUrl: CS2_SCREENSHOTS[1],
+        likes: "1.4k",
+        commentsCount: "86",
+        videoDuration: "0:45",
+        gameTag: "Counter-Strike 2",
+    },
+    {
+        id: "viral-2",
+        author: "EldenLord_VN",
+        authorAvatar: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
+        title: "Khoảnh khắc hạ gục Malenia chỉ bằng nắm đấm tay không!",
+        contentType: "SCREENSHOT",
+        imageUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/ss_49969dd4ae47a3219ee944ab8b958c2be653f545.1920x1080.jpg",
+        likes: "2.1k",
+        commentsCount: "142",
+        gameTag: "ELDEN RING",
+    },
+    {
+        id: "viral-3",
+        author: "CyberSamurai",
+        authorAvatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSamurai",
+        title: "Bộ ảnh chụp xe độ Rayfield Caliburn dưới mưa neon Night City",
+        contentType: "SCREENSHOT",
+        imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+        likes: "890",
+        commentsCount: "38",
+        gameTag: "Cyberpunk 2077",
+    },
+    {
+        id: "viral-4",
+        author: "MonkeyKing_88",
+        authorAvatar: "https://api.dicebear.com/7.x/bottts/svg?seed=MonkeyKing",
+        title: "Combo Định Thân Pháp + Biến Thân Xích Nhiêu chém bay nửa máu boss",
+        contentType: "VIDEO",
+        imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+        likes: "3.5k",
+        commentsCount: "215",
+        videoDuration: "1:12",
+        gameTag: "Black Myth: Wukong",
+    },
+];

@@ -5,12 +5,13 @@ import {
     faShieldHalved, faGlobe, faBug, faLightbulb, faCheckCircle, faArrowLeft, faBan, faGamepad, faCheck,
     faEye, faBell, faLaptop, faMobileScreen, faExclamationTriangle,
     faUserClock, faArrowUp, faArrowDown, faLanguage,
-    faChevronRight, faXmark, faSliders, faComment, faReply, faHeart, faAt, faUsers
+    faChevronRight, faXmark, faSliders, faComment, faReply, faHeart, faAt, faUsers,
+    faSun, faMoon
 } from '@fortawesome/free-solid-svg-icons';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useGameStore } from '@/features/game';
 import { useAuthStore } from '@/features/auth';
-import { useUserSessionsQuery } from '@/shared/api/useQueries';
+import { useUserSessionsQuery, useRevokeSessionMutation } from '@/shared/api/useQueries';
 import { INITIAL_GAMES } from '@/features/game/constants';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 
@@ -43,7 +44,7 @@ const ToggleSwitch = ({ checked, onChange, disabled, ariaLabel }: ToggleSwitchPr
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
-            checked ? 'bg-primary' : 'bg-[#252930]'
+            checked ? 'bg-primary' : 'bg-surface-hover border border-border/80'
         }`}
     >
         <span
@@ -64,8 +65,10 @@ export function SettingsPage() {
     >(initialTab);
 
     const { data: remoteSessions, isLoading: sessionsLoading } = useUserSessionsQuery();
+    const revokeSessionMutation = useRevokeSessionMutation();
 
     const theme = useThemeStore((state) => state.theme);
+    const setTheme = useThemeStore((state) => state.setTheme);
     const toggleTheme = useThemeStore((state) => state.toggleTheme);
     const language = useThemeStore((state) => state.language);
     const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
@@ -342,10 +345,10 @@ export function SettingsPage() {
                                     isActive
                                         ? tab.isDanger
                                             ? "bg-rose-500/10 border-rose-500 text-rose-400 font-bold"
-                                            : "bg-[#14171A] border-primary text-text font-bold"
+                                            : "bg-surface-hover border-primary text-text font-bold"
                                         : tab.isDanger
                                         ? "border-transparent hover:bg-rose-500/5 text-rose-500/80 font-medium"
-                                        : "border-transparent hover:bg-[#14171A]/60 text-[#8B9097] hover:text-[#E8E9EA] font-medium"
+                                        : "border-transparent hover:bg-surface-hover/60 text-text-muted hover:text-text font-medium"
                                 }`}
                             >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -385,30 +388,99 @@ export function SettingsPage() {
                             </div>
 
                             <div className="divide-y divide-divider-primary/50">
-                                {/* Theme Row */}
-                                <div className="py-3.5 flex items-center justify-between gap-4">
-                                    <div className="flex items-start gap-3 min-w-0">
-                                        <div className="w-8 h-8 rounded bg-surface hover:bg-surface-hover border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
-                                            <FontAwesomeIcon icon={theme === 'dark' ? faGlobe : faGlobe} className="text-xs" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="text-xs font-bold text-text">
-                                                {t('settings.general.appearance', { defaultValue: 'Chế độ tối (Dark Mode)' })}
+                                {/* Theme Row & Interactive Selectors */}
+                                <div className="py-4 space-y-3">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex items-start gap-3 min-w-0">
+                                            <div className="w-8 h-8 rounded bg-surface hover:bg-surface-hover border border-divider-primary/80 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                                                <FontAwesomeIcon icon={theme === 'dark' ? faMoon : faSun} className="text-xs" />
                                             </div>
-                                            <div className="text-[11px] text-text-faint mt-0.5">
-                                                {theme === 'dark'
-                                                    ? t('settings.general.darkModeDesc', { defaultValue: 'Sử dụng giao diện nền tối gaming mắt dịu' })
-                                                    : t('settings.general.lightModeDesc', { defaultValue: 'Sử dụng giao diện sáng truyền thống' })}
+                                            <div className="min-w-0">
+                                                <div className="text-xs font-bold text-text">
+                                                    {t('settings.general.appearance', { defaultValue: 'Giao diện chủ đề (Theme)' })}
+                                                </div>
+                                                <div className="text-[11px] text-text-faint mt-0.5">
+                                                    {theme === 'dark'
+                                                        ? t('settings.general.darkModeDesc', { defaultValue: 'Đang dùng chế độ tối (Dark Mode) - Dịu mắt, tối ưu ban đêm' })
+                                                        : t('settings.general.lightModeDesc', { defaultValue: 'Đang dùng chế độ sáng (Light Mode) - Tương phản cao, dễ nhìn ban ngày' })}
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {/* Quick Switch */}
+                                        <ToggleSwitch
+                                            checked={theme === 'dark'}
+                                            onChange={toggleTheme}
+                                            ariaLabel="Toggle Dark / Light Mode"
+                                        />
                                     </div>
 
-                                    {/* iPhone style Toggle Switch */}
-                                    <ToggleSwitch
-                                        checked={theme === 'dark'}
-                                        onChange={toggleTheme}
-                                        ariaLabel="Toggle Dark Mode"
-                                    />
+                                    {/* 2-Option Cards */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                        {/* Dark Mode Card */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setTheme('dark')}
+                                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex items-start gap-3 ${
+                                                theme === 'dark'
+                                                    ? 'bg-surface border-primary ring-1 ring-primary/40 shadow-xs'
+                                                    : 'bg-surface/50 border-border hover:bg-surface-hover text-text-muted hover:text-text'
+                                            }`}
+                                        >
+                                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                                theme === 'dark' ? 'bg-primary/15 text-primary' : 'bg-surface-inner text-text-muted'
+                                            }`}>
+                                                <FontAwesomeIcon icon={faMoon} className="text-sm" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-xs font-bold ${theme === 'dark' ? 'text-primary' : 'text-text'}`}>
+                                                        Chế độ tối (Dark Mode)
+                                                    </span>
+                                                    {theme === 'dark' && (
+                                                        <span className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">
+                                                            <FontAwesomeIcon icon={faCheck} />
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-text-faint mt-1 leading-relaxed">
+                                                    Nền tối gaming chuẩn OLED, giảm mỏi mắt khi chơi game đêm.
+                                                </p>
+                                            </div>
+                                        </button>
+
+                                        {/* Light Mode Card */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setTheme('light')}
+                                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex items-start gap-3 ${
+                                                theme === 'light'
+                                                    ? 'bg-surface border-primary ring-1 ring-primary/40 shadow-xs'
+                                                    : 'bg-surface/50 border-border hover:bg-surface-hover text-text-muted hover:text-text'
+                                            }`}
+                                        >
+                                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                                theme === 'light' ? 'bg-primary/15 text-primary' : 'bg-surface-inner text-text-muted'
+                                            }`}>
+                                                <FontAwesomeIcon icon={faSun} className="text-sm" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-xs font-bold ${theme === 'light' ? 'text-primary' : 'text-text'}`}>
+                                                        Chế độ sáng (Light Mode)
+                                                    </span>
+                                                    {theme === 'light' && (
+                                                        <span className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">
+                                                            <FontAwesomeIcon icon={faCheck} />
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-text-faint mt-1 leading-relaxed">
+                                                    Nền sáng rõ ràng, độ tương phản sắc nét khi sử dụng ban ngày.
+                                                </p>
+                                            </div>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Language Row */}
@@ -875,7 +947,9 @@ export function SettingsPage() {
                                                             </span>
                                                             <button
                                                                 type="button"
-                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer"
+                                                                onClick={() => revokeSessionMutation.mutate(s.id)}
+                                                                disabled={revokeSessionMutation.isPending}
+                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer disabled:opacity-50"
                                                             >
                                                                 {t('settings.account.revokeSession', { defaultValue: 'Thu hồi' })}
                                                             </button>

@@ -1,50 +1,43 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { 
     faGear, 
     faThumbtack, 
     faComment, 
-    faImage,
-    faChevronDown,
-    faCheck,
-    faUsers,
-    faEyeSlash,
-    faPaperclip,
-    faXmark,
-    faLock,
-    faTriangleExclamation
-} from "@fortawesome/free-solid-svg-icons"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { useNavigate } from "@tanstack/react-router"
+    faImage, 
+    faChevronDown, 
+    faCheck, 
+    faUsers, 
+    faEyeSlash, 
+    faXmark, 
+    faTriangleExclamation,
+    faBold,
+    faItalic,
+    faStrikethrough,
+    faListUl,
+    faLink,
+    faQuoteLeft,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import { createAttachmentFromFile, revokeAttachmentUrls, type EditableAttachment } from "@/features/post/helpers/postAttachments";
+import { createAttachmentFromFile, type EditableAttachment, prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
 import { useCommunitiesStore, type CommunityData } from "@/features/community";
-import { AttachmentPicker, useDraftsStore, getCurrentAuthor } from "@/features/post";
-import { type CreatePostPayload } from "../types";
+import { AttachmentPicker, useDraftsStore, getCurrentAuthor, usePostsStore } from "@/features/post";
+import { type CreatePostPayload, type PostDataWithSettings } from "../types";
+import { HASHTAG_REGEX } from "../constants";
+import { useCreatePostModalStore } from "../store/useCreatePostModalStore";
+import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
+import { useCreatePostMutation } from "@/shared/api/useQueries";
+
 export type { CreatePostPayload };
-import { HASHTAG_REGEX, MAX_TEXTAREA_HEIGHT } from "../constants";
 
 const extractHashtags = (text: string): string[] => {
     const matches = text.match(HASHTAG_REGEX) ?? [];
     const seen = new Set<string>();
     matches.forEach((m) => seen.add(m.slice(1)));
     return Array.from(seen);
-};
-
-const renderHighlightedContent = (text: string) => {
-    if (!text) return null;
-    const parts = text.split(/(#[^\s#]+)/g);
-    return parts.map((part, i) =>
-        /^#[^\s#]+$/.test(part) ? (
-            <span key={i} className="text-primary font-semibold">
-                {part}
-            </span>
-        ) : (
-            <span key={i}>{part}</span>
-        )
-    );
 };
 
 const ToggleSwitch = ({
@@ -88,6 +81,8 @@ const PostSettingsMenu = ({
     onPinnedChange,
     isSpoiler,
     onSpoilerChange,
+    isNsfw,
+    onNsfwChange,
 }: {
     allowComments: boolean;
     onAllowCommentsChange: (v: boolean) => void;
@@ -95,6 +90,8 @@ const PostSettingsMenu = ({
     onPinnedChange: (v: boolean) => void;
     isSpoiler: boolean;
     onSpoilerChange: (v: boolean) => void;
+    isNsfw: boolean;
+    onNsfwChange: (v: boolean) => void;
 }) => {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -106,8 +103,8 @@ const PostSettingsMenu = ({
         if (!buttonRef.current) return;
         const rect = buttonRef.current.getBoundingClientRect();
         setCoords({
-            top: rect.bottom + 6,
-            left: Math.max(12, rect.right - 220),
+            top: rect.top - 180,
+            left: Math.max(12, rect.right - 230),
         });
     };
 
@@ -146,12 +143,16 @@ const PostSettingsMenu = ({
                 ref={buttonRef}
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className={`p-1.5 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer ${
-                    open ? "bg-surface-hover text-text" : ""
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer border border-border/50 ${
+                    open || isSpoiler || isNsfw || pinned ? "bg-surface-hover text-primary border-primary/40" : ""
                 }`}
-                title={t('feed.settings') || "Post Settings"}
+                title={t('feed.settings', { defaultValue: 'Cài đặt bài viết' })}
             >
-                <FontAwesomeIcon icon={faGear} className="w-3.5 h-3.5" />
+                <FontAwesomeIcon icon={faGear} className="w-3 h-3" />
+                <span className="text-[11px] hidden sm:inline">{t('feed.settings', { defaultValue: 'Cài đặt' })}</span>
+                {(isSpoiler || isNsfw) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                )}
             </button>
 
             {open &&
@@ -160,25 +161,32 @@ const PostSettingsMenu = ({
                     <div
                         ref={menuRef}
                         style={{ top: coords.top, left: coords.left }}
-                        className="fixed z-[9999] w-56 rounded-[6px] bg-surface border border-divider-primary shadow-xl p-1.5 flex flex-col gap-1 text-xs animate-fade-in"
+                        className="fixed z-[9999] w-60 rounded-lg bg-surface border border-border shadow-2xl p-1.5 flex flex-col gap-1 text-xs animate-fade-in"
                     >
                         <ToggleSwitch
                             checked={allowComments}
                             onChange={onAllowCommentsChange}
-                            label={t('feed.allowComments') || "Allow comments"}
+                            label={t('feed.allowComments', { defaultValue: 'Bật bình luận' })}
                             icon={faComment}
                         />
                         <ToggleSwitch
                             checked={pinned}
                             onChange={onPinnedChange}
-                            label={t('feed.pinPost') || "Pin post"}
+                            label={t('feed.pinPost', { defaultValue: 'Ghim bài viết' })}
                             icon={faThumbtack}
                         />
+                        <div className="my-1 border-t border-border/40" />
                         <ToggleSwitch
                             checked={isSpoiler}
                             onChange={onSpoilerChange}
-                            label={t('feed.spoiler') || "Spoiler warning"}
+                            label={t('feed.warningSpoiler', { defaultValue: 'Cảnh báo Spoiler' })}
                             icon={faEyeSlash}
+                        />
+                        <ToggleSwitch
+                            checked={isNsfw}
+                            onChange={onNsfwChange}
+                            label={t('feed.warningNsfw', { defaultValue: 'Cảnh báo 18+ (NSFW)' })}
+                            icon={faTriangleExclamation}
                         />
                     </div>,
                     document.body
@@ -187,7 +195,10 @@ const PostSettingsMenu = ({
     );
 };
 
-const CommunitySelector = ({
+/* =========================================================================
+   5. Community Context & Identity Selector
+   ========================================================================= */
+export const CommunitySelector = ({
     value,
     onChange,
     communities,
@@ -223,34 +234,51 @@ const CommunitySelector = ({
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                className={`w-full h-8 flex items-center justify-between gap-2 px-2.5 rounded-[6px] border text-xs font-semibold transition-all cursor-pointer whitespace-nowrap overflow-hidden ${
+                className={`w-full h-9 flex items-center justify-between gap-2.5 px-3 rounded-lg border text-xs font-medium transition-all cursor-pointer whitespace-nowrap overflow-hidden ${
                     isOpen
                         ? "border-primary ring-1 ring-primary/30 bg-surface-hover/70"
                         : hasError && !selectedCommunity
                         ? "border-rose-500 bg-rose-500/10 text-rose-400"
                         : selectedCommunity
-                        ? "border-divider-primary bg-surface-hover/50 hover:bg-surface-hover text-text"
-                        : "border-divider-primary bg-surface-hover/30 hover:bg-surface-hover/60 text-text-muted"
+                        ? "border-border/70 bg-surface-hover/50 hover:bg-surface-hover text-text"
+                        : "border-border/50 bg-surface-hover/30 hover:bg-surface-hover/60 text-text-muted"
                 }`}
             >
                 {selectedCommunity ? (
                     <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-                        <img
-                            src={selectedCommunity.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"}
-                            alt={selectedCommunity.name}
-                            className="w-4 h-4 rounded-full object-cover shrink-0"
-                        />
-                        <span className="truncate font-bold text-text text-xs">{selectedCommunity.name}</span>
+                        {/* Game / Community Logo */}
+                        {selectedCommunity.logo ? (
+                            <img
+                                src={selectedCommunity.logo}
+                                alt={selectedCommunity.name}
+                                className="w-5 h-5 rounded-[4px] object-cover shrink-0 border border-border/40"
+                            />
+                        ) : (
+                            <span className="w-5 h-5 rounded-[4px] bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                                {selectedCommunity.name.charAt(0)}
+                            </span>
+                        )}
+
+                        {/* Short Game Tag badge */}
+                        {selectedCommunity.tag && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase bg-primary/15 text-primary border border-primary/25 shrink-0 select-none">
+                                {selectedCommunity.tag}
+                            </span>
+                        )}
+
+                        <span className="truncate font-bold text-text text-xs sm:text-[13px]">
+                            {selectedCommunity.name}
+                        </span>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate text-text-muted">
-                        <FontAwesomeIcon icon={faUsers} className="text-text-faint text-[11px] shrink-0" />
-                        <span className="truncate text-xs">{t('feed.selectCommunityPlaceholder') || "Choose community"}</span>
+                    <div className="flex items-center gap-2 min-w-0 flex-1 truncate text-text-muted">
+                        <FontAwesomeIcon icon={faUsers} className="text-text-faint text-xs shrink-0" />
+                        <span className="truncate text-xs font-medium">{t('feed.selectCommunityPlaceholder', { defaultValue: 'Chọn cộng đồng đăng bài...' })}</span>
                     </div>
                 )}
                 <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-[9px] text-text-faint transition-transform duration-200 shrink-0 ml-1 ${
+                    className={`text-[9px] text-text-faint transition-transform duration-200 shrink-0 ml-1.5 ${
                         isOpen ? "rotate-180 text-primary" : ""
                     }`}
                 />
@@ -260,16 +288,16 @@ const CommunitySelector = ({
             {hasError && !selectedCommunity && (
                 <span className="text-[11px] text-rose-500 font-semibold flex items-center gap-1 pt-0.5 animate-fade-in whitespace-nowrap">
                     <span>⚠</span>
-                    <span>{t('feed.selectCommunityRequired') || "Please select a community"}</span>
+                    <span>{t('feed.selectCommunityRequired', { defaultValue: 'Vui lòng chọn một cộng đồng' })}</span>
                 </span>
             )}
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 min-w-[200px] w-full bg-surface border border-divider-primary rounded-[6px] shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto animate-fade-in p-1 flex flex-col gap-0.5">
+                <div className="absolute top-full left-0 mt-1 min-w-[240px] w-full bg-surface border border-border rounded-lg shadow-2xl z-50 overflow-hidden max-h-60 overflow-y-auto animate-fade-in p-1 flex flex-col gap-0.5">
                     {communities.length === 0 ? (
                         <div className="px-3 py-2 text-xs text-text-faint text-center whitespace-nowrap">
-                            {t('feed.noCommunitiesJoined') || "No communities joined"}
+                            {t('feed.noCommunitiesJoined', { defaultValue: 'Chưa tham gia cộng đồng nào' })}
                         </div>
                     ) : (
                         communities.map((c) => {
@@ -282,18 +310,31 @@ const CommunitySelector = ({
                                         onChange(c.id);
                                         setIsOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-[4px] text-left text-xs transition-colors cursor-pointer whitespace-nowrap ${
+                                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-md text-left text-xs transition-colors cursor-pointer whitespace-nowrap ${
                                         isSelected
                                             ? "bg-primary/10 text-primary font-bold"
                                             : "hover:bg-surface-hover text-text"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2 min-w-0 truncate">
-                                        <img
-                                            src={c.logo}
-                                            alt={c.name}
-                                            className="w-4 h-4 rounded-full object-cover shrink-0"
-                                        />
+                                    <div className="flex items-center gap-2.5 min-w-0 truncate">
+                                        {c.logo ? (
+                                            <img
+                                                src={c.logo}
+                                                alt={c.name}
+                                                className="w-5 h-5 rounded-[4px] object-cover shrink-0 border border-border/40"
+                                            />
+                                        ) : (
+                                            <span className="w-5 h-5 rounded-[4px] bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                {c.name.charAt(0)}
+                                            </span>
+                                        )}
+
+                                        {c.tag && (
+                                            <span className="px-1 py-0.2 rounded text-[9px] font-extrabold uppercase bg-primary/10 text-primary shrink-0">
+                                                {c.tag}
+                                            </span>
+                                        )}
+
                                         <span className="truncate font-semibold text-xs">{c.name}</span>
                                     </div>
                                     {isSelected && (
@@ -309,136 +350,218 @@ const CommunitySelector = ({
     );
 };
 
-interface CreatePostBoxProps {
+/* =========================================================================
+   6. Content Editor Formatting Toolbar
+   ========================================================================= */
+const FormattingToolbar = ({
+    onFormat,
+    onAddImage,
+}: {
+    onFormat: (prefix: string, suffix?: string, placeholder?: string) => void;
+    onAddImage: () => void;
+}) => {
+    return (
+        <div className="flex items-center justify-between gap-1 py-1 px-1.5 bg-surface-hover/40 border border-border/40 rounded-lg text-text-muted flex-wrap">
+            <div className="flex items-center gap-1 flex-wrap">
+                <button
+                    type="button"
+                    onClick={() => onFormat("**", "**", "in đậm")}
+                    title="In đậm (Bold)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs font-bold cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faBold} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onFormat("*", "*", "nghiêng")}
+                    title="In nghiêng (Italic)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs italic cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faItalic} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onFormat("~~", "~~", "gạch ngang")}
+                    title="Gạch ngang (Strikethrough)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faStrikethrough} />
+                </button>
+                <span className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
+                <button
+                    type="button"
+                    onClick={() => onFormat("\n- ", "", "mục danh sách")}
+                    title="Danh sách (List)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faListUl} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onFormat("[", "](https://)", "tiêu đề liên kết")}
+                    title="Gắn liên kết (Link)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faLink} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onFormat("\n> ", "", "trích dẫn")}
+                    title="Trích dẫn (Quote)"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faQuoteLeft} />
+                </button>
+            </div>
+
+            {/* Top Media Upload Trigger */}
+            <button
+                type="button"
+                onClick={onAddImage}
+                title="Tải lên hình ảnh hoặc video"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
+            >
+                <FontAwesomeIcon icon={faImage} className="text-emerald-400 text-xs" />
+                <span className="text-[11px]">Ảnh / Video</span>
+            </button>
+        </div>
+    );
+};
+
+/* =========================================================================
+   CREATE POST MODAL (FULL EXPERIENCE)
+   - Sticky Header: CREATE POST ... ×
+   - Scrollable Body (Independently scrollable with large content)
+   - Sticky Footer: Media / Video, Add attachments ... Cancel, Post
+   ========================================================================= */
+export interface CreatePostModalProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+    defaultCommunityId?: string | number | null;
     onPostCreated?: (payload: CreatePostPayload) => void;
-    defaultCommunityId?: number | string | null;
-    hideCommunitySelector?: boolean;
     initialTitle?: string;
     initialContent?: string;
 }
 
-export const CreatePostBox = ({
+export const CreatePostModal = ({
+    isOpen: propIsOpen,
+    onClose: propOnClose,
+    defaultCommunityId: propDefaultCommunityId,
     onPostCreated,
-    defaultCommunityId = null,
-    hideCommunitySelector = false,
     initialTitle = "",
     initialContent = "",
-}: CreatePostBoxProps) => {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
+}: CreatePostModalProps) => {
+    const { t, language } = useTranslation();
     const user = useAuthStore((s) => s.user);
-    const customAvatar = useAuthStore((s) => s.customAvatar);
-    const displayName = user?.name || user?.username || getCurrentAuthor();
-    const avatarUrl =
-        user?.avatarUrl ||
-        user?.avatar_url ||
-        customAvatar ||
-        (user?.user_metadata?.avatar_url as string | undefined) ||
-        "";
 
-    const { communities } = useCommunitiesStore();
+    const storeIsOpen = useCreatePostModalStore((s) => s.isOpen);
+    const storeDefaultCommunityId = useCreatePostModalStore((s) => s.defaultCommunityId);
+    const storeClose = useCreatePostModalStore((s) => s.closeCreatePost);
+
+    const isVisible = propIsOpen !== undefined ? propIsOpen : storeIsOpen;
+    const handleClose = propOnClose || storeClose;
+
+    const effectiveDefaultCommunityId = propDefaultCommunityId !== undefined ? propDefaultCommunityId : storeDefaultCommunityId;
+
+    const { communities, getCommunityById } = useCommunitiesStore();
     const joinedCommunities = useMemo(() => {
         const joined = communities.filter((c) => c.joined || (c as CommunityData & { isJoined?: boolean }).isJoined);
         return joined.length > 0 ? joined : communities;
     }, [communities]);
 
-    const activeFilteredCommunity = useMemo(() => {
-        if (!defaultCommunityId) return null;
-        return joinedCommunities.find((c) => String(c.id) === String(defaultCommunityId)) || null;
-    }, [joinedCommunities, defaultCommunityId]);
-
     const saveDraft = useDraftsStore((s) => s.saveDraft);
     const drafts = useDraftsStore((s) => s.drafts);
+    const addPost = usePostsStore((s) => s.addPost);
+    const createPostMutation = useCreatePostMutation();
 
-    const [isExpanded, setExpanded] = useState(false);
     const [title, setTitle] = useState(initialTitle);
     const [content, setContent] = useState(initialContent);
     const [manualTags, setManualTags] = useState("");
-    const [communityId, setCommunityId] = useState<number | string | null>(defaultCommunityId);
+    const [communityId, setCommunityId] = useState<number | string | null>(effectiveDefaultCommunityId || null);
     const [allowComments, setAllowComments] = useState(true);
     const [pinned, setPinned] = useState(false);
     const [isSpoiler, setIsSpoiler] = useState(false);
+    const [isNsfw, setIsNsfw] = useState(false);
     const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
     const [isPosting, setIsPosting] = useState(false);
     const [submitAttempted, setSubmitAttempted] = useState(false);
 
-    // Update communityId if defaultCommunityId changes
-    useEffect(() => {
-        if (defaultCommunityId !== null && defaultCommunityId !== undefined) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setCommunityId(defaultCommunityId);
-        }
-    }, [defaultCommunityId]);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
-    // Load draft if available and no initial data provided (once on mount)
+    // Sync effective community ID
+    useEffect(() => {
+        if (effectiveDefaultCommunityId !== null && effectiveDefaultCommunityId !== undefined) {
+            /* eslint-disable-next-line react-hooks/set-state-in-effect */
+            setCommunityId(effectiveDefaultCommunityId);
+        }
+    }, [effectiveDefaultCommunityId]);
+
+    // Restore draft if available
     const hasLoadedDraft = useRef(false);
     useEffect(() => {
         if (!hasLoadedDraft.current && !initialTitle && !initialContent && drafts.length > 0) {
+            hasLoadedDraft.current = true;
             const draft = drafts[0];
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+            /* eslint-disable react-hooks/set-state-in-effect */
             if (draft.title) setTitle(draft.title);
             if (draft.content) setContent(draft.content);
             if (draft.attachments && draft.attachments.length > 0) setAttachments(draft.attachments);
-            if (draft.communityId && !defaultCommunityId) setCommunityId(draft.communityId);
+            if (draft.communityId && !effectiveDefaultCommunityId) setCommunityId(draft.communityId);
             if (draft.isSpoiler !== undefined) setIsSpoiler(draft.isSpoiler);
-            hasLoadedDraft.current = true;
+            if (draft.isNsfw !== undefined) setIsNsfw(draft.isNsfw);
+            /* eslint-enable react-hooks/set-state-in-effect */
         }
-    }, [drafts, initialTitle, initialContent, defaultCommunityId]);
+    }, [drafts, initialTitle, initialContent, effectiveDefaultCommunityId]);
 
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const highlightRef = useRef<HTMLDivElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Auto-save draft silently when user closes/collapses or when component unmounts with non-empty content
+    // Auto-save draft on change/unmount
     useEffect(() => {
-        return () => {
-            if (content.trim() || title.trim()) {
-                saveDraft({
-                    title,
-                    content,
-                    communityId,
-                    attachments,
-                    privacy: "public",
-                    allowComments,
-                    pinned,
-                });
+        if (content.trim() || title.trim()) {
+            saveDraft({
+                title,
+                content,
+                communityId,
+                attachments,
+                privacy: "public",
+                allowComments,
+                pinned,
+                isSpoiler,
+                isNsfw,
+            });
+        }
+    }, [content, title, communityId, attachments, allowComments, pinned, isSpoiler, isNsfw, saveDraft]);
+
+    // Keyboard support: Escape to cancel
+    useEffect(() => {
+        if (!isVisible) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                handleClose();
             }
         };
-    }, [content, title, communityId, attachments, allowComments, pinned, saveDraft]);
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isVisible, handleClose]);
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (initialTitle) setTitle(initialTitle);
-        if (initialContent) setContent(initialContent);
-    }, [initialTitle, initialContent]);
+    const targetCommunity = useMemo(() => {
+        const targetId = communityId || effectiveDefaultCommunityId;
+        if (!targetId) return null;
+        return communities.find((c) => String(c.id) === String(targetId)) || null;
+    }, [communities, communityId, effectiveDefaultCommunityId]);
 
-    useEffect(() => {
-        const el = textareaRef.current;
-        if (!el) return;
-        el.style.height = "auto";
-        const nextHeight = Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT);
-        el.style.height = `${nextHeight}px`;
-    }, [content, isExpanded]);
-
-    const handleTextareaScroll = () => {
-        if (textareaRef.current && highlightRef.current) {
-            highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+    const dynamicPlaceholder = useMemo(() => {
+        if (targetCommunity) {
+            return language === "vi"
+                ? `Chia sẻ với ${targetCommunity.name}...`
+                : `Share with ${targetCommunity.name}...`;
         }
-    };
+        return language === "vi"
+            ? "Chia sẻ khoảnh khắc, góc nhìn hoặc khám phá mới..."
+            : "Share a moment, thought, or discovery...";
+    }, [targetCommunity, language]);
 
     const handleQuickImageClick = () => {
-        setExpanded(true);
-        setTimeout(() => {
-            imageInputRef.current?.click();
-        }, 50);
-    };
-
-    const handleQuickFileClick = () => {
-        setExpanded(true);
-        setTimeout(() => {
-            fileInputRef.current?.click();
-        }, 50);
+        imageInputRef.current?.click();
     };
 
     const handleQuickImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -453,15 +576,21 @@ export const CreatePostBox = ({
         e.target.value = "";
     };
 
-    const handleQuickFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-        const newAttachments: EditableAttachment[] = [];
-        Array.from(files).forEach((file) => {
-            newAttachments.push(createAttachmentFromFile(file, "file"));
-        });
-        setAttachments((prev) => [...prev, ...newAttachments]);
-        e.target.value = "";
+    const handleFormat = (prefix: string, suffix: string = prefix, placeholder: string = "") => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const current = content;
+        const selected = current.substring(start, end);
+        const replacement = selected ? `${prefix}${selected}${suffix}` : `${prefix}${placeholder}${suffix}`;
+        const nextContent = current.substring(0, start) + replacement + current.substring(end);
+        setContent(nextContent);
+        setTimeout(() => {
+            textarea.focus();
+            const nextPos = selected ? start + replacement.length : start + prefix.length;
+            textarea.setSelectionRange(nextPos, nextPos + (selected ? 0 : placeholder.length));
+        }, 10);
     };
 
     const titleLen = title.trim().length;
@@ -477,23 +606,15 @@ export const CreatePostBox = ({
         if (!requireVerifiedEmail("đăng bài viết")) return;
 
         setSubmitAttempted(true);
-
-        if (!communityId) {
-            return;
-        }
-
-        if (!hasValidContent) {
-            return;
-        }
+        if (!communityId || !hasValidContent) return;
 
         setIsPosting(true);
 
         const contentHashtags = extractHashtags(content);
         const splitManualTags = manualTags
             .split(/[, ]+/)
-            .filter(t => t.trim().length > 0)
-            .map(t => t.startsWith('#') ? t.slice(1) : t);
-        
+            .filter((t) => t.trim().length > 0)
+            .map((t) => (t.startsWith("#") ? t.slice(1) : t));
         const combinedTags = Array.from(new Set([...contentHashtags, ...splitManualTags]));
 
         const payload: CreatePostPayload = {
@@ -504,71 +625,79 @@ export const CreatePostBox = ({
             allowComments,
             pinned,
             isSpoiler,
+            isNsfw,
             tags: combinedTags,
             attachments,
         };
 
         try {
-            onPostCreated?.(payload);
+            if (onPostCreated) {
+                await onPostCreated(payload);
+            } else {
+                // Direct fallback submission
+                const { images, files } = await prepareAttachmentsForSave(attachments);
+                const comm = getCommunityById(communityId);
+                const currentAuthor = getCurrentAuthor();
+
+                const newPost: PostDataWithSettings = {
+                    id: Date.now(),
+                    author: currentAuthor,
+                    authorAvatar: user?.avatarUrl || user?.avatar_url || avatarGame,
+                    gameTag: comm?.name ?? "General",
+                    gameBadge: comm?.tag ?? undefined,
+                    timeAgo: t('feed.justNow', { defaultValue: 'Vừa xong' }),
+                    title: title.trim() || content.slice(0, 80) + (content.length > 80 ? "..." : ""),
+                    content: content.trim(),
+                    images: images.length > 0 ? images : undefined,
+                    files: files.length > 0 ? files : undefined,
+                    tags: combinedTags,
+                    likes: 0,
+                    upvotes: 0,
+                    downvotes: 0,
+                    score: 0,
+                    comments: 0,
+                    privacy: "public",
+                    allowComments,
+                    pinned,
+                    isSpoiler,
+                    isNsfw,
+                    communityId,
+                };
+
+                if (communityId) {
+                    try {
+                        await createPostMutation.mutateAsync({
+                            communityId: String(communityId),
+                            title: title.trim() || undefined,
+                            content: content.trim(),
+                            images: images.length > 0 ? images : undefined,
+                            tags: combinedTags,
+                            pinned,
+                            allowComments,
+                        });
+                    } catch {
+                        // Optimistic fallback
+                    }
+                }
+                addPost(newPost);
+            }
+
+            // Reset and close
             setTitle("");
             setContent("");
             setManualTags("");
             setAttachments([]);
             setSubmitAttempted(false);
-            setExpanded(false);
+            handleClose();
         } finally {
             setIsPosting(false);
         }
     };
 
-    const handleCancel = () => {
-        if (content.trim() || title.trim()) {
-            saveDraft({
-                title,
-                content,
-                communityId,
-                attachments,
-                privacy: "public",
-                allowComments,
-                pinned,
-            });
-        }
-        setTitle("");
-        setContent("");
-        revokeAttachmentUrls(attachments);
-        setAttachments([]);
-        setSubmitAttempted(false);
-        setExpanded(false);
-    };
-
-    if (!user) {
-        return (
-            <div id="create-post" className="w-full my-1 p-4 rounded-xl bg-surface border border-border/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">
-                        <FontAwesomeIcon icon={faLock} />
-                    </div>
-                    <div>
-                        <h4 className="text-xs font-black uppercase tracking-wider text-text">{t('feed.loginToCreatePost') || "Đăng nhập để tạo bài viết mới"}</h4>
-                        <p className="text-xs text-text-muted mt-0.5">{t('feed.loginToCreatePostDesc') || "Tham gia thảo luận cùng cộng đồng IndieG và chia sẻ khoảnh khắc chơi game của bạn."}</p>
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => navigate({ to: "/auth" })}
-                    className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
-                >
-                    {t('authenticate.login') || "Đăng Nhập"} / {t('authenticate.register') || "Đăng Ký"}
-                </button>
-            </div>
-        );
-    }
+    if (!isVisible) return null;
 
     return (
-        <div
-            id="create-post"
-            className="w-full pb-2 flex flex-col gap-3"
-        >
+        <div className="fixed inset-0 z-[120] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-fade-in select-none">
             {/* Hidden File Inputs */}
             <input
                 ref={imageInputRef}
@@ -578,259 +707,284 @@ export const CreatePostBox = ({
                 onChange={handleQuickImageChange}
                 className="hidden"
             />
-            <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleQuickFileChange}
-                className="hidden"
-            />
 
-            {!isExpanded ? (
-                /* ================= COLLAPSED CLOSED STATE ================= */
-                <div
-                    onClick={() => setExpanded(true)}
-                    className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-[6px] bg-surface-hover/30 hover:bg-surface-hover/60 border border-transparent hover:border-divider-primary transition-colors cursor-pointer group"
-                >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="relative shrink-0">
-                            {avatarUrl ? (
-                                <img
-                                    src={avatarUrl}
-                                    alt="User"
-                                    className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
-                                    onError={(e) => {
-                                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                                    }}
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
-                                    {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
-                                </div>
-                            )}
-                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-bg" />
-                        </div>
+            {/* Backdrop click to cancel */}
+            <div className="absolute inset-0" onClick={handleClose} />
 
-                        <div className="flex flex-col justify-center min-w-0 flex-1">
-                            <span className="text-xs sm:text-sm text-text-muted group-hover:text-text transition-colors">
-                                {t('feed.whatOnMind') || "What's on your mind?"}
-                            </span>
-                            {activeFilteredCommunity && (
-                                <span className="text-[11px] text-primary font-bold truncate mt-0.5 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                    <span>{activeFilteredCommunity.name}</span>
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleQuickImageClick();
-                            }}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
-                        >
-                            <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
-                            <span className="hidden sm:inline">{t('feed.mediaButton') || "Media"}</span>
-                        </button>
-                    </div>
+            {/* Modal Dialog Card */}
+            <div
+                className="relative w-full max-w-[660px] h-[88vh] max-h-[760px] bg-surface border border-border/80 rounded-xl shadow-2xl flex flex-col overflow-hidden z-10 select-text"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* ================= 3. STICKY TOP HEADER ================= */}
+                <div className="sticky top-0 z-30 shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-surface border-b border-border/60">
+                    <span className="text-xs sm:text-[13px] font-black uppercase tracking-wider text-text flex items-center gap-2">
+                        {t('feed.createPost', { defaultValue: 'CREATE POST' })}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
+                        title={t('common.cancel', { defaultValue: 'Đóng' })}
+                    >
+                        <FontAwesomeIcon icon={faXmark} className="text-sm" />
+                    </button>
                 </div>
-            ) : (
-                /* ================= OPEN EXPANDED EDITOR STATE ================= */
-                <div className="w-full flex flex-col gap-3 animate-fade-in">
-                    {/* Header: CREATE POST */}
-                    <div className="flex items-center justify-between pb-2 border-b border-divider-primary">
-                        <span className="text-xs font-black uppercase tracking-wider text-text">
-                            {t('feed.createPost') || "CREATE POST"}
+
+                {/* ================= SCROLLABLE EDITOR BODY ================= */}
+                <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 flex flex-col gap-4 overscroll-contain">
+                    {/* 5. Community Context & Selector */}
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-faint">
+                            {t('feed.selectCommunity', { defaultValue: 'Cộng đồng mục tiêu' })}
                         </span>
-                        <button
-                            type="button"
-                            onClick={handleCancel}
-                            className="text-text-faint hover:text-text text-xs p-1 cursor-pointer transition-colors"
-                            title={t('common.cancel') || "Cancel"}
-                        >
-                            <FontAwesomeIcon icon={faXmark} />
-                        </button>
+                        <CommunitySelector
+                            value={communityId}
+                            onChange={(val) => {
+                                setCommunityId(val);
+                                setSubmitAttempted(false);
+                            }}
+                            communities={joinedCommunities}
+                            hasError={submitAttempted && !communityId}
+                        />
                     </div>
 
-                    {/* Metadata: User & Community Selector */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            {avatarUrl ? (
-                                <img
-                                    src={avatarUrl}
-                                    alt="User"
-                                    className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80 shrink-0"
-                                    onError={(e) => {
-                                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                                    }}
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 shrink-0 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
-                                    {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
-                                </div>
-                            )}
-
-                            {!hideCommunitySelector && (
-                                <div className="flex items-center gap-2 min-w-0 w-full sm:w-80">
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-text-faint shrink-0">
-                                        {t('feed.selectCommunity') || "Communities"}
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                        <CommunitySelector
-                                            value={communityId}
-                                            onChange={(val) => {
-                                                setCommunityId(val);
-                                                setSubmitAttempted(false);
-                                            }}
-                                            communities={joinedCommunities}
-                                            hasError={submitAttempted && !communityId}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Editor Fields */}
-                    <div className="flex flex-col gap-2 pt-1">
-                        {/* Title Field */}
-                        <div className="w-full border-b border-divider-secondary pb-1">
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder={t('feed.postTitlePlaceholder') || "Give your post a title..."}
-                                className="w-full bg-transparent border-none outline-none text-sm font-bold text-text placeholder:text-text-faint py-1.5 px-0.5"
-                            />
-                            {title.trim().length > 0 && title.trim().length < 6 && (
-                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5 px-0.5">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} />
-                                    <span>{t('feed.titleMinLenError', { min: 6, current: title.trim().length })}</span>
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Tags Field */}
-                        <div className="w-full border-b border-divider-secondary pb-1">
-                            <input
-                                type="text"
-                                value={manualTags}
-                                onChange={(e) => setManualTags(e.target.value)}
-                                placeholder={t('feed.tagsPlaceholder') || "Add tags (e.g. #CS2 #Tips)..."}
-                                className="w-full bg-transparent border-none outline-none text-xs font-semibold text-primary placeholder:text-text-faint py-1 px-0.5"
-                            />
-                        </div>
-
-                        {/* Body Editor Area */}
-                        <div className="relative w-full pt-1">
-                            <textarea
-                                ref={textareaRef}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                onScroll={handleTextareaScroll}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
-                                }}
-                                placeholder={t('feed.writeSomething') || "What's on your mind? Write something..."}
-                                rows={6}
-                                className="block w-full min-h-[160px] sm:min-h-[200px] p-2 bg-transparent border-none outline-none text-xs sm:text-sm font-normal text-transparent caret-text placeholder:text-text-faint resize-none leading-relaxed"
-                            />
-                            <div
-                                ref={highlightRef}
-                                aria-hidden
-                                className="absolute inset-0 pt-3 p-2 text-xs sm:text-sm font-normal leading-relaxed whitespace-pre-wrap break-words overflow-hidden pointer-events-none text-text"
-                            >
-                                {renderHighlightedContent(content)}
-                                {content.endsWith("\n") ? "\u200b" : null}
-                            </div>
-                            {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
-                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1 px-2">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} />
-                                    <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length })}</span>
-                                </p>
-                            )}
-                            {content.trim().length > 10000 && (
-                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1 px-2">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} />
-                                    <span>{t('feed.contentMaxLenError', { max: 10000 })}</span>
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Attachments preview */}
-                        {attachments.length > 0 && (
-                            <div className="pt-2">
-                                <AttachmentPicker
-                                    attachments={attachments}
-                                    onChange={setAttachments}
-                                    showToolbar={false}
-                                    compactToolbar
-                                />
-                            </div>
+                    {/* Post Title Field (Prominent Typography) */}
+                    <div className="flex flex-col gap-1 border-b border-border/40 pb-2">
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder={t('feed.postTitlePlaceholder', { defaultValue: 'Đặt tiêu đề ấn tượng cho bài viết...' })}
+                            className="w-full bg-transparent border-none outline-none text-base sm:text-[17px] font-bold text-text placeholder:text-text-faint py-1.5 px-0"
+                        />
+                        {title.trim().length > 0 && title.trim().length < 6 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('feed.titleMinLenError', { min: 6, current: title.trim().length, defaultValue: `Tiêu đề cần tối thiểu 6 ký tự (hiện tại: ${title.trim().length})` })}</span>
+                            </p>
                         )}
                     </div>
 
-                    {/* Bottom Toolbar */}
-                    <div className="flex items-center justify-between pt-3 border-t border-divider-primary mt-1">
-                        {/* Media and Attachment Buttons */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={handleQuickImageClick}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
-                            >
-                                <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
-                                <span>{t('feed.mediaButton') || "Media"}</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleQuickFileClick}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] hover:bg-surface-hover/70 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
-                            >
-                                <FontAwesomeIcon icon={faPaperclip} className="text-primary text-xs" />
-                                <span>{t('feed.addAttachments') || "Attachment"}</span>
-                            </button>
-                        </div>
+                    {/* Tags Input Field */}
+                    <div className="border-b border-border/40 pb-2">
+                        <input
+                            type="text"
+                            value={manualTags}
+                            onChange={(e) => setManualTags(e.target.value)}
+                            placeholder={t('feed.tagsPlaceholder', { defaultValue: 'Thêm thẻ hashtag (ví dụ: #CS2 #Clutch #Premier)...' })}
+                            className="w-full bg-transparent border-none outline-none text-xs font-semibold text-primary placeholder:text-text-faint py-1 px-0"
+                        />
+                    </div>
 
-                        {/* Settings & Post Action */}
-                        <div className="flex items-center gap-3">
-                            <PostSettingsMenu
-                                allowComments={allowComments}
-                                onAllowCommentsChange={setAllowComments}
-                                pinned={pinned}
-                                onPinnedChange={setPinned}
-                                isSpoiler={isSpoiler}
-                                onSpoilerChange={setIsSpoiler}
+                    {/* 6. Formatting Toolbar */}
+                    <FormattingToolbar
+                        onFormat={handleFormat}
+                        onAddImage={handleQuickImageClick}
+                    />
+
+                    {/* Main Content Textarea */}
+                    <div className="relative w-full flex-1 min-h-[160px] flex flex-col">
+                        <textarea
+                            ref={textareaRef}
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            onFocus={() => setIsEditorFocused(true)}
+                            onBlur={() => setIsEditorFocused(false)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                    handlePost();
+                                }
+                            }}
+                            placeholder={dynamicPlaceholder}
+                            rows={8}
+                            className="w-full flex-1 min-h-[160px] p-2 bg-transparent border-none outline-none text-sm font-normal text-text placeholder:text-text-faint resize-none leading-relaxed"
+                        />
+                        {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
+                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length, defaultValue: `Nội dung cần tối thiểu 6 ký tự (hiện tại: ${content.trim().length})` })}</span>
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Attachments Preview */}
+                    {attachments.length > 0 && (
+                        <div className="pt-2 border-t border-border/40">
+                            <span className="text-[11px] font-bold text-text-muted mb-2 block">
+                                {t('feed.attachmentsLabel', { defaultValue: `Đính kèm (${attachments.length})` })}
+                            </span>
+                            <AttachmentPicker
+                                attachments={attachments}
+                                onChange={setAttachments}
+                                showToolbar={false}
+                                compactToolbar
                             />
-
-                            <button
-                                type="button"
-                                onClick={handleCancel}
-                                className="px-3 py-1.5 rounded-[6px] text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-hover/60 transition-colors cursor-pointer"
-                            >
-                                {t('common.cancel') || "Cancel"}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handlePost}
-                                disabled={isPosting}
-                                className={`px-5 py-1.5 rounded-[6px] text-xs font-bold transition-all cursor-pointer ${
-                                    canPost
-                                        ? "bg-primary hover:bg-primary-hover text-white shadow-xs"
-                                        : "bg-primary text-white opacity-40 cursor-not-allowed"
-                                }`}
-                            >
-                                <span>{isPosting ? t('common.loading') : (t('feed.postButton') || "Post")}</span>
-                            </button>
                         </div>
+                    )}
+                </div>
+
+                {/* ================= 4. STICKY BOTTOM FOOTER ================= */}
+                <div className="sticky bottom-0 z-30 shrink-0 flex items-center justify-between px-4 sm:px-6 py-3 bg-surface border-t border-border/60">
+                    {/* Left: Settings Menu (Spoiler / NSFW / Comments / Pin) */}
+                    <div>
+                        <PostSettingsMenu
+                            allowComments={allowComments}
+                            onAllowCommentsChange={setAllowComments}
+                            pinned={pinned}
+                            onPinnedChange={setPinned}
+                            isSpoiler={isSpoiler}
+                            onSpoilerChange={setIsSpoiler}
+                            isNsfw={isNsfw}
+                            onNsfwChange={setIsNsfw}
+                        />
+                    </div>
+
+                    {/* Right Actions: Cancel, Post */}
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-hover/70 transition-colors cursor-pointer"
+                        >
+                            {t('common.cancel', { defaultValue: 'Hủy' })}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handlePost}
+                            disabled={!canPost}
+                            className={`px-5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                canPost
+                                    ? "bg-primary hover:bg-primary-hover text-white shadow-xs"
+                                    : "bg-primary text-white opacity-40 cursor-not-allowed"
+                            }`}
+                        >
+                            {isPosting ? t('common.loading', { defaultValue: 'Đang đăng...' }) : (t('feed.postButton', { defaultValue: 'Đăng' }))}
+                        </button>
                     </div>
                 </div>
-            )}
+            </div>
+        </div>
+    );
+};
+
+/* =========================================================================
+   CREATE POST BOX (FEED BANNER TRIGGER)
+   ========================================================================= */
+interface CreatePostBoxProps {
+    onPostCreated?: (payload: CreatePostPayload) => void;
+    defaultCommunityId?: number | string | null;
+    hideCommunitySelector?: boolean;
+    initialTitle?: string;
+    initialContent?: string;
+}
+
+export const CreatePostBox = ({
+    onPostCreated,
+    defaultCommunityId = null,
+    initialTitle = "",
+    initialContent = "",
+}: CreatePostBoxProps) => {
+    const { language } = useTranslation();
+    const user = useAuthStore((s) => s.user);
+    const customAvatar = useAuthStore((s) => s.customAvatar);
+    const displayName = user?.name || user?.username || getCurrentAuthor();
+    const avatarUrl =
+        user?.avatarUrl ||
+        user?.avatar_url ||
+        customAvatar ||
+        (user?.user_metadata?.avatar_url as string | undefined) ||
+        "";
+
+    const { communities } = useCommunitiesStore();
+    const openCreatePost = useCreatePostModalStore((s) => s.openCreatePost);
+
+    const activeFilteredCommunity = useMemo(() => {
+        if (!defaultCommunityId) return null;
+        return communities.find((c) => String(c.id) === String(defaultCommunityId)) || null;
+    }, [communities, defaultCommunityId]);
+
+    const dynamicPlaceholder = useMemo(() => {
+        if (activeFilteredCommunity) {
+            return language === "vi"
+                ? `Chia sẻ với ${activeFilteredCommunity.name}...`
+                : `Share with ${activeFilteredCommunity.name}...`;
+        }
+        return language === "vi"
+            ? "Chia sẻ khoảnh khắc, góc nhìn hoặc khám phá mới..."
+            : "Share a moment, thought, or discovery...";
+    }, [activeFilteredCommunity, language]);
+
+    return (
+        <div id="create-post" className="w-full pb-2">
+            {/* Feed Quick Trigger Bar */}
+            <div
+                onClick={() => openCreatePost(defaultCommunityId)}
+                className="w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-surface/70 hover:bg-surface-hover/80 border border-border/40 hover:border-border/80 transition-all cursor-pointer group shadow-xs"
+            >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="relative shrink-0">
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt="User"
+                                className="w-8 h-8 rounded-full object-cover ring-1 ring-border/80"
+                                onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                                }}
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
+                            </div>
+                        )}
+                        <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-bg" />
+                    </div>
+
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm text-text-muted group-hover:text-text transition-colors">
+                            {dynamicPlaceholder}
+                        </span>
+                        {activeFilteredCommunity && (
+                            <span className="text-[11px] text-primary font-bold truncate mt-0.5 flex items-center gap-1.5">
+                                {activeFilteredCommunity.logo ? (
+                                    <img
+                                        src={activeFilteredCommunity.logo}
+                                        alt=""
+                                        className="w-3.5 h-3.5 rounded object-cover"
+                                    />
+                                ) : (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                )}
+                                <span>{activeFilteredCommunity.name}</span>
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openCreatePost(defaultCommunityId);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-surface-hover text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
+                    >
+                        <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
+                        <span className="hidden sm:inline">Media</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* The Modal Component */}
+            <CreatePostModal
+                defaultCommunityId={defaultCommunityId}
+                onPostCreated={onPostCreated}
+                initialTitle={initialTitle}
+                initialContent={initialContent}
+            />
         </div>
     );
 };

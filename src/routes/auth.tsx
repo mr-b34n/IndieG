@@ -6,36 +6,139 @@ import {
     faSpinner,
     faArrowLeft,
     faGamepad,
-    faUsers,
-    faShieldHalved,
-    faSun,
-    faMoon,
-    faWandMagicSparkles,
     faRightToBracket,
     faUserPlus,
-    faEnvelope,
-    faKey,
     faExclamationTriangle,
     faPaperPlane,
     faLock,
+    faChevronDown,
+    faUserShield,
+    faUserCheck,
+    faDragon,
+    faVideo,
+    faCrosshairs,
+    faUserXmark,
+    faCheck,
+    faBolt,
+    faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCircleCheck } from "@fortawesome/free-regular-svg-icons";
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { STRENGTH_LEVELS, validatePassword, type PasswordValidationResult } from '../features/auth/helpers/passwordValidator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
-import { useAuthStore, type AuthMode, AccountSwitcher, TEST_ACCOUNTS } from '@/features/auth';
+import { useAuthStore, type AuthMode, TEST_ACCOUNTS } from '@/features/auth';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { authApi, profilesApi } from '@/shared/api';
+
+// Account types available for selection
+const ACCOUNT_TYPES = [
+    {
+        key: "admin",
+        acc: TEST_ACCOUNTS.admin,
+        typeLabel: "Quản trị viên (Admin)",
+        badge: "Admin",
+        badgeColor: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
+        icon: faUserShield,
+        iconColor: "text-rose-400",
+        iconBg: "bg-rose-500/10",
+        desc: "Toàn quyền hệ thống, kiểm duyệt và quản lý toàn bộ tính năng",
+    },
+    {
+        key: "verifiedUser",
+        acc: TEST_ACCOUNTS.verifiedUser,
+        typeLabel: "Game thủ VIP (Founder)",
+        badge: "Founder",
+        badgeColor: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+        icon: faUserCheck,
+        iconColor: "text-emerald-400",
+        iconBg: "bg-emerald-500/10",
+        desc: "Tài khoản VIP Founder, đã xác thực email, game library phong phú",
+    },
+    {
+        key: "eldenLord",
+        acc: TEST_ACCOUNTS.eldenLord,
+        typeLabel: "Hardcore RPG Gamer",
+        badge: "RPG Veteran",
+        badgeColor: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30",
+        icon: faDragon,
+        iconColor: "text-cyan-400",
+        iconBg: "bg-cyan-500/10",
+        desc: "Game thủ Souls-like, nhiều thảo luận & hoạt động cộng đồng",
+    },
+    {
+        key: "streamer",
+        acc: TEST_ACCOUNTS.streamer,
+        typeLabel: "Streamer & Creator",
+        badge: "Streamer",
+        badgeColor: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
+        icon: faVideo,
+        iconColor: "text-purple-400",
+        iconBg: "bg-purple-500/10",
+        desc: "Nhà sáng tạo nội dung, streamer được yêu thích trên nền tảng",
+    },
+    {
+        key: "shadowHunter",
+        acc: TEST_ACCOUNTS.shadowHunter,
+        typeLabel: "Tuyển thủ FPS Pro",
+        badge: "FPS Pro",
+        badgeColor: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+        icon: faCrosshairs,
+        iconColor: "text-blue-400",
+        iconBg: "bg-blue-500/10",
+        desc: "Đội trưởng CS2 Premier, tuyển thủ thi đấu bắn súng chiến thuật",
+    },
+    {
+        key: "unverifiedUser",
+        acc: TEST_ACCOUNTS.unverifiedUser,
+        typeLabel: "Tân thủ (Chưa verify)",
+        badge: "Chưa verify",
+        badgeColor: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+        icon: faUserXmark,
+        iconColor: "text-amber-400",
+        iconBg: "bg-amber-500/10",
+        desc: "Người chơi mới chưa xác thực email (dùng test cổng bảo vệ email)",
+    },
+];
 
 const AuthPage = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const theme = useThemeStore((state) => state.theme);
-    const toggleTheme = useThemeStore((state) => state.toggleTheme);
     const language = useThemeStore((state) => state.language);
     const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
     const loginStoreAction = useAuthStore((state) => state.login);
+
+    // Account Dropdown State
+    const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+    const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(null);
+    const accountMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close account dropdown when clicking outside or pressing Escape
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+                setIsAccountMenuOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsAccountMenuOpen(false);
+            }
+        };
+
+        if (isAccountMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isAccountMenuOpen]);
 
     const getStrengthLabel = (score: number) => {
         switch (score) {
@@ -44,17 +147,6 @@ const AuthPage = () => {
             case 3: return t('auth.pwdGood', { defaultValue: 'Khá' });
             case 4: return t('auth.pwdStrong', { defaultValue: 'Mạnh' });
             default: return t('auth.pwdWeak', { defaultValue: 'Yếu' });
-        }
-    };
-
-    const getReqLabel = (id: string, defaultLabel: string) => {
-        switch (id) {
-            case 'length': return t('auth.reqLength', { defaultValue: 'Ít nhất 8 ký tự' });
-            case 'uppercase': return t('auth.reqUppercase', { defaultValue: 'Chứa chữ hoa' });
-            case 'lowercase': return t('auth.reqLowercase', { defaultValue: 'Chứa chữ thường' });
-            case 'number': return t('auth.reqNumber', { defaultValue: 'Chứa chữ số' });
-            case 'special': return t('auth.reqSpecial', { defaultValue: 'Chứa ký tự đặc biệt' });
-            default: return defaultLabel;
         }
     };
 
@@ -96,6 +188,39 @@ const AuthPage = () => {
     };
 
     const [pwdState, setPwdState] = useState<PasswordValidationResult>(EMPTY_PASSWORD_STATE);
+
+    const selectedAccount =
+        ACCOUNT_TYPES.find((item) => item.key === selectedAccountKey) ||
+        ACCOUNT_TYPES.find((item) => item.acc.email === formData.email);
+
+    const handleSelectAccount = async (item: (typeof ACCOUNT_TYPES)[0]) => {
+        const { acc } = item;
+        if (!acc) return;
+        setMode('login');
+        setFormData({
+            username: acc.username || "",
+            email: acc.email || "",
+            password: acc.password || "",
+            confirmPassword: "",
+            otpCode: "",
+        });
+        setSelectedAccountKey(item.key);
+        setServerError(null);
+        setSuccessMessage(`Đã chọn tài khoản: ${item.typeLabel} (${acc.username})`);
+        setIsAccountMenuOpen(false);
+
+        if (acc.password) {
+            const result = await validatePassword(acc.password);
+            setPwdState(result);
+        }
+    };
+
+    const handleInstantLogin = (e: React.MouseEvent, acc: (typeof TEST_ACCOUNTS)[string]) => {
+        e.stopPropagation();
+        loginStoreAction(acc, `mock_token_${acc.id}`, `mock_refresh_${acc.id}`);
+        setIsAccountMenuOpen(false);
+        navigate({ to: "/" });
+    };
 
     const switchMode = async (newMode: AuthMode) => {
         setMode(newMode);
@@ -147,7 +272,6 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                // Try real backend login
                 let accessToken: string | undefined;
                 let userProfile: Record<string, unknown> | null = null;
 
@@ -170,7 +294,6 @@ const AuthPage = () => {
                         (anyRes.data as Record<string, unknown>) ||
                         (res.id ? anyRes : null);
 
-                    // If token received, save immediately
                     if (accessToken) {
                         try {
                             localStorage.setItem("indieg_access_token", accessToken);
@@ -188,7 +311,6 @@ const AuthPage = () => {
                     if (emailLower.includes("unverified") && formData.password !== "error") {
                         userProfile = TEST_ACCOUNTS.unverifiedUser as unknown as Record<string, unknown>;
                     } else {
-                        // Throw real API error to user
                         throw apiErr;
                     }
                 }
@@ -248,13 +370,11 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                // Call real backend register
                 await authApi.register({
                     email: formData.email.trim(),
                     password: formData.password,
                 });
 
-                // Auto login immediately after register
                 let accessToken: string | undefined;
                 let userProfile: Record<string, unknown> | null = null;
 
@@ -303,7 +423,7 @@ const AuthPage = () => {
                       };
 
                 loginStoreAction(userObj, accessToken);
-                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đang chuyển hướng đến trang chủ...' }));
+                setSuccessMessage(t('auth.msgRegisterSuccess', { defaultValue: 'Đăng ký thành công! Đang chuyển hướng...' }));
                 setTimeout(() => {
                     navigate({ to: "/" });
                 }, 600);
@@ -325,7 +445,6 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                // Call real backend forgot password
                 await authApi.forgotPassword({
                     email: formData.email.trim(),
                 });
@@ -352,7 +471,6 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                // Call real backend verify email
                 await authApi.verifyEmail(formData.otpCode.trim());
 
                 setSuccessMessage(t('auth.msgVerifySuccess', { defaultValue: 'Xác thực email thành công! Tài khoản của bạn đã sẵn sàng.' }));
@@ -390,7 +508,6 @@ const AuthPage = () => {
 
             setIsLoading(true);
             try {
-                // Call real backend reset password
                 await authApi.resetPassword({
                     token: formData.otpCode.trim() || "token",
                     newPassword: formData.password,
@@ -412,237 +529,314 @@ const AuthPage = () => {
 
     return (
         <div className="relative min-h-screen w-full bg-bg text-text flex flex-col justify-between overflow-x-hidden selection:bg-primary/20 selection:text-primary">
+            {/* Subtle gaming atmospheric background pattern (faint, distraction-free) */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:24px_24px]" />
+
             {/* Top Navigation Header */}
-            <header className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between">
+            <header className="relative z-20 w-full max-w-6xl mx-auto px-4 sm:px-8 py-5 flex items-center justify-between">
                 {/* Brand Logo */}
                 <button
                     onClick={() => navigate({ to: "/" })}
                     className="flex items-center gap-3 group cursor-pointer"
                 >
-                    <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:scale-105 transition-transform">
-                        <FontAwesomeIcon icon={faGamepad} className="text-xl" />
+                    <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+                        <FontAwesomeIcon icon={faGamepad} className="text-lg" />
                     </div>
                     <div className="flex flex-col text-left">
-                        <span className="text-xl sm:text-2xl font-black tracking-tight text-primary">
+                        <span className="text-xl font-black tracking-tight text-primary leading-none">
                             IndieG
                         </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-faint -mt-1">
-                            Gaming Hub
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-faint mt-0.5">
+                            Gaming Community
                         </span>
                     </div>
                 </button>
 
                 {/* Right Controls */}
-                <div className="flex items-center gap-2 sm:gap-3 bg-surface/80 backdrop-blur-md border border-border p-1.5 rounded-full shadow-md">
+                <div className="flex items-center gap-2 sm:gap-3 bg-surface/40 backdrop-blur-md border border-border/40 p-1.5 rounded-full relative">
                     <button
                         onClick={() => navigate({ to: "/" })}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold text-text-muted hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold text-text-muted hover:text-text hover:bg-surface-hover/60 transition-colors cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
                         <span className="hidden sm:inline">{t('common.home', { defaultValue: 'Trang chủ' })}</span>
                     </button>
 
-                    <div className="w-px h-4 bg-border" />
+                    <div className="w-px h-3.5 bg-border/40" />
 
                     <button
                         onClick={toggleLanguage}
                         title={t('common.switchLanguage', { defaultValue: 'Đổi ngôn ngữ' })}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                     >
                         {language.toUpperCase()}
                     </button>
 
-                    <button
-                        onClick={toggleTheme}
-                        title={t('common.toggleTheme', { defaultValue: 'Đổi giao diện sáng/tối' })}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={theme === "light" ? faSun : faMoon} className="text-sm" />
-                    </button>
+                    <div className="w-px h-3.5 bg-border/40" />
+
+                    {/* Account Type Selector Dropdown Menu (Replaces dark/light mode toggle) */}
+                    <div className="relative" ref={accountMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                                isAccountMenuOpen
+                                    ? "bg-primary text-white shadow-md shadow-primary/25"
+                                    : "text-text-muted hover:text-text hover:bg-surface-hover/60"
+                            }`}
+                            aria-expanded={isAccountMenuOpen}
+                            aria-haspopup="true"
+                            title="Chọn loại tài khoản để đăng nhập"
+                        >
+                            <FontAwesomeIcon icon={faUsers} className="text-xs" />
+                            <span>{selectedAccount ? selectedAccount.badge : "Tài khoản"}</span>
+                            <FontAwesomeIcon
+                                icon={faChevronDown}
+                                className={`text-[9px] transition-transform duration-200 ${
+                                    isAccountMenuOpen ? "rotate-180" : ""
+                                }`}
+                            />
+                        </button>
+
+                        {/* Dropdown Menu - Drops Downwards */}
+                        {isAccountMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl bg-surface/95 backdrop-blur-2xl border border-border shadow-2xl p-2.5 z-50 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[80vh] overflow-y-auto">
+                                <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
+                                    <div className="flex items-center gap-1.5">
+                                        <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
+                                        <span className="text-xs font-bold text-text">Chọn loại tài khoản đăng nhập</span>
+                                    </div>
+                                    <span className="text-[10px] text-text-faint font-medium">
+                                        {ACCOUNT_TYPES.length} tài khoản
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5 pt-1">
+                                    {ACCOUNT_TYPES.map((item) => {
+                                        const isSelected = selectedAccountKey === item.key || formData.email === item.acc.email;
+                                        return (
+                                            <div
+                                                key={item.key}
+                                                onClick={() => handleSelectAccount(item)}
+                                                className={`group p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                                                    isSelected
+                                                        ? "bg-primary/10 border-primary/40 ring-1 ring-primary/30"
+                                                        : "bg-surface-hover/20 hover:bg-surface-hover/60 border-border/30 hover:border-border/60"
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.iconBg} ${item.iconColor}`}>
+                                                        <FontAwesomeIcon icon={item.icon} className="text-sm" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="text-xs font-bold text-text truncate">
+                                                                {item.typeLabel}
+                                                            </span>
+                                                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
+                                                                {item.badge}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-text-faint truncate font-mono mt-0.5">
+                                                            {item.acc.email}
+                                                        </p>
+                                                        <p className="text-[10px] text-text-muted/80 truncate mt-0.5">
+                                                            {item.desc}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleInstantLogin(e, item.acc)}
+                                                        title="Đăng nhập ngay (1-click)"
+                                                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary hover:bg-primary-hover text-white transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <FontAwesomeIcon icon={faBolt} className="text-[9px]" />
+                                                        <span className="hidden sm:inline">Vào ngay</span>
+                                                    </button>
+                                                    {isSelected && (
+                                                        <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px]">
+                                                            <FontAwesomeIcon icon={faCheck} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="px-2 py-1.5 mt-1 border-t border-border/30 flex items-center justify-between text-[10px] text-text-faint">
+                                    <span>💡 Bấm hàng để chọn & điền form, hoặc "Vào ngay" để đăng nhập</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-10 flex items-center justify-center">
+            {/* Main Content Area: Focused on Form */}
+            <main className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 flex items-center justify-center">
                 <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                     
-                    {/* LEFT SIDE: Slogans & Info */}
-                    <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs sm:text-sm font-bold shadow-xs">
-                            <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-400 text-xs" />
-                            <span>{t('auth.pageTagline', { defaultValue: 'Gaming Social Hub • Connect & Play' })}</span>
+                    {/* LEFT SIDE: Brand Identity (Concise, no clutter, no feature cards) */}
+                    <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left gap-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>A place for gamers to find their people</span>
                         </div>
 
-                        <div className="flex flex-col gap-3 max-w-2xl">
-                            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-text leading-tight sm:leading-none">
-                                {t('auth.heroTitleLine1', { defaultValue: 'Connect Your Squad' })}.<br />
-                                {t('auth.heroTitleLine2', { defaultValue: 'Elevate Your Game' })}.
+                        {/* Heading reduced by ~30% per feedback */}
+                        <div className="flex flex-col gap-3 max-w-md">
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text leading-tight">
+                                Find games.<br />
+                                Find people.<br />
+                                <span className="text-primary">Find your place.</span>
                             </h1>
-                            <p className="text-sm sm:text-base text-text-muted max-w-md leading-relaxed">
-                                {t('auth.heroSubtitle', { defaultValue: 'Nền tảng kết nối đồng đội & cộng đồng game thủ thế hệ mới.' })}
+                            <p className="text-sm sm:text-base text-text-muted leading-relaxed">
+                                {t('auth.heroSubtitle', { defaultValue: 'Nơi kết nối đồng đội, chia sẻ đam mê và tìm thấy cộng đồng game thủ của bạn.' })}
                             </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mt-2">
-                            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-surface/70 backdrop-blur-md border border-border hover:border-primary/40 hover:bg-surface transition-all shadow-xs group text-left">
-                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg shrink-0 group-hover:scale-110 transition-transform">
-                                    <FontAwesomeIcon icon={faUsers} />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <h3 className="text-sm font-extrabold text-text group-hover:text-primary transition-colors">
-                                        {t('auth.featureConnectTitle', { defaultValue: 'Connect Your Squad' })}
-                                    </h3>
-                                    <p className="text-xs text-text-muted leading-relaxed">
-                                        {t('auth.featureConnectDesc', { defaultValue: 'Tìm kiếm đồng đội chuẩn gu, kết nối squad tức thì.' })}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-surface/70 backdrop-blur-md border border-border hover:border-primary/40 hover:bg-surface transition-all shadow-xs group text-left">
-                                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-lg shrink-0 group-hover:scale-110 transition-transform">
-                                    <FontAwesomeIcon icon={faGamepad} />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <h3 className="text-sm font-extrabold text-text group-hover:text-primary transition-colors">
-                                        {t('auth.featureElevateTitle', { defaultValue: 'Elevate Your Game' })}
-                                    </h3>
-                                    <p className="text-xs text-text-muted leading-relaxed">
-                                        {t('auth.featureElevateDesc', { defaultValue: 'Nâng tầm trải nghiệm gaming cùng cộng đồng.' })}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
-                    {/* RIGHT SIDE: Auth Card */}
-                    <div className="lg:col-span-5 w-full max-w-md mx-auto">
-                        <div className="relative rounded-3xl bg-surface/80 backdrop-blur-xl border border-border shadow-2xl p-6 sm:p-8 flex flex-col gap-6">
+                    {/* RIGHT SIDE: Clean Floating Dark Glass Auth Panel */}
+                    <div className="lg:col-span-6 w-full max-w-md mx-auto">
+                        <div className="relative rounded-2xl bg-surface/50 backdrop-blur-xl border border-border/40 p-6 sm:p-8 flex flex-col gap-5 shadow-xl">
                             
-                            {/* Card Header */}
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <h2 className="text-xl sm:text-2xl font-black text-text">
-                                            {mode === 'login' && t('auth.loginTitle', { defaultValue: 'Đăng Nhập IndieG' })}
-                                            {mode === 'register' && t('auth.registerTitle', { defaultValue: 'Tạo Tài Khoản Mới' })}
-                                            {mode === 'forgot-password' && t('auth.forgotPasswordTitle', { defaultValue: 'Khôi Phục Mật Khẩu' })}
-                                            {mode === 'verify-email' && t('auth.verifyEmailTitle', { defaultValue: 'Xác Thực Địa Chỉ Email' })}
-                                            {mode === 'reset-password' && t('auth.resetPasswordTitle', { defaultValue: 'Đặt Mật Khẩu Mới' })}
-                                        </h2>
-                                        <p className="text-xs text-text-muted mt-0.5">
-                                            {mode === 'login' && t('auth.loginSubtitle', { defaultValue: 'Chào mừng bạn trở lại! Hãy nhập thông tin để chiến game.' })}
-                                            {mode === 'register' && t('auth.registerSubtitle', { defaultValue: 'Gia nhập ngay hôm nay để mở khóa toàn bộ tính năng.' })}
-                                            {mode === 'forgot-password' && t('auth.forgotPasswordSubtitle', { defaultValue: 'Nhập địa chỉ email để nhận mã xác nhận đặt lại mật khẩu.' })}
-                                            {mode === 'verify-email' && t('auth.verifyEmailSubtitle', { defaultValue: 'Nhập mã OTP 6 chữ số đã được gửi tới email của bạn.' })}
-                                            {mode === 'reset-password' && t('auth.resetPasswordSubtitle', { defaultValue: 'Tạo mật khẩu mới an toàn cho tài khoản của bạn.' })}
-                                        </p>
-                                    </div>
+                            {/* Simple Navigation: Sign in | Create account */}
+                            {(mode === 'login' || mode === 'register') ? (
+                                <div className="flex items-center gap-3 border-b border-border/30 pb-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('login')}
+                                        className={`text-sm sm:text-base font-bold transition-all cursor-pointer relative pb-1 ${
+                                            mode === 'login'
+                                                ? "text-text after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                                : "text-text-muted hover:text-text"
+                                        }`}
+                                    >
+                                        {t('auth.tabLogin', { defaultValue: 'Đăng nhập' })}
+                                    </button>
+                                    <span className="text-border/60 text-xs font-light">/</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('register')}
+                                        className={`text-sm sm:text-base font-bold transition-all cursor-pointer relative pb-1 ${
+                                            mode === 'register'
+                                                ? "text-text after:absolute after:bottom-[-13px] after:left-0 after:right-0 after:h-0.5 after:bg-primary"
+                                                : "text-text-muted hover:text-text"
+                                        }`}
+                                    >
+                                        {t('auth.tabRegister', { defaultValue: 'Tạo tài khoản' })}
+                                    </button>
                                 </div>
-
-                                {/* Mode Switcher Tabs for Login/Register */}
-                                {(mode === 'login' || mode === 'register') && (
-                                    <div className="grid grid-cols-2 p-1 rounded-2xl bg-surface-hover/80 border border-border text-xs font-bold">
-                                        <button
-                                            type="button"
-                                            onClick={() => switchMode('login')}
-                                            className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                                mode === 'login'
-                                                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                                                    : "text-text-muted hover:text-text"
-                                            }`}
-                                        >
-                                            <FontAwesomeIcon icon={faRightToBracket} className="text-xs" />
-                                            <span>{t('auth.tabLogin', { defaultValue: 'Đăng Nhập' })}</span>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => switchMode('register')}
-                                            className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                                                mode === 'register'
-                                                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                                                    : "text-text-muted hover:text-text"
-                                            }`}
-                                        >
-                                            <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
-                                            <span>{t('auth.tabRegister', { defaultValue: 'Đăng Ký' })}</span>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Alert Banner: Session Expired */}
-                            {sessionExpired && (
-                                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-semibold flex items-start gap-2.5 animate-fade-in">
-                                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-sm shrink-0 mt-0.5" />
-                                    <div className="flex flex-col gap-0.5">
-                                        <p className="font-bold">{t('auth.sessionExpiredTitle', { defaultValue: 'Phiên đăng nhập đã hết hạn' })}</p>
-                                        <p className="text-[11px] opacity-90">{t('auth.sessionExpiredDesc', { defaultValue: 'Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.' })}</p>
-                                    </div>
+                            ) : (
+                                <div className="border-b border-border/30 pb-3">
+                                    <h2 className="text-base font-bold text-text">
+                                        {mode === 'forgot-password' && t('auth.forgotPasswordTitle', { defaultValue: 'Khôi phục mật khẩu' })}
+                                        {mode === 'verify-email' && t('auth.verifyEmailTitle', { defaultValue: 'Xác thực email' })}
+                                        {mode === 'reset-password' && t('auth.resetPasswordTitle', { defaultValue: 'Đặt mật khẩu mới' })}
+                                    </h2>
+                                    <p className="text-xs text-text-muted mt-0.5">
+                                        {mode === 'forgot-password' && t('auth.forgotPasswordSubtitle', { defaultValue: 'Nhập email để nhận mã khôi phục.' })}
+                                        {mode === 'verify-email' && t('auth.verifyEmailSubtitle', { defaultValue: 'Nhập mã OTP 6 chữ số đã được gửi tới email.' })}
+                                        {mode === 'reset-password' && t('auth.resetPasswordSubtitle', { defaultValue: 'Nhập mật khẩu mới an toàn.' })}
+                                    </p>
                                 </div>
                             )}
 
-                            {/* Alert Banner: Error State */}
+                            {/* Session Expired Alert */}
+                            {sessionExpired && (
+                                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs flex items-center gap-2">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-xs shrink-0" />
+                                    <span>{t('auth.sessionExpiredDesc', { defaultValue: 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.' })}</span>
+                                </div>
+                            )}
+
+                            {/* Error Alert */}
                             {serverError && (
-                                <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-semibold flex items-start gap-2.5 animate-fade-in">
-                                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-sm shrink-0 mt-0.5" />
+                                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-xs shrink-0" />
                                     <span>{serverError}</span>
                                 </div>
                             )}
 
-                            {/* Alert Banner: Success State */}
+                            {/* Success Alert */}
                             {successMessage && (
-                                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-semibold flex items-start gap-2.5 animate-fade-in">
-                                    <FontAwesomeIcon icon={faCircleCheck} className="text-sm shrink-0 mt-0.5" />
+                                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+                                    <FontAwesomeIcon icon={faCircleCheck} className="text-xs shrink-0" />
                                     <span>{successMessage}</span>
                                 </div>
                             )}
 
-                            {/* Main Form */}
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            {/* Streamlined Auth Form */}
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
 
-                                {/* Email Address (Login, Register, Forgot Password) */}
-                                {(mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
-                                    <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="email" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                                            <FontAwesomeIcon icon={faEnvelope} className="text-primary text-xs" />
-                                            <span>{t('auth.emailLabel', { defaultValue: 'Địa chỉ Email' })}</span>
-                                        </label>
-                                        <div className="flex items-center w-full rounded-2xl h-11 border border-border bg-bg/60 px-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                            <input
-                                                id="email"
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                placeholder={t('auth.emailPlaceholder', { defaultValue: 'gamer@indieg.com' })}
-                                                disabled={isLoading}
-                                                className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
-                                                required
-                                            />
+                                {/* Quick Account Type Selector Hint */}
+                                {mode === 'login' && (
+                                    <div className="flex items-center justify-between text-xs px-3 py-2 rounded-xl bg-surface-hover/30 border border-border/30">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <FontAwesomeIcon icon={faUsers} className="text-primary text-xs shrink-0" />
+                                            <span className="text-[11px] text-text-muted truncate">
+                                                {selectedAccount ? (
+                                                    <>
+                                                        Loại tài khoản: <strong className="text-text font-bold">{selectedAccount.typeLabel}</strong>
+                                                    </>
+                                                ) : (
+                                                    "Tài khoản mẫu để test:"
+                                                )}
+                                            </span>
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                                            className="text-primary hover:text-primary-hover font-semibold text-xs flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
+                                        >
+                                            <span>{selectedAccount ? "Đổi loại" : "Chọn tài khoản"}</span>
+                                            <FontAwesomeIcon icon={faChevronDown} className="text-[9px]" />
+                                        </button>
                                     </div>
                                 )}
 
-                                {/* Password Field (Login, Register, Reset Password) */}
+                                {/* Email Field */}
+                                {(mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="email" className="text-xs font-semibold text-text-muted">
+                                            {t('auth.emailLabel', { defaultValue: 'Email' })}
+                                        </label>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            placeholder={t('auth.emailPlaceholder', { defaultValue: 'gamer@indieg.local' })}
+                                            disabled={isLoading}
+                                            className="w-full h-10 px-3 rounded-xl bg-surface-hover/30 border border-border/40 focus:border-primary/80 focus:bg-surface-hover/60 focus:outline-none text-sm text-text placeholder:text-text-faint transition-all"
+                                            required
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Password Field */}
                                 {(mode === 'login' || mode === 'register' || mode === 'reset-password') && (
                                     <div className="flex flex-col gap-1.5">
                                         <div className="flex items-center justify-between">
-                                            <label htmlFor="password" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faKey} className="text-primary text-xs" />
-                                                <span>{mode === 'reset-password' ? t('auth.newPasswordLabel', { defaultValue: 'Mật khẩu mới' }) : t('auth.passwordLabel', { defaultValue: 'Mật khẩu' })}</span>
+                                            <label htmlFor="password" className="text-xs font-semibold text-text-muted">
+                                                {mode === 'reset-password' ? t('auth.newPasswordLabel', { defaultValue: 'Mật khẩu mới' }) : t('auth.passwordLabel', { defaultValue: 'Mật khẩu' })}
                                             </label>
                                             {mode === 'login' && (
                                                 <button
                                                     type="button"
                                                     onClick={() => switchMode('forgot-password')}
-                                                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+                                                    className="text-xs text-text-muted hover:text-primary transition-colors cursor-pointer"
                                                 >
                                                     {t('auth.forgotPasswordLink', { defaultValue: 'Quên mật khẩu?' })}
                                                 </button>
                                             )}
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-2 w-full rounded-2xl h-11 border border-border bg-bg/60 px-3.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                                        <div className="relative flex items-center">
                                             <input
                                                 id="password"
                                                 type={isShowPassword ? "text" : "password"}
@@ -650,85 +844,62 @@ const AuthPage = () => {
                                                 onChange={handleInputChange}
                                                 placeholder="••••••••"
                                                 disabled={isLoading}
-                                                className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
+                                                className="w-full h-10 pl-3 pr-9 rounded-xl bg-surface-hover/30 border border-border/40 focus:border-primary/80 focus:bg-surface-hover/60 focus:outline-none text-sm text-text placeholder:text-text-faint transition-all"
                                                 required
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setIsShowPassword(!isShowPassword)}
-                                                className="text-text-faint hover:text-text p-1 text-xs cursor-pointer"
+                                                className="absolute right-3 text-text-faint hover:text-text text-xs p-1 cursor-pointer"
                                             >
                                                 <FontAwesomeIcon icon={isShowPassword ? faEye : faEyeSlash} />
                                             </button>
                                         </div>
 
-                                        {/* Password Strength Indicator */}
-                                        {(mode === 'register' || mode === 'reset-password') && (
-                                            <div className="flex flex-col gap-2 mt-1 p-3 rounded-2xl border border-border bg-bg/80 text-xs">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className={`font-semibold ${pwdState.isEmpty ? "text-text-faint" : pwdState.strengthConfig.color}`}>
-                                                        {t('auth.pwdStrength', { defaultValue: 'Độ mạnh:' })} <span className="font-bold">{pwdState.isEmpty ? t('auth.pwdNotEntered', { defaultValue: 'Chưa nhập' }) : getStrengthLabel(pwdState.score)}</span>
-                                                    </span>
-                                                    <div className="grid grid-cols-4 gap-1.5 h-1.5 w-28">
-                                                        {[1, 2, 3, 4].map((level) => (
-                                                            <div
-                                                                key={level}
-                                                                className={`h-full rounded-full transition-all duration-300 ${
-                                                                    level <= (pwdState.score <= 1 ? 1 : pwdState.score)
-                                                                        ? pwdState.strengthConfig.bg
-                                                                        : "bg-surface-hover"
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2 border-t border-border/60 text-[11px]">
-                                                    {pwdState.requirements.map((item) => (
-                                                        <div key={item.id} className="flex items-center gap-1.5">
-                                                            <FontAwesomeIcon
-                                                                icon={faCircleCheck}
-                                                                className={item.isMet ? "text-emerald-500" : "text-text-faint"}
-                                                            />
-                                                            <span className={item.isMet ? "text-text font-medium" : "text-text-faint"}>
-                                                                {getReqLabel(item.id, item.label)}
-                                                            </span>
-                                                        </div>
+                                        {/* Compact Password Strength Indicator (no heavy cards) */}
+                                        {(mode === 'register' || mode === 'reset-password') && !pwdState.isEmpty && (
+                                            <div className="flex items-center gap-2 pt-1">
+                                                <div className="flex-1 grid grid-cols-4 gap-1 h-1">
+                                                    {[1, 2, 3, 4].map((level) => (
+                                                        <div
+                                                            key={level}
+                                                            className={`h-full rounded-full transition-all duration-300 ${
+                                                                level <= pwdState.score ? pwdState.strengthConfig.bg : "bg-border/30"
+                                                            }`}
+                                                        />
                                                     ))}
                                                 </div>
+                                                <span className={`text-[11px] font-medium ${pwdState.strengthConfig.color}`}>
+                                                    {getStrengthLabel(pwdState.score)}
+                                                </span>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Confirm Password (Register, Reset Password) */}
+                                {/* Confirm Password Field */}
                                 {(mode === 'register' || mode === 'reset-password') && (
                                     <div className="flex flex-col gap-1.5">
-                                        <label htmlFor="confirmPassword" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                                            <FontAwesomeIcon icon={faShieldHalved} className="text-primary text-xs" />
-                                            <span>{t('auth.confirmPasswordLabel', { defaultValue: 'Xác nhận mật khẩu' })}</span>
+                                        <label htmlFor="confirmPassword" className="text-xs font-semibold text-text-muted">
+                                            {t('auth.confirmPasswordLabel', { defaultValue: 'Xác nhận mật khẩu' })}
                                         </label>
-                                        <div
-                                            className={`flex items-center w-full rounded-2xl h-11 border px-3.5 transition-all ${
+                                        <input
+                                            id="confirmPassword"
+                                            type="password"
+                                            value={formData.confirmPassword}
+                                            onChange={handleInputChange}
+                                            placeholder="••••••••"
+                                            disabled={isLoading}
+                                            className={`w-full h-10 px-3 rounded-xl bg-surface-hover/30 border focus:outline-none text-sm text-text placeholder:text-text-faint transition-all ${
                                                 isPasswordMatched
-                                                    ? "border-border bg-bg/60 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
-                                                    : "border-rose-500 bg-rose-500/10"
+                                                    ? "border-border/40 focus:border-primary/80 focus:bg-surface-hover/60"
+                                                    : "border-rose-500/80 bg-rose-500/10"
                                             }`}
-                                        >
-                                            <input
-                                                id="confirmPassword"
-                                                type="password"
-                                                value={formData.confirmPassword}
-                                                onChange={handleInputChange}
-                                                placeholder="••••••••"
-                                                disabled={isLoading}
-                                                className="w-full h-full focus:outline-none bg-transparent text-sm text-text placeholder:text-text-faint font-medium disabled:opacity-50"
-                                                required
-                                            />
-                                        </div>
+                                            required
+                                        />
                                         {!isPasswordMatched && (
-                                            <p className="text-rose-500 text-xs font-bold mt-0.5">
-                                                {t('auth.passwordMismatch', { defaultValue: 'Mật khẩu xác nhận không trùng khớp!' })}
+                                            <p className="text-rose-400 text-xs font-medium">
+                                                {t('auth.passwordMismatch', { defaultValue: 'Mật khẩu xác nhận không trùng khớp' })}
                                             </p>
                                         )}
                                     </div>
@@ -736,35 +907,32 @@ const AuthPage = () => {
 
                                 {/* OTP Field (Verify Email) */}
                                 {mode === 'verify-email' && (
-                                    <div className="flex flex-col gap-2">
-                                        <label htmlFor="otpCode" className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                                            <FontAwesomeIcon icon={faLock} className="text-primary text-xs" />
-                                            <span>{t('auth.otpCodeLabel', { defaultValue: 'Mã OTP xác thực 6 chữ số' })}</span>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="otpCode" className="text-xs font-semibold text-text-muted">
+                                            {t('auth.otpCodeLabel', { defaultValue: 'Mã xác thực OTP' })}
                                         </label>
-                                        <div className="flex items-center w-full rounded-2xl h-12 border border-border bg-bg/60 px-4 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                            <input
-                                                id="otpCode"
-                                                type="text"
-                                                maxLength={6}
-                                                value={formData.otpCode}
-                                                onChange={handleInputChange}
-                                                placeholder="123456"
-                                                disabled={isLoading}
-                                                className="w-full h-full focus:outline-none bg-transparent text-center tracking-[0.5em] font-mono text-lg font-bold text-text disabled:opacity-50"
-                                                required
-                                            />
-                                        </div>
+                                        <input
+                                            id="otpCode"
+                                            type="text"
+                                            maxLength={6}
+                                            value={formData.otpCode}
+                                            onChange={handleInputChange}
+                                            placeholder="123456"
+                                            disabled={isLoading}
+                                            className="w-full h-10 px-3 rounded-xl bg-surface-hover/30 border border-border/40 focus:border-primary/80 focus:outline-none text-center font-mono tracking-widest text-base font-bold text-text transition-all"
+                                            required
+                                        />
                                         <p className="text-[11px] text-text-faint text-center">
-                                            {t('auth.otpDemoHint', { defaultValue: 'Mã thử nghiệm demo:' })} <span className="font-mono font-bold text-primary">123456</span>
+                                            {t('auth.otpDemoHint', { defaultValue: 'Mã thử nghiệm:' })} <span className="font-mono font-bold text-primary">123456</span>
                                         </p>
                                     </div>
                                 )}
 
-                                {/* Action Submit Button */}
+                                {/* Primary Action CTA */}
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover text-white text-sm font-extrabold shadow-lg shadow-primary/25 transition-all cursor-pointer flex items-center justify-center gap-2 mt-1 disabled:opacity-50"
+                                    className="w-full h-10 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold shadow-md shadow-primary/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                                 >
                                     {isLoading ? (
                                         <>
@@ -773,60 +941,76 @@ const AuthPage = () => {
                                         </>
                                     ) : mode === 'login' ? (
                                         <>
-                                            <FontAwesomeIcon icon={faRightToBracket} />
-                                            <span>{t('auth.btnLoginNow', { defaultValue: 'Đăng Nhập Ngay' })}</span>
+                                            <FontAwesomeIcon icon={faRightToBracket} className="text-xs" />
+                                            <span>{t('auth.btnLoginNow', { defaultValue: 'Đăng nhập' })}</span>
                                         </>
                                     ) : mode === 'register' ? (
                                         <>
-                                            <FontAwesomeIcon icon={faUserPlus} />
-                                            <span>{t('auth.btnRegisterNow', { defaultValue: 'Tạo Tài Khoản Mới' })}</span>
+                                            <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
+                                            <span>{t('auth.btnRegisterNow', { defaultValue: 'Tạo tài khoản' })}</span>
                                         </>
                                     ) : mode === 'forgot-password' ? (
                                         <>
-                                            <FontAwesomeIcon icon={faPaperPlane} />
-                                            <span>{t('auth.btnSendRecovery', { defaultValue: 'Gửi Mã Khôi Phục' })}</span>
+                                            <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                                            <span>{t('auth.btnSendRecovery', { defaultValue: 'Gửi mã khôi phục' })}</span>
                                         </>
                                     ) : mode === 'verify-email' ? (
                                         <>
-                                            <FontAwesomeIcon icon={faCircleCheck} />
-                                            <span>{t('auth.btnVerifyEmail', { defaultValue: 'Xác Nhận Email' })}</span>
+                                            <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+                                            <span>{t('auth.btnVerifyEmail', { defaultValue: 'Xác thực' })}</span>
                                         </>
                                     ) : (
                                         <>
-                                            <FontAwesomeIcon icon={faLock} />
-                                            <span>{t('auth.btnSaveNewPassword', { defaultValue: 'Lưu Mật Khẩu Mới' })}</span>
+                                            <FontAwesomeIcon icon={faLock} className="text-xs" />
+                                            <span>{t('auth.btnSaveNewPassword', { defaultValue: 'Lưu mật khẩu mới' })}</span>
                                         </>
                                     )}
                                 </button>
                             </form>
 
-                            {/* Back to Login Link for secondary modes */}
-                            {(mode === 'forgot-password' || mode === 'verify-email' || mode === 'reset-password') && (
-                                <button
-                                    type="button"
-                                    onClick={() => switchMode('login')}
-                                    className="text-xs font-bold text-text-muted hover:text-primary transition-colors text-center cursor-pointer py-1"
-                                >
-                                    {t('auth.backToLogin', { defaultValue: '← Quay lại trang Đăng Nhập' })}
-                                </button>
-                            )}
-
-                            {/* Quick Account Switcher (Manual Test) */}
-                            {(mode === 'login' || mode === 'register') && (
-                                <div className="mt-2 pt-2 border-t border-border/60">
-                                    <AccountSwitcher />
-                                </div>
-                            )}
-
+                            {/* Secondary Navigation Links */}
+                            <div className="text-center pt-1 text-xs text-text-muted">
+                                {mode === 'login' ? (
+                                    <span>
+                                        {t('auth.noAccountPrompt', { defaultValue: 'Chưa có tài khoản?' })}{' '}
+                                        <button
+                                            type="button"
+                                            onClick={() => switchMode('register')}
+                                            className="text-primary hover:underline font-semibold cursor-pointer"
+                                        >
+                                            {t('auth.tabRegister', { defaultValue: 'Tạo tài khoản' })}
+                                        </button>
+                                    </span>
+                                ) : mode === 'register' ? (
+                                    <span>
+                                        {t('auth.hasAccountPrompt', { defaultValue: 'Đã có tài khoản?' })}{' '}
+                                        <button
+                                            type="button"
+                                            onClick={() => switchMode('login')}
+                                            className="text-primary hover:underline font-semibold cursor-pointer"
+                                        >
+                                            {t('auth.tabLogin', { defaultValue: 'Đăng nhập' })}
+                                        </button>
+                                    </span>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('login')}
+                                        className="text-text-muted hover:text-text transition-colors cursor-pointer"
+                                    >
+                                        {t('auth.backToLogin', { defaultValue: '← Quay lại Đăng nhập' })}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="relative z-20 w-full border-t border-border/50 py-4 text-center text-xs text-text-faint">
-                <p>{t('auth.footerRights', { defaultValue: '© 2026 IndieG Gaming Hub. Tất cả quyền được bảo lưu.' })}</p>
+            {/* Clean Minimal Footer */}
+            <footer className="relative z-20 w-full border-t border-border/30 py-4 text-center text-xs text-text-faint">
+                <p>{t('auth.footerRights', { defaultValue: '© 2026 IndieG Gaming Community. All rights reserved.' })}</p>
             </footer>
         </div>
     );

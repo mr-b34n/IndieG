@@ -88,7 +88,7 @@ export const FeedList = () => {
     const [activeCommunityFilter, setActiveCommunityFilter] = useState<string | null>(null);
     const [sortOrder, setSortOrder] = useState<FeedSortOption>("latest");
     const [hiddenAuthors, setHiddenAuthors] = useState<string[]>([]);
-    const [displayLimit, setDisplayLimit] = useState(5);
+    const [displayLimit, setDisplayLimit] = useState(8);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -183,12 +183,8 @@ export const FeedList = () => {
                     return postCommId === targetId || (postGameTag && targetName && postGameTag.includes(targetName));
                 }
 
-                // Otherwise, show posts from ANY joined community
-                const belongsToJoinedCommunity =
-                    (postCommId && joinedCommunityIds.has(postCommId)) ||
-                    (postGameTag && Array.from(joinedCommunityNames).some((name) => postGameTag.includes(name)));
-
-                return belongsToJoinedCommunity;
+                // Otherwise (ALL tab), show all community posts
+                return true;
             })
             .slice()
             .sort((a, b) => {
@@ -201,7 +197,14 @@ export const FeedList = () => {
                 if (sortOrder === "discussed") {
                     return (b.comments || 0) - (a.comments || 0);
                 }
-                return Number(b.id) - Number(a.id);
+
+                const bTime = typeof b.timestamp === "number" ? b.timestamp : 0;
+                const aTime = typeof a.timestamp === "number" ? a.timestamp : 0;
+                if (bTime && aTime && bTime !== aTime) {
+                    return bTime - aTime;
+                }
+
+                return String(b.id).localeCompare(String(a.id));
             });
     }, [posts, hiddenAuthors, currentAuthor, activeCommunityFilter, sortOrder, communities, joinedCommunityIds, joinedCommunityNames]);
 

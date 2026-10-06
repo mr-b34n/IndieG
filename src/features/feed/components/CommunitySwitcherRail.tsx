@@ -12,7 +12,21 @@ interface CommunitySwitcherRailProps {
     onSortChange?: (sort: FeedSortOption) => void;
 }
 
-const MAX_VISIBLE_COMMUNITIES = 3;
+const MAX_VISIBLE_COMMUNITIES = 4;
+
+const getShortTabLabel = (c: CommunityData): string => {
+    const id = String(c.id || "").toLowerCase();
+    const name = (c.name || "").toLowerCase();
+    if (id.includes("cs2") || name.includes("counter-strike")) return "CS2";
+    if (id.includes("elden") || name.includes("elden ring")) return "ELDEN RING";
+    if (id.includes("cyberpunk")) return "CYBERPUNK";
+    if (id.includes("valorant")) return "VALORANT";
+    if (id.includes("wukong") || name.includes("ngộ không") || name.includes("black myth")) return "WUKONG";
+    if (id.includes("wilds") || name.includes("monster hunter")) return "MH WILDS";
+    if (id.includes("minecraft")) return "MINECRAFT";
+    if (c.tag) return c.tag.toUpperCase();
+    return c.name.slice(0, 12).toUpperCase();
+};
 
 export const CommunitySwitcherRail = ({
     joinedCommunities,
@@ -116,7 +130,7 @@ export const CommunitySwitcherRail = ({
                                     alt={c.name}
                                     className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
                                 />
-                                <span className="truncate max-w-[120px] sm:max-w-[180px]">{c.name}</span>
+                                <span className="truncate">{getShortTabLabel(c)}</span>
                             </button>
                         );
                     })}
@@ -126,10 +140,10 @@ export const CommunitySwitcherRail = ({
                         <button
                             type="button"
                             onClick={() => setIsDrawerOpen(true)}
-                            className="text-xs font-bold text-text-faint hover:text-primary transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 border-transparent shrink-0 flex items-center gap-1"
-                            title="View all joined communities"
+                            className="text-xs font-bold text-text-faint hover:text-primary transition-colors cursor-pointer pb-2.5 -mb-[1px] border-b-2 border-transparent shrink-0 flex items-center gap-1 font-mono"
+                            title="Xem tất cả cộng đồng"
                         >
-                            <span>{t('feed.moreCommunities', { count: hiddenCount, defaultValue: `+${hiddenCount} more` })}</span>
+                            <span>+{hiddenCount}</span>
                         </button>
                     )}
                 </div>

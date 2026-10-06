@@ -13,10 +13,13 @@ import {
     faUser,
     faGear,
     faRightFromBracket,
-    faChevronDown
+    faChevronDown,
+    faShieldHalved,
+    faPenToSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from '@/features/auth';
 import { getCurrentAuthor } from "@/features/post";
+import { useCreatePostModalStore } from '@/features/feed/store/useCreatePostModalStore';
 
 export const Header = () => {
     const { t } = useTranslation();
@@ -53,6 +56,13 @@ export const Header = () => {
         (user?.user_metadata?.avatar_url as string | undefined) ||
         "";
 
+    const isAdmin = Boolean(
+        user?.role === "admin" ||
+        user?.id === "usr_admin" ||
+        user?.username === "IndieAdmin" ||
+        user?.email === "admin@indieg.com"
+    );
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -63,6 +73,16 @@ export const Header = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const openCreatePost = useCreatePostModalStore((state) => state.openCreatePost);
+
+    const handleCreatePostClick = () => {
+        if (!isLoggedIn) {
+            navigate({ to: "/auth" });
+            return;
+        }
+        openCreatePost();
+    };
+
     const handleLogout = () => {
         setShowUserMenu(false);
         logout();
@@ -70,7 +90,7 @@ export const Header = () => {
     };
 
     return (
-        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-black border-b border-[#1C1F22] select-none">
+        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-surface/95 backdrop-blur-md border-b border-border select-none transition-colors">
 
             {/* LEFT: Logo & Mobile Toggle */}
             <div className="flex items-center gap-3 shrink-0">
@@ -79,7 +99,7 @@ export const Header = () => {
                         type="button"
                         onClick={toggleLeft}
                         title={t('common.menu')}
-                        className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A] transition-colors cursor-pointer"
+                        className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faBars} className="text-base" />
                     </button>
@@ -90,7 +110,7 @@ export const Header = () => {
                     className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-90 py-1"
                     onClick={() => navigate({ to: '/' })}
                 >
-                    <span className="text-[22px] sm:text-[24px] font-bold tracking-tight text-[#1688E8]">
+                    <span className="text-[22px] sm:text-[24px] font-bold tracking-tight text-primary">
                         IndieG
                     </span>
                 </div>
@@ -108,13 +128,23 @@ export const Header = () => {
                     <Search />
                 </div>
 
+                {/* Persistent CREATE POST Icon Button */}
+                <button
+                    type="button"
+                    onClick={handleCreatePostClick}
+                    title={t('feed.createPost', { defaultValue: 'Tạo bài viết' })}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary hover:bg-primary-hover text-white transition-all shadow-xs shrink-0 cursor-pointer select-none active:scale-95"
+                >
+                    <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
+                </button>
+
                 {!hideSidebars && (
                     <button
                         type="button"
                         onClick={toggleRight}
                         title={t('common.openExplore')}
                         className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg
-                            text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
+                            text-text-muted hover:text-text hover:bg-surface-hover
                             transition-colors duration-150 cursor-pointer shrink-0"
                     >
                         <FontAwesomeIcon icon={faGamepad} className="text-sm" />
@@ -127,7 +157,7 @@ export const Header = () => {
                         onClick={() => navigate({ to: '/' })}
                         title={t('common.home')}
                         className="w-9 h-9 flex items-center justify-center rounded-lg
-                            text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
+                            text-text-muted hover:text-text hover:bg-surface-hover
                             transition-colors duration-150 cursor-pointer shrink-0"
                     >
                         <FontAwesomeIcon icon={faHouse} className="text-sm" />
@@ -145,7 +175,7 @@ export const Header = () => {
                                 }}
                                 title={t('notification.title')}
                                 className="relative w-9 h-9 flex items-center justify-center rounded-lg
-                                    text-[#8B9097] hover:text-[#E8E9EA] hover:bg-[#14171A]
+                                    text-text-muted hover:text-text hover:bg-surface-hover
                                     transition-colors duration-150 cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faBell} className="text-sm" />
@@ -167,7 +197,7 @@ export const Header = () => {
                                         setShowUserMenu(!showUserMenu);
                                         setShowNotifications(false);
                                     }}
-                                    className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-[#14171A] transition-colors cursor-pointer group"
+                                    className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer group"
                                 >
                                     {avatarUrl ? (
                                         <img
@@ -179,13 +209,13 @@ export const Header = () => {
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full bg-[#181F2C] ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-[#1688E8] uppercase select-none">
+                                        <div className="w-8 h-8 rounded-full bg-surface-hover ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
                                             {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
                                         </div>
                                     )}
                                     <FontAwesomeIcon
                                         icon={faChevronDown}
-                                        className={`text-[10px] text-[#8B9097] group-hover:text-[#E8E9EA] transition-transform duration-200 ${
+                                        className={`text-[10px] text-text-muted group-hover:text-text transition-transform duration-200 ${
                                             showUserMenu ? "rotate-180" : ""
                                         }`}
                                     />
@@ -193,22 +223,50 @@ export const Header = () => {
 
                                 {/* User Dropdown */}
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#121417] border border-[#23272C] shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
-                                        <div className="px-4 py-2.5 border-b border-[#23272C]/80">
-                                            <p className="font-bold text-xs text-[#E8E9EA] truncate">{displayName}</p>
-                                            <p className="text-[11px] text-[#8B9097] truncate">{user?.email || "demo@indieg.com"}</p>
+                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface border border-border shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="px-4 py-2.5 border-b border-border">
+                                            <p className="font-bold text-xs text-text truncate">{displayName}</p>
+                                            <p className="text-[11px] text-text-muted truncate">{user?.email || "demo@indieg.com"}</p>
                                         </div>
 
                                         <div className="py-1">
+                                            {isAdmin && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowUserMenu(false);
+                                                        const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
+                                                            ? pathname.split("/")[2]
+                                                            : "cs2-vietnam";
+                                                        navigate({
+                                                            to: "/community/$communityId",
+                                                            params: { communityId: targetId },
+                                                            search: { nav: "manage-reports" },
+                                                        });
+                                                    }}
+                                                    className="w-full px-4 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center justify-between transition-colors cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 text-rose-400 shrink-0" />
+                                                        <span className="truncate">{t('common.adminReports', { defaultValue: 'Quản trị & Báo cáo' })}</span>
+                                                    </div>
+                                                    {pendingReportsCount > 0 && (
+                                                        <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-mono font-bold">
+                                                            {pendingReportsCount}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            )}
+
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     setShowUserMenu(false);
                                                     navigate({ to: "/profile/$userId", params: { userId: "me" } });
                                                 }}
-                                                className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                className="w-full px-4 py-2 text-xs font-medium text-text-muted hover:text-text hover:bg-surface-hover flex items-center gap-2.5 transition-colors cursor-pointer"
                                             >
-                                                <FontAwesomeIcon icon={faUser} className="w-3.5 text-[#8B9097]" />
+                                                <FontAwesomeIcon icon={faUser} className="w-3.5 text-text-muted" />
                                                 <span>{t('common.viewProfile', { defaultValue: 'Trang cá nhân' })}</span>
                                             </button>
 
@@ -218,18 +276,18 @@ export const Header = () => {
                                                     setShowUserMenu(false);
                                                     navigate({ to: "/settings" });
                                                 }}
-                                                className="w-full px-4 py-2 text-xs font-medium text-[#C2C7CE] hover:text-white hover:bg-[#1C2026] flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                className="w-full px-4 py-2 text-xs font-medium text-text-muted hover:text-text hover:bg-surface-hover flex items-center gap-2.5 transition-colors cursor-pointer"
                                             >
-                                                <FontAwesomeIcon icon={faGear} className="w-3.5 text-[#8B9097]" />
+                                                <FontAwesomeIcon icon={faGear} className="w-3.5 text-text-muted" />
                                                 <span>{t('common.settings', { defaultValue: 'Cài đặt' })}</span>
                                             </button>
                                         </div>
 
-                                        <div className="border-t border-[#23272C]/80 pt-1 mt-1">
+                                        <div className="border-t border-border pt-1 mt-1">
                                             <button
                                                 type="button"
                                                 onClick={handleLogout}
-                                                className="w-full px-4 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                className="w-full px-4 py-2 text-xs font-bold text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
                                             >
                                                 <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5" />
                                                 <span>{t('common.logout', { defaultValue: 'Đăng xuất' })}</span>
@@ -244,7 +302,7 @@ export const Header = () => {
                     <button
                         type="button"
                         onClick={() => navigate({ to: "/auth" })}
-                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer shadow-sm shadow-primary/20"
                     >
                         {t('authenticate.login', { defaultValue: 'Đăng nhập' })}
                     </button>

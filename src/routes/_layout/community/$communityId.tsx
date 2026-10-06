@@ -65,6 +65,9 @@ import { CommunityManageRules } from '@/features/community/components/hub/Commun
 import { CommunityManageSettings } from '@/features/community/components/hub/CommunityManageSettings';
 
 export const Route = createFileRoute('/_layout/community/$communityId')({
+    validateSearch: (search: Record<string, unknown>) => ({
+        nav: typeof search.nav === 'string' ? search.nav : undefined,
+    }),
     component: CommunityDetailPage,
 });
 
@@ -99,6 +102,8 @@ function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
         currentUserVoteType: typeof dto.currentUserVoteType === "number" ? dto.currentUserVoteType : 0,
         images: dto.images && dto.images.length > 0 ? dto.images : undefined,
         tags: dto.tags || [],
+        isSpoiler: (dto as unknown as { isSpoiler?: boolean }).isSpoiler || dto.tags?.includes("spoiler"),
+        isNsfw: (dto as unknown as { isNsfw?: boolean }).isNsfw || dto.tags?.includes("nsfw"),
     };
 }
 
@@ -166,9 +171,22 @@ export function CommunityDetailPage() {
     }, [communityId, communities, communityDto]);
 
     // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about, manage-*
-    const [activeNav, setActiveNav] = useState("home");
+    const searchParams = Route.useSearch();
+    const searchNav = searchParams?.nav;
+    const [navOverride, setNavOverride] = useState<string | null>(null);
+    const [prevSearchNav, setPrevSearchNav] = useState(searchNav);
+
+    if (prevSearchNav !== searchNav) {
+        setPrevSearchNav(searchNav);
+        setNavOverride(null);
+    }
+
+    const activeNav = navOverride || searchNav || "home";
+    const setActiveNav = (nav: string) => {
+        setNavOverride(nav);
+    };
     const [activeFilter, setActiveFilter] = useState("all");
-    const [sortMode, setSortMode] = useState<"hot" | "new" | "unanswered" | "top">("hot");
+    const [sortMode, setSortMode] = useState<"hot" | "new">("hot");
     const [searchQuery, setSearchQuery] = useState("");
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -191,16 +209,24 @@ export function CommunityDetailPage() {
         return obj;
     }, [meMembershipData]);
 
-    // Derived Community Role State based on /members/me response
+    const isPlatformAdmin = Boolean(
+        user?.role === "admin" ||
+        user?.id === "usr_admin" ||
+        user?.username === "IndieAdmin" ||
+        user?.email === "admin@indieg.com"
+    );
+
+    // Derived Community Role State based on /members/me response or platform admin status
     const userRole = useMemo<"owner" | "moderator" | "member">(() => {
+        if (isPlatformAdmin) return "owner";
         if (!meMembership) return "member";
         const roleLower = String(meMembership.role || "").toLowerCase();
         if (roleLower === "owner" || roleLower === "admin") return "owner";
         if (roleLower === "moderator" || roleLower === "mod") return "moderator";
         return "member";
-    }, [meMembership]);
+    }, [isPlatformAdmin, meMembership]);
 
-    const isStaff = userRole === "owner" || userRole === "moderator";
+    const isStaff = isPlatformAdmin || userRole === "owner" || userRole === "moderator";
 
     // Fetch pending members for staff (GET /communities/{id}/members/pending)
     const { data: pendingMembersQueryData } = usePendingMembersQuery(community.id, undefined, { enabled: isStaff });
@@ -529,6 +555,12 @@ export function CommunityDetailPage() {
     const handleNavChange = (navId: string) => {
         setActiveNav(navId);
         setActiveFilter("all");
+        navigate({
+            to: "/community/$communityId",
+            params: { communityId },
+            search: { nav: navId === "home" ? undefined : navId },
+            replace: true,
+        });
     };
 
     const isManageView = activeNav.startsWith("manage-");
@@ -708,7 +740,6 @@ export function CommunityDetailPage() {
                         announcement={community.announcement}
                         featured={community.featured}
                         userRole={userRole}
-                        onManageClick={() => handleNavChange("manage-overview")}
                     />
 
                     {/* VIEW SWITCHER: Display content according to selected destination */}

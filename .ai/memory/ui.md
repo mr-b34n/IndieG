@@ -302,7 +302,131 @@ Implications:
 - Header background aligns to pure black (`bg-black`).
 - No ambient colored blur/gradient blobs placed on background wrappers.
 
+---
 
+## Decision: Auth Layout Streamlining & Floating Dark Glass Panel
 
+Status: Active
 
+Date: 2026-09-30
 
+Decision:
+
+The `/auth` page layout is streamlined to prioritize the authentication form over marketing clutter:
+1. **Hero & Identity Hierarchy**:
+   - Removed secondary feature cards ("Connect Your Squad", "Elevate Your Game") from the left column.
+   - Reduced hero typography size by ~30% (`text-3xl sm:text-4xl lg:text-5xl font-black`) to make the form the clear focal point.
+   - Replaced generic tagline with punchy gaming identity: *"Find games. Find people. Find your place."* ("A place for gamers to find their people").
+2. **Floating Dark Glass Panel & Border Reduction**:
+   - Replaced heavy, multi-nested bordered boxes with a single floating dark glass panel (`bg-surface/50 backdrop-blur-xl border border-border/40 shadow-xl rounded-2xl`).
+   - Inputs use clean single-layer surface hover backgrounds (`bg-surface-hover/30 border border-border/40 focus:border-primary/80`).
+3. **Simplified Navigation**:
+   - Replaced the heavy segmented tab bar with minimal inline navigation: `Sign in / Create account`.
+   - Secondary switch prompt placed naturally beneath the form ("Chưa có tài khoản? Tạo tài khoản" / "Đã có tài khoản? Đăng nhập").
+4. **Compact Password Strength Indicator**:
+   - Replaced the large 2-column checklist card with an ultra-compact single progress bar line and status label.
+
+Why:
+
+Reduces cognitive load, eliminates redundant visual weight, avoids nested container fatigue, and delivers a sleek, modern gaming social identity.
+
+---
+
+## Decision: Dual-Theme (Light & Dark Mode) Architecture
+Status: Active
+Date: 2026-10-01
+
+Decision:
+Light Mode and Dark Mode are fully supported through Tailwind v4 theme variables mapped to dynamic CSS custom properties:
+1. **CSS Custom Properties**:
+   - `:root` declares light mode variables (`--app-bg: #F4F6F8`, `--app-surface: #FFFFFF`, `--app-text: #111827`, `--app-border: #E2E6EA`, `color-scheme: light`).
+   - `.dark` declares dark mode variables (`--app-bg: #000000`, `--app-surface: #0B0D0F`, `--app-text: #E8E9EA`, `--app-border: #1C1F22`, `color-scheme: dark`).
+   - `@theme` in `App.css` binds semantic Tailwind utilities (`--color-bg`, `--color-surface`, `--color-text`, `--color-border`) to these dynamic properties.
+2. **DOM Synchronization (`useThemeStore.ts`)**:
+   - `applyThemeToDOM` synchronizes the `dark` class, `data-theme` attribute, and `style.colorScheme` on `document.documentElement`, ensuring immediate CSS variable re-evaluation and native browser control styling.
+   - Provides both `toggleTheme()` and `setTheme()`, with persistent persistence in `localStorage.getItem('theme')`.
+3. **Shell & Navigation Consistency**:
+   - Hardcoded hex codes (`bg-black`, `#14171A`, `#1C1F22`) in Header, LeftBar, and Search replaced with semantic theme tokens (`bg-surface/95`, `bg-surface-hover`, `border-border`, `text-text`, `text-text-muted`).
+   - Theme management is centralized strictly inside `/settings` (Appearance tab) with dedicated visual card selectors and toggle switch, preserving the lightweight, clutter-free primary Header.
+
+---
+
+## Decision: Post Hover Surface, Capsule Voting & 3-Level Threaded Comments
+
+Status: Active
+
+Date: 2026-10-05
+
+Decision:
+1. **Post Card Hover**: Hovering over posts no longer changes title text color; instead, the entire post card subtly highlights with a dark-gray surface (`hover:bg-surface-hover/60 dark:hover:bg-[#16181B]`), providing clean feedback while keeping typography stable.
+2. **Capsule / Pill Voting Shape**: The rectangular upvote/downvote containers across posts and comments are updated to a capsule/pill shape (`rounded-full`).
+3. **3-Level Nested Comments (Depth = 3: 1-2-3)**: Comments support up to 3 visual nesting levels with hierarchical avatar sizing (w-9, w-7, w-6), auto-prefixed `@author` tagging on replies, and subtle vertical thread guide lines (`border-l-2 border-border/50`). Deeper sub-replies at depth 3 are flattened to prevent infinite horizontal drift on mobile.
+
+---
+
+## Decision: Post Card Guideline (Hybrid Social + Forum)
+
+Status: Active
+Date: 2026-10-05
+
+Decision:
+Post cards implement the standardized 6-layer Hybrid Social + Forum architecture:
+1. **Component Architecture**:
+   `<Post>` orchestrates 6 dedicated subcomponents: `PostHeader`, `PostTitle`, `PostContent`, `PostMedia`, `PostTags`, `PostActions`.
+2. **Order of Structure & Spacing**:
+   - `PostHeader` (Avatar: 40x40, Username: 14–15px / 600, Community: 12–13px / muted, Time: 12px / muted, Badges: 11–12px max 2–3, More button: 32x32)
+   - ↓ 12px (`mb-3`)
+   - `PostTitle` (18–20px / 700 / max 2 lines clamp on feed)
+   - ↓ 8px (`mb-2`)
+   - `PostContent` (14–15px / line-height: 1.5 / max 3–5 lines clamp on feed with `...more` expander)
+   - ↓ 12px (`mb-3`)
+   - `PostMedia` (1 img: full width, radius 8–10px; 2 imgs: 50/50 grid; 3+ imgs: gallery with +N overlay; radius: `rounded-[10px]`)
+   - ↓ 12px (`mb-3`)
+   - `PostTags` (#Tag / 12px / accent color / max 3–5 tags)
+   - ↓ 16px (`mb-4`)
+   - `PostActions` ([↑] (score) [↓] capsule with 32–36px buttons, 16–18px icons, 13–14px / 600 score; 💬 comments; ↗ share; 🔖 bookmark).
+3. **Color Rule**:
+   Strict adherence to semantic tokens: Title → Foreground (`text-text`), Content → Foreground/Muted (`text-text/90`), Community/Time → Muted (`text-text-muted`), Tags/Active Vote/Active Bookmark → Accent (`text-primary`).
+
+---
+
+## Decision: Home Page Content Density & Gaming Platform Identity Refinement
+
+Status: Active
+Date: 2026-10-06
+
+Decision:
+1. **Clear Post Hierarchy (Game → Community → User → Content)**:
+   - Posts visually emphasize game and community context via small badges/labels (`[CS2]`, `[ELDEN RING]`, `[CYBERPUNK]`, etc.) and community logos beside the community name in the header, reinforcing IndieG's identity as a gaming platform rather than a generic social network.
+   - Author badges (e.g. `QA EXPERT`, `RECOMMENDED`, `NETRUNNER`, `PLATINUM`) sit cleanly alongside usernames.
+2. **Realistic Content Density & Varied Post Types**:
+   - The Home feed features 6 diverse post formats: image-heavy gameplay highlight (CS2 1v4 clutch), deep mechanical discussion (Elden Ring Stagger/Poise), build question (Cyberpunk Sandevistan Katana), achievement milestone (Wukong 100% Platinum), shared news/game content (MH Wilds Beta), and tactical forum debate (Valorant vs CS2 macro).
+3. **Dynamic Post Composer**:
+   - Replaced generic "What's on your mind?" with "Share a moment, thought, or discovery..." ("Chia sẻ khoảnh khắc, góc nhìn hoặc khám phá mới...").
+   - Dynamically adapts when a community filter is active: "Share with Counter-Strike 2 Vietnam..." ("Chia sẻ với Counter-Strike 2 Vietnam...").
+4. **Clean & Compact Feed Tabs**:
+   - Tab labels shortened to crisp gaming titles: `ALL`, `CS2`, `ELDEN RING`, `CYBERPUNK`, `VALORANT`, `+N` with drawer selector, keeping navigation minimal and functional.
+5. **Populated Sidebars**:
+   - **Left Sidebar**: 5 community shortcuts with "Xem tất cả" link, Social nav (Home, Community, Explore, Squad).
+   - **Right Sidebar**: Compact mock data strictly bounded to 4 Friends Online, 3 Trending Discussions, and 3 Upcoming Events.
+
+---
+
+## Decision: Community UI & Admin Overview Redesign
+
+Status: Active
+Date: 2026-10-06
+
+Decision:
+1. **Community-First, Non-Dashboard Philosophy**:
+   - Replaced generic SaaS card-based look with a dark, dense, gaming-centric forum layout.
+   - Banner height limited to ~160–180px so it provides atmosphere without dominating the viewport.
+   - Clear community identity: avatar, strong typography, joined action, member counts (34.5k members • 2.2k online), and only essential badges (VERIFIED, FEATURED).
+2. **Horizontal Community Navigation**:
+   - Flat, accessible navigation: Discussions, Guides, Media, Events, Members, Rules, Links.
+3. **Hybrid Forum/Social Feed & Feed Filters**:
+   - Filter bar: `LATEST`, `HOT`, `DISCUSSIONS`, `GUIDES`, `MEDIA` with compact sort control (`HOT`, `NEW`, `TOP`).
+   - Clean separators between posts rather than heavy decorative card containers.
+4. **Action-Oriented Admin Overview**:
+   - Removed fake SaaS analytics (Growth Rate, Engagement Level, Response Time).
+   - Promoted actionable items: `NEEDS ATTENTION` (Reports waiting for review, flagged posts, pending member requests), quick action buttons, and operational recent activity.

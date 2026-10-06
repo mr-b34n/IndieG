@@ -509,12 +509,12 @@ export const CommunityManageMembers = ({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-divider-primary/30">
-                        {filteredMembers.map((member) => {
+                        {filteredMembers.map((member, idx) => {
                             const isMenuOpen = activeMenuMemberId === member.id;
 
                             return (
                                 <tr
-                                    key={member.id}
+                                    key={`${member.id || member.userId}-${idx}`}
                                     className="hover:bg-surface-hover/40 transition-colors group"
                                 >
                                     {/* Avatar & Username */}

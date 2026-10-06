@@ -1,6 +1,14 @@
 export * from "./types";
 export * from "./constants";
-export { Post } from "./components/Post";
+export {
+    Post,
+    PostHeader,
+    PostTitle,
+    PostContent,
+    PostMedia,
+    PostTags,
+    PostActions,
+} from "./components/Post";
 export { EditPostModal } from "./components/EditPostModal";
 export { AttachmentPicker } from "./components/AttachmentPicker";
 export { CommentSection } from "./components/CommentSection";

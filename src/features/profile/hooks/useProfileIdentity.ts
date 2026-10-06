@@ -29,6 +29,10 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
             ? JSON.stringify(remoteProfile.bio)
             : (remoteProfile?.bio as string) || "";
 
+        const isBanned = (remoteProfile as Record<string, unknown> | null)?.isBanned === true || remoteProfile?.status === "banned";
+        const banReason = (remoteProfile as Record<string, unknown> | null)?.banReason as string | undefined;
+        const archived = remoteProfile?.archived === true || remoteProfile?.status === "archived";
+
         if (isOwnProfile) {
             return {
                 name: remoteProfile?.name || remoteProfile?.username || currentAuthor,
@@ -36,11 +40,14 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                     ? `@${remoteProfile.username}`
                     : `@${currentAuthor}`,
                 bio: resolvedBio,
-                status: "online",
+                status: isBanned ? "offline" : "online",
                 rank: remoteProfile?.rank ?? null,
                 avatarUrl: resolvedAvatarUrl,
                 coverUrl: resolvedCoverUrl,
                 createdAt: remoteProfile?.createdAt,
+                isBanned,
+                banReason,
+                archived,
             };
         }
         return {
@@ -49,10 +56,13 @@ export function useProfileIdentity({ userId, isOwnProfile, currentAuthor, remote
                 ? `@${remoteProfile.username}`
                 : (userId?.startsWith("@") ? userId : `@${userId || "gamer"}`),
             bio: resolvedBio,
-            status: "online",
+            status: isBanned ? "offline" : "online",
             avatarUrl: resolvedAvatarUrl,
             coverUrl: resolvedCoverUrl,
             createdAt: remoteProfile?.createdAt,
+            isBanned,
+            banReason,
+            archived,
         };
     }, [userId, isOwnProfile, currentAuthor, remoteProfile]);
 

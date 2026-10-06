@@ -744,7 +744,7 @@ export const SearchResultsPage = () => {
                                             </div>
 
                                             {post.title && (
-                                                <h3 className="text-sm sm:text-base font-bold text-[#ECEDEF] mt-2 group-hover:text-[#1688E8] transition-colors line-clamp-1">
+                                                <h3 className="text-sm sm:text-base font-bold text-[#ECEDEF] mt-2 line-clamp-1">
                                                     {post.title}
                                                 </h3>
                                             )}
@@ -754,7 +754,7 @@ export const SearchResultsPage = () => {
                                             </p>
 
                                             <div className="flex items-center gap-4 pt-2 mt-1 text-xs text-[#656A72] font-medium">
-                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#17191C] border border-[#26282C]">
+                                                <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#17191C] border border-[#26282C]">
                                                     <FontAwesomeIcon icon={faCaretUp} className="text-xs text-[#979BA2]" />
                                                     <span className="text-[11px] font-bold text-[#ECEDEF] min-w-[1rem] text-center">
                                                         {(post.upvotes ?? post.likes ?? 0) - (post.downvotes ?? 0)}

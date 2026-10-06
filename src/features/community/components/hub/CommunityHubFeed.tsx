@@ -1,9 +1,3 @@
-import { useState, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faChevronDown,
-    faCheck,
-} from "@fortawesome/free-solid-svg-icons";
 import { Post, type PostData, usePostsStore, getCurrentAuthor, type UserRank } from "@/features/post";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
@@ -39,14 +33,16 @@ export interface CommunityFeedPost {
     eventTime?: string;
     eventLocation?: string;
     tags?: string[];
+    isSpoiler?: boolean;
+    isNsfw?: boolean;
 }
 
 export interface CommunityHubFeedProps {
     posts: CommunityFeedPost[];
-    activeFilter: string;
-    onFilterChange: (filter: string) => void;
+    activeFilter?: string;
+    onFilterChange?: (filter: string) => void;
     sortMode: "hot" | "new" | "unanswered" | "top";
-    onSortChange: (mode: "hot" | "new" | "unanswered" | "top") => void;
+    onSortChange: (mode: "hot" | "new") => void;
     onPostClick?: (postId: string) => void;
     communityId?: string;
     communityName?: string;
@@ -93,6 +89,8 @@ function mapFeedPostToPostData(
         commentsCount: p.repliesCount,
         pinned: p.isPinned,
         privacy: "public",
+        isSpoiler: p.isSpoiler,
+        isNsfw: p.isNsfw,
         currentUserVoteType: p.currentUserVoteType ?? (p.isLiked ? 1 : 0),
         timeAgo: p.createdAt,
         communityId: communityId,
@@ -102,142 +100,55 @@ function mapFeedPostToPostData(
 
 export const CommunityHubFeed = ({
     posts,
-    activeFilter,
-    onFilterChange,
     sortMode,
     onSortChange,
     communityId,
     communityName,
     isVi,
 }: CommunityHubFeedProps) => {
-    // Dropdown controls states
-    const [isSortOpen, setIsSortOpen] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-    const sortRef = useRef<HTMLDivElement>(null);
-    const filterRef = useRef<HTMLDivElement>(null);
-
     const user = useAuthStore((state) => state.user);
     const currentAuthor = getCurrentAuthor(user);
     const deletePost = usePostsStore((state) => state.deletePost);
     const updatePost = usePostsStore((state) => state.updatePost);
 
-    // Close dropdowns on outside click
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
-                setIsSortOpen(false);
-            }
-            if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-                setIsFilterOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const filterOptions = [
-        { id: "all", labelVi: "Tất cả bài viết", labelEn: "All Posts" },
-        { id: "discussion", labelVi: "Thảo luận", labelEn: "Discussions" },
-        { id: "question", labelVi: "Hỏi đáp", labelEn: "Questions" },
-        { id: "guide", labelVi: "Hướng dẫn", labelEn: "Guides" },
-        { id: "showcase", labelVi: "Media & Showcase", labelEn: "Showcases" },
-        { id: "poll", labelVi: "Bình chọn", labelEn: "Polls" },
-        { id: "event", labelVi: "Sự kiện", labelEn: "Events" },
-    ];
-
-    const sortOptions = [
-        { id: "hot", labelVi: "Phổ biến", labelEn: "Hot" },
-        { id: "new", labelVi: "Mới nhất", labelEn: "New" },
-        { id: "top", labelVi: "Hàng đầu", labelEn: "Top" },
-        { id: "unanswered", labelVi: "Chưa trả lời", labelEn: "Unanswered" },
-    ] as const;
-
-    const currentSortLabel = sortOptions.find((s) => s.id === sortMode);
-    const currentFilterLabel = filterOptions.find((f) => f.id === activeFilter);
-
     return (
-        <div className="w-full flex flex-col gap-4">
-            {/* Feed Header: ACTIVITY + Dropdown Controls */}
-            <div className="flex items-center justify-between pb-3 border-b border-divider-primary/40">
-                <span className="text-xs font-mono font-bold tracking-wider text-text-muted uppercase">
-                    ACTIVITY
-                </span>
-
-                <div className="flex items-center gap-2 text-xs">
-                    {/* Filter Dropdown */}
-                    <div ref={filterRef} className="relative">
+        <div className="w-full flex flex-col gap-3">
+            {/* Feed Header: Compact Sort Selector (Newest & Hot only) */}
+            <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/50 select-none">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase text-text-faint tracking-wider font-bold">
+                        {isVi ? "SẮP XẾP:" : "SORT:"}
+                    </span>
+                    <div className="inline-flex items-center bg-surface-inner border border-border/60 rounded-[6px] p-0.5">
                         <button
                             type="button"
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-surface-inner/80 hover:bg-surface-hover text-text-muted hover:text-text border border-divider-primary/50 transition-colors cursor-pointer text-xs font-medium"
+                            onClick={() => onSortChange("hot")}
+                            className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                sortMode === "hot"
+                                    ? "bg-surface-hover text-primary font-bold shadow-2xs"
+                                    : "text-text-muted hover:text-text"
+                            }`}
                         >
-                            <span>{isVi ? currentFilterLabel?.labelVi : currentFilterLabel?.labelEn}</span>
-                            <FontAwesomeIcon icon={faChevronDown} className="text-[9px] text-text-faint" />
+                            <span>🔥</span>
+                            <span>{isVi ? "Phổ biến" : "Hot"}</span>
                         </button>
-
-                        {isFilterOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-44 py-1 bg-surface border border-divider-primary/80 rounded-[6px] shadow-2xl z-40 animate-fade-in">
-                                {filterOptions.map((opt) => (
-                                    <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => {
-                                            onFilterChange(opt.id);
-                                            setIsFilterOpen(false);
-                                        }}
-                                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                                            activeFilter === opt.id
-                                                ? "text-primary font-bold bg-primary/10"
-                                                : "text-text-muted hover:text-text hover:bg-surface-hover/60"
-                                        }`}
-                                    >
-                                        <span>{isVi ? opt.labelVi : opt.labelEn}</span>
-                                        {activeFilter === opt.id && (
-                                            <FontAwesomeIcon icon={faCheck} className="text-[10px] text-primary" />
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sort Dropdown */}
-                    <div ref={sortRef} className="relative">
                         <button
                             type="button"
-                            onClick={() => setIsSortOpen(!isSortOpen)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-surface-inner/80 hover:bg-surface-hover text-text-muted hover:text-text border border-divider-primary/50 transition-colors cursor-pointer text-xs font-medium"
+                            onClick={() => onSortChange("new")}
+                            className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                                sortMode === "new"
+                                    ? "bg-surface-hover text-primary font-bold shadow-2xs"
+                                    : "text-text-muted hover:text-text"
+                            }`}
                         >
-                            <span>{isVi ? currentSortLabel?.labelVi : currentSortLabel?.labelEn}</span>
-                            <FontAwesomeIcon icon={faChevronDown} className="text-[9px] text-text-faint" />
+                            <span>⚡</span>
+                            <span>{isVi ? "Mới nhất" : "Newest"}</span>
                         </button>
-
-                        {isSortOpen && (
-                            <div className="absolute right-0 top-full mt-1 w-36 py-1 bg-surface border border-divider-primary/80 rounded-[6px] shadow-2xl z-40 animate-fade-in">
-                                {sortOptions.map((opt) => (
-                                    <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => {
-                                            onSortChange(opt.id);
-                                            setIsSortOpen(false);
-                                        }}
-                                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                                            sortMode === opt.id
-                                                ? "text-primary font-bold bg-primary/10"
-                                                : "text-text-muted hover:text-text hover:bg-surface-hover/60"
-                                        }`}
-                                    >
-                                        <span>{isVi ? opt.labelVi : opt.labelEn}</span>
-                                        {sortMode === opt.id && (
-                                            <FontAwesomeIcon icon={faCheck} className="text-[10px] text-primary" />
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                     </div>
+                </div>
+
+                <div className="text-[11px] font-mono text-text-faint">
+                    {posts.length} {isVi ? "bài viết" : "posts"}
                 </div>
             </div>
 

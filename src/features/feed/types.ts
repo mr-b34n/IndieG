@@ -12,6 +12,7 @@ export interface CreatePostPayload {
     allowComments: boolean;
     pinned: boolean;
     isSpoiler: boolean;
+    isNsfw?: boolean;
     communityId?: string | number;
     gameTag?: string;
 }

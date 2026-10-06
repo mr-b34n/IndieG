@@ -46,7 +46,13 @@ export interface PostData {
     pinned?: boolean;
     allowComments?: boolean;
     isSpoiler?: boolean;
+    isNsfw?: boolean;
+    warningType?: "spoiler" | "nsfw";
     currentUserVoteType?: number;
+    gameBadge?: string;
+    postType?: "highlight" | "discussion" | "question" | "achievement" | "discovery" | "debate";
+    postTypeLabel?: string;
+    authorBadge?: string;
 }
 
 export type Post = PostData;
@@ -60,6 +66,7 @@ export interface PostDraft {
     allowComments: boolean;
     pinned: boolean;
     isSpoiler?: boolean;
+    isNsfw?: boolean;
     communityId: string | number | null;
     updatedAt: string;
 }

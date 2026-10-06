@@ -57,3 +57,24 @@ Search can produce many results across multiple entity types.
 Implications:
 
 Use concise previews and progressive discovery for large result sets.
+
+---
+
+## Decision: Comprehensive Mock Content & Threaded Comments
+
+Status: Active
+
+Date: 2026-10-02
+
+Decision:
+
+All webapp content surfaces (posts, communities, games, guides, reviews, patch notes, profile guestbooks, notifications, and bookmarks) maintain comprehensive mock datasets with nested threaded comments.
+
+Why:
+
+Prevents empty states during offline testing, ensures `useCommentsQuery` resolves full comment trees without backend dependencies, and provides an engaging, lively gaming community experience across all routes.
+
+Implications:
+
+`commentsApi` must implement both `getRootComments` and `getReplyComments` alongside `getPostComments`, with support for threaded replies, author object/fallback mapping, and runtime comment addition.
+

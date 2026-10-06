@@ -6,16 +6,31 @@ export type Language = 'en' | 'vi';
 interface ThemeState {
     theme: Theme;
     toggleTheme: () => void;
+    setTheme: (theme: Theme) => void;
     language: Language;
     setLanguage: (lang: Language) => void;
     toggleLanguage: () => void;
 }
 
+const applyThemeToDOM = (theme: Theme) => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    if (theme === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+    } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+    }
+    root.setAttribute('data-theme', theme);
+    root.style.colorScheme = theme;
+};
+
 const getInitialTheme = (): Theme => {
-    if (typeof window === 'undefined') return 'light';
+    if (typeof window === 'undefined') return 'dark';
     const saved = localStorage.getItem('theme') as Theme | null;
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
 };
 
 const getInitialLanguage = (): Language => {
@@ -28,13 +43,7 @@ const getInitialLanguage = (): Language => {
 const initialTheme = getInitialTheme();
 const initialLanguage = getInitialLanguage();
 
-if (typeof document !== 'undefined') {
-    if (initialTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-}
+applyThemeToDOM(initialTheme);
 
 export const useThemeStore = create<ThemeState>((set) => ({
     theme: initialTheme,
@@ -42,17 +51,14 @@ export const useThemeStore = create<ThemeState>((set) => ({
     toggleTheme: () => set((state) => {
         const nextTheme: Theme = state.theme === 'light' ? 'dark' : 'light';
         localStorage.setItem('theme', nextTheme);
-
-        if (typeof document !== 'undefined') {
-            if (nextTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-
+        applyThemeToDOM(nextTheme);
         return { theme: nextTheme };
     }),
+    setTheme: (theme: Theme) => {
+        localStorage.setItem('theme', theme);
+        applyThemeToDOM(theme);
+        set({ theme });
+    },
     setLanguage: (language) => {
         localStorage.setItem('language', language);
         set({ language });

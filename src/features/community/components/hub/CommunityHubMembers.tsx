@@ -255,9 +255,9 @@ export const CommunityHubMembers = ({
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {filteredMembers.map((member) => (
+                        {filteredMembers.map((member, idx) => (
                             <div
-                                key={member.id}
+                                key={`${member.id || member.userId}-${idx}`}
                                 className="p-3 rounded-[4px] bg-surface/70 border border-divider-primary/60 hover:border-divider-primary transition-all flex items-center justify-between gap-3"
                             >
                                 <div className="flex items-center gap-3 min-w-0">

@@ -247,6 +247,18 @@ export const ProfileHero = ({
                                         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F0F1F2] tracking-tight">
                                             {identity.name}
                                         </h1>
+                                        {identity.isBanned && (
+                                            <span className="px-2 py-0.5 rounded-[4px] bg-rose-500/20 border border-rose-500/40 text-rose-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                                <FontAwesomeIcon icon={faBan} className="text-[10px]" />
+                                                <span>Banned</span>
+                                            </span>
+                                        )}
+                                        {identity.archived && !identity.isBanned && (
+                                            <span className="px-2 py-0.5 rounded-[4px] bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                                <FontAwesomeIcon icon={faClock} className="text-[10px]" />
+                                                <span>Archived</span>
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -417,6 +429,26 @@ export const ProfileHero = ({
                     </div>
                 </div>
             </div>
+
+            {/* Banned or Archived Status Alert Banner */}
+            {identity.isBanned && (
+                <div className="w-full bg-rose-950/40 border-y border-rose-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-rose-200">
+                    <FontAwesomeIcon icon={faBan} className="text-rose-400 text-sm shrink-0" />
+                    <div className="min-w-0 flex-1">
+                        <span className="font-bold text-rose-300">Tài khoản này đã bị khóa: </span>
+                        <span className="text-rose-200/90">{identity.banReason || "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG."}</span>
+                    </div>
+                </div>
+            )}
+            {identity.archived && !identity.isBanned && (
+                <div className="w-full bg-amber-950/30 border-y border-amber-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-amber-200">
+                    <FontAwesomeIcon icon={faClock} className="text-amber-400 text-sm shrink-0" />
+                    <div className="min-w-0 flex-1">
+                        <span className="font-bold text-amber-300">Hồ sơ đã lưu trữ (Archived): </span>
+                        <span className="text-amber-200/90">Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn.</span>
+                    </div>
+                </div>
+            )}
 
             {/* ── Quiet & Mature Level, XP & Typography Stats Bar ─────────────────────────────── */}
             <div className="w-full bg-[#0E1116] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">

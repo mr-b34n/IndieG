@@ -3,11 +3,9 @@ import {
     faPlus,
     faCheck,
     faCircle,
-    faLock,
     faStar,
+    faCheckCircle,
     faBullhorn,
-    faShieldHalved,
-    faCrown,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatCompactNumber } from "../../constants";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -26,8 +24,8 @@ interface CommunityHubHeaderProps {
     isLocked?: boolean;
     announcement?: string;
     featured?: boolean;
+    isVerified?: boolean;
     userRole?: "owner" | "admin" | "moderator" | "member";
-    onManageClick?: () => void;
 }
 
 export const CommunityHubHeader = ({
@@ -43,12 +41,10 @@ export const CommunityHubHeader = ({
     isLocked,
     announcement,
     featured,
+    isVerified = true,
     isVi,
-    userRole = "owner",
-    onManageClick,
 }: CommunityHubHeaderProps) => {
     const { t } = useTranslation();
-    const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     return (
         <div className="w-full flex flex-col gap-3 select-none">
@@ -62,131 +58,110 @@ export const CommunityHubHeader = ({
                 </div>
             )}
 
-            {/* 1. Atmospheric Cover Image (Restrained height, calm editorial mood) */}
-            <div className="relative w-full h-36 sm:h-44 bg-surface-inner rounded-[6px] overflow-hidden border border-divider-primary/50">
+            {/* 1. Shorter Atmospheric Cover Banner (~160–180px, does NOT dominate) */}
+            <div className="relative w-full h-40 sm:h-44 bg-surface-inner rounded-[8px] overflow-hidden border border-border/50">
                 <img
                     src={coverUrl}
                     alt={name}
-                    className="w-full h-full object-cover brightness-[0.9] saturate-[1.1]"
+                    className="w-full h-full object-cover brightness-[0.85] saturate-[1.1]"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </div>
 
-            {/* 2. Compact Identity Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+            {/* 2. Community Header Identity & Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 px-1 pt-1">
                 {/* Left: Community Avatar & Metadata */}
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-start gap-3.5 min-w-0 flex-1">
                     <img
                         src={iconUrl}
                         alt={name}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-[6px] object-cover bg-surface border border-divider-primary shrink-0 shadow-sm"
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-[8px] object-cover bg-surface border-2 border-border shrink-0 shadow-md"
                     />
 
-                    <div className="flex flex-col min-w-0">
+                    <div className="flex flex-col min-w-0 flex-1">
+                        {/* Title & Meaningful Badges Only */}
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-text uppercase leading-none truncate">
+                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-text uppercase leading-tight truncate">
                                 {name}
                             </h1>
 
-                            {userRole === "owner" && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[9px] font-mono uppercase flex items-center gap-1">
-                                    <FontAwesomeIcon icon={faCrown} className="text-[8px]" />
-                                    <span>{isVi ? "Trưởng nhóm" : "Owner"}</span>
-                                </span>
-                            )}
-
-                            {userRole === "moderator" && (
-                                <span className="px-1.5 py-0.5 rounded bg-primary/15 border border-primary/30 text-primary font-bold text-[9px] font-mono uppercase flex items-center gap-1">
-                                    <FontAwesomeIcon icon={faShieldHalved} className="text-[8px]" />
-                                    <span>Mod</span>
+                            {isVerified && (
+                                <span className="px-1.5 py-0.5 rounded-[4px] bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono font-bold text-[9px] tracking-wider uppercase flex items-center gap-1">
+                                    <FontAwesomeIcon icon={faCheckCircle} className="text-[9px]" />
+                                    <span>VERIFIED</span>
                                 </span>
                             )}
 
                             {featured && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[10px] uppercase flex items-center gap-1">
+                                <span className="px-1.5 py-0.5 rounded-[4px] bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono font-bold text-[9px] tracking-wider uppercase flex items-center gap-1">
                                     <FontAwesomeIcon icon={faStar} className="text-[8px]" />
-                                    <span>{t('community.badgeFeatured', { defaultValue: 'Featured' })}</span>
-                                </span>
-                            )}
-
-                            {isLocked && (
-                                <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-[10px] uppercase flex items-center gap-1">
-                                    <FontAwesomeIcon icon={faLock} className="text-[8px]" />
-                                    <span>{isVi ? "Khóa" : "Locked"}</span>
+                                    <span>FEATURED</span>
                                 </span>
                             )}
                         </div>
 
+                        {/* Description */}
                         {description && (
-                            <p className="text-xs text-text-muted leading-relaxed line-clamp-1 mt-0.5 max-w-xl">
+                            <p className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-2 mt-1 max-w-2xl">
                                 {description}
                             </p>
                         )}
 
-                        {/* Status line: Members + Online + Subtle Membership state */}
-                        <div className="flex items-center gap-2.5 text-xs font-mono font-medium text-text-muted mt-1">
+                        {/* Member Counts & Online Status */}
+                        <div className="flex items-center gap-2.5 text-xs font-mono font-medium text-text-muted mt-2">
                             <span className="text-text font-bold">
                                 {formatCompactNumber(membersCount)}{" "}
                                 <span className="text-text-muted font-sans font-normal text-[11px]">
                                     {t('community.membersLabel', { defaultValue: 'members' })}
                                 </span>
                             </span>
-                            <span className="text-divider-primary font-normal">·</span>
-                            <span className="flex items-center gap-1.5 text-emerald-500 font-bold">
+                            <span className="text-text-faint font-normal">•</span>
+                            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
                                 <FontAwesomeIcon icon={faCircle} className="text-[5px] animate-pulse" />
                                 {formatCompactNumber(onlineCount)}{" "}
                                 <span className="text-text-muted font-sans font-normal text-[11px]">
                                     {t('community.onlineLabel', { defaultValue: 'online' })}
                                 </span>
                             </span>
-
-                            {/* Subtle Membership Indicator */}
-                            <span className="text-divider-primary font-normal">·</span>
-                            <button
-                                type="button"
-                                onClick={onToggleJoin}
-                                className={`text-[11px] font-sans font-medium transition-colors cursor-pointer hover:underline flex items-center gap-1 ${
-                                    isJoined ? "text-emerald-400" : "text-primary font-semibold"
-                                }`}
-                            >
-                                {isJoined ? (
-                                    <>
-                                        <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
-                                        <span>{isVi ? "Đã tham gia" : "Joined"}</span>
-                                    </>
-                                ) : (
-                                    <span>{isVi ? "+ Tham gia" : "+ Join"}</span>
-                                )}
-                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Contextual Management + Primary Action CTA */}
-                <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
-                    {/* Small contextual control near Create button for Admin / Owner */}
-                    {hasManagePermission && onManageClick && (
-                        <button
-                            type="button"
-                            onClick={onManageClick}
-                            className="px-3 py-2 rounded-[6px] text-xs font-semibold bg-surface-inner hover:bg-surface-hover border border-divider-primary text-text flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-                        >
-                            <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary" />
-                            <span>{isVi ? "Quản lý" : "Manage"}</span>
-                        </button>
-                    )}
+                {/* Right: Actions [Joined / Join] [+ Create] [Manage] */}
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center flex-wrap">
+                    {/* Joined State / Action Button */}
+                    <button
+                        type="button"
+                        onClick={onToggleJoin}
+                        className={`px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                            isJoined
+                                ? "bg-surface-inner hover:bg-surface-hover text-text-muted hover:text-text border-border"
+                                : "bg-primary hover:bg-primary/90 text-white border-primary shadow-xs"
+                        }`}
+                    >
+                        {isJoined ? (
+                            <>
+                                <FontAwesomeIcon icon={faCheck} className="text-[10px] text-emerald-400" />
+                                <span>{isVi ? "Đã tham gia" : "Joined"}</span>
+                            </>
+                        ) : (
+                            <span>{isVi ? "+ Tham gia" : "+ Join"}</span>
+                        )}
+                    </button>
 
+                    {/* Primary Create Button */}
                     <button
                         type="button"
                         onClick={onStartDiscussion}
                         disabled={isLocked}
-                        className={`px-4 py-2 rounded-[6px] text-xs font-bold transition-all flex items-center gap-2 shadow-sm ${
+                        className={`px-3.5 py-1.5 rounded-[6px] text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
                             isLocked
-                                ? "bg-surface-inner text-text-faint cursor-not-allowed border border-divider-primary"
-                                : "bg-primary hover:bg-primary/90 text-white cursor-pointer hover:shadow-md active:scale-[0.98]"
+                                ? "bg-surface-inner text-text-faint cursor-not-allowed border border-border"
+                                : "bg-primary hover:bg-primary/90 text-white cursor-pointer active:scale-[0.98]"
                         }`}
                     >
-                        <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                        <span>{isVi ? "Tạo bài viết" : "Create"}</span>
+                        <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                        <span>{isVi ? "Tạo bài viết" : "Create Post"}</span>
                     </button>
                 </div>
             </div>

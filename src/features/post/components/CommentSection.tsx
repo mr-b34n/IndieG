@@ -219,7 +219,7 @@ const CommentItem = ({
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
     const [showSubEmoji, setShowSubEmoji] = useState(false);
-    const [showAllReplies, setShowAllReplies] = useState(false);
+    const [showAllReplies, setShowAllReplies] = useState(depth > 0);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
     const replyImage = useCommentImageAttachment();
     const navigate = useNavigate();
@@ -246,7 +246,7 @@ const CommentItem = ({
     const combinedReplies = useMemo(() => {
         const local = comment.replies || [];
         if (!remoteRepliesData) return local;
-        const remoteList = extractCommentList(remoteRepliesData).map(mapCommentEntityToCommentData);
+        const remoteList = extractCommentList(remoteRepliesData).map((r) => mapCommentEntityToCommentData(r, depth));
         const merged = [...local];
         remoteList.forEach((r) => {
             if (!merged.some((m) => String(m.id) === String(r.id))) {
@@ -254,7 +254,7 @@ const CommentItem = ({
             }
         });
         return merged;
-    }, [comment.replies, remoteRepliesData]);
+    }, [comment.replies, remoteRepliesData, depth]);
 
     const user = useAuthStore((state) => state.user);
     const currentAuthor = getCurrentAuthor();
@@ -320,7 +320,7 @@ const CommentItem = ({
         if (!requireVerifiedEmail("trả lời bình luận")) return;
         setIsReplying((prev) => {
             const next = !prev;
-            if (next && depth >= 2 && !replyText.trim()) {
+            if (next && depth >= 1 && !replyText.trim()) {
                 setReplyText(`@${comment.author} `);
             }
             return next;
@@ -383,7 +383,9 @@ const CommentItem = ({
         setShowMenu(false);
     };
 
-    const avatarSize = depth === 0 ? "w-9 h-9" : "w-7 h-7";
+    const avatarSize = depth === 0 ? "w-9 h-9" : depth === 1 ? "w-7 h-7" : "w-6 h-6";
+    const nameSize = depth === 0 ? "text-[14px]" : depth === 1 ? "text-[13px]" : "text-[12.5px]";
+    const contentSize = depth === 0 ? "text-[14px]" : depth === 1 ? "text-[13.5px]" : "text-[13px]";
     const commentRank = getRankConfigIfPresent(comment.authorRank);
 
     return (
@@ -402,7 +404,7 @@ const CommentItem = ({
                             <div className="flex flex-row items-center gap-2 flex-wrap">
                                 <p 
                                     onClick={handleAuthorClick}
-                                    className={`font-bold text-[14px] hover:underline cursor-pointer ${
+                                    className={`font-bold ${nameSize} hover:underline cursor-pointer ${
                                         commentRank?.textColor || "text-text"
                                     }`}
                                 >
@@ -552,7 +554,7 @@ const CommentItem = ({
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-[14px] text-text mt-0.5 leading-snug whitespace-pre-wrap break-words">
+                            <p className={`${contentSize} text-text mt-0.5 leading-snug whitespace-pre-wrap break-words`}>
                                 {renderCommentContent(comment.content)}
                             </p>
                         )}
@@ -567,10 +569,10 @@ const CommentItem = ({
 
                     {/* Actions */}
                     <div className="flex flex-row items-center gap-4 mt-1 text-xs font-medium text-text-faint">
-                        <div className="flex flex-row items-center gap-0.5 px-1.5 py-0.5 rounded bg-surface-hover/20 border border-border/20">
+                        <div className="flex flex-row items-center gap-0.5 px-2 py-0.5 rounded-full bg-surface-hover/30 border border-border/30 hover:border-border/60 transition-colors">
                             <button 
                                 onClick={toggleLike} 
-                                className={`p-0.5 hover:text-primary transition-colors ${liked ? "text-primary font-bold scale-110" : ""}`}
+                                className={`p-0.5 rounded-full hover:text-primary transition-colors ${liked ? "text-primary font-bold scale-110" : ""}`}
                                 title={liked ? "Đã upvote" : "Upvote"}
                             >
                                 <FontAwesomeIcon icon={faCaretUp} className="text-xs sm:text-sm" />
@@ -584,7 +586,7 @@ const CommentItem = ({
 
                             <button 
                                 onClick={toggleDownvote} 
-                                className={`p-0.5 hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold scale-110" : ""}`}
+                                className={`p-0.5 rounded-full hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold scale-110" : ""}`}
                                 title={downvoted ? "Đã downvote" : "Downvote"}
                             >
                                 <FontAwesomeIcon icon={faCaretDown} className="text-xs sm:text-sm" />
@@ -701,11 +703,11 @@ const CommentItem = ({
                 </div>
             </div>
 
-            {/* Nested Replies */}
-            {depth < 2 && (combinedReplies.length > 0 || shouldFetchReplies || (comment.replyCount !== undefined && comment.replyCount > 0)) && (() => {
+            {/* Nested Replies - Supports depth up to 3 (Levels 1, 2, 3) */}
+            {depth < 3 && (combinedReplies.length > 0 || shouldFetchReplies || (comment.replyCount !== undefined && comment.replyCount > 0)) && (() => {
                 let allReplies = sortComments(combinedReplies, sortBy);
                 
-                if (depth === 1) {
+                if (depth === 2) {
                     const flatten = (replies: CommentData[]): CommentData[] => {
                         let res: CommentData[] = [];
                         for (const r of replies) {
@@ -725,8 +727,12 @@ const CommentItem = ({
                     (remoteList.length >= replyLimit) ||
                     (comment.replyCount !== undefined && comment.replyCount > allReplies.length);
                 
-                // Align replies with the content block of the parent comment. Max 3 visual depths (0, 1, 2).
-                const indentClass = depth === 0 ? "pl-[46px] sm:pl-[48px]" : "pl-[38px] sm:pl-[40px]";
+                // Align replies with subtle vertical thread guide lines. Max 3 visual depths: 0, 1, 2 (Levels 1, 2, 3).
+                const indentClass = depth === 0 
+                    ? "ml-3 sm:ml-4 pl-3.5 sm:pl-4.5 border-l-2 border-border/50 hover:border-primary/40 transition-colors" 
+                    : depth === 1
+                    ? "ml-2.5 sm:ml-3.5 pl-3 sm:pl-4 border-l-2 border-border/40 hover:border-primary/40 transition-colors"
+                    : "ml-2 sm:ml-3 pl-2.5 sm:pl-3.5 border-l-2 border-border/30 hover:border-primary/40 transition-colors";
 
                 return (
                     <div className={`mt-2.5 flex flex-col gap-2.5 ${indentClass}`}>
@@ -830,19 +836,23 @@ function extractCommentList(res: unknown): CommentEntity[] {
     return [];
 }
 
-function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
-    const authorObj = typeof c.author === "object" && c.author !== null ? c.author : null;
+function mapCommentEntityToCommentData(c: CommentEntity, parentDepth?: number): CommentData {
+    const currentDepth = c.depth !== undefined ? c.depth : (parentDepth !== undefined ? parentDepth + 1 : 0);
+    const authorObj = typeof c.author === "object" && c.author !== null
+        ? c.author
+        : ((c as { user?: unknown }).user && typeof (c as { user?: unknown }).user === "object" ? (c as { user?: unknown }).user as { name?: string; username?: string; displayName?: string; avatar?: string; avatarUrl?: string } : null);
+
     const authorName = authorObj
-        ? (authorObj.name || authorObj.username || "Thành viên")
-        : (typeof c.author === "string" && c.author.trim() ? c.author : (c.authorId ? `User_${c.authorId.slice(-4)}` : "Thành viên"));
+        ? (authorObj.name || (authorObj as { displayName?: string }).displayName || authorObj.username || "Thành viên")
+        : (typeof c.author === "string" && c.author.trim() ? c.author : ((c as { authorName?: string }).authorName || (c.authorId ? `User_${c.authorId.slice(-4)}` : "Thành viên")));
 
     const fallbackAvatar = authorObj?.username
         ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorObj.username)}`
-        : (c.authorId ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.authorId)}` : avatarUser);
+        : ((c as { authorAvatar?: string }).authorAvatar || (c.authorId ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.authorId)}` : avatarUser));
 
     const authorAvatar = authorObj
         ? (authorObj.avatarUrl || authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || fallbackAvatar)
-        : fallbackAvatar;
+        : ((c as { authorAvatar?: string }).authorAvatar || fallbackAvatar);
 
     // Children can be an array of CommentEntity objects or an array of ID strings
     const isChildObject = (item: unknown): item is CommentEntity =>
@@ -852,7 +862,7 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
         ? (c.children.filter(isChildObject) as CommentEntity[])
         : ((c as { replies?: CommentEntity[] }).replies || []);
 
-    const mappedReplies = childList.map(mapCommentEntityToCommentData);
+    const mappedReplies = childList.map((ch) => mapCommentEntityToCommentData(ch, currentDepth));
 
     let parsedReplyCount = 0;
     if (Array.isArray(c.replyCount)) {
@@ -887,7 +897,7 @@ function mapCommentEntityToCommentData(c: CommentEntity): CommentData {
         authorBio: authorObj?.bio,
         authorStatus: authorObj?.status,
         parentId: c.parentId ?? (typeof c.parent === "string" ? c.parent : (c.parent?.id ?? null)),
-        depth: c.depth ?? 0,
+        depth: currentDepth,
         content: c.content || "",
         timeAgo: c.createdAt ? formatTimeAgo(c.createdAt) : "Vừa xong",
         createdAt: c.createdAt,
@@ -1050,6 +1060,17 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     };
 
     
+    const findCommentInTree = (list: CommentData[], targetId: string | number): CommentData | null => {
+        for (const item of list) {
+            if (String(item.id) === String(targetId)) return item;
+            if (item.replies && item.replies.length > 0) {
+                const found = findCommentInTree(item.replies, targetId);
+                if (found) return found;
+            }
+        }
+        return null;
+    };
+
     const handleAddSubReply = async (parentId: string | number, text: string, image?: string) => {
         const authorName = user?.name || user?.username || getCurrentAuthor() || "You";
         const authorAvatar =
@@ -1057,6 +1078,11 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             user?.avatar_url ||
             (user?.user_metadata?.avatar_url as string | undefined) ||
             (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
+
+        // Find parent to calculate next depth level (0 -> 1 -> 2, depth = 3 levels total)
+        const parentComment = findCommentInTree(comments, parentId);
+        const parentDepth = parentComment ? (parentComment.depth ?? 0) : 0;
+        const nextDepth = Math.min(parentDepth + 1, 2);
 
         const tempSubId = `sub-${Date.now()}`;
         const newSubReply: CommentData = {
@@ -1074,7 +1100,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             upvotes: 0,
             downvotes: 0,
             likes: 0,
-            depth: 1,
+            depth: nextDepth,
             image,
         };
         setComments((prev) => addReplyToTree(prev, parentId, newSubReply));

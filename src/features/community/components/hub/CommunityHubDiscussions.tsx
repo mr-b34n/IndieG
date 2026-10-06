@@ -143,7 +143,7 @@ export const CommunityHubDiscussions = ({
                             <div
                                 key={thread.id}
                                 onClick={() => onThreadClick(thread.id)}
-                                className="group py-3.5 px-2 rounded-[4px] hover:bg-surface-hover/40 transition-colors cursor-pointer flex flex-col gap-2"
+                                className="group py-3 px-3 rounded-xl hover:bg-surface-hover/60 dark:hover:bg-[#16181B] transition-colors cursor-pointer flex flex-col gap-2"
                             >
                                 <div className="flex items-start gap-3">
                                     <img
@@ -153,7 +153,7 @@ export const CommunityHubDiscussions = ({
                                     />
 
                                     <div className="flex flex-col min-w-0 flex-1">
-                                        <h3 className="font-bold text-xs sm:text-sm text-text group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                                        <h3 className="font-bold text-xs sm:text-sm text-text line-clamp-2 leading-snug">
                                             {thread.title}
                                         </h3>
 
@@ -170,11 +170,11 @@ export const CommunityHubDiscussions = ({
                                 {/* Engagement & Meta Row */}
                                 <div className="flex items-center justify-between text-xs text-text-muted pl-11">
                                     <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-hover/30 border border-border/30">
+                                        <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-hover/40 border border-border/40">
                                             <button
                                                 type="button"
                                                 onClick={(e) => handleLikeToggle(e, thread.id, thread.likesCount)}
-                                                className={`p-0.5 transition-colors cursor-pointer text-xs ${
+                                                className={`p-0.5 rounded-full transition-colors cursor-pointer text-xs ${
                                                     likesState.liked
                                                         ? "text-primary font-bold scale-110"
                                                         : "text-text-muted hover:text-primary"
@@ -193,7 +193,7 @@ export const CommunityHubDiscussions = ({
                                             <button
                                                 type="button"
                                                 onClick={(e) => handleDownvoteToggle(e, thread.id, thread.likesCount)}
-                                                className={`p-0.5 transition-colors cursor-pointer text-xs ${
+                                                className={`p-0.5 rounded-full transition-colors cursor-pointer text-xs ${
                                                     localDownvotes[thread.id]
                                                         ? "text-rose-500 font-bold scale-110"
                                                         : "text-text-muted hover:text-rose-500"

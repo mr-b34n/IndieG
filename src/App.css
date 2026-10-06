@@ -18,7 +18,7 @@
     @media (min-width: 1024px) {
         * {
             scrollbar-width: thin;
-            scrollbar-color: var(--color-surface-hover) transparent;
+            scrollbar-color: var(--app-surface-hover) transparent;
         }
         *::-webkit-scrollbar {
             display: block;
@@ -29,12 +29,12 @@
             background: transparent;
         }
         *::-webkit-scrollbar-thumb {
-            background-color: var(--color-surface-hover);
+            background-color: var(--app-surface-hover);
             border-radius: 9999px;
             transition: background-color 0.2s ease;
         }
         *::-webkit-scrollbar-thumb:hover {
-            background-color: var(--color-text-faint);
+            background-color: var(--app-text-faint);
         }
     }
 
@@ -138,7 +138,103 @@
     --color-cyan-400: #22d3ee;
     --color-cyan-500: #06b6d4;
 
-    /* Continuous Shell Neutral & Surfaces */
+    /* Dynamic Theme Colors (switches between light & dark) */
+    --color-bg: var(--app-bg);
+    --color-surface: var(--app-surface);
+    --color-surface-hover: var(--app-surface-hover);
+    --color-surface-inner: var(--app-surface-inner);
+    --color-surface-active: var(--app-surface-active);
+    --color-border: var(--app-border);
+    --color-border-subtle: var(--app-border-subtle);
+    --color-border-strong: var(--app-border-strong);
+    --color-border-hover: var(--app-border-hover);
+    --color-divider-primary: var(--app-divider-primary);
+    --color-divider-secondary: var(--app-divider-secondary);
+
+    --color-text: var(--app-text);
+    --color-text-muted: var(--app-text-muted);
+    --color-text-faint: var(--app-text-faint);
+    --color-text-disabled: var(--app-text-disabled);
+
+    --color-primary: #1688E8;
+    --color-primary-hover: #329af0;
+    --color-primary-soft: var(--app-primary-soft);
+    --color-primary-glow: var(--app-primary-glow);
+
+    --color-like: #ef4444;
+    --color-like-soft: rgba(239, 68, 68, 0.15);
+}
+
+/* Light Mode (default when .dark is NOT present) */
+:root {
+    --app-bg: #F4F6F8;
+    --app-surface: #FFFFFF;
+    --app-surface-hover: #ECEFF2;
+    --app-surface-inner: #F8F9FA;
+    --app-surface-active: #E2E6EA;
+
+    --app-border: #E2E6EA;
+    --app-border-subtle: #EDF1F5;
+    --app-border-strong: #CBD2D9;
+    --app-border-hover: #9AA5B1;
+    --app-divider-primary: #E2E6EA;
+    --app-divider-secondary: #EDF1F5;
+
+    --app-text: #111827;
+    --app-text-muted: #4B5563;
+    --app-text-faint: #828C99;
+    --app-text-disabled: #CBD2D9;
+
+    --app-primary-soft: #E0EFFF;
+    --app-primary-glow: rgba(22, 136, 232, 0.15);
+
+    /* Direct variable fallbacks */
+    --color-bg: #F4F6F8;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #ECEFF2;
+    --color-surface-inner: #F8F9FA;
+    --color-surface-active: #E2E6EA;
+    --color-border: #E2E6EA;
+    --color-border-subtle: #EDF1F5;
+    --color-border-strong: #CBD2D9;
+    --color-border-hover: #9AA5B1;
+    --color-divider-primary: #E2E6EA;
+    --color-divider-secondary: #EDF1F5;
+    --color-text: #111827;
+    --color-text-muted: #4B5563;
+    --color-text-faint: #828C99;
+    --color-text-disabled: #CBD2D9;
+    --color-primary-soft: #E0EFFF;
+    --color-primary-glow: rgba(22, 136, 232, 0.15);
+
+    color-scheme: light;
+}
+
+/* Dark Mode (when html has class .dark) */
+.dark {
+    --app-bg: #000000;
+    --app-surface: #0B0D0F;
+    --app-surface-hover: #14171A;
+    --app-surface-inner: #121518;
+    --app-surface-active: #181C20;
+
+    --app-border: #1C1F22;
+    --app-border-subtle: #16181B;
+    --app-border-strong: #282C31;
+    --app-border-hover: #282C31;
+    --app-border-active: #1688E8;
+    --app-divider-primary: #1C1F22;
+    --app-divider-secondary: #16181B;
+
+    --app-text: #E8E9EA;
+    --app-text-muted: #8B9097;
+    --app-text-faint: #5F646B;
+    --app-text-disabled: #3d424a;
+
+    --app-primary-soft: #0e2740;
+    --app-primary-glow: rgba(22, 136, 232, 0.12);
+
+    /* Direct variable fallbacks */
     --color-bg: #000000;
     --color-surface: #0B0D0F;
     --color-surface-hover: #14171A;
@@ -147,54 +243,25 @@
     --color-border: #1C1F22;
     --color-border-subtle: #16181B;
     --color-border-strong: #282C31;
-    --color-divider-primary: #1C1F22;
-    --color-divider-secondary: #16181B;
-
-    --color-text: #E8E9EA;
-    --color-text-muted: #8B9097;
-    --color-text-faint: #5F646B;
-
-    --color-primary: #1688E8;
-    --color-primary-hover: #329af0;
-    --color-primary-soft: #0e2740;
-
-    --color-like: #ef4444;
-    --color-like-soft: rgba(239, 68, 68, 0.15);
-}
-
-.dark, :root {
-    --color-bg: #000000;
-    --color-surface: #0B0D0F;
-    --color-surface-hover: #14171A;
-    --color-surface-inner: #121518;
-    --color-surface-active: #181C20;
-
-    --color-border: #1C1F22;
     --color-border-hover: #282C31;
     --color-border-active: #1688E8;
     --color-divider-primary: #1C1F22;
     --color-divider-secondary: #16181B;
-
     --color-text: #E8E9EA;
     --color-text-muted: #8B9097;
     --color-text-faint: #5F646B;
     --color-text-disabled: #3d424a;
-
-    --color-primary: #1688E8;
-    --color-primary-hover: #329af0;
     --color-primary-soft: #0e2740;
     --color-primary-glow: rgba(22, 136, 232, 0.12);
 
-    --color-like: #ef4444;
-    --color-like-soft: rgba(239, 68, 68, 0.15);
-
-    background: #000000;
+    color-scheme: dark;
 }
 
 body {
-    background-color: #000000;
-    color: #E8E9EA;
+    background-color: var(--app-bg);
+    color: var(--app-text);
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dark .bg-surface,
@@ -202,6 +269,10 @@ body {
 .dark .bg-surface\/90,
 .dark .bg-surface\/80 {
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+:root:not(.dark) .bg-surface {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* IndieG Signature XP & Action Gradient */
@@ -260,10 +331,10 @@ a.bg-primary,
 }
 
 .text-bio-default {
-    color: #F0F1F2;
+    color: var(--app-text);
 }
 .text-bio-muted {
-    color: #8A8F98;
+    color: var(--app-text-muted);
 }
 .text-bio-accent {
     color: #1688E8;

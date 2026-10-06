@@ -94,6 +94,9 @@ export interface ProfileIdentity {
     playstyles?: string[];
     usuallyPlays?: string[];
     accentColor?: string; // e.g. "from-cyan-500 to-blue-600"
+    isBanned?: boolean;
+    banReason?: string;
+    archived?: boolean;
 }
 
 export interface CommunityReputation {

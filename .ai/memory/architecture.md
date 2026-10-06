@@ -203,5 +203,30 @@ Why:
 
 Guarantees complete frontend-to-backend alignment with zero missing endpoints, preventing unhandled 404/405 errors and enabling robust type safety across all application features.
 
+---
+
+## Decision: Centralized Mock Data Architecture & API Fallback
+
+Status: Active
+
+Date: 2026-09-30
+
+Decision:
+
+All mock data is centralized in the dedicated `src/mocks/` directory, organized modularly by domain:
+- `posts.mock.ts`: Sample posts, author ranks, tags, images, likes, and comments.
+- `communities.mock.ts`: Sample communities (CS2, Elden Ring, Cyberpunk 2077, Indie Games, RDR2) with banners, icons, members, and rules.
+- `games.mock.ts`: Sample games, screenshots, guides, reviews, and patch notes.
+- `users.mock.ts`: Sample user accounts, profiles, badges, and the current user profile.
+- `notifications.mock.ts`: Sample notifications (likes, comments, friend requests).
+- `bookmarks.mock.ts`: Sample bookmarked posts.
+- `index.ts`: Central re-export of all mock data and getter helpers.
+
+The API layer in `src/shared/api/index.ts` is streamlined using `callOrMock(...)`. When the remote backend is unreachable, the API gracefully and seamlessly resolves using the mock data from `src/mocks/` without throwing unhandled network errors. Components and stores (`usePostsStore`, `useCommunitiesStore`, `INITIAL_GAMES`) initialize directly from `src/mocks/`, enabling developers to easily add new sample data in `src/mocks/` without editing API or component internals.
+
+Why:
+
+Allows the user and frontend developers to prototype, add, and test mock data directly in isolated mock files while preserving full TypeScript safety and ensuring zero empty screens or network crash bugs when developing without an active backend.
+
 
 

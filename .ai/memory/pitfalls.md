@@ -124,5 +124,22 @@ Prevention:
 1. In mapper functions (`mapCommunityDtoToCommunityData`, `mapUserProfileDtoToSearchUser`), populate both canonical aliases (`logo` and `avatarUrl`, `backdrop` and `bannerUrl`).
 2. In UI components, always provide fallback chains on `img` `src` (e.g., `comm.avatarUrl || comm.logo`).
 
+---
+
+## Pitfall: Buried Admin Moderation Without Global Navigation Entry Point
+
+Status: Active
+
+Problem:
+
+Moderation and report management views confined solely to nested sub-routes (e.g. `/community/$communityId` management tabs) become inaccessible from the global user dashboard if global sidebars and headers do not expose dynamic navigation controls for users with `role: "admin"`.
+
+Prevention:
+
+1. Always expose a dedicated "Admin / Quản trị" section in the primary sidebar (`LeftBar`) and header dropdown when `isAdmin` is true.
+2. Support URL search parameter validation (`?nav=manage-reports`) in community routes so that global admin buttons can deep-link directly into moderation tabs.
+3. Synchronize internal tab state (`subTab`) in moderation components with incoming `initialTab` props using `useEffect`.
+
+
 
 

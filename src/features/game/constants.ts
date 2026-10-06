@@ -5,7 +5,9 @@ import {
     CS2_SCREENSHOTS,
 } from "@/shared/constants/images";
 
-export const INITIAL_GAMES: GameData[] = [];
+import { MOCK_GAMES } from "@/mocks/games.mock";
+
+export const INITIAL_GAMES: GameData[] = MOCK_GAMES;
 
 export const STEAM_URL_MAP: Record<string, string> = {
     "raft": "https://store.steampowered.com/app/648800/Raft/",
