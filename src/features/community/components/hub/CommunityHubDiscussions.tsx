@@ -129,7 +129,7 @@ export const CommunityHubDiscussions = ({
             {/* Discussions List (Post DNA: Avatar, Title, Author & Category, Likes, Comments, Time) */}
             {threads.length === 0 ? (
                 <div className="py-12 text-center text-xs text-text-muted font-mono">
-                    {isVi ? "Chưa có bài thảo luận nào phù hợp." : "No discussions found in this section."}
+                    {t('hub.communityhubdiscussions_13')}
                 </div>
             ) : (
                 <div className="flex flex-col divide-y divide-divider-primary/40">

@@ -14,7 +14,7 @@ interface ProfileTabBarProps {
 export const ProfileTabBar = ({ activeTab, onChange, friendsCount, showBookmarks = true, isCustomizeMode = false, t }: ProfileTabBarProps) => {
     const tabs: { id: ProfileTab; label: string; count?: number }[] = [
         { id: "overview", label: t("profile.tabs.overview") || "Overview" },
-        { id: "games", label: t("profile.tabs.games") || "Game Mastery" },
+        { id: "games", label: "Library" },
         { id: "posts", label: t("profile.tabs.posts") || "Posts" },
         { id: "communities", label: t("profile.tabs.communities") || "Communities" },
         { id: "friends", label: t("profile.friendsWidgetTitle") || "Friends", count: friendsCount },

@@ -756,7 +756,7 @@ export function CommunityDetailPage() {
                         <CommunityManageModeration
                             communityId={community.id}
                             communityName={community.name}
-                            initialTab="requests"
+                            initialTab="queue"
                             userRole={userRole}
                             isVi={isVi}
                             onNavigateRules={() => handleNavChange("manage-rules")}
@@ -845,6 +845,7 @@ export function CommunityDetailPage() {
                         nextEvent={upcomingEventsData[0]}
                         onNavigateNav={handleNavChange}
                         isVi={isVi}
+                        isManageView={isManageView}
                         userRole={userRole}
                         pendingCount={pendingCount}
                         reportsCount={reportsCount}

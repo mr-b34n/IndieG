@@ -61,13 +61,13 @@ const ToggleSwitch = ({
             role="switch"
             aria-checked={checked}
             onClick={() => onChange(!checked)}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
-                checked ? "bg-primary" : "bg-[#252930]"
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
+                checked ? "bg-primary border border-transparent" : "bg-[#252930] border border-border/20"
             }`}
         >
             <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    checked ? "translate-x-4" : "translate-x-0"
+                className={`pointer-events-none absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white shadow-md ring-0 transition-all duration-200 ease-in-out ${
+                    checked ? "left-[18px]" : "left-[2px]"
                 }`}
             />
         </button>
@@ -143,15 +143,14 @@ const PostSettingsMenu = ({
                 ref={buttonRef}
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer border border-border/50 ${
+                className={`relative flex items-center justify-center w-7 h-7 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer border border-border/50 ${
                     open || isSpoiler || isNsfw || pinned ? "bg-surface-hover text-primary border-primary/40" : ""
                 }`}
                 title={t('feed.settings', { defaultValue: 'Cài đặt bài viết' })}
             >
                 <FontAwesomeIcon icon={faGear} className="w-3 h-3" />
-                <span className="text-[11px] hidden sm:inline">{t('feed.settings', { defaultValue: 'Cài đặt' })}</span>
                 {(isSpoiler || isNsfw) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500" />
                 )}
             </button>
 
@@ -419,10 +418,9 @@ const FormattingToolbar = ({
                 type="button"
                 onClick={onAddImage}
                 title="Tải lên hình ảnh hoặc video"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
+                className="flex items-center justify-center w-7 h-7 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
             >
                 <FontAwesomeIcon icon={faImage} className="text-emerald-400 text-xs" />
-                <span className="text-[11px]">Ảnh / Video</span>
             </button>
         </div>
     );
@@ -978,13 +976,6 @@ export const CreatePostBox = ({
                 </div>
             </div>
 
-            {/* The Modal Component */}
-            <CreatePostModal
-                defaultCommunityId={defaultCommunityId}
-                onPostCreated={onPostCreated}
-                initialTitle={initialTitle}
-                initialContent={initialContent}
-            />
         </div>
     );
 };

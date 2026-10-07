@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -27,6 +28,7 @@ export const CommunityChatDrawer = ({
     communityName,
     isVi,
 }: CommunityChatDrawerProps) => {
+    const { t } = useTranslation();
     const [messages, setMessages] = useState<ChatMessage[]>([
         { id: "m1", user: "@ghoststrider", text: "Ai rảnh farm shark tooth cùng mình không?", time: "12:04" },
         { id: "m2", user: "@tactical_xeno", text: "Guide base 3 tầng mới ra hay vãi!", time: "12:05" },
@@ -104,7 +106,7 @@ export const CommunityChatDrawer = ({
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder={isVi ? "Nhập tin nhắn..." : "Type a message..."}
+                        placeholder={t('hub.communitychatdrawer_1')}
                         className="flex-1 bg-surface border border-divider-primary rounded-[4px] px-2.5 py-1.5 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
                     />
                     <button

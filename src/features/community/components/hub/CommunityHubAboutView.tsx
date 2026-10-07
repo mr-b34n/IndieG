@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faShieldHalved,
@@ -22,6 +23,7 @@ export const CommunityHubAboutView = ({
     description,
     isVi,
 }: CommunityHubAboutViewProps) => {
+    const { t } = useTranslation();
 
 
     const rules = [
@@ -57,19 +59,19 @@ export const CommunityHubAboutView = ({
 
     const wikiArticles = [
         {
-            title: isVi ? "Cẩm nang sinh tồn cơ bản cho người mới" : "Beginner's Survival Roadmap",
+            title: t('hub.communityhubaboutview_2'),
             category: "Getting Started",
             reads: "5.4k reads",
             updated: "2 days ago",
         },
         {
-            title: isVi ? "Bảng công thức chế tạo & vật liệu nâng cao" : "Advanced Crafting & Recipes Matrix",
+            title: t('hub.communityhubaboutview_3'),
             category: "Databases",
             reads: "12.8k reads",
             updated: "1 week ago",
         },
         {
-            title: isVi ? "Tối ưu hóa căn cứ & hệ sinh thái bè tự động" : "Automated Raft Automation & Irrigation",
+            title: t('hub.communityhubaboutview_4'),
             category: "Mechanics",
             reads: "8.1k reads",
             updated: "2 weeks ago",
@@ -106,7 +108,7 @@ export const CommunityHubAboutView = ({
                     </div>
                     <div>
                         <h2 className="font-extrabold text-sm text-text">{isVi ? `Nội Quy Cộng Đồng ${communityName}` : `${communityName} Community Rules`}</h2>
-                        <p className="text-xs text-text-muted">{isVi ? "Mọi thành viên cần tuân thủ để xây dựng môi trường văn minh." : "Please respect and follow the guidelines below."}</p>
+                        <p className="text-xs text-text-muted">{t('hub.communityhubaboutview_5')}</p>
                     </div>
                 </div>
 
@@ -134,7 +136,7 @@ export const CommunityHubAboutView = ({
                     </div>
                     <div>
                         <h2 className="font-extrabold text-sm text-text">{isVi ? `Tài Liệu & Wiki ${communityName}` : `${communityName} Community Wiki`}</h2>
-                        <p className="text-xs text-text-muted">{isVi ? "Tổng hợp tài liệu, hướng dẫn và cơ chế từ các thành viên gạo cội." : "Curated guides, game mechanics and data sheets."}</p>
+                        <p className="text-xs text-text-muted">{t('hub.communityhubaboutview_6')}</p>
                     </div>
                 </div>
 
@@ -164,8 +166,8 @@ export const CommunityHubAboutView = ({
                         <FontAwesomeIcon icon={faLink} />
                     </div>
                     <div>
-                        <h2 className="font-extrabold text-sm text-text">{isVi ? "Liên Kết Quan Trọng" : "Official & Community Links"}</h2>
-                        <p className="text-xs text-text-muted">{isVi ? "Các đường dẫn chính thức và kênh giao lưu hữu ích." : "Handy external links and useful resources."}</p>
+                        <h2 className="font-extrabold text-sm text-text">{t('hub.communityhubaboutview_7')}</h2>
+                        <p className="text-xs text-text-muted">{t('hub.communityhubaboutview_8')}</p>
                     </div>
                 </div>
 
@@ -204,19 +206,17 @@ export const CommunityHubAboutView = ({
                 </div>
                 <div>
                     <h2 className="font-extrabold text-sm text-text">{isVi ? `Về Cộng Đồng ${communityName}` : `About ${communityName}`}</h2>
-                    <p className="text-xs text-text-muted">{isVi ? "Thông tin giới thiệu, mục tiêu và đội ngũ phát triển." : "Community story, mission, and moderators."}</p>
+                    <p className="text-xs text-text-muted">{t('hub.communityhubaboutview_9')}</p>
                 </div>
             </div>
 
             <div className="p-4 rounded-[4px] bg-surface/70 border border-divider-primary/60 space-y-3">
-                <h3 className="font-bold text-xs text-primary uppercase tracking-wider font-mono">{isVi ? "GIỚI THIỆU CHUNG" : "MISSION & OVERVIEW"}</h3>
+                <h3 className="font-bold text-xs text-primary uppercase tracking-wider font-mono">{t('hub.communityhubaboutview_10')}</h3>
                 <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
                     {description}
                 </p>
                 <p className="text-xs text-text-muted leading-relaxed">
-                    {isVi
-                        ? "Không gian dành riêng cho các game thủ trao đổi kinh nghiệm, chia sẻ các bản build sáng tạo, tìm đồng đội leo rank hoặc co-op, và tham gia các sự kiện giải đấu cộng đồng định kỳ."
-                        : "A dedicated space for passionate players to exchange knowledge, share creative builds, find co-op teammates, and participate in community tournaments."}
+                    {t('hub.communityhubaboutview_11')}
                 </p>
             </div>
         </div>

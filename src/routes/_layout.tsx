@@ -8,7 +8,8 @@ import { useSidebarStore } from '@/shared/store/useSidebarStore'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useTranslation } from '@/shared/hooks/useTranslate'
-import { UnverifiedBanner } from '@/features/auth'
+import { UnverifiedBanner } from '@/features/auth';
+import { CreatePostModal } from '@/features/feed/components/CreatePostBox';
 
 const scrollPositions = new Map<string, number>()
 
@@ -92,6 +93,7 @@ function MainLayout() {
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
             <Header />
             <UnverifiedBanner />
+            <CreatePostModal />
 
             {/* Mobile Left Sidebar */}
             {!hideSidebars && isLeftOpen && (

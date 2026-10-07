@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faShieldHalved,
@@ -33,6 +34,7 @@ export const CommunityManageOverview = ({
     userRole = "owner",
     totalMembers,
 }: CommunityManageOverviewProps) => {
+    const { t } = useTranslation();
     // TanStack queries for operational management state
     const { data: membersData } = useCommunityMembersQuery(communityId || "");
     const { data: pendingData } = usePendingMembersQuery(communityId || "");
@@ -59,11 +61,11 @@ export const CommunityManageOverview = ({
 
     // Sub-navigation for admin hub
     const adminTabs = [
-        { id: "manage-overview", label: isVi ? "Tổng quan" : "Overview" },
-        { id: "manage-moderation", label: isVi ? "Kiểm duyệt" : "Moderation", badge: pendingCount > 0 ? String(pendingCount) : undefined },
-        { id: "manage-members", label: isVi ? "Thành viên" : "Members" },
-        { id: "manage-reports", label: isVi ? "Báo cáo" : "Reports", badge: reportsCount > 0 ? String(reportsCount) : undefined },
-        ...(isOwnerOrAdmin ? [{ id: "manage-settings", label: isVi ? "Cài đặt" : "Settings" }] : []),
+        { id: "manage-overview", label: t('hub.communitymanageoverview_131') },
+        { id: "manage-moderation", label: t('hub.communitymanageoverview_132'), badge: pendingCount > 0 ? String(pendingCount) : undefined },
+        { id: "manage-members", label: t('hub.communitymanageoverview_133') },
+        { id: "manage-reports", label: t('hub.communitymanageoverview_134'), badge: reportsCount > 0 ? String(reportsCount) : undefined },
+        ...(isOwnerOrAdmin ? [{ id: "manage-settings", label: t('hub.communitymanageoverview_135') }] : []),
     ];
 
     // NEEDS ATTENTION items (Highest priority!)
@@ -73,18 +75,18 @@ export const CommunityManageOverview = ({
             id: "att-reports",
             severity: "high" as const,
             label: isVi ? `${reportsCount} báo cáo vi phạm đang chờ xử lý` : `${reportsCount} reports waiting for review`,
-            desc: isVi ? "Cần điều tra nội dung bị người dùng gắn cờ" : "Review user-reported content",
+            desc: t('hub.communitymanageoverview_136'),
             action: () => onNavigate("manage-reports"),
-            actionText: isVi ? "Xử lý ngay" : "Review now",
+            actionText: t('hub.communitymanageoverview_137'),
         });
     } else {
         attentionItems.push({
             id: "att-flagged-post",
             severity: "medium" as const,
-            label: isVi ? `3 bài viết bị hệ thống kiểm duyệt tạm giữ` : `3 flagged posts awaiting approval`,
-            desc: isVi ? "Nội dung kích hoạt bộ lọc từ khóa nhạy cảm" : "Triggered automated keyword filter",
+            label: t('hub.communitymanageoverview_138'),
+            desc: t('hub.communitymanageoverview_139'),
             action: () => onNavigate("manage-reports"),
-            actionText: isVi ? "Xem xét" : "Review",
+            actionText: t('hub.communitymanageoverview_140'),
         });
     }
 
@@ -93,9 +95,9 @@ export const CommunityManageOverview = ({
             id: "att-pending",
             severity: "medium" as const,
             label: isVi ? `${pendingCount} yêu cầu thành viên đang chờ duyệt` : `${pendingCount} pending member requests`,
-            desc: isVi ? "Đơn xin gia nhập cộng đồng chưa được chấp thuận" : "New member join applications waiting",
+            desc: t('hub.communitymanageoverview_141'),
             action: () => onNavigate("manage-moderation"),
-            actionText: isVi ? "Duyệt đơn" : "Review",
+            actionText: t('hub.communitymanageoverview_142'),
         });
     }
 
@@ -103,30 +105,30 @@ export const CommunityManageOverview = ({
     const recentActivity = [
         {
             id: "act-1",
-            text: isVi ? "ShadowHunter đã báo cáo bài viết vi phạm quy tắc" : "ShadowHunter reported a post for spam",
+            text: t('hub.communitymanageoverview_143'),
             time: "10m ago",
-            actionLabel: isVi ? "Báo cáo" : "Reports",
+            actionLabel: t('hub.communitymanageoverview_144'),
             onAction: () => onNavigate("manage-reports"),
         },
         {
             id: "act-2",
-            text: isVi ? "EldenLord_VN đã tham gia cộng đồng" : "EldenLord_VN joined the community",
+            text: t('hub.communitymanageoverview_145'),
             time: "35m ago",
-            actionLabel: isVi ? "Thành viên" : "Members",
+            actionLabel: t('hub.communitymanageoverview_146'),
             onAction: () => onNavigate("manage-members"),
         },
         {
             id: "act-3",
-            text: isVi ? "MonkeyKing_88 đã tạo thảo luận mới trong mục Thảo luận" : "MonkeyKing_88 created a new discussion",
+            text: t('hub.communitymanageoverview_147'),
             time: "1h ago",
-            actionLabel: isVi ? "Xem" : "View",
+            actionLabel: t('hub.communitymanageoverview_148'),
             onAction: () => onNavigate("discussions"),
         },
         {
             id: "act-4",
-            text: isVi ? "Điều hành viên đã phê duyệt báo cáo vi phạm #104" : "Moderator reviewed and resolved report #104",
+            text: t('hub.communitymanageoverview_149'),
             time: "3h ago",
-            actionLabel: isVi ? "Nhật ký" : "Log",
+            actionLabel: t('hub.communitymanageoverview_150'),
             onAction: () => onNavigate("manage-moderation"),
         },
     ];
@@ -150,7 +152,7 @@ export const CommunityManageOverview = ({
                                 </span>
                             </div>
                             <p className="text-xs text-text-muted">
-                                {isVi ? "Bảng điều khiển và vận hành cộng đồng" : "Community Management & Operations Hub"}
+                                {t('hub.communitymanageoverview_151')}
                             </p>
                         </div>
                     </div>
@@ -161,7 +163,7 @@ export const CommunityManageOverview = ({
                             onClick={() => onNavigate("home")}
                             className="px-3 py-1.5 rounded-[6px] bg-surface-inner hover:bg-surface-hover border border-border text-xs font-semibold text-text transition-colors cursor-pointer"
                         >
-                            <span>{isVi ? "Xem trang công khai" : "View Public Community"}</span>
+                            <span>{t('hub.communitymanageoverview_152')}</span>
                         </button>
                         <button
                             type="button"
@@ -169,7 +171,7 @@ export const CommunityManageOverview = ({
                             className="px-3 py-1.5 rounded-[6px] bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                         >
                             <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                            <span>{isVi ? "Đăng bài" : "Post"}</span>
+                            <span>{t('hub.communitymanageoverview_153')}</span>
                         </button>
                     </div>
                 </div>
@@ -212,7 +214,7 @@ export const CommunityManageOverview = ({
                             {formatCompactNumber(calcMembersCount)}
                         </span>
                         <span className="text-[11px] text-text-muted font-sans mt-0.5">
-                            {isVi ? "Thành viên" : "Members"}
+                            {t('hub.communitymanageoverview_154')}
                         </span>
                     </div>
 
@@ -222,7 +224,7 @@ export const CommunityManageOverview = ({
                             {formatCompactNumber(calcOnlineCount)}
                         </span>
                         <span className="text-[11px] text-text-muted font-sans mt-0.5">
-                            {isVi ? "Trực tuyến" : "Online now"}
+                            {t('hub.communitymanageoverview_155')}
                         </span>
                     </div>
 
@@ -231,7 +233,7 @@ export const CommunityManageOverview = ({
                             {reportsCount}
                         </span>
                         <span className="text-[11px] text-text-muted font-sans mt-0.5">
-                            {isVi ? "Báo cáo vi phạm" : "Reports"}
+                            {t('hub.communitymanageoverview_156')}
                         </span>
                     </div>
 
@@ -240,7 +242,7 @@ export const CommunityManageOverview = ({
                             {pendingCount}
                         </span>
                         <span className="text-[11px] text-text-muted font-sans mt-0.5">
-                            {isVi ? "Chờ duyệt" : "Pending requests"}
+                            {t('hub.communitymanageoverview_157')}
                         </span>
                     </div>
 
@@ -249,7 +251,7 @@ export const CommunityManageOverview = ({
                             {postsCount || 48}
                         </span>
                         <span className="text-[11px] text-text-muted font-sans mt-0.5">
-                            {isVi ? "Thảo luận" : "Discussions"}
+                            {t('hub.communitymanageoverview_158')}
                         </span>
                     </div>
                 </div>
@@ -263,7 +265,7 @@ export const CommunityManageOverview = ({
                         <span>NEEDS ATTENTION</span>
                     </span>
                     <span className="text-[10px] font-mono text-text-faint">
-                        {attentionItems.length} {isVi ? "mục cần hành động" : "actionable items"}
+                        {attentionItems.length} {t('hub.communitymanageoverview_159')}
                     </span>
                 </div>
 
@@ -299,7 +301,7 @@ export const CommunityManageOverview = ({
                     {attentionItems.length === 0 && (
                         <div className="p-4 rounded-[6px] bg-surface-inner/40 border border-border/40 text-xs text-text-muted flex items-center gap-2">
                             <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-400 text-sm" />
-                            <span>{isVi ? "Tất cả đã được xử lý. Không có vi phạm hay yêu cầu tồn đọng." : "All clear! No pending moderation issues requiring immediate action."}</span>
+                            <span>{t('hub.communitymanageoverview_160')}</span>
                         </div>
                     )}
                 </div>
@@ -321,10 +323,10 @@ export const CommunityManageOverview = ({
                         </div>
                         <div className="flex flex-col min-w-0 leading-tight">
                             <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {isVi ? "Kiểm duyệt" : "Moderation"}
+                                {t('hub.communitymanageoverview_161')}
                             </span>
                             <span className="text-[10px] text-text-muted mt-0.5 truncate">
-                                {isVi ? "Duyệt đơn & bài" : "Review queue"}
+                                {t('hub.communitymanageoverview_162')}
                             </span>
                         </div>
                     </button>
@@ -339,10 +341,10 @@ export const CommunityManageOverview = ({
                         </div>
                         <div className="flex flex-col min-w-0 leading-tight">
                             <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {isVi ? "Thành viên" : "Members"}
+                                {t('hub.communitymanageoverview_163')}
                             </span>
                             <span className="text-[10px] text-text-muted mt-0.5 truncate">
-                                {isVi ? "Phân quyền mod" : "Manage roles"}
+                                {t('hub.communitymanageoverview_164')}
                             </span>
                         </div>
                     </button>
@@ -357,10 +359,10 @@ export const CommunityManageOverview = ({
                         </div>
                         <div className="flex flex-col min-w-0 leading-tight">
                             <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {isVi ? "Báo cáo" : "Reports"}
+                                {t('hub.communitymanageoverview_165')}
                             </span>
                             <span className="text-[10px] text-text-muted mt-0.5 truncate">
-                                {isVi ? "Khiếu nại vi phạm" : "Flagged items"}
+                                {t('hub.communitymanageoverview_166')}
                             </span>
                         </div>
                     </button>
@@ -375,10 +377,10 @@ export const CommunityManageOverview = ({
                         </div>
                         <div className="flex flex-col min-w-0 leading-tight">
                             <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                {isVi ? "Cài đặt" : "Settings"}
+                                {t('hub.communitymanageoverview_167')}
                             </span>
                             <span className="text-[10px] text-text-muted mt-0.5 truncate">
-                                {isVi ? "Quy tắc & hồ sơ" : "Rules & profile"}
+                                {t('hub.communitymanageoverview_168')}
                             </span>
                         </div>
                     </button>
@@ -396,7 +398,7 @@ export const CommunityManageOverview = ({
                         onClick={() => onNavigate("manage-moderation")}
                         className="text-[11px] font-mono text-primary hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                        <span>{isVi ? "Xem toàn bộ nhật ký" : "View audit log"}</span>
+                        <span>{t('hub.communitymanageoverview_169')}</span>
                         <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
                     </button>
                 </div>
