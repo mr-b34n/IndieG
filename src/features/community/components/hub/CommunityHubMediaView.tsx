@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -32,6 +33,7 @@ export const CommunityHubMediaView = ({
     mediaItems,
     isVi,
 }: CommunityHubMediaViewProps) => {
+    const { t } = useTranslation();
     const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
 
     const [likes, setLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
@@ -80,17 +82,17 @@ export const CommunityHubMediaView = ({
                         {isVi ? `Thư Viện Media & Showcase ${communityName}` : `${communityName} Media & Showcase`}
                     </h2>
                     <p className="text-xs text-text-muted">
-                        {isVi ? "Hình ảnh gameplay, căn cứ, fanart và highlights từ cộng đồng." : "Community screenshots, base builds, highlights and fan creations."}
+                        {t('hub.communityhubmediaview_28')}
                     </p>
                 </div>
                 <span className="text-xs font-mono font-bold text-text-muted">
-                    {mediaItems.length} {isVi ? "hình ảnh" : "items"}
+                    {mediaItems.length} {t('hub.communityhubmediaview_29')}
                 </span>
             </div>
 
             {mediaItems.length === 0 ? (
                 <div className="py-16 text-center text-xs text-text-muted font-mono bg-surface/30 rounded-[4px] border border-dashed border-divider-primary/60">
-                    {isVi ? "Chưa có hình ảnh nào được tải lên." : "No media uploads found."}
+                    {t('hub.communityhubmediaview_30')}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

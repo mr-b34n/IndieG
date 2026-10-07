@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -57,6 +58,7 @@ export const CommunityHubMembers = ({
     communityId,
     isVi,
 }: CommunityHubMembersProps) => {
+    const { t } = useTranslation();
     const [subTab, setSubTab] = useState<"all" | "staff">("all");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -213,7 +215,7 @@ export const CommunityHubMembers = ({
                         }`}
                     >
                         <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                        <span>{isVi ? "Tất cả thành viên" : "All Members"}</span>
+                        <span>{t('hub.communityhubmembers_31')}</span>
                     </button>
 
                     <button
@@ -226,7 +228,7 @@ export const CommunityHubMembers = ({
                         }`}
                     >
                         <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-                        <span>{isVi ? "Ban quản trị" : "Staff & Mods"}</span>
+                        <span>{t('hub.communityhubmembers_32')}</span>
                     </button>
                 </div>
 
@@ -240,7 +242,7 @@ export const CommunityHubMembers = ({
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={isVi ? "Tìm thành viên..." : "Search members..."}
+                        placeholder={t('hub.communityhubmembers_33')}
                         className="w-full pl-7 pr-3 py-1.5 bg-surface-inner border border-divider-primary/70 rounded-[4px] text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
                     />
                 </div>
@@ -250,7 +252,7 @@ export const CommunityHubMembers = ({
             {filteredMembers.length === 0 ? (
                     <div className="w-full py-12 flex flex-col items-center justify-center text-center p-6 bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
                         <span className="text-xs text-text-muted">
-                            {isVi ? "Không tìm thấy thành viên phù hợp." : "No community members found."}
+                            {t('hub.communityhubmembers_34')}
                         </span>
                     </div>
                 ) : (
@@ -278,7 +280,7 @@ export const CommunityHubMembers = ({
                                         </div>
                                         <span className="text-[11px] font-mono text-text-muted truncate">{member.handle}</span>
                                         <span className="text-[10px] font-mono text-text-faint pt-0.5">
-                                            {isVi ? "Gia nhập:" : "Joined:"} {member.joinedDate}
+                                            {t('hub.communityhubmembers_35')} {member.joinedDate}
                                         </span>
                                     </div>
                                 </div>

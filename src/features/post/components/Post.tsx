@@ -348,18 +348,18 @@ export const PostContent = ({
             {isDetailView || isExpanded ? (
                 <span>{content}</span>
             ) : (
-                <>
-                    <span className="line-clamp-4 inline">{content}</span>
+                <div className="relative">
+                    <div className="line-clamp-3">{content}</div>
                     {isLong && (
                         <button
                             type="button"
                             onClick={onExpand}
-                            className="inline font-semibold text-text hover:underline cursor-pointer ml-1 text-xs sm:text-sm"
+                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm"
                         >
                             ...more
                         </button>
                     )}
-                </>
+                </div>
             )}
         </div>
     );
@@ -1063,7 +1063,7 @@ export const Post = ({
         <article
             onClick={handleNavigate}
             className={`
-                w-full border-b border-divider-secondary transition-colors duration-150
+                w-full transition-colors duration-150
                 ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "relative"}
                 ${isDetailView 
                     ? "py-4 pb-5" 

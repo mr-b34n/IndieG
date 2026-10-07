@@ -13,7 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useSquadStore } from "@/features/squad";
