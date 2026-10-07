@@ -97,7 +97,7 @@ export const CommunitySwitcherRail = ({
             {/* Switcher Rail + Sort Dropdown */}
             <div className="flex items-center justify-between border-b border-divider-primary gap-4 overflow-x-hidden">
                 {/* Switcher Rail: ALL + Top Communities + (+N more) */}
-                <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar min-w-0">
+                <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none min-w-0">
                     {/* ALL Option */}
                     <button
                         type="button"

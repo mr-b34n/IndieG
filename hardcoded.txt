@@ -1,0 +1,651 @@
+src/features/auth/components/AccountSwitcher.tsx:83:            roleTag: "Chưa verify",
+src/features/auth/components/AccountSwitcher.tsx:109:                    <span>Tài Khoản Mẫu Để Đăng Nhập (Test Accounts)</span>
+src/features/auth/components/AccountSwitcher.tsx:113:                        Đang đăng nhập: <strong className="text-primary font-bold">{user.username}</strong>
+src/features/auth/components/AccountSwitcher.tsx:150:                            {/* Dual action buttons: Điền form or 1-Click login */}
+src/features/auth/components/AccountSwitcher.tsx:155:                                    title="Điền email và mật khẩu vào form đăng nhập"
+src/features/auth/components/AccountSwitcher.tsx:159:                                    <span>{isFilled ? "Đã điền!" : "Điền form"}</span>
+src/features/auth/components/AccountSwitcher.tsx:164:                                    title="Đăng nhập ngay lập tức với tài khoản này"
+src/features/auth/components/AccountSwitcher.tsx:168:                                    <span>Vào ngay</span>
+src/features/auth/components/AccountSwitcher.tsx:177:                💡 Bạn có thể bấm <strong className="text-text-muted">Điền form</strong> để kiểm tra form đăng nhập hoặc bấm <strong className="text-primary">Vào ngay</strong> để đăng nhập 1-click tức thì.
+src/features/bookmark/components/BookmarkList.tsx:98:                    title: "Bài viết đã lưu",
+src/features/bookmark/components/BookmarkList.tsx:99:                    content: "Nội dung bài viết đang được đồng bộ...",
+src/features/bookmark/components/BookmarkList.tsx:100:                    author: "Người dùng",
+src/features/bookmark/components/BookmarkList.tsx:104:                    timeAgo: "Đã lưu",
+src/features/bookmark/components/BookmarkList.tsx:123:                    Vui lòng đăng nhập để xem danh sách bài viết bạn đã đánh dấu và đồng bộ trên mọi thiết bị.
+src/features/bookmark/components/BookmarkList.tsx:129:                    Đăng nhập ngay
+src/features/bookmark/components/BookmarkList.tsx:139:                <p className="text-text-muted text-xs">Đang tải danh sách dấu trang...</p>
+src/features/bookmark/components/BookmarkList.tsx:156:                        {bookmarkedPosts.length} đã lưu
+src/features/community/components/EditCommunityModal.tsx:25:        community.rules?.join("\n") || "1. Tôn trọng tất cả các thành viên trong cộng đồng.\n2. Không đả kích, toxic hay xúc phạm."
+src/features/community/components/EditCommunityModal.tsx:64:                        <span>Chỉnh Sửa Cộng Đồng</span>
+src/features/community/components/EditCommunityModal.tsx:80:                            <span>Tên cộng đồng</span>
+src/features/community/components/EditCommunityModal.tsx:95:                            <span>Thể loại Game</span>
+src/features/community/components/EditCommunityModal.tsx:112:                        <label className="text-xs font-bold text-text-muted">Mô tả cộng đồng</label>
+src/features/community/components/EditCommunityModal.tsx:123:                        <label className="text-xs font-bold text-text-muted">Thẻ phân loại (Tags)</label>
+src/features/community/components/EditCommunityModal.tsx:136:                            <span>Nội quy cộng đồng (mỗi dòng 1 quy tắc)</span>
+src/features/community/components/EditCommunityModal.tsx:151:                                    Bạn có chắc chắn muốn xóa cộng đồng này? Hành động này không thể hoàn tác.
+src/features/community/components/EditCommunityModal.tsx:159:                                        Hủy
+src/features/community/components/EditCommunityModal.tsx:166:                                        Xác nhận xóa
+src/features/community/components/EditCommunityModal.tsx:177:                                <span>Xóa cộng đồng này</span>
+src/features/community/components/EditCommunityModal.tsx:189:                            Hủy
+src/features/community/components/EditCommunityModal.tsx:196:                            <span>Lưu thay đổi</span>
+src/features/community/components/hub/CommunityChatDrawer.tsx:31:        { id: "m1", user: "@ghoststrider", text: "Ai rảnh farm shark tooth cùng mình không?", time: "12:04" },
+src/features/community/components/hub/CommunityChatDrawer.tsx:32:        { id: "m2", user: "@tactical_xeno", text: "Guide base 3 tầng mới ra hay vãi!", time: "12:05" },
+src/features/community/components/hub/CommunityChatDrawer.tsx:33:        { id: "m3", user: "@ocean_lover", text: "Server đang online nha anh em!", time: "12:06" },
+src/features/community/components/hub/CommunityChatDrawer.tsx:44:        if (!useAuthStore.getState().requireVerifiedEmail("gửi tin nhắn chat")) return;
+src/features/community/components/hub/CommunityChatDrawer.tsx:92:                    <span className="text-amber-500 font-bold truncate">🔒 Cần xác nhận email để chat</span>
+src/features/community/components/hub/CommunityChatDrawer.tsx:95:                        onClick={() => useAuthStore.getState().openVerifyModal("Xác nhận email để gửi tin nhắn chat.")}
+src/features/community/components/hub/CommunityChatDrawer.tsx:98:                        Xác thực
+src/features/community/components/hub/CommunityChatDrawer.tsx:107:                        placeholder={isVi ? "Nhập tin nhắn..." : "Type a message..."}
+src/features/community/components/hub/CommunityHubCategories.tsx:40:                        {isVi ? "Tất cả danh mục" : "Show all"}
+src/features/community/components/hub/CommunityHubEventsView.tsx:35:                        {isVi ? `Sự Kiện & Giải Đấu ${communityName}` : `${communityName} Community Events`}
+src/features/community/components/hub/CommunityHubEventsView.tsx:38:                        {isVi ? "Các buổi giao lưu, custom game và giải đấu định kỳ." : "Upcoming tournaments, play sessions, and community watch parties."}
+src/features/community/components/hub/CommunityHubEventsView.tsx:79:                                            <span>{count} {isVi ? "người tham gia" : "attending"}</span>
+src/features/community/components/hub/CommunityHubEventsView.tsx:97:                                        <span>{isVi ? "Đã đăng ký" : "Attending"}</span>
+src/features/community/components/hub/CommunityHubEventsView.tsx:100:                                    <span>{isVi ? "Tham gia sự kiện" : "RSVP Event"}</span>
+src/features/community/components/hub/CreateThreadModal.tsx:41:        if (!useAuthStore.getState().requireVerifiedEmail("tạo thảo luận mới")) return;
+src/features/community/components/hub/CreateThreadModal.tsx:55:        { id: "discussion", labelVi: "Thảo luận", labelEn: "Discussion" },
+src/features/community/components/hub/CreateThreadModal.tsx:56:        { id: "question", labelVi: "Hỏi đáp / Trợ giúp", labelEn: "Question / Help" },
+src/features/community/components/hub/CreateThreadModal.tsx:57:        { id: "guide", labelVi: "Hướng dẫn / Guide", labelEn: "Guide & Tips" },
+src/features/community/components/hub/CreateThreadModal.tsx:59:        { id: "poll", labelVi: "Bình chọn / Poll", labelEn: "Poll" },
+src/features/community/components/hub/CreateThreadModal.tsx:60:        { id: "event", labelVi: "Sự kiện", labelEn: "Event" },
+src/features/community/components/hub/CreateThreadModal.tsx:70:                        <span>{isVi ? `Đăng bài trong ${communityName}` : `Create Post in ${communityName}`}</span>
+src/features/community/components/hub/CreateThreadModal.tsx:85:                            {isVi ? "Loại bài đăng:" : "Post Type:"}
+src/features/community/components/hub/CreateThreadModal.tsx:111:                            {isVi ? "Tiêu đề bài viết:" : "Title:"}
+src/features/community/components/hub/CreateThreadModal.tsx:118:                            placeholder={isVi ? "Nhập tiêu đề bài viết..." : "What do you want to discuss?"}
+src/features/community/components/hub/CreateThreadModal.tsx:126:                            {isVi ? "Danh mục:" : "Category:"}
+src/features/community/components/hub/CreateThreadModal.tsx:144:                            {isVi ? "Nội dung:" : "Content:"}
+src/features/community/components/hub/CreateThreadModal.tsx:151:                            placeholder={isVi ? "Chia sẻ chi tiết câu hỏi, kinh nghiệm hoặc thiết kế..." : "Write your thoughts, tips, or questions..."}
+src/features/community/components/hub/CreateThreadModal.tsx:180:                            {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CreateThreadModal.tsx:188:                                ? (isVi ? "Đang đăng..." : "Publishing...")
+src/features/community/components/hub/CreateThreadModal.tsx:189:                                : (isVi ? "Đăng bài" : "Publish Post")}
+src/features/community/components/hub/CommunityHubMediaView.tsx:80:                        {isVi ? `Thư Viện Media & Showcase ${communityName}` : `${communityName} Media & Showcase`}
+src/features/community/components/hub/CommunityHubMediaView.tsx:83:                        {isVi ? "Hình ảnh gameplay, căn cứ, fanart và highlights từ cộng đồng." : "Community screenshots, base builds, highlights and fan creations."}
+src/features/community/components/hub/CommunityHubMediaView.tsx:87:                    {mediaItems.length} {isVi ? "hình ảnh" : "items"}
+src/features/community/components/hub/CommunityHubMediaView.tsx:93:                    {isVi ? "Chưa có hình ảnh nào được tải lên." : "No media uploads found."}
+src/features/community/components/hub/CommunityManageRules.tsx:33:            title: isVi ? "Tôn trọng và lịch sự với mọi người chơi" : "Respect other players",
+src/features/community/components/hub/CommunityManageRules.tsx:35:                ? "Không xúc phạm, phân biệt đối xử, quấy rối hay công kích cá nhân. Giữ môi trường trao đổi văn minh."
+src/features/community/components/hub/CommunityManageRules.tsx:40:            title: isVi ? "Không spam hoặc quảng cáo ngoài luồng" : "No spam or self-promotion",
+src/features/community/components/hub/CommunityManageRules.tsx:42:                ? "Nghiêm cấm chia sẻ liên kết lừa đảo, phần mềm độc hại, bán tài khoản hoặc kéo mem sang nhóm khác."
+src/features/community/components/hub/CommunityManageRules.tsx:47:            title: isVi ? "Gắn thẻ Spoiler khi bàn luận cốt truyện" : "Use spoiler tags for story content",
+src/features/community/components/hub/CommunityManageRules.tsx:49:                ? "Các bí mật cốt truyện, kết thúc hoặc nội dung khám phá hòn đảo đặc biệt bắt buộc phải dùng công cụ che chữ/spoiler."
+src/features/community/components/hub/CommunityManageRules.tsx:54:            title: isVi ? "Không chia sẻ cheat, bản mod phá hoại hoặc hack" : "No game exploits or malicious mods",
+src/features/community/components/hub/CommunityManageRules.tsx:56:                ? "Không phổ biến bản hack làm hỏng trải nghiệm người chơi khác hoặc liên kết chứa virus."
+src/features/community/components/hub/CommunityManageRules.tsx:61:            title: isVi ? "Đăng đúng chuyên mục và chủ đề thảo luận" : "Stay on-topic and use appropriate flairs",
+src/features/community/components/hub/CommunityManageRules.tsx:63:                ? "Phân loại bài viết chính xác (Thảo luận, Hướng dẫn, Bè đẹp, Tuyển team) để các thành viên dễ tìm kiếm."
+src/features/community/components/hub/CommunityManageRules.tsx:137:        if (!window.confirm(isVi ? `Xác nhận xóa quy tắc: "${title}"?` : `Delete rule: "${title}"?`)) {
+src/features/community/components/hub/CommunityManageRules.tsx:186:                            ? `Quy định tiêu chuẩn tham gia và hành vi thảo luận cho cộng đồng ${communityName}.`
+src/features/community/components/hub/CommunityManageRules.tsx:201:                        <span>{isVi ? "+ Thêm quy tắc" : "+ Add Rule"}</span>
+src/features/community/components/hub/CommunityManageRules.tsx:232:                                            placeholder={isVi ? "Tiêu đề quy tắc..." : "Rule title..."}
+src/features/community/components/hub/CommunityManageRules.tsx:241:                                        placeholder={isVi ? "Mô tả chi tiết và hướng dẫn vi phạm..." : "Detailed explanation..."}
+src/features/community/components/hub/CommunityManageRules.tsx:251:                                            {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CommunityManageRules.tsx:259:                                            <span>{isVi ? "Lưu thay đổi" : "Save Changes"}</span>
+src/features/community/components/hub/CommunityManageRules.tsx:288:                                            title={isVi ? "Di chuyển lên" : "Move up"}
+src/features/community/components/hub/CommunityManageRules.tsx:298:                                            title={isVi ? "Di chuyển xuống" : "Move down"}
+src/features/community/components/hub/CommunityManageRules.tsx:307:                                            title={isVi ? "Chỉnh sửa quy tắc" : "Edit rule"}
+src/features/community/components/hub/CommunityManageRules.tsx:316:                                            title={isVi ? "Xóa quy tắc" : "Delete rule"}
+src/features/community/components/hub/CommunityManageRules.tsx:339:                                placeholder={isVi ? "Nhập tiêu đề quy tắc mới..." : "Enter new rule title..."}
+src/features/community/components/hub/CommunityManageRules.tsx:349:                            placeholder={isVi ? "Mô tả chi tiết và căn cứ xử lý vi phạm..." : "Enter description and guidance..."}
+src/features/community/components/hub/CommunityManageRules.tsx:359:                                {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CommunityManageRules.tsx:367:                                <span>{isVi ? "Thêm quy tắc này" : "Save Rule"}</span>
+src/features/community/components/hub/CommunityManageRules.tsx:379:                        ? "Quy tắc cộng đồng được hiển thị cho tất cả người chơi trước khi đăng bài và là cơ sở để Điều hành viên xử lý các báo cáo vi phạm."
+src/features/community/components/hub/CommunityHubAboutView.tsx:30:            titleVi: "Tôn trọng và lịch sự",
+src/features/community/components/hub/CommunityHubAboutView.tsx:32:            descVi: "Không xúc phạm, quấy rối, phân biệt đối xử hoặc sử dụng ngôn từ kích động thù địch đối với bất kỳ thành viên nào.",
+src/features/community/components/hub/CommunityHubAboutView.tsx:37:            titleVi: "Đăng bài đúng chủ đề & danh mục",
+src/features/community/components/hub/CommunityHubAboutView.tsx:39:            descVi: "Hãy chọn đúng loại bài (Hỏi đáp, Hướng dẫn, Showcase...) và tránh spam nhiều bài liên tiếp có nội dung tương tự.",
+src/features/community/components/hub/CommunityHubAboutView.tsx:44:            titleVi: "Không chia sẻ hack, cheat & phần mềm độc hại",
+src/features/community/components/hub/CommunityHubAboutView.tsx:46:            descVi: "Nghiêm cấm chia sẻ phần mềm gian lận, hack tool, cracked game có kèm mã độc hoặc vi phạm điều khoản dịch vụ.",
+src/features/community/components/hub/CommunityHubAboutView.tsx:51:            titleVi: "Cảnh báo Spoiler & nội dung 18+",
+src/features/community/components/hub/CommunityHubAboutView.tsx:53:            descVi: "Sử dụng tag cảnh báo Spoiler cho cốt truyện mới và tuân thủ quy định độ tuổi của cộng đồng.",
+src/features/community/components/hub/CommunityHubAboutView.tsx:60:            title: isVi ? "Cẩm nang sinh tồn cơ bản cho người mới" : "Beginner's Survival Roadmap",
+src/features/community/components/hub/CommunityHubAboutView.tsx:66:            title: isVi ? "Bảng công thức chế tạo & vật liệu nâng cao" : "Advanced Crafting & Recipes Matrix",
+src/features/community/components/hub/CommunityHubAboutView.tsx:72:            title: isVi ? "Tối ưu hóa căn cứ & hệ sinh thái bè tự động" : "Automated Raft Automation & Irrigation",
+src/features/community/components/hub/CommunityHubAboutView.tsx:82:            desc: "Trang chủ chính thức của nhà phát triển",
+src/features/community/components/hub/CommunityHubAboutView.tsx:88:            desc: "Trung tâm cộng đồng Steam & Workshop",
+src/features/community/components/hub/CommunityHubAboutView.tsx:94:            desc: "Kênh Discord toàn cầu để tìm đồng đội",
+src/features/community/components/hub/CommunityHubAboutView.tsx:108:                        <h2 className="font-extrabold text-sm text-text">{isVi ? `Nội Quy Cộng Đồng ${communityName}` : `${communityName} Community Rules`}</h2>
+src/features/community/components/hub/CommunityHubAboutView.tsx:109:                        <p className="text-xs text-text-muted">{isVi ? "Mọi thành viên cần tuân thủ để xây dựng môi trường văn minh." : "Please respect and follow the guidelines below."}</p>
+src/features/community/components/hub/CommunityHubAboutView.tsx:136:                        <h2 className="font-extrabold text-sm text-text">{isVi ? `Tài Liệu & Wiki ${communityName}` : `${communityName} Community Wiki`}</h2>
+src/features/community/components/hub/CommunityHubAboutView.tsx:137:                        <p className="text-xs text-text-muted">{isVi ? "Tổng hợp tài liệu, hướng dẫn và cơ chế từ các thành viên gạo cội." : "Curated guides, game mechanics and data sheets."}</p>
+src/features/community/components/hub/CommunityHubAboutView.tsx:167:                        <h2 className="font-extrabold text-sm text-text">{isVi ? "Liên Kết Quan Trọng" : "Official & Community Links"}</h2>
+src/features/community/components/hub/CommunityHubAboutView.tsx:168:                        <p className="text-xs text-text-muted">{isVi ? "Các đường dẫn chính thức và kênh giao lưu hữu ích." : "Handy external links and useful resources."}</p>
+src/features/community/components/hub/CommunityHubAboutView.tsx:206:                    <h2 className="font-extrabold text-sm text-text">{isVi ? `Về Cộng Đồng ${communityName}` : `About ${communityName}`}</h2>
+src/features/community/components/hub/CommunityHubAboutView.tsx:207:                    <p className="text-xs text-text-muted">{isVi ? "Thông tin giới thiệu, mục tiêu và đội ngũ phát triển." : "Community story, mission, and moderators."}</p>
+src/features/community/components/hub/CommunityHubAboutView.tsx:218:                        ? "Không gian dành riêng cho các game thủ trao đổi kinh nghiệm, chia sẻ các bản build sáng tạo, tìm đồng đội leo rank hoặc co-op, và tham gia các sự kiện giải đấu cộng đồng định kỳ."
+src/features/community/components/hub/CommunityManageSettings.tsx:29:    communityDescription = "Cộng đồng những người chơi sinh tồn, thiết kế và phiêu lưu trên đại dương trong tựa game Raft. Cùng chia sẻ kinh nghiệm, bản vẽ và tìm đồng đội!",
+src/features/community/components/hub/CommunityManageSettings.tsx:84:    const [transferTargetUser, setTransferTargetUser] = useState("Minh Quân (@shark_hunter99)");
+src/features/community/components/hub/CommunityManageSettings.tsx:143:                            ? `Cấu hình thông tin, phạm vi tìm kiếm, quyền thành viên và kiểm duyệt cho ${communityName}.`
+src/features/community/components/hub/CommunityManageSettings.tsx:154:                    <span>{isVi ? "Lưu tất cả thay đổi" : "Save All Changes"}</span>
+src/features/community/components/hub/CommunityManageSettings.tsx:169:                            {isVi ? "Tên cộng đồng" : "Community name"}
+src/features/community/components/hub/CommunityManageSettings.tsx:182:                            {isVi ? "Tựa game liên kết" : "Associated Game"}
+src/features/community/components/hub/CommunityManageSettings.tsx:195:                            {isVi ? "Đường dẫn cộng đồng (URL Slug)" : "Community URL"}
+src/features/community/components/hub/CommunityManageSettings.tsx:207:                        {isVi ? "Mô tả giới thiệu" : "Description"}
+src/features/community/components/hub/CommunityManageSettings.tsx:234:                            {isVi ? "Thay đổi" : "Change"}
+src/features/community/components/hub/CommunityManageSettings.tsx:253:                            {isVi ? "Thay đổi" : "Change"}
+src/features/community/components/hub/CommunityManageSettings.tsx:269:                            {isVi ? "Thẻ từ khóa (Tags)" : "Tags (comma separated)"}
+src/features/community/components/hub/CommunityManageSettings.tsx:281:                            {isVi ? "Danh mục (Category)" : "Category"}
+src/features/community/components/hub/CommunityManageSettings.tsx:295:                            {isVi ? "Khả năng tìm kiếm trên nền tảng" : "Search Visibility"}
+src/features/community/components/hub/CommunityManageSettings.tsx:299:                                ? "Cho phép cộng đồng xuất hiện trong kết quả tìm kiếm và danh mục khám phá"
+src/features/community/components/hub/CommunityManageSettings.tsx:316:                        <span>{searchVisibility === "visible" ? (isVi ? "Công khai" : "Visible") : (isVi ? "Ẩn tìm kiếm" : "Hidden")}</span>
+src/features/community/components/hub/CommunityManageSettings.tsx:348:                            {isVi ? "Bất kỳ người chơi nào cũng có thể tự do tham gia ngay lập tức." : "Anyone can join."}
+src/features/community/components/hub/CommunityManageSettings.tsx:371:                            {isVi ? "Người dùng gửi yêu cầu và cần được Điều hành viên hoặc Trưởng nhóm phê duyệt." : "Users request access and moderators/admin approve."}
+src/features/community/components/hub/CommunityManageSettings.tsx:394:                            {isVi ? "Chỉ những người dùng được mời trực tiếp mới có thể gia nhập." : "Only invited users can join."}
+src/features/community/components/hub/CommunityManageSettings.tsx:401:                        {isVi ? "Yêu cầu ghi chú số giờ chơi khi nộp đơn gia nhập" : "Require playtime note on join request"}
+src/features/community/components/hub/CommunityManageSettings.tsx:421:                        {isVi ? "Định dạng bài viết cho phép" : "Allowed post types"}
+src/features/community/components/hub/CommunityManageSettings.tsx:449:                            {isVi ? "Cho phép upload video trực tiếp" : "Allow video uploads"}
+src/features/community/components/hub/CommunityManageSettings.tsx:461:                            {isVi ? "Giới hạn dung lượng file" : "Max upload size"}
+src/features/community/components/hub/CommunityManageSettings.tsx:476:                            {isVi ? "Tự động xem trước link" : "Auto-embed link"}
+src/features/community/components/hub/CommunityManageSettings.tsx:498:                            {isVi ? "Tuổi tài khoản tối thiểu" : "Minimum account age"}
+src/features/community/components/hub/CommunityManageSettings.tsx:501:                            {isVi ? "Ngăn chặn clone bot spam" : "Prevent new spam accounts"}
+src/features/community/components/hub/CommunityManageSettings.tsx:508:                            <option value={0}>{isVi ? "Không giới hạn" : "No restriction"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:509:                            <option value={1}>{isVi ? "1 ngày" : "1 day"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:510:                            <option value={3}>{isVi ? "3 ngày (Khuyên dùng)" : "3 days (Recommended)"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:511:                            <option value={7}>{isVi ? "7 ngày" : "7 days"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:517:                            {isVi ? "Tự động ẩn sau số báo cáo" : "Auto-flag report threshold"}
+src/features/community/components/hub/CommunityManageSettings.tsx:520:                            {isVi ? "Tự động tạm ẩn bài vi phạm" : "Hide content pending review"}
+src/features/community/components/hub/CommunityManageSettings.tsx:527:                            <option value={2}>2 {isVi ? "báo cáo" : "reports"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:528:                            <option value={3}>3 {isVi ? "báo cáo" : "reports"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:529:                            <option value={5}>5 {isVi ? "báo cáo" : "reports"}</option>
+src/features/community/components/hub/CommunityManageSettings.tsx:536:                                {isVi ? "Quyền ghim bài của Điều hành viên" : "Allow mods to pin posts"}
+src/features/community/components/hub/CommunityManageSettings.tsx:539:                                {isVi ? "Cho phép ghim bài thông báo" : "Can pin community announcements"}
+src/features/community/components/hub/CommunityManageSettings.tsx:566:                                {isVi ? "Chuyển giao quyền sở hữu cộng đồng" : "Transfer community ownership"}
+src/features/community/components/hub/CommunityManageSettings.tsx:570:                                    ? "Chuyển giao toàn bộ quyền quản trị cao nhất của cộng đồng này cho một thành viên khác. Bạn sẽ trở thành Điều hành viên thông thường."
+src/features/community/components/hub/CommunityManageSettings.tsx:579:                            {isVi ? "Chuyển quyền sở hữu..." : "Transfer Ownership..."}
+src/features/community/components/hub/CommunityManageSettings.tsx:587:                                {isVi ? "Xóa vĩnh viễn cộng đồng này" : "Delete this community"}
+src/features/community/components/hub/CommunityManageSettings.tsx:591:                                    ? "Thao tác này sẽ xóa toàn bộ bài viết, thảo luận, danh sách thành viên và tệp đa phương tiện của cộng đồng này. Không thể khôi phục."
+src/features/community/components/hub/CommunityManageSettings.tsx:601:                            <span>{isVi ? "Xóa cộng đồng..." : "Delete Community..."}</span>
+src/features/community/components/hub/CommunityManageSettings.tsx:629:                                ? "Hành động này sẽ chuyển quyền Trưởng cộng đồng cao nhất cho thành viên được chỉ định. Bạn sẽ không thể tự hoàn tác nếu không có sự đồng ý của họ."
+src/features/community/components/hub/CommunityManageSettings.tsx:635:                                {isVi ? "Chọn thành viên nhận quyền sở hữu" : "Select member"}
+src/features/community/components/hub/CommunityManageSettings.tsx:652:                                <span>{isVi ? "Xác thực mật khẩu của bạn" : "Re-authenticate (Enter your password)"}</span>
+src/features/community/components/hub/CommunityManageSettings.tsx:669:                                {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CommunityManageSettings.tsx:676:                                {isVi ? "Xác nhận chuyển giao" : "Confirm Transfer"}
+src/features/community/components/hub/CommunityManageSettings.tsx:705:                                ? `CẢNH BÁO: Thao tác này sẽ xóa toàn bộ nội dung của "${communityName}". Tất cả 1,284 thành viên sẽ bị giải tán khỏi cộng đồng này.`
+src/features/community/components/hub/CommunityManageSettings.tsx:712:                                    ? `Để xác nhận, vui lòng nhập chính xác tên cộng đồng: "${communityName}"`
+src/features/community/components/hub/CommunityManageSettings.tsx:728:                                <span>{isVi ? "Xác thực mật khẩu tài khoản của bạn" : "Re-authenticate password"}</span>
+src/features/community/components/hub/CommunityManageSettings.tsx:745:                                {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CommunityManageSettings.tsx:752:                                {isVi ? "Xác nhận xóa vĩnh viễn" : "Delete Community"}
+src/features/community/components/hub/CommunityHubDiscussions.tsx:88:        { id: "new", labelVi: "Mới nhất", labelEn: "New", icon: faClock },
+src/features/community/components/hub/CommunityHubDiscussions.tsx:89:        { id: "top", labelVi: "Top bầu chọn", labelEn: "Top", icon: faStar },
+src/features/community/components/hub/CommunityHubDiscussions.tsx:90:        { id: "unanswered", labelVi: "Chưa trả lời", labelEn: "Unanswered", icon: faCircleQuestion },
+src/features/community/components/hub/CommunityHubDiscussions.tsx:132:                    {isVi ? "Chưa có bài thảo luận nào phù hợp." : "No discussions found in this section."}
+src/features/community/components/hub/CommunityHubFeed.tsx:133:                            <span>{isVi ? "Phổ biến" : "Hot"}</span>
+src/features/community/components/hub/CommunityHubFeed.tsx:145:                            <span>{isVi ? "Mới nhất" : "Newest"}</span>
+src/features/community/components/hub/CommunityHubFeed.tsx:151:                    {posts.length} {isVi ? "bài viết" : "posts"}
+src/features/community/components/hub/CommunityHubFeed.tsx:158:                    <p className="font-semibold text-text">{isVi ? "Chưa có hoạt động nào trong mục này." : "No posts found."}</p>
+src/features/community/components/hub/CommunityHubFeed.tsx:160:                        {isVi ? "Hãy là người đầu tiên chia sẻ nội dung." : "Be the first to post something."}
+src/features/community/components/hub/CommunityHubHeader.tsx:145:                                <span>{isVi ? "Đã tham gia" : "Joined"}</span>
+src/features/community/components/hub/CommunityHubHeader.tsx:164:                        <span>{isVi ? "Tạo bài viết" : "Create Post"}</span>
+src/features/community/components/hub/CommunityHubMembers.tsx:112:                (uid ? `Thành viên (${uid.slice(0, 6)})` : `Member #${idx + 1}`);
+src/features/community/components/hub/CommunityHubMembers.tsx:216:                        <span>{isVi ? "Tất cả thành viên" : "All Members"}</span>
+src/features/community/components/hub/CommunityHubMembers.tsx:229:                        <span>{isVi ? "Ban quản trị" : "Staff & Mods"}</span>
+src/features/community/components/hub/CommunityHubMembers.tsx:243:                        placeholder={isVi ? "Tìm thành viên..." : "Search members..."}
+src/features/community/components/hub/CommunityHubMembers.tsx:253:                            {isVi ? "Không tìm thấy thành viên phù hợp." : "No community members found."}
+src/features/community/components/hub/CommunityHubMembers.tsx:281:                                            {isVi ? "Gia nhập:" : "Joined:"} {member.joinedDate}
+src/features/community/components/hub/CommunityHubNav.tsx:14:        { id: "home", labelVi: "Trang chủ", labelEn: "Home" },
+src/features/community/components/hub/CommunityHubNav.tsx:15:        { id: "discussions", labelVi: "Thảo luận", labelEn: "Discussions" },
+src/features/community/components/hub/CommunityHubNav.tsx:16:        { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides" },
+src/features/community/components/hub/CommunityHubNav.tsx:18:        { id: "events", labelVi: "Sự kiện", labelEn: "Events" },
+src/features/community/components/hub/CommunityHubNav.tsx:19:        { id: "members", labelVi: "Thành viên", labelEn: "Members" },
+src/features/community/components/hub/CommunityHubNav.tsx:20:        { id: "rules", labelVi: "Quy tắc", labelEn: "Rules" },
+src/features/community/components/hub/CommunityHubNav.tsx:21:        { id: "links", labelVi: "Liên kết", labelEn: "Links" },
+src/features/community/components/hub/CommunityHubRightRail.tsx:56:        { num: "01", text: isVi ? "Không spam hoặc quảng cáo thương mại trái phép" : "No spam or unauthorized advertising" },
+src/features/community/components/hub/CommunityHubRightRail.tsx:57:        { num: "02", text: isVi ? "Tôn trọng các thành viên, nghiêm cấm toxic / phân biệt" : "Be respectful, zero toxicity or harassment" },
+src/features/community/components/hub/CommunityHubRightRail.tsx:58:        { num: "03", text: isVi ? "Đăng bài đúng chủ đề, không chia sẻ hack / cheat" : "Stay on-topic, strictly no cheats or piracy" },
+src/features/community/components/hub/CommunityHubRightRail.tsx:76:                    {description || (isVi ? `Không gian sinh hoạt, trao đổi kinh nghiệm và mẹo chiến thuật cho game thủ ${communityName}.` : `Official gaming space and discussion forum for ${communityName}.`)}
+src/features/community/components/hub/CommunityHubRightRail.tsx:108:                        <span>{isVi ? "Xem tất cả" : "View all"}</span>
+src/features/community/components/hub/CommunityHubRightRail.tsx:168:                            <span>{isVi ? "Xem thêm" : "See all"}</span>
+src/features/community/components/hub/CommunityHubSidebar.tsx:44:        { id: "home", labelVi: "Trang chủ", labelEn: "Home", icon: faHouse },
+src/features/community/components/hub/CommunityHubSidebar.tsx:45:        { id: "discussions", labelVi: "Thảo luận", labelEn: "Discussions", icon: faComments },
+src/features/community/components/hub/CommunityHubSidebar.tsx:46:        { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides", icon: faBook },
+src/features/community/components/hub/CommunityHubSidebar.tsx:48:        { id: "events", labelVi: "Sự kiện", labelEn: "Events", icon: faCalendarDays },
+src/features/community/components/hub/CommunityHubSidebar.tsx:53:        { id: "members", labelVi: "Thành viên", labelEn: "Members", icon: faUsers },
+src/features/community/components/hub/CommunityHubSidebar.tsx:54:        { id: "rules", labelVi: "Quy tắc", labelEn: "Rules", icon: faShieldHalved },
+src/features/community/components/hub/CommunityHubSidebar.tsx:55:        { id: "links", labelVi: "Liên kết", labelEn: "Links", icon: faLink },
+src/features/community/components/hub/CommunityHubSidebar.tsx:60:        { id: "manage-overview", labelVi: "Tổng quan", labelEn: "Overview", icon: faSliders },
+src/features/community/components/hub/CommunityHubSidebar.tsx:63:            labelVi: "Kiểm duyệt", 
+src/features/community/components/hub/CommunityHubSidebar.tsx:70:            labelVi: "Báo cáo", 
+src/features/community/components/hub/CommunityHubSidebar.tsx:76:            ? [{ id: "manage-settings", labelVi: "Cài đặt", labelEn: "Settings", icon: faGear }]
+src/features/community/components/hub/CommunityHubSidebar.tsx:152:                                title={isVi ? "Thu gọn thanh điều hướng" : "Collapse sidebar"}
+src/features/community/components/hub/CommunityHubSidebar.tsx:163:                                title={isVi ? "Mở rộng thanh điều hướng" : "Expand sidebar"}
+src/features/community/components/hub/CommunityManageMembers.tsx:144:            const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
+src/features/community/components/hub/CommunityManageMembers.tsx:147:            const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
+src/features/community/components/hub/CommunityManageMembers.tsx:149:                ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
+src/features/community/components/hub/CommunityManageMembers.tsx:151:                ? (isVi ? "Đã bị cấm" : "Banned")
+src/features/community/components/hub/CommunityManageMembers.tsx:153:                ? (isVi ? "Đang chờ duyệt" : "Pending approval")
+src/features/community/components/hub/CommunityManageMembers.tsx:154:                : (isVi ? "Đang hoạt động" : "Active");
+src/features/community/components/hub/CommunityManageMembers.tsx:188:                activitySummary: newStatus === "Muted" ? (isVi ? "Bị tắt tiếng 24h" : "Muted 24h") : (isVi ? "Đang hoạt động" : "Active"),
+src/features/community/components/hub/CommunityManageMembers.tsx:213:                ? (isVi ? `Đã bỏ tắt tiếng ${name}.` : `Unmuted ${name}.`)
+src/features/community/components/hub/CommunityManageMembers.tsx:214:                : (isVi ? `Đã tắt tiếng ${name} trong 24 giờ.` : `Muted ${name} for 24 hours.`)
+src/features/community/components/hub/CommunityManageMembers.tsx:225:                activitySummary: newStatus === "Banned" ? (isVi ? "Đã bị cấm" : "Banned") : (isVi ? "Đang hoạt động" : "Active"),
+src/features/community/components/hub/CommunityManageMembers.tsx:250:                ? (isVi ? `Đã gỡ cấm ${name} khỏi cộng đồng.` : `Unbanned ${name}.`)
+src/features/community/components/hub/CommunityManageMembers.tsx:251:                : (isVi ? `Đã cấm ${name} khỏi cộng đồng này.` : `Banned ${name} from this community.`)
+src/features/community/components/hub/CommunityManageMembers.tsx:274:        if (!window.confirm(isVi ? `Hạ cấp ${name} xuống thành viên thông thường?` : `Remove ${name} from Moderator role?`)) {
+src/features/community/components/hub/CommunityManageMembers.tsx:328:                    {isVi ? "Quyền truy cập bị giới hạn" : "Access Restricted"}
+src/features/community/components/hub/CommunityManageMembers.tsx:332:                        ? "Chỉ Trưởng nhóm và Điều hành viên mới có quyền xem danh sách quản lý thành viên."
+src/features/community/components/hub/CommunityManageMembers.tsx:365:                                {isVi ? "Bảo vệ tài khoản Trưởng cộng đồng (Owner)" : "Community Owner Protected"}
+src/features/community/components/hub/CommunityManageMembers.tsx:369:                                    ? "Bạn không thể tự gỡ quyền hoặc cấm tài khoản của chính mình. Để chuyển giao quyền quản trị cao nhất, vui lòng sử dụng mục Chuyển quyền sở hữu trong 'Vùng nguy hiểm' tại Cài đặt cộng đồng."
+src/features/community/components/hub/CommunityManageMembers.tsx:392:                            ? `Quản lý thành viên, điều hành viên và danh sách hạn chế trong ${communityName}.`
+src/features/community/components/hub/CommunityManageMembers.tsx:407:                        placeholder={isVi ? "Tìm kiếm thành viên..." : "Search members..."}
+src/features/community/components/hub/CommunityManageMembers.tsx:424:                    <span>{isVi ? "Tất cả" : "All"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:437:                    <span>{isVi ? "Thành viên" : "Members"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:451:                    <span>{isVi ? "Điều hành viên" : "Moderators"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:465:                    <span>{isVi ? "Bị tắt tiếng" : "Muted"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:479:                    <span>{isVi ? "Bị cấm" : "Banned"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:493:                    <span>{isVi ? "Chờ duyệt" : "Pending"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:622:                                                        <span>{isVi ? "Xem hồ sơ" : "View profile"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:636:                                                            <span>{isVi ? "Trưởng cộng đồng (Bảo vệ)" : "Owner (Protected)"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:647:                                                                    <span>{isVi ? "Gỡ quyền Điều hành" : "Remove Moderator"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:655:                                                                    <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng 24h" : "Mute")}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:663:                                                                    <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm thành viên" : "Ban")}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:669:                                                                <span>{isVi ? "Được bảo vệ bởi vai trò Mod" : "Protected Mod role"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:682:                                                                    <span>{isVi ? "Thăng cấp Điều hành viên" : "Promote to Moderator"}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:691:                                                                <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng" : "Mute")}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:699:                                                                <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm khỏi cộng đồng" : "Ban")}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:716:                        <span className="text-xs">{isVi ? "Đang tải danh sách thành viên..." : "Loading member directory..."}</span>
+src/features/community/components/hub/CommunityManageMembers.tsx:724:                            {isVi ? "Không tìm thấy thành viên nào phù hợp với bộ lọc." : "No members found matching the filter."}
+src/features/community/components/hub/CommunityManageModeration.tsx:141:            const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : "Thành viên");
+src/features/community/components/hub/CommunityManageModeration.tsx:151:                note: isVi ? "Yêu cầu gia nhập cộng đồng đang chờ xem xét." : "Join request awaiting steward review.",
+src/features/community/components/hub/CommunityManageModeration.tsx:153:                appliedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Gần đây" : "Recent"),
+src/features/community/components/hub/CommunityManageModeration.tsx:187:            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
+src/features/community/components/hub/CommunityManageModeration.tsx:194:                    ? (isVi ? `Báo cáo người dùng: ${r.targetId || "Tài khoản"}` : `Reported User: ${r.targetId || "Account"}`)
+src/features/community/components/hub/CommunityManageModeration.tsx:202:                (isVi ? "Nội dung bị báo cáo" : "Reported content");
+src/features/community/components/hub/CommunityManageModeration.tsx:215:                reason: r.reason || (isVi ? "Vi phạm quy tắc ứng xử" : "Community rule violation"),
+src/features/community/components/hub/CommunityManageModeration.tsx:216:                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Gần đây" : "Recent"),
+src/features/community/components/hub/CommunityManageModeration.tsx:253:                name: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+src/features/community/components/hub/CommunityManageModeration.tsx:272:        if (!window.confirm(isVi ? `Xác nhận gỡ quyền Điều hành viên của ${name}?` : `Demote ${name} from Moderator?`)) {
+src/features/community/components/hub/CommunityManageModeration.tsx:291:            assignedAt: isVi ? "Vừa xong" : "Just now",
+src/features/community/components/hub/CommunityManageModeration.tsx:333:                            ? `Kiểm duyệt nội dung, xử lý báo cáo và phê duyệt thành viên cho ${communityName}.`
+src/features/community/components/hub/CommunityManageModeration.tsx:345:                        <span>{isVi ? "Quy tắc cộng đồng" : "Community Rules"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:362:                    <span>{isVi ? "Yêu cầu gia nhập" : "Join Requests"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:380:                    <span>{isVi ? "Báo cáo vi phạm" : "Reports"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:398:                    <span>{isVi ? "Đội ngũ điều hành" : "Moderator Team"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:414:                    <span>{isVi ? "Nhật ký kiểm duyệt" : "Audit History"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:422:                        <span>{joinRequests.filter((r) => r.status === "pending").length} {isVi ? "yêu cầu đang chờ duyệt" : "requests awaiting decision"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:423:                        <span className="text-text-faint text-[11px]">{isVi ? "Chế độ phê duyệt: Thủ công" : "Membership Mode: Approval Required"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:428:                            <p className="text-xs text-text-muted">{isVi ? "Không có yêu cầu tham gia nào đang chờ duyệt." : "No pending join requests."}</p>
+src/features/community/components/hub/CommunityManageModeration.tsx:474:                                                    <span>{isVi ? "Từ chối" : "Reject"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:482:                                                    <span>{isVi ? "Phê duyệt" : "Approve"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:488:                                                <span>{isVi ? "Đã duyệt" : "Approved"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:493:                                                <span>{isVi ? "Đã từ chối" : "Rejected"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:516:                                        ? (isVi ? "Tất cả" : "All")
+src/features/community/components/hub/CommunityManageModeration.tsx:518:                                        ? (isVi ? "Chờ xử lý" : "Pending")
+src/features/community/components/hub/CommunityManageModeration.tsx:520:                                        ? (isVi ? "Đã xử lý" : "Resolved")
+src/features/community/components/hub/CommunityManageModeration.tsx:521:                                        : (isVi ? "Đã bác bỏ" : "Dismissed");
+src/features/community/components/hub/CommunityManageModeration.tsx:540:                        <span className="text-text-faint text-[11px]">{isVi ? "Toàn quyền quản trị Admin" : "Full Admin Access"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:545:                            <p className="text-xs text-text-muted">{isVi ? "Không có báo cáo vi phạm nào phù hợp bộ lọc." : "No reports matching filter."}</p>
+src/features/community/components/hub/CommunityManageModeration.tsx:593:                                                {isVi ? "Bác bỏ" : "Dismiss"}
+src/features/community/components/hub/CommunityManageModeration.tsx:601:                                                <span>{isVi ? "Tắt tiếng tác giả" : "Mute Author"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:609:                                                <span>{isVi ? "Gỡ nội dung" : "Remove Content"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:614:                                            ✓ {rep.status === "resolved" ? (isVi ? "Đã xử lý" : "Resolved") : (isVi ? "Đã bác bỏ" : "Dismissed")}
+src/features/community/components/hub/CommunityManageModeration.tsx:634:                                    ? "Điều hành viên giúp duy trì thảo luận, duyệt bài và xử lý báo cáo trong cộng đồng này."
+src/features/community/components/hub/CommunityManageModeration.tsx:646:                                <span>{isVi ? "+ Thêm Điều hành viên" : "+ Add Moderator"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:653:                            <p className="text-xs text-text-muted">{isVi ? "Chưa có Điều hành viên nào được chỉ định." : "No moderators appointed yet."}</p>
+src/features/community/components/hub/CommunityManageModeration.tsx:685:                                                {isVi ? `Bổ nhiệm từ ${mod.assignedAt} · ${mod.actionsCount} hành động` : `Appointed ${mod.assignedAt} · ${mod.actionsCount} actions`}
+src/features/community/components/hub/CommunityManageModeration.tsx:698:                                                    {isVi ? "Gỡ quyền" : "Demote"}
+src/features/community/components/hub/CommunityManageModeration.tsx:702:                                                    {isVi ? "Điều hành viên" : "Moderator"}
+src/features/community/components/hub/CommunityManageModeration.tsx:707:                                                {isVi ? "Trưởng cộng đồng" : "Primary Steward"}
+src/features/community/components/hub/CommunityManageModeration.tsx:720:                                {isVi ? "Thăng cấp thành viên làm Điều hành viên" : "Promote Member to Moderator"}
+src/features/community/components/hub/CommunityManageModeration.tsx:724:                                    ? "Nhập @username của thành viên bạn muốn trao quyền kiểm duyệt cho cộng đồng này:"
+src/features/community/components/hub/CommunityManageModeration.tsx:740:                                    {isVi ? "Xác nhận" : "Promote"}
+src/features/community/components/hub/CommunityManageModeration.tsx:747:                                    {isVi ? "Hủy" : "Cancel"}
+src/features/community/components/hub/CommunityManageModeration.tsx:759:                        <span>{isVi ? "Nhật ký kiểm duyệt thời gian thực" : "Real-time moderation audit log"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:760:                        <span className="text-text-faint text-[11px]">{isVi ? "Lưu giữ 90 ngày" : "Retained for 90 days"}</span>
+src/features/community/components/hub/CommunityManageModeration.tsx:765:                            <p className="text-xs text-text-muted">{isVi ? "Chưa có nhật ký kiểm duyệt nào được ghi nhận." : "No moderation history recorded yet."}</p>
+src/features/community/components/hub/CommunityManageOverview.tsx:62:        { id: "manage-overview", label: isVi ? "Tổng quan" : "Overview" },
+src/features/community/components/hub/CommunityManageOverview.tsx:63:        { id: "manage-moderation", label: isVi ? "Kiểm duyệt" : "Moderation", badge: pendingCount > 0 ? String(pendingCount) : undefined },
+src/features/community/components/hub/CommunityManageOverview.tsx:64:        { id: "manage-members", label: isVi ? "Thành viên" : "Members" },
+src/features/community/components/hub/CommunityManageOverview.tsx:65:        { id: "manage-reports", label: isVi ? "Báo cáo" : "Reports", badge: reportsCount > 0 ? String(reportsCount) : undefined },
+src/features/community/components/hub/CommunityManageOverview.tsx:66:        ...(isOwnerOrAdmin ? [{ id: "manage-settings", label: isVi ? "Cài đặt" : "Settings" }] : []),
+src/features/community/components/hub/CommunityManageOverview.tsx:75:            label: isVi ? `${reportsCount} báo cáo vi phạm đang chờ xử lý` : `${reportsCount} reports waiting for review`,
+src/features/community/components/hub/CommunityManageOverview.tsx:76:            desc: isVi ? "Cần điều tra nội dung bị người dùng gắn cờ" : "Review user-reported content",
+src/features/community/components/hub/CommunityManageOverview.tsx:78:            actionText: isVi ? "Xử lý ngay" : "Review now",
+src/features/community/components/hub/CommunityManageOverview.tsx:84:            label: isVi ? `3 bài viết bị hệ thống kiểm duyệt tạm giữ` : `3 flagged posts awaiting approval`,
+src/features/community/components/hub/CommunityManageOverview.tsx:85:            desc: isVi ? "Nội dung kích hoạt bộ lọc từ khóa nhạy cảm" : "Triggered automated keyword filter",
+src/features/community/components/hub/CommunityManageOverview.tsx:87:            actionText: isVi ? "Xem xét" : "Review",
+src/features/community/components/hub/CommunityManageOverview.tsx:95:            label: isVi ? `${pendingCount} yêu cầu thành viên đang chờ duyệt` : `${pendingCount} pending member requests`,
+src/features/community/components/hub/CommunityManageOverview.tsx:96:            desc: isVi ? "Đơn xin gia nhập cộng đồng chưa được chấp thuận" : "New member join applications waiting",
+src/features/community/components/hub/CommunityManageOverview.tsx:98:            actionText: isVi ? "Duyệt đơn" : "Review",
+src/features/community/components/hub/CommunityManageOverview.tsx:106:            text: isVi ? "ShadowHunter đã báo cáo bài viết vi phạm quy tắc" : "ShadowHunter reported a post for spam",
+src/features/community/components/hub/CommunityManageOverview.tsx:108:            actionLabel: isVi ? "Báo cáo" : "Reports",
+src/features/community/components/hub/CommunityManageOverview.tsx:113:            text: isVi ? "EldenLord_VN đã tham gia cộng đồng" : "EldenLord_VN joined the community",
+src/features/community/components/hub/CommunityManageOverview.tsx:115:            actionLabel: isVi ? "Thành viên" : "Members",
+src/features/community/components/hub/CommunityManageOverview.tsx:120:            text: isVi ? "MonkeyKing_88 đã tạo thảo luận mới trong mục Thảo luận" : "MonkeyKing_88 created a new discussion",
+src/features/community/components/hub/CommunityManageOverview.tsx:127:            text: isVi ? "Điều hành viên đã phê duyệt báo cáo vi phạm #104" : "Moderator reviewed and resolved report #104",
+src/features/community/components/hub/CommunityManageOverview.tsx:129:            actionLabel: isVi ? "Nhật ký" : "Log",
+src/features/community/components/hub/CommunityManageOverview.tsx:153:                                {isVi ? "Bảng điều khiển và vận hành cộng đồng" : "Community Management & Operations Hub"}
+src/features/community/components/hub/CommunityManageOverview.tsx:164:                            <span>{isVi ? "Xem trang công khai" : "View Public Community"}</span>
+src/features/community/components/hub/CommunityManageOverview.tsx:172:                            <span>{isVi ? "Đăng bài" : "Post"}</span>
+src/features/community/components/hub/CommunityManageOverview.tsx:215:                            {isVi ? "Thành viên" : "Members"}
+src/features/community/components/hub/CommunityManageOverview.tsx:225:                            {isVi ? "Trực tuyến" : "Online now"}
+src/features/community/components/hub/CommunityManageOverview.tsx:234:                            {isVi ? "Báo cáo vi phạm" : "Reports"}
+src/features/community/components/hub/CommunityManageOverview.tsx:243:                            {isVi ? "Chờ duyệt" : "Pending requests"}
+src/features/community/components/hub/CommunityManageOverview.tsx:252:                            {isVi ? "Thảo luận" : "Discussions"}
+src/features/community/components/hub/CommunityManageOverview.tsx:266:                        {attentionItems.length} {isVi ? "mục cần hành động" : "actionable items"}
+src/features/community/components/hub/CommunityManageOverview.tsx:302:                            <span>{isVi ? "Tất cả đã được xử lý. Không có vi phạm hay yêu cầu tồn đọng." : "All clear! No pending moderation issues requiring immediate action."}</span>
+src/features/community/components/hub/CommunityManageOverview.tsx:324:                                {isVi ? "Kiểm duyệt" : "Moderation"}
+src/features/community/components/hub/CommunityManageOverview.tsx:327:                                {isVi ? "Duyệt đơn & bài" : "Review queue"}
+src/features/community/components/hub/CommunityManageOverview.tsx:342:                                {isVi ? "Thành viên" : "Members"}
+src/features/community/components/hub/CommunityManageOverview.tsx:345:                                {isVi ? "Phân quyền mod" : "Manage roles"}
+src/features/community/components/hub/CommunityManageOverview.tsx:360:                                {isVi ? "Báo cáo" : "Reports"}
+src/features/community/components/hub/CommunityManageOverview.tsx:363:                                {isVi ? "Khiếu nại vi phạm" : "Flagged items"}
+src/features/community/components/hub/CommunityManageOverview.tsx:378:                                {isVi ? "Cài đặt" : "Settings"}
+src/features/community/components/hub/CommunityManageOverview.tsx:381:                                {isVi ? "Quy tắc & hồ sơ" : "Rules & profile"}
+src/features/community/components/hub/CommunityManageOverview.tsx:399:                        <span>{isVi ? "Xem toàn bộ nhật ký" : "View audit log"}</span>
+src/features/community/components/MemberListModal.tsx:104:                displayName: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`,
+src/features/community/components/MemberListModal.tsx:107:                joinedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "Thành viên",
+src/features/community/components/MemberListModal.tsx:119:                displayName: m.displayName || m.username || "Thành viên",
+src/features/community/components/MemberListModal.tsx:122:                joinedAt: m.joinedAt || "Gần đây",
+src/features/community/components/MemberListModal.tsx:132:                joinedAt: "Vừa xong",
+src/features/community/components/MemberListModal.tsx:202:                        <h3 className="text-lg font-extrabold text-text">Danh Sách Thành Viên</h3>
+src/features/community/components/MemberListModal.tsx:226:                            placeholder="Tìm kiếm thành viên..."
+src/features/community/components/MemberListModal.tsx:238:                            Tất cả ({members.length})
+src/features/community/components/MemberListModal.tsx:246:                            Ban quản trị ({members.filter((m) => m.role !== "member").length})
+src/features/community/components/MemberListModal.tsx:254:                            Thành viên ({members.filter((m) => m.role === "member").length})
+src/features/community/components/MemberListModal.tsx:291:                                                title="Thăng cấp làm MOD"
+src/features/community/components/MemberListModal.tsx:300:                                                title="Hạ cấp xuống thành viên"
+src/features/community/components/MemberListModal.tsx:308:                                            title="Mời ra khỏi nhóm"
+src/features/community/components/MemberListModal.tsx:319:                            <span>Không tìm thấy thành viên phù hợp</span>
+src/features/community/components/CommunityList.tsx:117:        if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;
+src/features/community/components/CommunityList.tsx:145:                    <p className="text-xs font-semibold text-text-muted">Đang tải danh sách cộng đồng...</p>
+src/features/community/components/CommunityNavigator.tsx:146:                                    <span>all (Tất cả)</span>
+src/features/community/components/CommunityNavigator.tsx:166:                                        <span>joined (Đã tham gia)</span>
+src/features/community/components/CommunityNavigator.tsx:189:                                    <span>trending (Nổi bật)</span>
+src/features/community/components/CommunityGameTile.tsx:37:            if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+src/features/community/components/CreateCommunityModal.tsx:46:        "1. Tôn trọng tất cả các thành viên trong cộng đồng.\n2. Không đả kích, toxic hoặc xúc phạm cá nhân.\n3. Không đăng bài quảng cáo rác (spam)."
+src/features/community/components/CreateCommunityModal.tsx:72:        const displayName: string = rawFullName || rawUsername || authorUsername || "Thành viên";
+src/features/community/components/CreateCommunityModal.tsx:91:                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
+src/features/community/components/CreateCommunityModal.tsx:104:                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
+src/features/community/components/CreateCommunityModal.tsx:112:                rules: rules.length > 0 ? rules : ["Tôn trọng mọi người trong cộng đồng", "Không đả kích hay gây tranh cãi toxic"],
+src/features/community/components/CreateCommunityModal.tsx:119:                        joinedAt: "Vừa xong",
+src/features/community/components/CreateCommunityModal.tsx:139:                        <span>Tạo Cộng Đồng Mới</span>
+src/features/community/components/CreateCommunityModal.tsx:156:                            <span>Tên cộng đồng</span>
+src/features/community/components/CreateCommunityModal.tsx:178:                            <span>Thể loại Game</span>
+src/features/community/components/CreateCommunityModal.tsx:195:                        <label className="text-xs font-bold text-text-muted">Mô tả ngắn</label>
+src/features/community/components/CreateCommunityModal.tsx:200:                            placeholder="Giới thiệu mục tiêu, phong cách chơi hoặc chủ đề thảo luận chính của cộng đồng..."
+src/features/community/components/CreateCommunityModal.tsx:215:                            <span>Biểu tượng (Logo)</span>
+src/features/community/components/CreateCommunityModal.tsx:237:                            <span>Ảnh bìa (Backdrop)</span>
+src/features/community/components/CreateCommunityModal.tsx:259:                            <span>Thẻ tìm kiếm (Tags, phân cách bằng dấu phẩy)</span>
+src/features/community/components/CreateCommunityModal.tsx:274:                            <span>Nội quy cộng đồng (mỗi dòng 1 quy tắc)</span>
+src/features/community/components/CreateCommunityModal.tsx:291:                            Hủy
+src/features/community/components/CreateCommunityModal.tsx:298:                            <span>Tạo cộng đồng</span>
+src/features/explore/components/ExplorePage.tsx:67:                        <p className="font-extrabold text-text text-sm">Chưa có nội dung khám phá</p>
+src/features/explore/components/ExplorePage.tsx:68:                        <p className="text-text-muted text-xs leading-relaxed">Nội dung mới và các sự kiện sẽ được cập nhật tại đây.</p>
+src/features/explore/components/VietnamGamesBanner.tsx:33:        name: "Thần Trùng (The Death)",
+src/features/explore/components/VietnamGamesBanner.tsx:35:        genre: "Kinh Dị Tâm Lý / Tâm Linh Việt",
+src/features/explore/components/VietnamGamesBanner.tsx:36:        status: "Đã Ra Mắt",
+src/features/explore/components/VietnamGamesBanner.tsx:38:        releaseDate: "Mới Cập Nhật 2026",
+src/features/explore/components/VietnamGamesBanner.tsx:39:        descriptionVi: "Trải nghiệm không gian Hà Nội thập niên 90 âm u kỳ bí với những câu chuyện tâm linh, truyền thuyết đô thị Việt Nam gây sốt cộng đồng.",
+src/features/explore/components/VietnamGamesBanner.tsx:42:        tags: ["Kinh Dị Việt", "Hà Nội 1990s", "DUT Studio"],
+src/features/explore/components/VietnamGamesBanner.tsx:50:        genre: "Phiêu Lưu / Giải Đố Nghệ Thuật",
+src/features/explore/components/VietnamGamesBanner.tsx:51:        status: "Đoạt Giải Quốc Tế",
+src/features/explore/components/VietnamGamesBanner.tsx:53:        releaseDate: "Bản Siêu Đẹp 4K",
+src/features/explore/components/VietnamGamesBanner.tsx:54:        descriptionVi: "Tuyệt phẩm indie Việt Nam với đồ họa vẽ tay thủ công đẹp ảo diệu phong cách Ghibli và âm hưởng piano êm dịu.",
+src/features/explore/components/VietnamGamesBanner.tsx:57:        tags: ["Đồ Họa Vẽ Tay", "Ghibli", "Thư Giãn"],
+src/features/explore/components/VietnamGamesBanner.tsx:63:        name: "Thần Điện - Huyền Thoại Việt",
+src/features/explore/components/VietnamGamesBanner.tsx:64:        developer: "Cỏ Mềm Team",
+src/features/explore/components/VietnamGamesBanner.tsx:65:        genre: "Nhập Vai Cổ Tích / Thần Thoại",
+src/features/explore/components/VietnamGamesBanner.tsx:66:        status: "Sắp Ra Mắt 2026",
+src/features/explore/components/VietnamGamesBanner.tsx:69:        descriptionVi: "Hành trình tái hiện câu chuyện Sơn Tinh Thủy Tinh & các vị thần sử Việt bằng công nghệ đồ họa Unreal Engine 5 đỉnh cao.",
+src/features/explore/components/VietnamGamesBanner.tsx:72:        tags: ["Unreal Engine 5", "Sơn Tinh Thủy Tinh", "Sắp Ra Mắt"],
+src/features/explore/components/VietnamGamesBanner.tsx:77:        name: "7554: Điện Biên Phủ Remastered",
+src/features/explore/components/VietnamGamesBanner.tsx:79:        genre: "Bắn Súng Lịch Sử Việt Nam",
+src/features/explore/components/VietnamGamesBanner.tsx:80:        status: "Bản Nâng Cấp HD",
+src/features/explore/components/VietnamGamesBanner.tsx:82:        releaseDate: "Phiên Bản Kỷ Niệm",
+src/features/explore/components/VietnamGamesBanner.tsx:83:        descriptionVi: "Hào hùng trận chiến lịch sử Điện Biên Phủ lừng lẫy. Tái hiện tinh thần quả cảm của các chiến sĩ quân đội nhân dân Việt Nam.",
+src/features/explore/components/VietnamGamesBanner.tsx:86:        tags: ["Bắn Súng Lịch Sử", "Điện Biên Phủ", "Hào Hùng"],
+src/features/feed/components/GamePromoBanner.tsx:17:    // 7 game nổi bật trên banner
+src/features/feed/components/GamePromoBanner.tsx:45:    // Hàm tính toán vị trí tương đối (-3 đến +3) của card trong vòng lặp 3D Carousel
+src/features/feed/components/GamePromoBanner.tsx:54:    // Hàm lấy style và vị trí CSS cho từng card dựa trên offset
+src/features/feed/components/GamePromoBanner.tsx:57:            // Card chính giữa: Nằm trên cùng (z-20), scale chuẩn 100%
+src/features/feed/components/GamePromoBanner.tsx:63:            // Card bên trái: Cùng kích thước cố định nhưng scale nhỏ lại và nằm dưới (z-10)
+src/features/feed/components/GamePromoBanner.tsx:69:            // Card bên phải: Cùng kích thước cố định nhưng scale nhỏ lại và nằm dưới (z-10)
+src/features/feed/components/GamePromoBanner.tsx:75:            // Card ẩn ngoài rìa bên trái
+src/features/feed/components/GamePromoBanner.tsx:81:            // Card ẩn ngoài rìa bên phải
+src/features/feed/components/GamePromoBanner.tsx:95:            {/* 3D Carousel Container với chiều cao cố định tuyệt đối (không bao giờ bị thay đổi height) */}
+src/features/feed/components/GamePromoBanner.tsx:97:                {/* Left navigation button - Height bằng cả thẻ, không bo góc, không border */}
+src/features/feed/components/GamePromoBanner.tsx:107:                {/* Right navigation button - Height bằng cả thẻ, không bo góc, không border */}
+src/features/feed/components/GamePromoBanner.tsx:117:                {/* Render tất cả card với cùng một kích thước cố định để không bị tràn/nhảy text khi di chuyển */}
+src/features/feed/components/GamePromoBanner.tsx:149:                            {/* Overlays tối ưu để không che đi bg img quá nhiều */}
+src/features/feed/components/GamePromoBanner.tsx:153:                            {/* Content bên trong thẻ - Cấu trúc cố định giống hệt nhau cho tất cả các thẻ để không bao giờ bị nhảy hay tràn chữ khi chuyển animation */}
+src/features/feed/components/GamePromoBanner.tsx:183:                                    {/* Description snippet gọn gàng */}
+src/features/feed/components/CommunitySwitcherRail.tsx:24:    if (id.includes("wukong") || name.includes("ngộ không") || name.includes("black myth")) return "WUKONG";
+src/features/feed/components/CommunitySwitcherRail.tsx:144:                            title="Xem tất cả cộng đồng"
+src/features/feed/components/CreatePostBox.tsx:369:                    title="In đậm (Bold)"
+src/features/feed/components/CreatePostBox.tsx:377:                    title="In nghiêng (Italic)"
+src/features/feed/components/CreatePostBox.tsx:385:                    title="Gạch ngang (Strikethrough)"
+src/features/feed/components/CreatePostBox.tsx:394:                    title="Danh sách (List)"
+src/features/feed/components/CreatePostBox.tsx:402:                    title="Gắn liên kết (Link)"
+src/features/feed/components/CreatePostBox.tsx:410:                    title="Trích dẫn (Quote)"
+src/features/feed/components/CreatePostBox.tsx:421:                title="Tải lên hình ảnh hoặc video"
+src/features/feed/components/CreatePostBox.tsx:555:                ? `Chia sẻ với ${targetCommunity.name}...`
+src/features/feed/components/CreatePostBox.tsx:559:            ? "Chia sẻ khoảnh khắc, góc nhìn hoặc khám phá mới..."
+src/features/feed/components/CreatePostBox.tsx:606:        if (!requireVerifiedEmail("đăng bài viết")) return;
+src/features/feed/components/CreatePostBox.tsx:911:                ? `Chia sẻ với ${activeFilteredCommunity.name}...`
+src/features/feed/components/CreatePostBox.tsx:915:            ? "Chia sẻ khoảnh khắc, góc nhìn hoặc khám phá mới..."
+src/features/post/components/CommentSection.tsx:46:    image?: string; // URL ảnh đính kèm (nếu có)
+src/features/post/components/CommentSection.tsx:47:    replies?: CommentData[]; // Danh sách reply con
+src/features/post/components/CommentSection.tsx:48:    replyCount?: number; // Tổng số câu trả lời từ backend
+src/features/post/components/CommentSection.tsx:49:    pinned?: boolean; // Ghim bình luận
+src/features/post/components/CommentSection.tsx:69: * Hook nhỏ gọn xử lý chọn/validate/preview 1 ảnh đính kèm cho ô nhập bình luận.
+src/features/post/components/CommentSection.tsx:70: * Giới hạn: chỉ ảnh, tối đa MAX_COMMENT_IMAGE_SIZE, không cho phép file khác.
+src/features/post/components/CommentSection.tsx:270:        if (profileTarget && profileTarget !== "Thành viên" && profileTarget !== "You") {
+src/features/post/components/CommentSection.tsx:282:        if (!requireVerifiedEmail("upvote bình luận")) return;
+src/features/post/components/CommentSection.tsx:301:        if (!requireVerifiedEmail("downvote bình luận")) return;
+src/features/post/components/CommentSection.tsx:320:        if (!requireVerifiedEmail("trả lời bình luận")) return;
+src/features/post/components/CommentSection.tsx:337:        if (!requireVerifiedEmail("gửi bình luận")) return;
+src/features/post/components/CommentSection.tsx:361:        if (!requireVerifiedEmail("chỉnh sửa bình luận")) return;
+src/features/post/components/CommentSection.tsx:371:        if (!requireVerifiedEmail("xóa bình luận")) return;
+src/features/post/components/CommentSection.tsx:379:        if (!requireVerifiedEmail("ghim bình luận")) return;
+src/features/post/components/CommentSection.tsx:576:                                title={liked ? "Đã upvote" : "Upvote"}
+src/features/post/components/CommentSection.tsx:590:                                title={downvoted ? "Đã downvote" : "Downvote"}
+src/features/post/components/CommentSection.tsx:846:        ? (authorObj.name || (authorObj as { displayName?: string }).displayName || authorObj.username || "Thành viên")
+src/features/post/components/CommentSection.tsx:847:        : (typeof c.author === "string" && c.author.trim() ? c.author : ((c as { authorName?: string }).authorName || (c.authorId ? `User_${c.authorId.slice(-4)}` : "Thành viên")));
+src/features/post/components/CommentSection.tsx:902:        timeAgo: c.createdAt ? formatTimeAgo(c.createdAt) : "Vừa xong",
+src/features/post/components/CommentSection.tsx:999:        if (!requireVerifiedEmail("gửi bình luận")) return;
+src/features/post/components/CommentSection.tsx:1023:            timeAgo: "Vừa xong",
+src/features/post/components/CommentSection.tsx:1049:                content: textContent || "[Ảnh đính kèm]",
+src/features/post/components/CommentSection.tsx:1098:            timeAgo: "Vừa xong",
+src/features/post/components/Post.tsx:327:   14–15px / line-height: 1.5 / max 3–5 lines trên feed / ...more nếu dài
+src/features/post/components/Post.tsx:370:   1 ảnh: full width, radius 8–10px
+src/features/post/components/Post.tsx:371:   2 ảnh: 50/50 hoặc 70/30
+src/features/post/components/Post.tsx:372:   3+ ảnh: gallery / carousel
+src/features/post/components/Post.tsx:689:                    title={isLiked ? "Bỏ upvote" : "Upvote"}
+src/features/post/components/Post.tsx:714:                    title={isDownvoted ? "Bỏ downvote" : "Downvote"}
+src/features/post/components/Post.tsx:734:                    title="Bình luận"
+src/features/post/components/Post.tsx:875:        if (!requireVerifiedEmail("upvote bài viết")) return;
+src/features/post/components/Post.tsx:921:        if (!requireVerifiedEmail("downvote bài viết")) return;
+src/features/post/components/Post.tsx:967:        if (!requireVerifiedEmail("lưu bài viết")) return;
+src/features/post/components/Post.tsx:981:    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : "Thành viên");
+src/features/post/components/Post.tsx:1041:        if (!requireVerifiedEmail("xóa bài viết")) return;
+src/features/post/components/Post.tsx:1048:        if (!requireVerifiedEmail("chỉnh sửa bài viết")) return;
+src/features/post/components/Post.tsx:1054:        if (!requireVerifiedEmail("chỉnh sửa bài viết")) return;
+src/features/post/components/Post.tsx:1130:            {/* 4. Media (1 ảnh full width, 2 ảnh 50/50, 3+ gallery, radius 8–10px) */}
+src/features/profile/components/tabs/AchievementsTab.tsx:29:                        <p className="text-xs text-[#9A9DA3]">Danh hiệu độc quyền thu thập qua quá trình chơi game & hoạt động</p>
+src/features/profile/components/tabs/FriendsTab.tsx:104:                <span>Đang tải danh sách bạn bè...</span>
+src/features/profile/components/tabs/FriendsTab.tsx:156:                                <span>Đã gửi ({outgoingRequests.length})</span>
+src/features/profile/components/tabs/FriendsTab.tsx:170:                                    <span>Đã chặn ({blockedUsers.length})</span>
+src/features/profile/components/tabs/FriendsTab.tsx:327:                                            <span>Đã gửi {req.time}</span>
+src/features/profile/components/tabs/FriendsTab.tsx:338:                                        <span>Hủy lời mời</span>
+src/features/profile/components/tabs/FriendsTab.tsx:346:                            <span>Bạn chưa gửi lời mời kết bạn nào.</span>
+src/features/profile/components/tabs/FriendsTab.tsx:369:                                        <span className="text-xs font-medium text-[#FF6B6B] mt-0.5">Đã chặn</span>
+src/features/profile/components/tabs/FriendsTab.tsx:380:                                        <span>Bỏ chặn</span>
+src/features/profile/components/tabs/FriendsTab.tsx:388:                            <span>Chưa chặn người dùng nào.</span>
+src/features/profile/components/tabs/OverviewTab.tsx:102:                title={hidden ? tr("profile.toggleHidden", { defaultValue: "Đã ẩn (Click để hiện)" }) : tr("profile.toggleVisible", { defaultValue: "Đang hiện (Click để ẩn)" })}
+src/features/profile/components/tabs/OverviewTab.tsx:151:                                        {tr("profile.empty.bioDetail", { defaultValue: "Chưa thiết lập mô tả tiểu sử character." })}
+src/features/profile/components/tabs/OverviewTab.tsx:155:                                            {tr("profile.empty.bioEditPrompt", { defaultValue: "Bấm \"Chỉnh sửa hồ sơ\" để viết mô tả tiểu sử cho nhân vật." })}
+src/features/profile/components/tabs/OverviewTab.tsx:192:                                {tr("profile.gameMastery.loading", { defaultValue: "Đang tải dữ liệu Game Mastery từ hệ thống..." })}
+src/features/profile/components/tabs/OverviewTab.tsx:203:                                    {tr("profile.gameMastery.emptyTitle", { defaultValue: "Chưa có dữ liệu Game Mastery" })}
+src/features/profile/components/tabs/OverviewTab.tsx:207:                                        ? tr("profile.gameMastery.emptyDescOwn", { defaultValue: "Chưa nhận được phản hồi dữ liệu game. Bạn có thể thêm các tựa game và chỉ số vào thư viện." })
+src/features/profile/components/tabs/OverviewTab.tsx:208:                                        : tr("profile.gameMastery.emptyDescOther", { defaultValue: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery." })}
+src/features/profile/components/tabs/OverviewTab.tsx:218:                                    <span>{tr("profile.gameMastery.addGameBtn", { defaultValue: "Thêm game vào thư viện" })}</span>
+src/features/profile/components/tabs/OverviewTab.tsx:328:                                                    {tr("profile.library.hoursPlayed", { hours: game.hours, defaultValue: "{hours} giờ chơi" })}
+src/features/profile/components/tabs/OverviewTab.tsx:356:                            <span>{tr("profile.empty.activityText", { defaultValue: "Chưa có hoạt động gần đây." })}</span>
+src/features/profile/components/tabs/OverviewTab.tsx:400:                                    <span>{tr("common.loading", { defaultValue: "Đang tải dữ liệu..." })}</span>
+src/features/profile/components/tabs/OverviewTab.tsx:404:                                    <span>{tr("profile.empty.communitiesText", { defaultValue: "Chưa tham gia cộng đồng nào." })}</span>
+src/features/profile/components/tabs/OverviewTab.tsx:442:                                        Cập nhật thông tin thiết bị góc máy
+src/features/profile/components/tabs/OverviewTab.tsx:455:                                                    placeholder={`Nhập ${cat.value}...`}
+src/features/profile/components/tabs/OverviewTab.tsx:470:                                                {tr("profile.empty.gear", { defaultValue: "Chưa cập nhật thông tin thiết bị góc máy." })}
+src/features/profile/components/tabs/GuestbookTab.tsx:70:                    <span>Đang tải lời nhắn...</span>
+src/features/profile/components/tabs/GuestbookTab.tsx:94:                                            title="Xóa lời nhắn"
+src/features/profile/components/BadgeSelectorModal.tsx:26:                <button onClick={onClose} className="text-[#8D97AA] hover:text-[#F2F5FA] cursor-pointer p-1" aria-label="Đóng">
+src/features/profile/components/BadgeSelectorModal.tsx:51:                                <span className="absolute top-3 right-3 text-white text-base" title="Đang trang bị">
+src/features/profile/components/EditProfileModal.tsx:34:        if (!useAuthStore.getState().requireVerifiedEmail("cập nhật thông tin cá nhân")) return;
+src/features/profile/components/EditProfileModal.tsx:52:                        <span>Chỉnh Sửa Hồ Sơ</span>
+src/features/profile/components/EditProfileModal.tsx:68:                            <span>Đổi Avatar</span>
+src/features/profile/components/EditProfileModal.tsx:82:                            <span>Đổi Ảnh Bìa</span>
+src/features/profile/components/EditProfileModal.tsx:99:                            <span>Tên hiển thị</span>
+src/features/profile/components/EditProfileModal.tsx:105:                            placeholder="Nhập tên hiển thị"
+src/features/profile/components/EditProfileModal.tsx:131:                            <span>Tiểu sử (Bio)</span>
+src/features/profile/components/EditProfileModal.tsx:137:                            placeholder="Giới thiệu đôi nét về bản thân hoặc phong cách chơi game..."
+src/features/profile/components/EditProfileModal.tsx:146:                            <span>Khu vực / Quốc gia</span>
+src/features/profile/components/EditProfileModal.tsx:171:                            <span>Lưu thay đổi</span>
+src/features/profile/components/ImageCropperModal.tsx:27:    title = "Căn chỉnh ảnh đại diện",
+src/features/profile/components/ImageCropperModal.tsx:121:                    <button type="button" onClick={onClose} className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer" aria-label="Đóng">
+src/features/profile/components/ImageCropperModal.tsx:155:                        <span className="text-xs font-semibold text-[#8D97AA] shrink-0">Thu phóng:</span>
+src/features/profile/components/ImageCropperModal.tsx:164:                            aria-label="Thu phóng ảnh"
+src/features/profile/components/ImageCropperModal.tsx:170:                            aria-label="Phóng to"
+src/features/profile/components/ImageCropperModal.tsx:175:                    <p className="text-[11px] text-center text-[#5F697C] italic mt-1">* Kéo thả ảnh để di chuyển.</p>
+src/features/profile/components/ImageCropperModal.tsx:180:                        Hủy
+src/features/profile/components/ImageCropperModal.tsx:188:                        <span>Cắt & Lưu ảnh</span>
+src/features/profile/components/UserProfile.tsx:401:                if (pName === identity.name || pName === "Bạn" || pName === currentAuthor) return true;
+src/features/profile/components/UserProfile.tsx:637:                date: c.createdAt ? new Date(c.createdAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Vừa xong",
+src/features/profile/components/UserProfile.tsx:668:            const errorMsg = (err as { message?: string })?.message || "Không thể gửi lời nhắn, vui lòng thử lại.";
+src/features/profile/components/UserProfile.tsx:682:            const errorMsg = (err as { message?: string })?.message || "Không thể xóa lời nhắn.";
+src/features/profile/components/UserProfile.tsx:707:            lastPlayed: g.lastPlayed || "Gần đây",
+src/features/profile/components/UserProfile.tsx:710:            keyStat: g.keyStat || (g.hours ? `${g.hours}h chơi` : "Đang chơi"),
+src/features/profile/components/UserProfile.tsx:726:                keyStat: `${gameData.hours || 0}h chơi`,
+src/features/profile/components/UserProfile.tsx:730:            const errorMsg = (err as { message?: string })?.message || "Không thể thêm game vào thư viện.";
+src/features/profile/components/UserProfile.tsx:740:            const errorMsg = (err as { message?: string })?.message || "Không thể xóa game khỏi thư viện.";
+src/features/profile/components/UserProfile.tsx:778:                <h3 className="text-xl font-extrabold text-text">Không tìm thấy hồ sơ người dùng</h3>
+src/features/profile/components/UserProfile.tsx:779:                <p className="text-sm text-text-muted">Hồ sơ người dùng này không tồn tại, đã bị xóa hoặc đường dẫn không chính xác.</p>
+src/features/profile/components/UserProfile.tsx:785:                    <span>Quay lại</span>
+src/features/profile/components/ProfileHero.tsx:233:                                            placeholder="Tên hiển thị"
+src/features/profile/components/ProfileHero.tsx:294:                                        title="Chỉnh sửa thông tin và tùy chỉnh giao diện hồ sơ"
+src/features/profile/components/ProfileHero.tsx:297:                                        <span>Chỉnh sửa hồ sơ</span>
+src/features/profile/components/ProfileHero.tsx:308:                                            title="Hủy bỏ thay đổi và hoàn tác"
+src/features/profile/components/ProfileHero.tsx:311:                                            <span>Hủy</span>
+src/features/profile/components/ProfileHero.tsx:320:                                            title="Lưu tất cả thay đổi hồ sơ"
+src/features/profile/components/ProfileHero.tsx:323:                                            <span>Lưu thay đổi</span>
+src/features/profile/components/ProfileHero.tsx:341:                                    onClick={() => handleProtectedAction("gửi tin nhắn", () => {})}
+src/features/profile/components/ProfileHero.tsx:345:                                    <span>Nhắn tin</span>
+src/features/profile/components/ProfileHero.tsx:355:                                        <span>Đang xử lý...</span>
+src/features/profile/components/ProfileHero.tsx:360:                                        onClick={() => handleProtectedAction("quản lý bạn bè", () => setShowFriendMenu((v) => !v))}
+src/features/profile/components/ProfileHero.tsx:370:                                        onClick={() => handleProtectedAction("chấp nhận kết bạn", () => onAcceptRequest?.())}
+src/features/profile/components/ProfileHero.tsx:379:                                        onClick={() => handleProtectedAction("hủy lời mời", () => onCancelRequest?.())}
+src/features/profile/components/ProfileHero.tsx:381:                                        title="Nhấn để hủy lời mời"
+src/features/profile/components/ProfileHero.tsx:384:                                        <span>Đã gửi lời mời</span>
+src/features/profile/components/ProfileHero.tsx:389:                                        onClick={() => handleProtectedAction("kết bạn", onAddFriend)}
+src/features/profile/components/ProfileHero.tsx:399:                                    onClick={() => handleProtectedAction("mở tùy chọn", () => setShowFriendMenu((v) => !v))}
+src/features/profile/components/ProfileHero.tsx:438:                        <span className="font-bold text-rose-300">Tài khoản này đã bị khóa: </span>
+src/features/profile/components/ProfileHero.tsx:439:                        <span className="text-rose-200/90">{identity.banReason || "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG."}</span>
+src/features/profile/components/ProfileHero.tsx:447:                        <span className="font-bold text-amber-300">Hồ sơ đã lưu trữ (Archived): </span>
+src/features/profile/components/ProfileHero.tsx:448:                        <span className="text-amber-200/90">Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn.</span>
+src/features/profile/components/ProfileTabBar.tsx:60:                            title={isLocked ? "Vui lòng lưu hoặc hủy chỉnh sửa ở tab Tổng quan trước khi đổi tab" : undefined}
+src/features/profile/bio/BioRenderer.tsx:13:    emptyPlaceholder = "Chưa có tiểu sử.",
+src/features/profile/bio/BioEditor.tsx:47:    placeholder = "Viết tiểu sử gaming của bạn (chọn văn bản để định dạng)...",
+src/features/profile/bio/BioEditor.tsx:496:                            title="Font chữ"
+src/features/profile/bio/BioEditor.tsx:540:                            title="Màu sắc phong cách"
+src/features/profile/bio/BioEditor.tsx:589:                            title="Căn chỉnh dòng"
+src/features/profile/bio/BioEditor.tsx:662:                        <span>Mẫu phong cách</span>
+src/features/profile/bio/BioEditor.tsx:669:                                Mẫu bio có sẵn
+src/features/profile/bio/BioEditor.tsx:708:                            (Vượt quá giới hạn)
+src/features/report/components/ReportModal.tsx:11:export const ReportModal = ({ postId, author = "người dùng", onClose }: ReportModalProps) => {
+src/features/report/components/ReportModal.tsx:22:        if (!useAuthStore.getState().requireVerifiedEmail("gửi báo cáo vi phạm")) return;
+src/features/squad/components/CreateSquadModal.tsx:35:    const [tags, setTags] = useState<string[]>(["🤝 Tìm Đồng Đội"]);
+src/features/squad/components/CreateSquadModal.tsx:60:        if (!useAuthStore.getState().requireVerifiedEmail("tạo phòng đội nhóm")) return;
+src/features/squad/components/CreateSquadModal.tsx:61:        const finalGame = game === "Khác..." ? customGame || "Gaming" : game;
+src/features/squad/components/CreateSquadModal.tsx:140:                            {game === "Khác..." && (
+src/features/squad/components/SquadCard.tsx:327:                                if (!useAuthStore.getState().requireVerifiedEmail("tham gia đội nhóm")) return;
+src/routes/_layout/community/$communityId.tsx:79:    const authorName = dto.user?.name || dto.user?.displayName || dto.user?.username || (dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên");
+src/routes/_layout/community/$communityId.tsx:86:        title: dto.title || "Bài viết",
+src/routes/_layout/community/$communityId.tsx:93:        createdAt: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
+src/routes/_layout/community/$communityId.tsx:155:            description: "Cộng đồng chính thức: trao đổi kinh nghiệm, mẹo chơi, thiết kế căn cứ và hoạt động nổi bật.",
+src/routes/_layout/community/$communityId.tsx:165:                "Tôn trọng các thành viên khác trong cộng đồng",
+src/routes/_layout/community/$communityId.tsx:166:                "Không đăng tải thông tin sai sự thật hoặc lừa đảo",
+src/routes/_layout/community/$communityId.tsx:167:                "Đặt tiêu đề bài viết rõ ràng, đúng chủ đề",
+src/routes/_layout/community/$communityId.tsx:168:                "Không quảng cáo thương mại hoặc spam liên kết",
+src/routes/_layout/community/$communityId.tsx:291:                (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : `Member #${idx + 1}`);
+src/routes/_layout/community/$communityId.tsx:328:            titleVi: "Thảo luận chung",
+src/routes/_layout/community/$communityId.tsx:330:            descVi: "Trò chuyện, hỏi đáp và trao đổi tự do",
+src/routes/_layout/community/$communityId.tsx:339:            descVi: "Chia sẻ bí quyết, mẹo sinh tồn & cẩm nang",
+src/routes/_layout/community/$communityId.tsx:348:            descVi: "Ý tưởng thiết kế căn cứ & trang trí",
+src/routes/_layout/community/$communityId.tsx:357:            descVi: "Giải đáp thắc mắc nhiệm vụ & lỗi game",
+src/routes/_layout/community/$communityId.tsx:366:            descVi: "Khoe thành quả, hình ảnh & video đẹp",
+src/routes/_layout/community/$communityId.tsx:394:            name: p.displayName || p.username || "Thành viên",
+src/routes/_layout/community/$communityId.tsx:523:        if (!requireVerifiedEmail("đăng bài viết mới")) return;
+src/routes/_layout/community/$communityId.tsx:731:                            if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+src/routes/_layout/community/$communityId.tsx:735:                            if (!requireVerifiedEmail("tạo bài viết")) return;
+src/routes/_layout/post/$postId.tsx:108:                <p className="text-text-muted text-sm">Đang tải bài viết...</p>
+src/routes/_layout/post/$postId.tsx:116:                <p className="text-lg font-semibold mb-2">Không tìm thấy bài viết</p>
+src/routes/_layout/post/$postId.tsx:118:                    Quay lại trang chủ
+src/routes/_layout/post/$postId.tsx:140:                    <span className="text-sm font-bold text-text-muted tracking-wide uppercase">Bài viết</span>
+src/routes/_layout/settings/index.tsx:438:                                                        Chế độ tối (Dark Mode)
+src/routes/_layout/settings/index.tsx:447:                                                    Nền tối gaming chuẩn OLED, giảm mỏi mắt khi chơi game đêm.
+src/routes/_layout/settings/index.tsx:470:                                                        Chế độ sáng (Light Mode)
+src/routes/_layout/settings/index.tsx:479:                                                    Nền sáng rõ ràng, độ tương phản sắc nét khi sử dụng ban ngày.
+src/routes/_layout/settings/index.tsx:508:                                        <span>{language === 'vi' ? 'Chuyển sang EN' : 'Switch to VI'}</span>
+src/routes/_layout/settings/index.tsx:657:                                            <div className="text-[11px] text-text-faint mt-0.5">Ai có quyền truy cập trang thông tin cá nhân của bạn</div>
+src/routes/_layout/settings/index.tsx:697:                                            <div className="text-[11px] text-text-faint mt-0.5">Quyền xem huy hiệu và tựa game đã chọn</div>
+src/routes/_layout/settings/index.tsx:809:                                                        defaultValue: 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư của bạn để hoàn tất.'
+src/routes/_layout/verify-email.tsx:27:                    setErrorMsg("Không tìm thấy token xác thực trong liên kết.");
+src/routes/_layout/verify-email.tsx:38:                    setErrorMsg(res.error || "Token xác thực không hợp lệ hoặc đã hết hạn.");
+src/routes/_layout/verify-email.tsx:59:                            Đang xác minh email...
+src/routes/_layout/verify-email.tsx:62:                            Vui lòng chờ trong giây lát trong khi hệ thống kiểm tra token xác thực.
+src/routes/_layout/verify-email.tsx:75:                                Xác minh email thành công!
+src/routes/_layout/verify-email.tsx:78:                                Tài khoản <strong className="text-[#FFB020]">{user?.email || "của bạn"}</strong> đã được mở khóa đầy đủ quyền truy cập.
+src/routes/_layout/verify-email.tsx:86:                            <span>Về Trang Chủ</span>
+src/routes/_layout/verify-email.tsx:99:                                Xác minh không thành công
+src/routes/_layout/verify-email.tsx:108:                            Quay lại Trang Chủ
+src/routes/_layout.tsx:21:    // 1. Lấy thông tin route hiện tại
+src/routes/_layout.tsx:24:    // 2. Ref trỏ đến container chứa thanh cuộn
+src/routes/_layout.tsx:34:    // 3. Mỗi khi chuyển trang (pathname thay đổi), cuộn container về top và đóng sidebar, hoặc restore scroll
+src/routes/_layout.tsx:40:                // Dùng state key của history (nếu có) để phân biệt các lần push giống nhau
+src/routes/_layout.tsx:61:            // Khôi phục scroll hoặc cuộn lên đầu
+src/routes/_layout.tsx:63:                // DOM có thể chưa render xong (ví dụ chưa render xong danh sách post)
+src/routes/_layout.tsx:64:                // Nên ta dùng requestAnimationFrame để thử cuộn lại trong vài frame
+src/routes/_layout.tsx:70:                    // Nếu chưa cuộn tới được đích (do DOM bị ngắn) và chưa quá 15 frame (khoảng 250ms)
+src/routes/auth.tsx:39:        typeLabel: "Quản trị viên (Admin)",
+src/routes/auth.tsx:45:        desc: "Toàn quyền hệ thống, kiểm duyệt và quản lý toàn bộ tính năng",
+src/routes/auth.tsx:50:        typeLabel: "Game thủ VIP (Founder)",
+src/routes/auth.tsx:56:        desc: "Tài khoản VIP Founder, đã xác thực email, game library phong phú",
+src/routes/auth.tsx:67:        desc: "Game thủ Souls-like, nhiều thảo luận & hoạt động cộng đồng",
+src/routes/auth.tsx:78:        desc: "Nhà sáng tạo nội dung, streamer được yêu thích trên nền tảng",
+src/routes/auth.tsx:83:        typeLabel: "Tuyển thủ FPS Pro",
+src/routes/auth.tsx:89:        desc: "Đội trưởng CS2 Premier, tuyển thủ thi đấu bắn súng chiến thuật",
+src/routes/auth.tsx:94:        typeLabel: "Tân thủ (Chưa verify)",
+src/routes/auth.tsx:95:        badge: "Chưa verify",
+src/routes/auth.tsx:100:        desc: "Người chơi mới chưa xác thực email (dùng test cổng bảo vệ email)",
+src/routes/auth.tsx:209:        setSuccessMessage(`Đã chọn tài khoản: ${item.typeLabel} (${acc.username})`);
+src/routes/auth.tsx:589:                            title="Chọn loại tài khoản để đăng nhập"
+src/routes/auth.tsx:592:                            <span>{selectedAccount ? selectedAccount.badge : "Tài khoản"}</span>
+src/routes/auth.tsx:607:                                        <span className="text-xs font-bold text-text">Chọn loại tài khoản đăng nhập</span>
+src/routes/auth.tsx:610:                                        {ACCOUNT_TYPES.length} tài khoản
+src/routes/auth.tsx:653:                                                        title="Đăng nhập ngay (1-click)"
+src/routes/auth.tsx:657:                                                        <span className="hidden sm:inline">Vào ngay</span>
+src/routes/auth.tsx:671:                                    <span>💡 Bấm hàng để chọn & điền form, hoặc "Vào ngay" để đăng nhập</span>
+src/routes/auth.tsx:784:                                                        Loại tài khoản: <strong className="text-text font-bold">{selectedAccount.typeLabel}</strong>
+src/routes/auth.tsx:787:                                                    "Tài khoản mẫu để test:"
+src/routes/auth.tsx:796:                                            <span>{selectedAccount ? "Đổi loại" : "Chọn tài khoản"}</span>
+src/shared/components/search/Search.tsx:353:                                                const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || "Vô danh") : (post.author || "Vô danh");
+src/shared/components/search/Search.tsx:405:                                        <span>Xóa tất cả</span>
+src/shared/components/search/Search.tsx:444:                                        Chưa có lịch sử tìm kiếm.
+src/shared/components/sidebars/RightBar.tsx:41:        detail: "Chương 6 · Hoa Quả Sơn",
+src/shared/components/sidebars/RightBar.tsx:61:        title: "Pha Clutch 1v4 nghẹt thở tại Mirage Premier rank 20k Elo!",
+src/shared/components/sidebars/RightBar.tsx:70:        title: "Tại sao cơ chế Stagger và Poise trong Elden Ring lại cuốn hút?",
+src/shared/components/sidebars/RightBar.tsx:79:        title: "Sau 180 giờ chinh phục: 100% Platinum Trophy Black Myth: Wukong!",
+src/shared/components/sidebars/RightBar.tsx:90:        title: "Giải đấu CS2 IndieG Premier Cup #4",
+src/shared/components/sidebars/RightBar.tsx:91:        subtitle: "Đăng ký squad 5v5 · Tổng giải thưởng 15.000.000đ",
+src/shared/components/sidebars/RightBar.tsx:98:        subtitle: "Thử nghiệm săn quái toàn cầu trên Steam & PS5",
+src/shared/components/sidebars/RightBar.tsx:104:        title: "Đêm hội Community: Wukong Speedrun Challenge",
+src/shared/components/sidebars/RightBar.tsx:105:        subtitle: "Livestream tranh tài diệt boss ẩn cùng dàn creator IndieG",
+src/shared/components/sidebars/RightBar.tsx:132:                            title={`Xem trang cá nhân của ${m.name}`}
+src/shared/components/ui/ImageCropperModal.tsx:19:    title = "Căn chỉnh ảnh đại diện",
+src/shared/components/ui/ImageCropperModal.tsx:168:                        <span className="text-xs font-semibold text-text-muted shrink-0">Thu phóng:</span>
+src/shared/components/ui/ImageCropperModal.tsx:183:                        * Kéo thả ảnh để di chuyển.
+src/shared/components/ui/ImageCropperModal.tsx:189:                        Hủy
+src/shared/components/ui/ImageCropperModal.tsx:197:                        <span>Cắt & Lưu ảnh</span>
+src/components/AvatarUploader.tsx:62:            setStatusMsg('Đang nén WebP và tải lên Cloudflare R2...');
+src/components/AvatarUploader.tsx:76:            setStatusMsg('Cập nhật Avatar thành công!');
+src/components/AvatarUploader.tsx:78:            const message = err instanceof Error ? err.message : 'Upload thất bại';
+src/components/AvatarUploader.tsx:96:                    title="Căn chỉnh ảnh đại diện"
+src/components/AvatarUploader.tsx:124:                <span>{loading ? 'Đang xử lý...' : 'Chọn ảnh đại diện mới'}</span>
+src/components/AvatarUploader.tsx:135:                JPG, PNG, WebP • Tối đa 5MB • Hỗ trợ căn chỉnh crop trước khi nén WebP

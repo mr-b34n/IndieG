@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useSquadStore } from "@/features/squad";
@@ -39,6 +40,25 @@ export const Search = () => {
     });
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    useKeyboardShortcut(["/"], () => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    });
+
+    useKeyboardShortcut(["Mod", "k"], () => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    });
+
+    useKeyboardShortcut(["Escape"], () => {
+        if (focused || document.activeElement === inputRef.current) {
+            setFocused(false);
+            inputRef.current?.blur();
+        }
+    }, { ignoreInput: false });
 
     // Data stores
     const { posts } = usePostsStore();
@@ -198,9 +218,14 @@ export const Search = () => {
                 />
 
                 {!focused && !value && (
-                    <kbd className="hidden sm:flex shrink-0 items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
-                        /
-                    </kbd>
+                    <div className="hidden sm:flex shrink-0 items-center gap-1">
+                        <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
+                            /
+                        </kbd>
+                        <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
+                            {typeof window !== "undefined" && navigator.userAgent.includes("Mac") ? "⌘ K" : "Ctrl K"}
+                        </kbd>
+                    </div>
                 )}
 
                 {value && (

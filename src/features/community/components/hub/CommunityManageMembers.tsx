@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -56,6 +57,7 @@ export const CommunityManageMembers = ({
     userRole = "owner",
     onViewProfile,
 }: CommunityManageMembersProps) => {
+    const { t } = useTranslation();
     const isOwner = userRole === "owner" || userRole === "admin";
     const isModerator = userRole === "moderator";
 
@@ -144,14 +146,14 @@ export const CommunityManageMembers = ({
             const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
             const handle = m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
             const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`;
-            const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (isVi ? "Thành viên" : "Member");
+            const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (t('hub.communitymanagemembers_43'));
             const activitySummary = m.mutedUntil
                 ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
                 : status === "Banned"
-                ? (isVi ? "Đã bị cấm" : "Banned")
+                ? (t('hub.communitymanagemembers_44'))
                 : status === "Pending"
-                ? (isVi ? "Đang chờ duyệt" : "Pending approval")
-                : (isVi ? "Đang hoạt động" : "Active");
+                ? (t('hub.communitymanagemembers_45'))
+                : (t('hub.communitymanagemembers_46'));
 
             return {
                 id: uid,
@@ -185,7 +187,7 @@ export const CommunityManageMembers = ({
             ...prev,
             [id]: {
                 status: newStatus,
-                activitySummary: newStatus === "Muted" ? (isVi ? "Bị tắt tiếng 24h" : "Muted 24h") : (isVi ? "Đang hoạt động" : "Active"),
+                activitySummary: newStatus === "Muted" ? (t('hub.communitymanagemembers_47')) : (t('hub.communitymanagemembers_48')),
             },
         }));
         setActiveMenuMemberId(null);
@@ -222,7 +224,7 @@ export const CommunityManageMembers = ({
             ...prev,
             [id]: {
                 status: newStatus,
-                activitySummary: newStatus === "Banned" ? (isVi ? "Đã bị cấm" : "Banned") : (isVi ? "Đang hoạt động" : "Active"),
+                activitySummary: newStatus === "Banned" ? (t('hub.communitymanagemembers_49')) : (t('hub.communitymanagemembers_50')),
             },
         }));
         setActiveMenuMemberId(null);
@@ -325,12 +327,10 @@ export const CommunityManageMembers = ({
                     <FontAwesomeIcon icon={faShieldHalved} />
                 </div>
                 <h3 className="text-sm font-bold text-text">
-                    {isVi ? "Quyền truy cập bị giới hạn" : "Access Restricted"}
+                    {t('hub.communitymanagemembers_51')}
                 </h3>
                 <p className="text-xs text-text-muted max-w-md">
-                    {isVi
-                        ? "Chỉ Trưởng nhóm và Điều hành viên mới có quyền xem danh sách quản lý thành viên."
-                        : "Only Community Owners and Moderators have permission to view member management."}
+                    {t('hub.communitymanagemembers_52')}
                 </p>
             </div>
         );
@@ -362,12 +362,10 @@ export const CommunityManageMembers = ({
                         <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-400 mt-0.5 text-xs shrink-0" />
                         <div>
                             <span className="font-bold block">
-                                {isVi ? "Bảo vệ tài khoản Trưởng cộng đồng (Owner)" : "Community Owner Protected"}
+                                {t('hub.communitymanagemembers_53')}
                             </span>
                             <span className="text-[11px] text-amber-200/80 leading-relaxed mt-0.5 block">
-                                {isVi
-                                    ? "Bạn không thể tự gỡ quyền hoặc cấm tài khoản của chính mình. Để chuyển giao quyền quản trị cao nhất, vui lòng sử dụng mục Chuyển quyền sở hữu trong 'Vùng nguy hiểm' tại Cài đặt cộng đồng."
-                                    : "You cannot remove or ban yourself. To transfer full stewardship, use the Transfer Ownership workflow in the Danger Zone under Community Settings."}
+                                {t('hub.communitymanagemembers_54')}
                             </span>
                         </div>
                     </div>
@@ -404,7 +402,7 @@ export const CommunityManageMembers = ({
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={isVi ? "Tìm kiếm thành viên..." : "Search members..."}
+                        placeholder={t('hub.communitymanagemembers_55')}
                         className="w-full h-8 pl-8 pr-3 bg-surface-inner border border-divider-primary rounded-[4px] text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary transition-colors"
                     />
                 </div>
@@ -421,7 +419,7 @@ export const CommunityManageMembers = ({
                             : "text-text-muted hover:text-text hover:bg-surface-hover/50"
                     }`}
                 >
-                    <span>{isVi ? "Tất cả" : "All"}</span>
+                    <span>{t('hub.communitymanagemembers_56')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.all})</span>
                 </button>
 
@@ -434,7 +432,7 @@ export const CommunityManageMembers = ({
                             : "text-text-muted hover:text-text hover:bg-surface-hover/50"
                     }`}
                 >
-                    <span>{isVi ? "Thành viên" : "Members"}</span>
+                    <span>{t('hub.communitymanagemembers_57')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.members})</span>
                 </button>
 
@@ -448,7 +446,7 @@ export const CommunityManageMembers = ({
                     }`}
                 >
                     <FontAwesomeIcon icon={faShieldHalved} className="text-[10px] text-primary" />
-                    <span>{isVi ? "Điều hành viên" : "Moderators"}</span>
+                    <span>{t('hub.communitymanagemembers_58')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.moderators})</span>
                 </button>
 
@@ -462,7 +460,7 @@ export const CommunityManageMembers = ({
                     }`}
                 >
                     <FontAwesomeIcon icon={faVolumeXmark} className="text-[10px] text-amber-400" />
-                    <span>{isVi ? "Bị tắt tiếng" : "Muted"}</span>
+                    <span>{t('hub.communitymanagemembers_59')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.muted})</span>
                 </button>
 
@@ -476,7 +474,7 @@ export const CommunityManageMembers = ({
                     }`}
                 >
                     <FontAwesomeIcon icon={faBan} className="text-[10px] text-rose-400" />
-                    <span>{isVi ? "Bị cấm" : "Banned"}</span>
+                    <span>{t('hub.communitymanagemembers_60')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.banned})</span>
                 </button>
 
@@ -490,7 +488,7 @@ export const CommunityManageMembers = ({
                     }`}
                 >
                     <FontAwesomeIcon icon={faUserCheck} className="text-[10px] text-amber-400" />
-                    <span>{isVi ? "Chờ duyệt" : "Pending"}</span>
+                    <span>{t('hub.communitymanagemembers_61')}</span>
                     <span className="font-mono text-[10px] text-text-faint">({counts.pending})</span>
                 </button>
             </div>
@@ -500,11 +498,11 @@ export const CommunityManageMembers = ({
                 <table className="w-full text-left text-xs border-collapse">
                     <thead>
                         <tr className="border-b border-divider-primary/50 text-[10px] font-mono text-text-faint uppercase">
-                            <th className="pb-2.5 font-bold pl-2">{isVi ? "THÀNH VIÊN" : "MEMBER"}</th>
-                            <th className="pb-2.5 font-bold">{isVi ? "VAI TRÒ" : "ROLE"}</th>
-                            <th className="pb-2.5 font-bold">{isVi ? "TRẠNG THÁI" : "STATUS"}</th>
-                            <th className="pb-2.5 font-bold hidden md:table-cell">{isVi ? "THAM GIA" : "JOINED"}</th>
-                            <th className="pb-2.5 font-bold hidden sm:table-cell">{isVi ? "HOẠT ĐỘNG" : "ACTIVITY"}</th>
+                            <th className="pb-2.5 font-bold pl-2">{t('hub.communitymanagemembers_62')}</th>
+                            <th className="pb-2.5 font-bold">{t('hub.communitymanagemembers_63')}</th>
+                            <th className="pb-2.5 font-bold">{t('hub.communitymanagemembers_64')}</th>
+                            <th className="pb-2.5 font-bold hidden md:table-cell">{t('hub.communitymanagemembers_65')}</th>
+                            <th className="pb-2.5 font-bold hidden sm:table-cell">{t('hub.communitymanagemembers_66')}</th>
                             <th className="pb-2.5 font-bold text-right pr-2">...</th>
                         </tr>
                     </thead>
@@ -619,7 +617,7 @@ export const CommunityManageMembers = ({
                                                         className="w-full px-3 py-2 text-text-muted hover:text-text hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
                                                     >
                                                         <FontAwesomeIcon icon={faUser} className="text-xs text-text-faint w-4" />
-                                                        <span>{isVi ? "Xem hồ sơ" : "View profile"}</span>
+                                                        <span>{t('hub.communitymanagemembers_67')}</span>
                                                     </button>
 
                                                     {/* ROLE SPECIFIC ACTIONS */}
@@ -633,7 +631,7 @@ export const CommunityManageMembers = ({
                                                             className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40 font-bold"
                                                         >
                                                             <FontAwesomeIcon icon={faCrown} className="text-xs text-amber-400 w-4" />
-                                                            <span>{isVi ? "Trưởng cộng đồng (Bảo vệ)" : "Owner (Protected)"}</span>
+                                                            <span>{t('hub.communitymanagemembers_68')}</span>
                                                         </button>
                                                     ) : member.role === "Moderator" ? (
                                                         isOwner ? (
@@ -644,7 +642,7 @@ export const CommunityManageMembers = ({
                                                                     className="w-full px-3 py-2 text-text-muted hover:text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40"
                                                                 >
                                                                     <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-text-faint w-4" />
-                                                                    <span>{isVi ? "Gỡ quyền Điều hành" : "Remove Moderator"}</span>
+                                                                    <span>{t('hub.communitymanagemembers_69')}</span>
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -652,7 +650,7 @@ export const CommunityManageMembers = ({
                                                                     className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
                                                                 >
                                                                     <FontAwesomeIcon icon={member.status === "Muted" ? faVolumeHigh : faVolumeXmark} className="text-xs w-4" />
-                                                                    <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng 24h" : "Mute")}</span>
+                                                                    <span>{member.status === "Muted" ? (t('hub.communitymanagemembers_70')) : (t('hub.communitymanagemembers_71'))}</span>
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -660,13 +658,13 @@ export const CommunityManageMembers = ({
                                                                     className="w-full px-3 py-2 text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
                                                                 >
                                                                     <FontAwesomeIcon icon={member.status === "Banned" ? faUnlock : faBan} className="text-xs w-4" />
-                                                                    <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm thành viên" : "Ban")}</span>
+                                                                    <span>{member.status === "Banned" ? (t('hub.communitymanagemembers_72')) : (t('hub.communitymanagemembers_73'))}</span>
                                                                 </button>
                                                             </>
                                                         ) : (
                                                             <div className="px-3 py-2 text-[11px] text-text-faint italic border-t border-divider-primary/40 flex items-center gap-1.5">
                                                                 <FontAwesomeIcon icon={faShieldHalved} className="text-[10px] text-primary" />
-                                                                <span>{isVi ? "Được bảo vệ bởi vai trò Mod" : "Protected Mod role"}</span>
+                                                                <span>{t('hub.communitymanagemembers_74')}</span>
                                                             </div>
                                                         )
                                                     ) : (
@@ -679,7 +677,7 @@ export const CommunityManageMembers = ({
                                                                     className="w-full px-3 py-2 text-primary hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors border-t border-divider-primary/40 font-semibold"
                                                                 >
                                                                     <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary w-4" />
-                                                                    <span>{isVi ? "Thăng cấp Điều hành viên" : "Promote to Moderator"}</span>
+                                                                    <span>{t('hub.communitymanagemembers_75')}</span>
                                                                 </button>
                                                             )}
                                                             <button
@@ -688,7 +686,7 @@ export const CommunityManageMembers = ({
                                                                 className="w-full px-3 py-2 text-amber-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
                                                             >
                                                                 <FontAwesomeIcon icon={member.status === "Muted" ? faVolumeHigh : faVolumeXmark} className="text-xs w-4" />
-                                                                <span>{member.status === "Muted" ? (isVi ? "Bỏ tắt tiếng" : "Unmute") : (isVi ? "Tắt tiếng" : "Mute")}</span>
+                                                                <span>{member.status === "Muted" ? (t('hub.communitymanagemembers_76')) : (t('hub.communitymanagemembers_77'))}</span>
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -696,7 +694,7 @@ export const CommunityManageMembers = ({
                                                                 className="w-full px-3 py-2 text-rose-400 hover:bg-surface-hover/60 flex items-center gap-2 cursor-pointer transition-colors"
                                                             >
                                                                 <FontAwesomeIcon icon={member.status === "Banned" ? faUnlock : faBan} className="text-xs w-4" />
-                                                                <span>{member.status === "Banned" ? (isVi ? "Gỡ lệnh cấm" : "Unban") : (isVi ? "Cấm khỏi cộng đồng" : "Ban")}</span>
+                                                                <span>{member.status === "Banned" ? (t('hub.communitymanagemembers_78')) : (t('hub.communitymanagemembers_79'))}</span>
                                                             </button>
                                                         </>
                                                     )}
@@ -713,7 +711,7 @@ export const CommunityManageMembers = ({
                 {isLoadingMembers && (
                     <div className="py-12 flex flex-col items-center justify-center gap-2 text-text-faint">
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-lg text-primary" />
-                        <span className="text-xs">{isVi ? "Đang tải danh sách thành viên..." : "Loading member directory..."}</span>
+                        <span className="text-xs">{t('hub.communitymanagemembers_80')}</span>
                     </div>
                 )}
 
@@ -721,7 +719,7 @@ export const CommunityManageMembers = ({
                     <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2">
                         <FontAwesomeIcon icon={faUser} className="text-2xl text-text-faint/60" />
                         <p className="text-xs text-text-muted">
-                            {isVi ? "Không tìm thấy thành viên nào phù hợp với bộ lọc." : "No members found matching the filter."}
+                            {t('hub.communitymanagemembers_81')}
                         </p>
                     </div>
                 )}

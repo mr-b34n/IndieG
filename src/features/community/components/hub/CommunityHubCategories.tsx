@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 
@@ -24,6 +25,7 @@ export const CommunityHubCategories = ({
     onSelectCategory,
     isVi,
 }: CommunityHubCategoriesProps) => {
+    const { t } = useTranslation();
     return (
         <div className="w-full flex flex-col gap-3 select-none">
             {/* Section Title */}
@@ -37,7 +39,7 @@ export const CommunityHubCategories = ({
                         onClick={() => onSelectCategory(null)}
                         className="text-xs text-primary hover:underline cursor-pointer font-semibold"
                     >
-                        {isVi ? "Tất cả danh mục" : "Show all"}
+                        {t('hub.communityhubcategories_12')}
                     </button>
                 )}
             </div>

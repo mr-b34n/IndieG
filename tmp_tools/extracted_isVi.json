@@ -1,0 +1,1317 @@
+[
+  {
+    "key": "hub.communitychatdrawer_1",
+    "vi": "Nhập tin nhắn...",
+    "en": "Type a message..."
+  },
+  {
+    "key": "hub.communityhubaboutview_2",
+    "vi": "Cẩm nang sinh tồn cơ bản cho người mới",
+    "en": "Beginner's Survival Roadmap"
+  },
+  {
+    "key": "hub.communityhubaboutview_3",
+    "vi": "Bảng công thức chế tạo & vật liệu nâng cao",
+    "en": "Advanced Crafting & Recipes Matrix"
+  },
+  {
+    "key": "hub.communityhubaboutview_4",
+    "vi": "Tối ưu hóa căn cứ & hệ sinh thái bè tự động",
+    "en": "Automated Raft Automation & Irrigation"
+  },
+  {
+    "key": "hub.communityhubaboutview_5",
+    "vi": "Mọi thành viên cần tuân thủ để xây dựng môi trường văn minh.",
+    "en": "Please respect and follow the guidelines below."
+  },
+  {
+    "key": "hub.communityhubaboutview_6",
+    "vi": "Tổng hợp tài liệu, hướng dẫn và cơ chế từ các thành viên gạo cội.",
+    "en": "Curated guides, game mechanics and data sheets."
+  },
+  {
+    "key": "hub.communityhubaboutview_7",
+    "vi": "Liên Kết Quan Trọng",
+    "en": "Official & Community Links"
+  },
+  {
+    "key": "hub.communityhubaboutview_8",
+    "vi": "Các đường dẫn chính thức và kênh giao lưu hữu ích.",
+    "en": "Handy external links and useful resources."
+  },
+  {
+    "key": "hub.communityhubaboutview_9",
+    "vi": "Thông tin giới thiệu, mục tiêu và đội ngũ phát triển.",
+    "en": "Community story, mission, and moderators."
+  },
+  {
+    "key": "hub.communityhubaboutview_10",
+    "vi": "GIỚI THIỆU CHUNG",
+    "en": "MISSION & OVERVIEW"
+  },
+  {
+    "key": "hub.communityhubaboutview_11",
+    "vi": "Không gian dành riêng cho các game thủ trao đổi kinh nghiệm, chia sẻ các bản build sáng tạo, tìm đồng đội leo rank hoặc co-op, và tham gia các sự kiện giải đấu cộng đồng định kỳ.",
+    "en": "A dedicated space for passionate players to exchange knowledge, share creative builds, find co-op teammates, and participate in community tournaments."
+  },
+  {
+    "key": "hub.communityhubcategories_12",
+    "vi": "Tất cả danh mục",
+    "en": "Show all"
+  },
+  {
+    "key": "hub.communityhubdiscussions_13",
+    "vi": "Chưa có bài thảo luận nào phù hợp.",
+    "en": "No discussions found in this section."
+  },
+  {
+    "key": "hub.communityhubeventsview_14",
+    "vi": "Các buổi giao lưu, custom game và giải đấu định kỳ.",
+    "en": "Upcoming tournaments, play sessions, and community watch parties."
+  },
+  {
+    "key": "hub.communityhubeventsview_15",
+    "vi": "SẮP DIỄN RA",
+    "en": "UPCOMING"
+  },
+  {
+    "key": "hub.communityhubeventsview_16",
+    "vi": "người tham gia",
+    "en": "attending"
+  },
+  {
+    "key": "hub.communityhubeventsview_17",
+    "vi": "Đã đăng ký",
+    "en": "Attending"
+  },
+  {
+    "key": "hub.communityhubeventsview_18",
+    "vi": "Tham gia sự kiện",
+    "en": "RSVP Event"
+  },
+  {
+    "key": "hub.communityhubfeed_19",
+    "vi": "SẮP XẾP:",
+    "en": "SORT:"
+  },
+  {
+    "key": "hub.communityhubfeed_20",
+    "vi": "Phổ biến",
+    "en": "Hot"
+  },
+  {
+    "key": "hub.communityhubfeed_21",
+    "vi": "Mới nhất",
+    "en": "Newest"
+  },
+  {
+    "key": "hub.communityhubfeed_22",
+    "vi": "bài viết",
+    "en": "posts"
+  },
+  {
+    "key": "hub.communityhubfeed_23",
+    "vi": "Chưa có hoạt động nào trong mục này.",
+    "en": "No posts found."
+  },
+  {
+    "key": "hub.communityhubfeed_24",
+    "vi": "Hãy là người đầu tiên chia sẻ nội dung.",
+    "en": "Be the first to post something."
+  },
+  {
+    "key": "hub.communityhubheader_25",
+    "vi": "Đã tham gia",
+    "en": "Joined"
+  },
+  {
+    "key": "hub.communityhubheader_26",
+    "vi": "+ Tham gia",
+    "en": "+ Join"
+  },
+  {
+    "key": "hub.communityhubheader_27",
+    "vi": "Tạo bài viết",
+    "en": "Create Post"
+  },
+  {
+    "key": "hub.communityhubmediaview_28",
+    "vi": "Hình ảnh gameplay, căn cứ, fanart và highlights từ cộng đồng.",
+    "en": "Community screenshots, base builds, highlights and fan creations."
+  },
+  {
+    "key": "hub.communityhubmediaview_29",
+    "vi": "hình ảnh",
+    "en": "items"
+  },
+  {
+    "key": "hub.communityhubmediaview_30",
+    "vi": "Chưa có hình ảnh nào được tải lên.",
+    "en": "No media uploads found."
+  },
+  {
+    "key": "hub.communityhubmembers_31",
+    "vi": "Tất cả thành viên",
+    "en": "All Members"
+  },
+  {
+    "key": "hub.communityhubmembers_32",
+    "vi": "Ban quản trị",
+    "en": "Staff & Mods"
+  },
+  {
+    "key": "hub.communityhubmembers_33",
+    "vi": "Tìm thành viên...",
+    "en": "Search members..."
+  },
+  {
+    "key": "hub.communityhubmembers_34",
+    "vi": "Không tìm thấy thành viên phù hợp.",
+    "en": "No community members found."
+  },
+  {
+    "key": "hub.communityhubmembers_35",
+    "vi": "Gia nhập:",
+    "en": "Joined:"
+  },
+  {
+    "key": "hub.communityhubrightrail_36",
+    "vi": "Không spam hoặc quảng cáo thương mại trái phép",
+    "en": "No spam or unauthorized advertising"
+  },
+  {
+    "key": "hub.communityhubrightrail_37",
+    "vi": "Tôn trọng các thành viên, nghiêm cấm toxic / phân biệt",
+    "en": "Be respectful, zero toxicity or harassment"
+  },
+  {
+    "key": "hub.communityhubrightrail_38",
+    "vi": "Đăng bài đúng chủ đề, không chia sẻ hack / cheat",
+    "en": "Stay on-topic, strictly no cheats or piracy"
+  },
+  {
+    "key": "hub.communityhubrightrail_39",
+    "vi": "Xem tất cả",
+    "en": "View all"
+  },
+  {
+    "key": "hub.communityhubrightrail_40",
+    "vi": "Xem thêm",
+    "en": "See all"
+  },
+  {
+    "key": "hub.communityhubsidebar_41",
+    "vi": "Thu gọn thanh điều hướng",
+    "en": "Collapse sidebar"
+  },
+  {
+    "key": "hub.communityhubsidebar_42",
+    "vi": "Mở rộng thanh điều hướng",
+    "en": "Expand sidebar"
+  },
+  {
+    "key": "hub.communitymanagemembers_43",
+    "vi": "Thành viên",
+    "en": "Member"
+  },
+  {
+    "key": "hub.communitymanagemembers_44",
+    "vi": "Đã bị cấm",
+    "en": "Banned"
+  },
+  {
+    "key": "hub.communitymanagemembers_45",
+    "vi": "Đang chờ duyệt",
+    "en": "Pending approval"
+  },
+  {
+    "key": "hub.communitymanagemembers_46",
+    "vi": "Đang hoạt động",
+    "en": "Active"
+  },
+  {
+    "key": "hub.communitymanagemembers_47",
+    "vi": "Bị tắt tiếng 24h",
+    "en": "Muted 24h"
+  },
+  {
+    "key": "hub.communitymanagemembers_48",
+    "vi": "Đang hoạt động",
+    "en": "Active"
+  },
+  {
+    "key": "hub.communitymanagemembers_49",
+    "vi": "Đã bị cấm",
+    "en": "Banned"
+  },
+  {
+    "key": "hub.communitymanagemembers_50",
+    "vi": "Đang hoạt động",
+    "en": "Active"
+  },
+  {
+    "key": "hub.communitymanagemembers_51",
+    "vi": "Quyền truy cập bị giới hạn",
+    "en": "Access Restricted"
+  },
+  {
+    "key": "hub.communitymanagemembers_52",
+    "vi": "Chỉ Trưởng nhóm và Điều hành viên mới có quyền xem danh sách quản lý thành viên.",
+    "en": "Only Community Owners and Moderators have permission to view member management."
+  },
+  {
+    "key": "hub.communitymanagemembers_53",
+    "vi": "Bảo vệ tài khoản Trưởng cộng đồng (Owner)",
+    "en": "Community Owner Protected"
+  },
+  {
+    "key": "hub.communitymanagemembers_54",
+    "vi": "Bạn không thể tự gỡ quyền hoặc cấm tài khoản của chính mình. Để chuyển giao quyền quản trị cao nhất, vui lòng sử dụng mục Chuyển quyền sở hữu trong 'Vùng nguy hiểm' tại Cài đặt cộng đồng.",
+    "en": "You cannot remove or ban yourself. To transfer full stewardship, use the Transfer Ownership workflow in the Danger Zone under Community Settings."
+  },
+  {
+    "key": "hub.communitymanagemembers_55",
+    "vi": "Tìm kiếm thành viên...",
+    "en": "Search members..."
+  },
+  {
+    "key": "hub.communitymanagemembers_56",
+    "vi": "Tất cả",
+    "en": "All"
+  },
+  {
+    "key": "hub.communitymanagemembers_57",
+    "vi": "Thành viên",
+    "en": "Members"
+  },
+  {
+    "key": "hub.communitymanagemembers_58",
+    "vi": "Điều hành viên",
+    "en": "Moderators"
+  },
+  {
+    "key": "hub.communitymanagemembers_59",
+    "vi": "Bị tắt tiếng",
+    "en": "Muted"
+  },
+  {
+    "key": "hub.communitymanagemembers_60",
+    "vi": "Bị cấm",
+    "en": "Banned"
+  },
+  {
+    "key": "hub.communitymanagemembers_61",
+    "vi": "Chờ duyệt",
+    "en": "Pending"
+  },
+  {
+    "key": "hub.communitymanagemembers_62",
+    "vi": "THÀNH VIÊN",
+    "en": "MEMBER"
+  },
+  {
+    "key": "hub.communitymanagemembers_63",
+    "vi": "VAI TRÒ",
+    "en": "ROLE"
+  },
+  {
+    "key": "hub.communitymanagemembers_64",
+    "vi": "TRẠNG THÁI",
+    "en": "STATUS"
+  },
+  {
+    "key": "hub.communitymanagemembers_65",
+    "vi": "THAM GIA",
+    "en": "JOINED"
+  },
+  {
+    "key": "hub.communitymanagemembers_66",
+    "vi": "HOẠT ĐỘNG",
+    "en": "ACTIVITY"
+  },
+  {
+    "key": "hub.communitymanagemembers_67",
+    "vi": "Xem hồ sơ",
+    "en": "View profile"
+  },
+  {
+    "key": "hub.communitymanagemembers_68",
+    "vi": "Trưởng cộng đồng (Bảo vệ)",
+    "en": "Owner (Protected)"
+  },
+  {
+    "key": "hub.communitymanagemembers_69",
+    "vi": "Gỡ quyền Điều hành",
+    "en": "Remove Moderator"
+  },
+  {
+    "key": "hub.communitymanagemembers_70",
+    "vi": "Bỏ tắt tiếng",
+    "en": "Unmute"
+  },
+  {
+    "key": "hub.communitymanagemembers_71",
+    "vi": "Tắt tiếng 24h",
+    "en": "Mute"
+  },
+  {
+    "key": "hub.communitymanagemembers_72",
+    "vi": "Gỡ lệnh cấm",
+    "en": "Unban"
+  },
+  {
+    "key": "hub.communitymanagemembers_73",
+    "vi": "Cấm thành viên",
+    "en": "Ban"
+  },
+  {
+    "key": "hub.communitymanagemembers_74",
+    "vi": "Được bảo vệ bởi vai trò Mod",
+    "en": "Protected Mod role"
+  },
+  {
+    "key": "hub.communitymanagemembers_75",
+    "vi": "Thăng cấp Điều hành viên",
+    "en": "Promote to Moderator"
+  },
+  {
+    "key": "hub.communitymanagemembers_76",
+    "vi": "Bỏ tắt tiếng",
+    "en": "Unmute"
+  },
+  {
+    "key": "hub.communitymanagemembers_77",
+    "vi": "Tắt tiếng",
+    "en": "Mute"
+  },
+  {
+    "key": "hub.communitymanagemembers_78",
+    "vi": "Gỡ lệnh cấm",
+    "en": "Unban"
+  },
+  {
+    "key": "hub.communitymanagemembers_79",
+    "vi": "Cấm khỏi cộng đồng",
+    "en": "Ban"
+  },
+  {
+    "key": "hub.communitymanagemembers_80",
+    "vi": "Đang tải danh sách thành viên...",
+    "en": "Loading member directory..."
+  },
+  {
+    "key": "hub.communitymanagemembers_81",
+    "vi": "Không tìm thấy thành viên nào phù hợp với bộ lọc.",
+    "en": "No members found matching the filter."
+  },
+  {
+    "key": "hub.communitymanagemoderation_82",
+    "vi": "Yêu cầu gia nhập cộng đồng đang chờ xem xét.",
+    "en": "Join request awaiting steward review."
+  },
+  {
+    "key": "hub.communitymanagemoderation_83",
+    "vi": "Gần đây",
+    "en": "Recent"
+  },
+  {
+    "key": "hub.communitymanagemoderation_84",
+    "vi": "Nội dung bị báo cáo",
+    "en": "Reported content"
+  },
+  {
+    "key": "hub.communitymanagemoderation_85",
+    "vi": "Vi phạm quy tắc ứng xử",
+    "en": "Community rule violation"
+  },
+  {
+    "key": "hub.communitymanagemoderation_86",
+    "vi": "Gần đây",
+    "en": "Recent"
+  },
+  {
+    "key": "hub.communitymanagemoderation_87",
+    "vi": "Không thể cập nhật báo cáo",
+    "en": "Failed to resolve report"
+  },
+  {
+    "key": "hub.communitymanagemoderation_88",
+    "vi": "Đã bác bỏ báo cáo.",
+    "en": "Report dismissed."
+  },
+  {
+    "key": "hub.communitymanagemoderation_89",
+    "vi": "Không thể bác bỏ báo cáo",
+    "en": "Failed to dismiss report"
+  },
+  {
+    "key": "hub.communitymanagemoderation_90",
+    "vi": "Chỉ Trưởng nhóm (Owner) mới có quyền gỡ Điều hành viên.",
+    "en": "Only Owner can remove Moderators."
+  },
+  {
+    "key": "hub.communitymanagemoderation_91",
+    "vi": "Chỉ Trưởng nhóm (Owner) mới có quyền chỉ định Điều hành viên.",
+    "en": "Only Owner can promote Moderators."
+  },
+  {
+    "key": "hub.communitymanagemoderation_92",
+    "vi": "Vừa xong",
+    "en": "Just now"
+  },
+  {
+    "key": "hub.communitymanagemoderation_93",
+    "vi": "Quy tắc cộng đồng",
+    "en": "Community Rules"
+  },
+  {
+    "key": "hub.communitymanagemoderation_94",
+    "vi": "Yêu cầu gia nhập",
+    "en": "Join Requests"
+  },
+  {
+    "key": "hub.communitymanagemoderation_95",
+    "vi": "Báo cáo vi phạm",
+    "en": "Reports"
+  },
+  {
+    "key": "hub.communitymanagemoderation_96",
+    "vi": "Đội ngũ điều hành",
+    "en": "Moderator Team"
+  },
+  {
+    "key": "hub.communitymanagemoderation_97",
+    "vi": "Nhật ký kiểm duyệt",
+    "en": "Audit History"
+  },
+  {
+    "key": "hub.communitymanagemoderation_98",
+    "vi": "yêu cầu đang chờ duyệt",
+    "en": "requests awaiting decision"
+  },
+  {
+    "key": "hub.communitymanagemoderation_99",
+    "vi": "Chế độ phê duyệt: Thủ công",
+    "en": "Membership Mode: Approval Required"
+  },
+  {
+    "key": "hub.communitymanagemoderation_100",
+    "vi": "Không có yêu cầu tham gia nào đang chờ duyệt.",
+    "en": "No pending join requests."
+  },
+  {
+    "key": "hub.communitymanagemoderation_101",
+    "vi": "Từ chối",
+    "en": "Reject"
+  },
+  {
+    "key": "hub.communitymanagemoderation_102",
+    "vi": "Phê duyệt",
+    "en": "Approve"
+  },
+  {
+    "key": "hub.communitymanagemoderation_103",
+    "vi": "Đã duyệt",
+    "en": "Approved"
+  },
+  {
+    "key": "hub.communitymanagemoderation_104",
+    "vi": "Đã từ chối",
+    "en": "Rejected"
+  },
+  {
+    "key": "hub.communitymanagemoderation_105",
+    "vi": "Tất cả",
+    "en": "All"
+  },
+  {
+    "key": "hub.communitymanagemoderation_106",
+    "vi": "Chờ xử lý",
+    "en": "Pending"
+  },
+  {
+    "key": "hub.communitymanagemoderation_107",
+    "vi": "Đã xử lý",
+    "en": "Resolved"
+  },
+  {
+    "key": "hub.communitymanagemoderation_108",
+    "vi": "Đã bác bỏ",
+    "en": "Dismissed"
+  },
+  {
+    "key": "hub.communitymanagemoderation_109",
+    "vi": "Toàn quyền quản trị Admin",
+    "en": "Full Admin Access"
+  },
+  {
+    "key": "hub.communitymanagemoderation_110",
+    "vi": "Không có báo cáo vi phạm nào phù hợp bộ lọc.",
+    "en": "No reports matching filter."
+  },
+  {
+    "key": "hub.communitymanagemoderation_111",
+    "vi": "Bác bỏ",
+    "en": "Dismiss"
+  },
+  {
+    "key": "hub.communitymanagemoderation_112",
+    "vi": "Tắt tiếng tác giả 24h",
+    "en": "Muted author 24h"
+  },
+  {
+    "key": "hub.communitymanagemoderation_113",
+    "vi": "Tắt tiếng tác giả",
+    "en": "Mute Author"
+  },
+  {
+    "key": "hub.communitymanagemoderation_114",
+    "vi": "Đã gỡ bài viết",
+    "en": "Removed content"
+  },
+  {
+    "key": "hub.communitymanagemoderation_115",
+    "vi": "Gỡ nội dung",
+    "en": "Remove Content"
+  },
+  {
+    "key": "hub.communitymanagemoderation_116",
+    "vi": "Đã xử lý",
+    "en": "Resolved"
+  },
+  {
+    "key": "hub.communitymanagemoderation_117",
+    "vi": "Đã bác bỏ",
+    "en": "Dismissed"
+  },
+  {
+    "key": "hub.communitymanagemoderation_118",
+    "vi": "Điều hành viên giúp duy trì thảo luận, duyệt bài và xử lý báo cáo trong cộng đồng này.",
+    "en": "Moderators help maintain discussions, approve requests, and resolve reports for this community."
+  },
+  {
+    "key": "hub.communitymanagemoderation_119",
+    "vi": "+ Thêm Điều hành viên",
+    "en": "+ Add Moderator"
+  },
+  {
+    "key": "hub.communitymanagemoderation_120",
+    "vi": "Chưa có Điều hành viên nào được chỉ định.",
+    "en": "No moderators appointed yet."
+  },
+  {
+    "key": "hub.communitymanagemoderation_121",
+    "vi": "Gỡ quyền",
+    "en": "Demote"
+  },
+  {
+    "key": "hub.communitymanagemoderation_122",
+    "vi": "Điều hành viên",
+    "en": "Moderator"
+  },
+  {
+    "key": "hub.communitymanagemoderation_123",
+    "vi": "Trưởng cộng đồng",
+    "en": "Primary Steward"
+  },
+  {
+    "key": "hub.communitymanagemoderation_124",
+    "vi": "Thăng cấp thành viên làm Điều hành viên",
+    "en": "Promote Member to Moderator"
+  },
+  {
+    "key": "hub.communitymanagemoderation_125",
+    "vi": "Nhập @username của thành viên bạn muốn trao quyền kiểm duyệt cho cộng đồng này:",
+    "en": "Enter the @username of the member you want to grant community moderation permissions:"
+  },
+  {
+    "key": "hub.communitymanagemoderation_126",
+    "vi": "Xác nhận",
+    "en": "Promote"
+  },
+  {
+    "key": "hub.communitymanagemoderation_127",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.communitymanagemoderation_128",
+    "vi": "Nhật ký kiểm duyệt thời gian thực",
+    "en": "Real-time moderation audit log"
+  },
+  {
+    "key": "hub.communitymanagemoderation_129",
+    "vi": "Lưu giữ 90 ngày",
+    "en": "Retained for 90 days"
+  },
+  {
+    "key": "hub.communitymanagemoderation_130",
+    "vi": "Chưa có nhật ký kiểm duyệt nào được ghi nhận.",
+    "en": "No moderation history recorded yet."
+  },
+  {
+    "key": "hub.communitymanageoverview_131",
+    "vi": "Tổng quan",
+    "en": "Overview"
+  },
+  {
+    "key": "hub.communitymanageoverview_132",
+    "vi": "Kiểm duyệt",
+    "en": "Moderation"
+  },
+  {
+    "key": "hub.communitymanageoverview_133",
+    "vi": "Thành viên",
+    "en": "Members"
+  },
+  {
+    "key": "hub.communitymanageoverview_134",
+    "vi": "Báo cáo",
+    "en": "Reports"
+  },
+  {
+    "key": "hub.communitymanageoverview_135",
+    "vi": "Cài đặt",
+    "en": "Settings"
+  },
+  {
+    "key": "hub.communitymanageoverview_136",
+    "vi": "Cần điều tra nội dung bị người dùng gắn cờ",
+    "en": "Review user-reported content"
+  },
+  {
+    "key": "hub.communitymanageoverview_137",
+    "vi": "Xử lý ngay",
+    "en": "Review now"
+  },
+  {
+    "key": "hub.communitymanageoverview_138",
+    "vi": "3 bài viết bị hệ thống kiểm duyệt tạm giữ",
+    "en": "3 flagged posts awaiting approval"
+  },
+  {
+    "key": "hub.communitymanageoverview_139",
+    "vi": "Nội dung kích hoạt bộ lọc từ khóa nhạy cảm",
+    "en": "Triggered automated keyword filter"
+  },
+  {
+    "key": "hub.communitymanageoverview_140",
+    "vi": "Xem xét",
+    "en": "Review"
+  },
+  {
+    "key": "hub.communitymanageoverview_141",
+    "vi": "Đơn xin gia nhập cộng đồng chưa được chấp thuận",
+    "en": "New member join applications waiting"
+  },
+  {
+    "key": "hub.communitymanageoverview_142",
+    "vi": "Duyệt đơn",
+    "en": "Review"
+  },
+  {
+    "key": "hub.communitymanageoverview_143",
+    "vi": "ShadowHunter đã báo cáo bài viết vi phạm quy tắc",
+    "en": "ShadowHunter reported a post for spam"
+  },
+  {
+    "key": "hub.communitymanageoverview_144",
+    "vi": "Báo cáo",
+    "en": "Reports"
+  },
+  {
+    "key": "hub.communitymanageoverview_145",
+    "vi": "EldenLord_VN đã tham gia cộng đồng",
+    "en": "EldenLord_VN joined the community"
+  },
+  {
+    "key": "hub.communitymanageoverview_146",
+    "vi": "Thành viên",
+    "en": "Members"
+  },
+  {
+    "key": "hub.communitymanageoverview_147",
+    "vi": "MonkeyKing_88 đã tạo thảo luận mới trong mục Thảo luận",
+    "en": "MonkeyKing_88 created a new discussion"
+  },
+  {
+    "key": "hub.communitymanageoverview_148",
+    "vi": "Xem",
+    "en": "View"
+  },
+  {
+    "key": "hub.communitymanageoverview_149",
+    "vi": "Điều hành viên đã phê duyệt báo cáo vi phạm #104",
+    "en": "Moderator reviewed and resolved report #104"
+  },
+  {
+    "key": "hub.communitymanageoverview_150",
+    "vi": "Nhật ký",
+    "en": "Log"
+  },
+  {
+    "key": "hub.communitymanageoverview_151",
+    "vi": "Bảng điều khiển và vận hành cộng đồng",
+    "en": "Community Management & Operations Hub"
+  },
+  {
+    "key": "hub.communitymanageoverview_152",
+    "vi": "Xem trang công khai",
+    "en": "View Public Community"
+  },
+  {
+    "key": "hub.communitymanageoverview_153",
+    "vi": "Đăng bài",
+    "en": "Post"
+  },
+  {
+    "key": "hub.communitymanageoverview_154",
+    "vi": "Thành viên",
+    "en": "Members"
+  },
+  {
+    "key": "hub.communitymanageoverview_155",
+    "vi": "Trực tuyến",
+    "en": "Online now"
+  },
+  {
+    "key": "hub.communitymanageoverview_156",
+    "vi": "Báo cáo vi phạm",
+    "en": "Reports"
+  },
+  {
+    "key": "hub.communitymanageoverview_157",
+    "vi": "Chờ duyệt",
+    "en": "Pending requests"
+  },
+  {
+    "key": "hub.communitymanageoverview_158",
+    "vi": "Thảo luận",
+    "en": "Discussions"
+  },
+  {
+    "key": "hub.communitymanageoverview_159",
+    "vi": "mục cần hành động",
+    "en": "actionable items"
+  },
+  {
+    "key": "hub.communitymanageoverview_160",
+    "vi": "Tất cả đã được xử lý. Không có vi phạm hay yêu cầu tồn đọng.",
+    "en": "All clear! No pending moderation issues requiring immediate action."
+  },
+  {
+    "key": "hub.communitymanageoverview_161",
+    "vi": "Kiểm duyệt",
+    "en": "Moderation"
+  },
+  {
+    "key": "hub.communitymanageoverview_162",
+    "vi": "Duyệt đơn & bài",
+    "en": "Review queue"
+  },
+  {
+    "key": "hub.communitymanageoverview_163",
+    "vi": "Thành viên",
+    "en": "Members"
+  },
+  {
+    "key": "hub.communitymanageoverview_164",
+    "vi": "Phân quyền mod",
+    "en": "Manage roles"
+  },
+  {
+    "key": "hub.communitymanageoverview_165",
+    "vi": "Báo cáo",
+    "en": "Reports"
+  },
+  {
+    "key": "hub.communitymanageoverview_166",
+    "vi": "Khiếu nại vi phạm",
+    "en": "Flagged items"
+  },
+  {
+    "key": "hub.communitymanageoverview_167",
+    "vi": "Cài đặt",
+    "en": "Settings"
+  },
+  {
+    "key": "hub.communitymanageoverview_168",
+    "vi": "Quy tắc & hồ sơ",
+    "en": "Rules & profile"
+  },
+  {
+    "key": "hub.communitymanageoverview_169",
+    "vi": "Xem toàn bộ nhật ký",
+    "en": "View audit log"
+  },
+  {
+    "key": "hub.communitymanagerules_170",
+    "vi": "Tôn trọng và lịch sự với mọi người chơi",
+    "en": "Respect other players"
+  },
+  {
+    "key": "hub.communitymanagerules_171",
+    "vi": "Không xúc phạm, phân biệt đối xử, quấy rối hay công kích cá nhân. Giữ môi trường trao đổi văn minh.",
+    "en": "No harassment, hate speech, or toxic personal attacks. Maintain a constructive gaming atmosphere."
+  },
+  {
+    "key": "hub.communitymanagerules_172",
+    "vi": "Không spam hoặc quảng cáo ngoài luồng",
+    "en": "No spam or self-promotion"
+  },
+  {
+    "key": "hub.communitymanagerules_173",
+    "vi": "Nghiêm cấm chia sẻ liên kết lừa đảo, phần mềm độc hại, bán tài khoản hoặc kéo mem sang nhóm khác.",
+    "en": "Refrain from unsolicited self-promotion, advertising third-party stores, or spamming identical content."
+  },
+  {
+    "key": "hub.communitymanagerules_174",
+    "vi": "Gắn thẻ Spoiler khi bàn luận cốt truyện",
+    "en": "Use spoiler tags for story content"
+  },
+  {
+    "key": "hub.communitymanagerules_175",
+    "vi": "Các bí mật cốt truyện, kết thúc hoặc nội dung khám phá hòn đảo đặc biệt bắt buộc phải dùng công cụ che chữ/spoiler.",
+    "en": "All major plot points, hidden island lore, and endgame reveals must be wrapped in spoiler markdown."
+  },
+  {
+    "key": "hub.communitymanagerules_176",
+    "vi": "Không chia sẻ cheat, bản mod phá hoại hoặc hack",
+    "en": "No game exploits or malicious mods"
+  },
+  {
+    "key": "hub.communitymanagerules_177",
+    "vi": "Không phổ biến bản hack làm hỏng trải nghiệm người chơi khác hoặc liên kết chứa virus.",
+    "en": "Exploits and unauthorized cracked executables are forbidden. Creative sandbox mods are welcomed."
+  },
+  {
+    "key": "hub.communitymanagerules_178",
+    "vi": "Đăng đúng chuyên mục và chủ đề thảo luận",
+    "en": "Stay on-topic and use appropriate flairs"
+  },
+  {
+    "key": "hub.communitymanagerules_179",
+    "vi": "Phân loại bài viết chính xác (Thảo luận, Hướng dẫn, Bè đẹp, Tuyển team) để các thành viên dễ tìm kiếm.",
+    "en": "Assign appropriate category tags (Discussions, Guides, Showcase, Squad) so content remains organized."
+  },
+  {
+    "key": "hub.communitymanagerules_180",
+    "vi": "Đã thay đổi thứ tự quy tắc.",
+    "en": "Rule order updated."
+  },
+  {
+    "key": "hub.communitymanagerules_181",
+    "vi": "Đã thay đổi thứ tự quy tắc.",
+    "en": "Rule order updated."
+  },
+  {
+    "key": "hub.communitymanagerules_182",
+    "vi": "Đã lưu cập nhật quy tắc.",
+    "en": "Rule updated successfully."
+  },
+  {
+    "key": "hub.communitymanagerules_183",
+    "vi": "Đã xóa quy tắc.",
+    "en": "Rule deleted."
+  },
+  {
+    "key": "hub.communitymanagerules_184",
+    "vi": "Đã thêm quy tắc mới!",
+    "en": "New rule added successfully!"
+  },
+  {
+    "key": "hub.communitymanagerules_185",
+    "vi": "+ Thêm quy tắc",
+    "en": "+ Add Rule"
+  },
+  {
+    "key": "hub.communitymanagerules_186",
+    "vi": "Tiêu đề quy tắc...",
+    "en": "Rule title..."
+  },
+  {
+    "key": "hub.communitymanagerules_187",
+    "vi": "Mô tả chi tiết và hướng dẫn vi phạm...",
+    "en": "Detailed explanation..."
+  },
+  {
+    "key": "hub.communitymanagerules_188",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.communitymanagerules_189",
+    "vi": "Lưu thay đổi",
+    "en": "Save Changes"
+  },
+  {
+    "key": "hub.communitymanagerules_190",
+    "vi": "Di chuyển lên",
+    "en": "Move up"
+  },
+  {
+    "key": "hub.communitymanagerules_191",
+    "vi": "Di chuyển xuống",
+    "en": "Move down"
+  },
+  {
+    "key": "hub.communitymanagerules_192",
+    "vi": "Chỉnh sửa quy tắc",
+    "en": "Edit rule"
+  },
+  {
+    "key": "hub.communitymanagerules_193",
+    "vi": "Xóa quy tắc",
+    "en": "Delete rule"
+  },
+  {
+    "key": "hub.communitymanagerules_194",
+    "vi": "Nhập tiêu đề quy tắc mới...",
+    "en": "Enter new rule title..."
+  },
+  {
+    "key": "hub.communitymanagerules_195",
+    "vi": "Mô tả chi tiết và căn cứ xử lý vi phạm...",
+    "en": "Enter description and guidance..."
+  },
+  {
+    "key": "hub.communitymanagerules_196",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.communitymanagerules_197",
+    "vi": "Thêm quy tắc này",
+    "en": "Save Rule"
+  },
+  {
+    "key": "hub.communitymanagerules_198",
+    "vi": "Quy tắc cộng đồng được hiển thị cho tất cả người chơi trước khi đăng bài và là cơ sở để Điều hành viên xử lý các báo cáo vi phạm.",
+    "en": "Community rules are displayed to players before posting and serve as the standard criteria for moderator actions."
+  },
+  {
+    "key": "hub.communitymanagesettings_199",
+    "vi": "Đã lưu cài đặt chung của cộng đồng.",
+    "en": "Saved general community settings."
+  },
+  {
+    "key": "hub.communitymanagesettings_200",
+    "vi": "Vui lòng nhập mật khẩu để xác thực lại danh tính.",
+    "en": "Please enter your password to re-authenticate."
+  },
+  {
+    "key": "hub.communitymanagesettings_201",
+    "vi": "Vui lòng nhập mật khẩu xác thực.",
+    "en": "Please enter your password to confirm deletion."
+  },
+  {
+    "key": "hub.communitymanagesettings_202",
+    "vi": "Cộng đồng đã được đánh dấu xóa vĩnh viễn.",
+    "en": "Community scheduled for permanent deletion."
+  },
+  {
+    "key": "hub.communitymanagesettings_203",
+    "vi": "Lưu tất cả thay đổi",
+    "en": "Save All Changes"
+  },
+  {
+    "key": "hub.communitymanagesettings_204",
+    "vi": "Tên cộng đồng",
+    "en": "Community name"
+  },
+  {
+    "key": "hub.communitymanagesettings_205",
+    "vi": "Tựa game liên kết",
+    "en": "Associated Game"
+  },
+  {
+    "key": "hub.communitymanagesettings_206",
+    "vi": "Đường dẫn cộng đồng (URL Slug)",
+    "en": "Community URL"
+  },
+  {
+    "key": "hub.communitymanagesettings_207",
+    "vi": "Mô tả giới thiệu",
+    "en": "Description"
+  },
+  {
+    "key": "hub.communitymanagesettings_208",
+    "vi": "Chọn file ảnh mới...",
+    "en": "Select new image..."
+  },
+  {
+    "key": "hub.communitymanagesettings_209",
+    "vi": "Thay đổi",
+    "en": "Change"
+  },
+  {
+    "key": "hub.communitymanagesettings_210",
+    "vi": "Chọn file ảnh mới...",
+    "en": "Select new image..."
+  },
+  {
+    "key": "hub.communitymanagesettings_211",
+    "vi": "Thay đổi",
+    "en": "Change"
+  },
+  {
+    "key": "hub.communitymanagesettings_212",
+    "vi": "Thẻ từ khóa (Tags)",
+    "en": "Tags (comma separated)"
+  },
+  {
+    "key": "hub.communitymanagesettings_213",
+    "vi": "Danh mục (Category)",
+    "en": "Category"
+  },
+  {
+    "key": "hub.communitymanagesettings_214",
+    "vi": "Khả năng tìm kiếm trên nền tảng",
+    "en": "Search Visibility"
+  },
+  {
+    "key": "hub.communitymanagesettings_215",
+    "vi": "Cho phép cộng đồng xuất hiện trong kết quả tìm kiếm và danh mục khám phá",
+    "en": "Allow this community to appear in platform search results and directory"
+  },
+  {
+    "key": "hub.communitymanagesettings_216",
+    "vi": "Công khai",
+    "en": "Visible"
+  },
+  {
+    "key": "hub.communitymanagesettings_217",
+    "vi": "Ẩn tìm kiếm",
+    "en": "Hidden"
+  },
+  {
+    "key": "hub.communitymanagesettings_218",
+    "vi": "Bất kỳ người chơi nào cũng có thể tự do tham gia ngay lập tức.",
+    "en": "Anyone can join."
+  },
+  {
+    "key": "hub.communitymanagesettings_219",
+    "vi": "Người dùng gửi yêu cầu và cần được Điều hành viên hoặc Trưởng nhóm phê duyệt.",
+    "en": "Users request access and moderators/admin approve."
+  },
+  {
+    "key": "hub.communitymanagesettings_220",
+    "vi": "Chỉ những người dùng được mời trực tiếp mới có thể gia nhập.",
+    "en": "Only invited users can join."
+  },
+  {
+    "key": "hub.communitymanagesettings_221",
+    "vi": "Yêu cầu ghi chú số giờ chơi khi nộp đơn gia nhập",
+    "en": "Require playtime note on join request"
+  },
+  {
+    "key": "hub.communitymanagesettings_222",
+    "vi": "Định dạng bài viết cho phép",
+    "en": "Allowed post types"
+  },
+  {
+    "key": "hub.communitymanagesettings_223",
+    "vi": "Cho phép upload video trực tiếp",
+    "en": "Allow video uploads"
+  },
+  {
+    "key": "hub.communitymanagesettings_224",
+    "vi": "Giới hạn dung lượng file",
+    "en": "Max upload size"
+  },
+  {
+    "key": "hub.communitymanagesettings_225",
+    "vi": "Tự động xem trước link",
+    "en": "Auto-embed link"
+  },
+  {
+    "key": "hub.communitymanagesettings_226",
+    "vi": "Tuổi tài khoản tối thiểu",
+    "en": "Minimum account age"
+  },
+  {
+    "key": "hub.communitymanagesettings_227",
+    "vi": "Ngăn chặn clone bot spam",
+    "en": "Prevent new spam accounts"
+  },
+  {
+    "key": "hub.communitymanagesettings_228",
+    "vi": "Không giới hạn",
+    "en": "No restriction"
+  },
+  {
+    "key": "hub.communitymanagesettings_229",
+    "vi": "1 ngày",
+    "en": "1 day"
+  },
+  {
+    "key": "hub.communitymanagesettings_230",
+    "vi": "3 ngày (Khuyên dùng)",
+    "en": "3 days (Recommended)"
+  },
+  {
+    "key": "hub.communitymanagesettings_231",
+    "vi": "7 ngày",
+    "en": "7 days"
+  },
+  {
+    "key": "hub.communitymanagesettings_232",
+    "vi": "Tự động ẩn sau số báo cáo",
+    "en": "Auto-flag report threshold"
+  },
+  {
+    "key": "hub.communitymanagesettings_233",
+    "vi": "Tự động tạm ẩn bài vi phạm",
+    "en": "Hide content pending review"
+  },
+  {
+    "key": "hub.communitymanagesettings_234",
+    "vi": "báo cáo",
+    "en": "reports"
+  },
+  {
+    "key": "hub.communitymanagesettings_235",
+    "vi": "báo cáo",
+    "en": "reports"
+  },
+  {
+    "key": "hub.communitymanagesettings_236",
+    "vi": "báo cáo",
+    "en": "reports"
+  },
+  {
+    "key": "hub.communitymanagesettings_237",
+    "vi": "Quyền ghim bài của Điều hành viên",
+    "en": "Allow mods to pin posts"
+  },
+  {
+    "key": "hub.communitymanagesettings_238",
+    "vi": "Cho phép ghim bài thông báo",
+    "en": "Can pin community announcements"
+  },
+  {
+    "key": "hub.communitymanagesettings_239",
+    "vi": "Chuyển giao quyền sở hữu cộng đồng",
+    "en": "Transfer community ownership"
+  },
+  {
+    "key": "hub.communitymanagesettings_240",
+    "vi": "Chuyển giao toàn bộ quyền quản trị cao nhất của cộng đồng này cho một thành viên khác. Bạn sẽ trở thành Điều hành viên thông thường.",
+    "en": "Ownership transfer gives another member full administrative control of this community."
+  },
+  {
+    "key": "hub.communitymanagesettings_241",
+    "vi": "Chuyển quyền sở hữu...",
+    "en": "Transfer Ownership..."
+  },
+  {
+    "key": "hub.communitymanagesettings_242",
+    "vi": "Xóa vĩnh viễn cộng đồng này",
+    "en": "Delete this community"
+  },
+  {
+    "key": "hub.communitymanagesettings_243",
+    "vi": "Thao tác này sẽ xóa toàn bộ bài viết, thảo luận, danh sách thành viên và tệp đa phương tiện của cộng đồng này. Không thể khôi phục.",
+    "en": "Permanently delete this community, all posts, guides, and member associations. This action cannot be undone."
+  },
+  {
+    "key": "hub.communitymanagesettings_244",
+    "vi": "Xóa cộng đồng...",
+    "en": "Delete Community..."
+  },
+  {
+    "key": "hub.communitymanagesettings_245",
+    "vi": "XÁC NHẬN CHUYỂN QUYỀN SỞ HỮU",
+    "en": "TRANSFER OWNERSHIP"
+  },
+  {
+    "key": "hub.communitymanagesettings_246",
+    "vi": "Hành động này sẽ chuyển quyền Trưởng cộng đồng cao nhất cho thành viên được chỉ định. Bạn sẽ không thể tự hoàn tác nếu không có sự đồng ý của họ.",
+    "en": "Ownership transfer gives another member full administrative control of this community."
+  },
+  {
+    "key": "hub.communitymanagesettings_247",
+    "vi": "Chọn thành viên nhận quyền sở hữu",
+    "en": "Select member"
+  },
+  {
+    "key": "hub.communitymanagesettings_248",
+    "vi": "Xác thực mật khẩu của bạn",
+    "en": "Re-authenticate (Enter your password)"
+  },
+  {
+    "key": "hub.communitymanagesettings_249",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.communitymanagesettings_250",
+    "vi": "Xác nhận chuyển giao",
+    "en": "Confirm Transfer"
+  },
+  {
+    "key": "hub.communitymanagesettings_251",
+    "vi": "XÓA VĨNH VIỄN CỘNG ĐỒNG",
+    "en": "DELETE COMMUNITY"
+  },
+  {
+    "key": "hub.communitymanagesettings_252",
+    "vi": "Xác thực mật khẩu tài khoản của bạn",
+    "en": "Re-authenticate password"
+  },
+  {
+    "key": "hub.communitymanagesettings_253",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.communitymanagesettings_254",
+    "vi": "Xác nhận xóa vĩnh viễn",
+    "en": "Delete Community"
+  },
+  {
+    "key": "hub.createthreadmodal_255",
+    "vi": "Loại bài đăng:",
+    "en": "Post Type:"
+  },
+  {
+    "key": "hub.createthreadmodal_256",
+    "vi": "Tiêu đề bài viết:",
+    "en": "Title:"
+  },
+  {
+    "key": "hub.createthreadmodal_257",
+    "vi": "Nhập tiêu đề bài viết...",
+    "en": "What do you want to discuss?"
+  },
+  {
+    "key": "hub.createthreadmodal_258",
+    "vi": "Danh mục:",
+    "en": "Category:"
+  },
+  {
+    "key": "hub.createthreadmodal_259",
+    "vi": "Nội dung:",
+    "en": "Content:"
+  },
+  {
+    "key": "hub.createthreadmodal_260",
+    "vi": "Chia sẻ chi tiết câu hỏi, kinh nghiệm hoặc thiết kế...",
+    "en": "Write your thoughts, tips, or questions..."
+  },
+  {
+    "key": "hub.createthreadmodal_261",
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  {
+    "key": "hub.createthreadmodal_262",
+    "vi": "Đang đăng...",
+    "en": "Publishing..."
+  },
+  {
+    "key": "hub.createthreadmodal_263",
+    "vi": "Đăng bài",
+    "en": "Publish Post"
+  }
+]

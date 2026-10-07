@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -27,6 +28,7 @@ export const CreateThreadModal = ({
     communityName,
     isVi,
 }: CreateThreadModalProps) => {
+    const { t } = useTranslation();
     const [title, setTitle] = useState("");
     const [type, setType] = useState<PostType>("discussion");
     const [category, setCategory] = useState(categories[0]?.id || "general");
@@ -82,7 +84,7 @@ export const CreateThreadModal = ({
                     {/* Post Type Selector */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text block">
-                            {isVi ? "Loại bài đăng:" : "Post Type:"}
+                            {t('hub.createthreadmodal_255')}
                         </label>
                         <div className="grid grid-cols-3 gap-1.5">
                             {typeOptions.map((opt) => {
@@ -108,14 +110,14 @@ export const CreateThreadModal = ({
                     {/* Title */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text block">
-                            {isVi ? "Tiêu đề bài viết:" : "Title:"}
+                            {t('hub.createthreadmodal_256')}
                         </label>
                         <input
                             type="text"
                             required
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder={isVi ? "Nhập tiêu đề bài viết..." : "What do you want to discuss?"}
+                            placeholder={t('hub.createthreadmodal_257')}
                             className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
                         />
                     </div>
@@ -123,7 +125,7 @@ export const CreateThreadModal = ({
                     {/* Category */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text block">
-                            {isVi ? "Danh mục:" : "Category:"}
+                            {t('hub.createthreadmodal_258')}
                         </label>
                         <select
                             value={category}
@@ -141,14 +143,14 @@ export const CreateThreadModal = ({
                     {/* Content */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-text block">
-                            {isVi ? "Nội dung:" : "Content:"}
+                            {t('hub.createthreadmodal_259')}
                         </label>
                         <textarea
                             rows={5}
                             required
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            placeholder={isVi ? "Chia sẻ chi tiết câu hỏi, kinh nghiệm hoặc thiết kế..." : "Write your thoughts, tips, or questions..."}
+                            placeholder={t('hub.createthreadmodal_260')}
                             className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary resize-y"
                         />
                     </div>
@@ -177,7 +179,7 @@ export const CreateThreadModal = ({
                             onClick={onClose}
                             className="px-4 py-2 rounded-[4px] border border-divider-primary hover:bg-surface-hover text-xs font-bold text-text-muted hover:text-text cursor-pointer transition-colors"
                         >
-                            {isVi ? "Hủy" : "Cancel"}
+                            {t('hub.createthreadmodal_261')}
                         </button>
                         <button
                             type="submit"
@@ -185,8 +187,8 @@ export const CreateThreadModal = ({
                             className="px-5 py-2 rounded-[4px] bg-primary hover:bg-primary/90 text-white text-xs font-bold cursor-pointer shadow-xs transition-colors disabled:opacity-50"
                         >
                             {isSubmitting
-                                ? (isVi ? "Đang đăng..." : "Publishing...")
-                                : (isVi ? "Đăng bài" : "Publish Post")}
+                                ? (t('hub.createthreadmodal_262'))
+                                : (t('hub.createthreadmodal_263'))}
                         </button>
                     </div>
                 </form>

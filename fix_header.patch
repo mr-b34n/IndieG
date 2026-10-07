@@ -1,0 +1,21 @@
+--- src/shared/components/header/Header.tsx
++++ src/shared/components/header/Header.tsx
+@@ -21,6 +21,8 @@
+ import { getCurrentAuthor } from "@/features/post";
+ import { useCreatePostModalStore } from '@/features/feed/store/useCreatePostModalStore';
++import { useReportsQuery } from "@/shared/api/useQueries";
++import { extractReportList } from "@/shared/api";
++import { useMemo } from "react";
+ 
+ export const Header = () => {
+@@ -64,4 +66,10 @@
+     );
+ 
++    const { data: reportsData } = useReportsQuery(undefined, { enabled: isAdmin });
++    const pendingReportsCount = useMemo(() => {
++        if (!isAdmin) return 0;
++        return extractReportList(reportsData).filter((r) => r.status === "pending").length;
++    }, [isAdmin, reportsData]);
++
+     useEffect(() => {
+         const handleClickOutside = (e: MouseEvent) => {
