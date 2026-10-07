@@ -6,7 +6,7 @@ import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
 
 export interface EditPostModalProps {
     initialTitle: string;
