@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -18,6 +19,7 @@ export const CommunityHubEventsView = ({
     events,
     isVi,
 }: CommunityHubEventsViewProps) => {
+    const { t } = useTranslation();
     const [attending, setAttending] = useState<Record<string, boolean>>({});
 
     const handleToggleAttend = (id: string) => {
@@ -35,7 +37,7 @@ export const CommunityHubEventsView = ({
                         {isVi ? `Sự Kiện & Giải Đấu ${communityName}` : `${communityName} Community Events`}
                     </h2>
                     <p className="text-xs text-text-muted">
-                        {isVi ? "Các buổi giao lưu, custom game và giải đấu định kỳ." : "Upcoming tournaments, play sessions, and community watch parties."}
+                        {t('hub.communityhubeventsview_14')}
                     </p>
                 </div>
             </div>
@@ -62,7 +64,7 @@ export const CommunityHubEventsView = ({
                                 <div className="flex flex-col min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="px-1.5 py-0.2 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-mono font-bold uppercase">
-                                            {isVi ? "SẮP DIỄN RA" : "UPCOMING"}
+                                            {t('hub.communityhubeventsview_15')}
                                         </span>
                                     </div>
                                     <h3 className="font-extrabold text-sm sm:text-base text-text hover:text-primary transition-colors leading-snug mt-1">
@@ -76,7 +78,7 @@ export const CommunityHubEventsView = ({
                                         <span>·</span>
                                         <span className="flex items-center gap-1">
                                             <FontAwesomeIcon icon={faUsers} className="text-[10px]" />
-                                            <span>{count} {isVi ? "người tham gia" : "attending"}</span>
+                                            <span>{count} {t('hub.communityhubeventsview_16')}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -94,10 +96,10 @@ export const CommunityHubEventsView = ({
                                 {isJoined ? (
                                     <>
                                         <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                        <span>{isVi ? "Đã đăng ký" : "Attending"}</span>
+                                        <span>{t('hub.communityhubeventsview_17')}</span>
                                     </>
                                 ) : (
-                                    <span>{isVi ? "Tham gia sự kiện" : "RSVP Event"}</span>
+                                    <span>{t('hub.communityhubeventsview_18')}</span>
                                 )}
                             </button>
                         </div>

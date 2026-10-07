@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { Post, type PostData, usePostsStore, getCurrentAuthor, type UserRank } from "@/features/post";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
@@ -106,6 +107,7 @@ export const CommunityHubFeed = ({
     communityName,
     isVi,
 }: CommunityHubFeedProps) => {
+    const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
     const currentAuthor = getCurrentAuthor(user);
     const deletePost = usePostsStore((state) => state.deletePost);
@@ -117,7 +119,7 @@ export const CommunityHubFeed = ({
             <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/50 select-none">
                 <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono uppercase text-text-faint tracking-wider font-bold">
-                        {isVi ? "SẮP XẾP:" : "SORT:"}
+                        {t('hub.communityhubfeed_19')}
                     </span>
                     <div className="inline-flex items-center bg-surface-inner border border-border/60 rounded-[6px] p-0.5">
                         <button
@@ -129,8 +131,7 @@ export const CommunityHubFeed = ({
                                     : "text-text-muted hover:text-text"
                             }`}
                         >
-                            <span>🔥</span>
-                            <span>{isVi ? "Phổ biến" : "Hot"}</span>
+                            <span>{t('hub.communityhubfeed_20')}</span>
                         </button>
                         <button
                             type="button"
@@ -141,23 +142,18 @@ export const CommunityHubFeed = ({
                                     : "text-text-muted hover:text-text"
                             }`}
                         >
-                            <span>⚡</span>
-                            <span>{isVi ? "Mới nhất" : "Newest"}</span>
+                            <span>{t('hub.communityhubfeed_21')}</span>
                         </button>
                     </div>
-                </div>
-
-                <div className="text-[11px] font-mono text-text-faint">
-                    {posts.length} {isVi ? "bài viết" : "posts"}
                 </div>
             </div>
 
             {/* Posts Stream - Reusing standardized Post component */}
             {posts.length === 0 ? (
                 <div className="py-14 text-center text-xs text-text-muted font-mono bg-surface-inner/30 rounded-[6px] border border-dashed border-divider-primary/50">
-                    <p className="font-semibold text-text">{isVi ? "Chưa có hoạt động nào trong mục này." : "No posts found."}</p>
+                    <p className="font-semibold text-text">{t('hub.communityhubfeed_23')}</p>
                     <p className="text-[11px] text-text-faint mt-1">
-                        {isVi ? "Hãy là người đầu tiên chia sẻ nội dung." : "Be the first to post something."}
+                        {t('hub.communityhubfeed_24')}
                     </p>
                 </div>
             ) : (

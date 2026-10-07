@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -27,41 +28,32 @@ export const CommunityManageRules = ({
     communityName,
     isVi,
 }: CommunityManageRulesProps) => {
+    const { t } = useTranslation();
     const [rules, setRules] = useState<CommunityRule[]>([
         {
             id: "rule-1",
-            title: isVi ? "Tôn trọng và lịch sự với mọi người chơi" : "Respect other players",
-            description: isVi
-                ? "Không xúc phạm, phân biệt đối xử, quấy rối hay công kích cá nhân. Giữ môi trường trao đổi văn minh."
-                : "No harassment, hate speech, or toxic personal attacks. Maintain a constructive gaming atmosphere.",
+            title: t('hub.communitymanagerules_170'),
+            description: t('hub.communitymanagerules_171'),
         },
         {
             id: "rule-2",
-            title: isVi ? "Không spam hoặc quảng cáo ngoài luồng" : "No spam or self-promotion",
-            description: isVi
-                ? "Nghiêm cấm chia sẻ liên kết lừa đảo, phần mềm độc hại, bán tài khoản hoặc kéo mem sang nhóm khác."
-                : "Refrain from unsolicited self-promotion, advertising third-party stores, or spamming identical content.",
+            title: t('hub.communitymanagerules_172'),
+            description: t('hub.communitymanagerules_173'),
         },
         {
             id: "rule-3",
-            title: isVi ? "Gắn thẻ Spoiler khi bàn luận cốt truyện" : "Use spoiler tags for story content",
-            description: isVi
-                ? "Các bí mật cốt truyện, kết thúc hoặc nội dung khám phá hòn đảo đặc biệt bắt buộc phải dùng công cụ che chữ/spoiler."
-                : "All major plot points, hidden island lore, and endgame reveals must be wrapped in spoiler markdown.",
+            title: t('hub.communitymanagerules_174'),
+            description: t('hub.communitymanagerules_175'),
         },
         {
             id: "rule-4",
-            title: isVi ? "Không chia sẻ cheat, bản mod phá hoại hoặc hack" : "No game exploits or malicious mods",
-            description: isVi
-                ? "Không phổ biến bản hack làm hỏng trải nghiệm người chơi khác hoặc liên kết chứa virus."
-                : "Exploits and unauthorized cracked executables are forbidden. Creative sandbox mods are welcomed.",
+            title: t('hub.communitymanagerules_176'),
+            description: t('hub.communitymanagerules_177'),
         },
         {
             id: "rule-5",
-            title: isVi ? "Đăng đúng chuyên mục và chủ đề thảo luận" : "Stay on-topic and use appropriate flairs",
-            description: isVi
-                ? "Phân loại bài viết chính xác (Thảo luận, Hướng dẫn, Bè đẹp, Tuyển team) để các thành viên dễ tìm kiếm."
-                : "Assign appropriate category tags (Discussions, Guides, Showcase, Squad) so content remains organized.",
+            title: t('hub.communitymanagerules_178'),
+            description: t('hub.communitymanagerules_179'),
         },
     ]);
 
@@ -92,7 +84,7 @@ export const CommunityManageRules = ({
             copy[index] = temp;
             return copy;
         });
-        showToast(isVi ? "Đã thay đổi thứ tự quy tắc." : "Rule order updated.");
+        showToast(t('hub.communitymanagerules_180'));
     };
 
     const handleMoveDown = (index: number) => {
@@ -104,7 +96,7 @@ export const CommunityManageRules = ({
             copy[index] = temp;
             return copy;
         });
-        showToast(isVi ? "Đã thay đổi thứ tự quy tắc." : "Rule order updated.");
+        showToast(t('hub.communitymanagerules_181'));
     };
 
     // Edit Handlers
@@ -125,7 +117,7 @@ export const CommunityManageRules = ({
             )
         );
         setEditingRuleId(null);
-        showToast(isVi ? "Đã lưu cập nhật quy tắc." : "Rule updated successfully.");
+        showToast(t('hub.communitymanagerules_182'));
     };
 
     const cancelEditing = () => {
@@ -138,7 +130,7 @@ export const CommunityManageRules = ({
             return;
         }
         setRules((prev) => prev.filter((r) => r.id !== id));
-        showToast(isVi ? "Đã xóa quy tắc." : "Rule deleted.");
+        showToast(t('hub.communitymanagerules_183'));
     };
 
     // Add Handler
@@ -153,7 +145,7 @@ export const CommunityManageRules = ({
         setNewTitle("");
         setNewDescription("");
         setIsAddingNew(false);
-        showToast(isVi ? "Đã thêm quy tắc mới!" : "New rule added successfully!");
+        showToast(t('hub.communitymanagerules_184'));
     };
 
     return (
@@ -198,7 +190,7 @@ export const CommunityManageRules = ({
                         className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                         <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                        <span>{isVi ? "+ Thêm quy tắc" : "+ Add Rule"}</span>
+                        <span>{t('hub.communitymanagerules_185')}</span>
                     </button>
                 )}
             </div>
@@ -229,7 +221,7 @@ export const CommunityManageRules = ({
                                             type="text"
                                             value={editTitle}
                                             onChange={(e) => setEditTitle(e.target.value)}
-                                            placeholder={isVi ? "Tiêu đề quy tắc..." : "Rule title..."}
+                                            placeholder={t('hub.communitymanagerules_186')}
                                             className="flex-1 h-8 px-3 rounded-[4px] bg-surface-inner border border-divider-primary text-xs font-bold text-text focus:outline-none focus:border-primary"
                                         />
                                     </div>
@@ -238,7 +230,7 @@ export const CommunityManageRules = ({
                                         value={editDescription}
                                         onChange={(e) => setEditDescription(e.target.value)}
                                         rows={2}
-                                        placeholder={isVi ? "Mô tả chi tiết và hướng dẫn vi phạm..." : "Detailed explanation..."}
+                                        placeholder={t('hub.communitymanagerules_187')}
                                         className="w-full p-2.5 rounded-[4px] bg-surface-inner border border-divider-primary text-xs text-text-muted focus:outline-none focus:border-primary resize-none"
                                     />
 
@@ -248,7 +240,7 @@ export const CommunityManageRules = ({
                                             onClick={cancelEditing}
                                             className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                                         >
-                                            {isVi ? "Hủy" : "Cancel"}
+                                            {t('hub.communitymanagerules_188')}
                                         </button>
                                         <button
                                             type="button"
@@ -256,7 +248,7 @@ export const CommunityManageRules = ({
                                             className="px-3.5 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                            <span>{isVi ? "Lưu thay đổi" : "Save Changes"}</span>
+                                            <span>{t('hub.communitymanagerules_189')}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -285,7 +277,7 @@ export const CommunityManageRules = ({
                                             type="button"
                                             disabled={idx === 0}
                                             onClick={() => handleMoveUp(idx)}
-                                            title={isVi ? "Di chuyển lên" : "Move up"}
+                                            title={t('hub.communitymanagerules_190')}
                                             className="w-7 h-7 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed text-text-faint hover:text-text flex items-center justify-center transition-colors cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
@@ -295,7 +287,7 @@ export const CommunityManageRules = ({
                                             type="button"
                                             disabled={idx === rules.length - 1}
                                             onClick={() => handleMoveDown(idx)}
-                                            title={isVi ? "Di chuyển xuống" : "Move down"}
+                                            title={t('hub.communitymanagerules_191')}
                                             className="w-7 h-7 rounded hover:bg-surface-hover disabled:opacity-30 disabled:cursor-not-allowed text-text-faint hover:text-text flex items-center justify-center transition-colors cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
@@ -304,7 +296,7 @@ export const CommunityManageRules = ({
                                         <button
                                             type="button"
                                             onClick={() => startEditing(rule)}
-                                            title={isVi ? "Chỉnh sửa quy tắc" : "Edit rule"}
+                                            title={t('hub.communitymanagerules_192')}
                                             className="w-7 h-7 rounded hover:bg-surface-hover text-text-faint hover:text-primary flex items-center justify-center transition-colors cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faPenToSquare} className="text-xs" />
@@ -313,7 +305,7 @@ export const CommunityManageRules = ({
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteRule(rule.id, rule.title)}
-                                            title={isVi ? "Xóa quy tắc" : "Delete rule"}
+                                            title={t('hub.communitymanagerules_193')}
                                             className="w-7 h-7 rounded hover:bg-rose-500/15 text-text-faint hover:text-rose-400 flex items-center justify-center transition-colors cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
@@ -336,7 +328,7 @@ export const CommunityManageRules = ({
                                 type="text"
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
-                                placeholder={isVi ? "Nhập tiêu đề quy tắc mới..." : "Enter new rule title..."}
+                                placeholder={t('hub.communitymanagerules_194')}
                                 className="flex-1 h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs font-bold text-text focus:outline-none focus:border-primary"
                                 autoFocus
                             />
@@ -346,7 +338,7 @@ export const CommunityManageRules = ({
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
                             rows={2}
-                            placeholder={isVi ? "Mô tả chi tiết và căn cứ xử lý vi phạm..." : "Enter description and guidance..."}
+                            placeholder={t('hub.communitymanagerules_195')}
                             className="w-full p-2.5 rounded-[4px] bg-surface border border-divider-primary text-xs text-text-muted focus:outline-none focus:border-primary resize-none"
                         />
 
@@ -356,7 +348,7 @@ export const CommunityManageRules = ({
                                 onClick={() => setIsAddingNew(false)}
                                 className="px-3 py-1.5 rounded-[4px] bg-surface hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                             >
-                                {isVi ? "Hủy" : "Cancel"}
+                                {t('hub.communitymanagerules_196')}
                             </button>
                             <button
                                 type="button"
@@ -364,7 +356,7 @@ export const CommunityManageRules = ({
                                 className="px-3.5 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
                             >
                                 <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                <span>{isVi ? "Thêm quy tắc này" : "Save Rule"}</span>
+                                <span>{t('hub.communitymanagerules_197')}</span>
                             </button>
                         </div>
                     </div>
@@ -375,9 +367,7 @@ export const CommunityManageRules = ({
             <div className="p-3 bg-surface-inner/30 border border-divider-primary/30 rounded-[6px] text-xs text-text-faint flex items-start gap-2.5">
                 <FontAwesomeIcon icon={faCircleInfo} className="text-primary mt-0.5 text-xs shrink-0" />
                 <p className="leading-relaxed">
-                    {isVi
-                        ? "Quy tắc cộng đồng được hiển thị cho tất cả người chơi trước khi đăng bài và là cơ sở để Điều hành viên xử lý các báo cáo vi phạm."
-                        : "Community rules are displayed to players before posting and serve as the standard criteria for moderator actions."}
+                    {t('hub.communitymanagerules_198')}
                 </p>
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faHouse,
@@ -37,6 +38,7 @@ export const CommunityHubSidebar = ({
     pendingCount,
     reportsCount,
 }: CommunityHubSidebarProps) => {
+    const { t } = useTranslation();
     const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     // 1. Primary community feed & content navigation
@@ -64,6 +66,12 @@ export const CommunityHubSidebar = ({
             labelEn: "Moderation", 
             icon: faGavel, 
             badge: pendingCount && pendingCount > 0 ? String(pendingCount) : undefined 
+        },
+        { 
+            id: "manage-members", 
+            labelVi: "Thành viên", 
+            labelEn: "Members", 
+            icon: faUsers 
         },
         { 
             id: "manage-reports", 
@@ -149,7 +157,7 @@ export const CommunityHubSidebar = ({
                             <button
                                 type="button"
                                 onClick={onToggleCollapse}
-                                title={isVi ? "Thu gọn thanh điều hướng" : "Collapse sidebar"}
+                                title={t('hub.communityhubsidebar_41')}
                                 className="w-6 h-6 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
                             >
                                 <FontAwesomeIcon icon={faChevronLeft} />
@@ -160,7 +168,7 @@ export const CommunityHubSidebar = ({
                             <button
                                 type="button"
                                 onClick={onToggleCollapse}
-                                title={isVi ? "Mở rộng thanh điều hướng" : "Expand sidebar"}
+                                title={t('hub.communityhubsidebar_42')}
                                 className="w-7 h-7 flex items-center justify-center text-text-faint hover:text-text rounded hover:bg-surface-hover/60 transition-colors cursor-pointer text-xs"
                             >
                                 <FontAwesomeIcon icon={faChevronRight} />

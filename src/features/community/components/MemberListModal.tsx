@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import React, { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faSearch, faCrown, faShieldHalved, faUserCheck, faUser, faUserMinus, faUserShield } from "@fortawesome/free-solid-svg-icons";
@@ -58,6 +59,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
     onClose,
     onUpdateMembers,
 }) => {
+    const { t } = useTranslation();
     const authorUsername = getCurrentAuthor();
     const { user, customAvatar } = useAuthStore.getState();
     const currentDisplayName = user?.user_metadata?.full_name || user?.username || authorUsername;
