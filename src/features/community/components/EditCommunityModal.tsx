@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheck, faPen, faTrash, faUsers, faLayerGroup, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
@@ -13,6 +14,7 @@ interface EditCommunityModalProps {
 const CATEGORY_OPTIONS = ["FPS", "RPG", "MOBA", "Survival", "Open World", "Strategy", "Sports", "MMORPG", "Casual", "Fighting"];
 
 export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ community, onClose }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const updateCommunity = useCommunitiesStore((state) => state.updateCommunity);
     const deleteCommunity = useCommunitiesStore((state) => state.deleteCommunity);

@@ -318,7 +318,7 @@ export const SearchResultsPage = () => {
             </div>
 
             {/* Target Category Filter Tabs - Unified Segmented Control */}
-            <div className="flex items-center overflow-x-auto no-scrollbar py-1">
+            <div className="flex items-center overflow-x-auto scrollbar-none py-1">
                 <div className="inline-flex items-center p-1 bg-[#131517] rounded-xl border border-[#1A1C1F]/60 gap-1 shrink-0">
                     {tabsList.map((tab) => {
                         const isActive = activeTab === tab.key;

@@ -1,3 +1,4 @@
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -32,6 +33,7 @@ export const CommunityManageSettings = ({
     isVi,
     onUpdateCommunityInfo,
 }: CommunityManageSettingsProps) => {
+    const { t } = useTranslation();
     // 1. GENERAL SECTION STATE
     const [name, setName] = useState(communityName);
     const [description, setDescription] = useState(communityDescription);
@@ -76,7 +78,7 @@ export const CommunityManageSettings = ({
         if (onUpdateCommunityInfo) {
             onUpdateCommunityInfo(name, description);
         }
-        showToast(isVi ? "Đã lưu cài đặt chung của cộng đồng." : "Saved general community settings.");
+        showToast(t('hub.communitymanagesettings_199'));
     };
 
     // 6. DANGER ZONE MODAL/STATE
@@ -90,7 +92,7 @@ export const CommunityManageSettings = ({
 
     const handleConfirmTransfer = () => {
         if (!transferPassword.trim()) {
-            alert(isVi ? "Vui lòng nhập mật khẩu để xác thực lại danh tính." : "Please enter your password to re-authenticate.");
+            alert(t('hub.communitymanagesettings_200'));
             return;
         }
         setIsTransferModalOpen(false);
@@ -104,13 +106,13 @@ export const CommunityManageSettings = ({
             return;
         }
         if (!deletePassword.trim()) {
-            alert(isVi ? "Vui lòng nhập mật khẩu xác thực." : "Please enter your password to confirm deletion.");
+            alert(t('hub.communitymanagesettings_201'));
             return;
         }
         setIsDeleteModalOpen(false);
         setDeleteConfirmName("");
         setDeletePassword("");
-        showToast(isVi ? "Cộng đồng đã được đánh dấu xóa vĩnh viễn." : "Community scheduled for permanent deletion.");
+        showToast(t('hub.communitymanagesettings_202'));
     };
 
     return (
@@ -151,7 +153,7 @@ export const CommunityManageSettings = ({
                     className="px-4 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shadow-sm"
                 >
                     <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                    <span>{isVi ? "Lưu tất cả thay đổi" : "Save All Changes"}</span>
+                    <span>{t('hub.communitymanagesettings_203')}</span>
                 </button>
             </div>
 
@@ -166,7 +168,7 @@ export const CommunityManageSettings = ({
                     {/* Community Name */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {isVi ? "Tên cộng đồng" : "Community name"}
+                            {t('hub.communitymanagesettings_204')}
                         </label>
                         <input
                             type="text"
@@ -179,7 +181,7 @@ export const CommunityManageSettings = ({
                     {/* Game Association */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {isVi ? "Tựa game liên kết" : "Associated Game"}
+                            {t('hub.communitymanagesettings_205')}
                         </label>
                         <input
                             type="text"
@@ -192,7 +194,7 @@ export const CommunityManageSettings = ({
                     {/* Community URL Slug */}
                     <div className="flex flex-col gap-1.5 md:col-span-2">
                         <label className="text-xs font-semibold text-text-muted">
-                            {isVi ? "Đường dẫn cộng đồng (URL Slug)" : "Community URL"}
+                            {t('hub.communitymanagesettings_206')}
                         </label>
                         <div className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary/60 text-xs font-mono text-text-muted flex items-center select-all">
                             <span className="text-text-faint">app.gg/community/</span>
@@ -204,7 +206,7 @@ export const CommunityManageSettings = ({
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-text-muted">
-                        {isVi ? "Mô tả giới thiệu" : "Description"}
+                        {t('hub.communitymanagesettings_207')}
                     </label>
                     <textarea
                         value={description}
@@ -228,10 +230,10 @@ export const CommunityManageSettings = ({
                         </div>
                         <button
                             type="button"
-                            onClick={() => showToast(isVi ? "Chọn file ảnh mới..." : "Select new image...")}
+                            onClick={() => showToast(t('hub.communitymanagesettings_208'))}
                             className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer"
                         >
-                            {isVi ? "Thay đổi" : "Change"}
+                            {t('hub.communitymanagesettings_209')}
                         </button>
                     </div>
 
@@ -247,10 +249,10 @@ export const CommunityManageSettings = ({
                         </div>
                         <button
                             type="button"
-                            onClick={() => showToast(isVi ? "Chọn file ảnh mới..." : "Select new image...")}
+                            onClick={() => showToast(t('hub.communitymanagesettings_210'))}
                             className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer"
                         >
-                            {isVi ? "Thay đổi" : "Change"}
+                            {t('hub.communitymanagesettings_211')}
                         </button>
                     </div>
                 </div>
@@ -266,7 +268,7 @@ export const CommunityManageSettings = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {isVi ? "Thẻ từ khóa (Tags)" : "Tags (comma separated)"}
+                            {t('hub.communitymanagesettings_212')}
                         </label>
                         <input
                             type="text"
@@ -278,7 +280,7 @@ export const CommunityManageSettings = ({
 
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {isVi ? "Danh mục (Category)" : "Category"}
+                            {t('hub.communitymanagesettings_213')}
                         </label>
                         <input
                             type="text"
@@ -292,12 +294,10 @@ export const CommunityManageSettings = ({
                 <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40 mt-1">
                     <div className="flex flex-col">
                         <span className="text-xs font-bold text-text">
-                            {isVi ? "Khả năng tìm kiếm trên nền tảng" : "Search Visibility"}
+                            {t('hub.communitymanagesettings_214')}
                         </span>
                         <span className="text-[11px] text-text-muted">
-                            {isVi
-                                ? "Cho phép cộng đồng xuất hiện trong kết quả tìm kiếm và danh mục khám phá"
-                                : "Allow this community to appear in platform search results and directory"}
+                            {t('hub.communitymanagesettings_215')}
                         </span>
                     </div>
 
@@ -313,7 +313,7 @@ export const CommunityManageSettings = ({
                         }`}
                     >
                         <FontAwesomeIcon icon={searchVisibility === "visible" ? faEye : faEyeSlash} className="text-[11px]" />
-                        <span>{searchVisibility === "visible" ? (isVi ? "Công khai" : "Visible") : (isVi ? "Ẩn tìm kiếm" : "Hidden")}</span>
+                        <span>{searchVisibility === "visible" ? (t('hub.communitymanagesettings_216')) : (t('hub.communitymanagesettings_217'))}</span>
                     </button>
                 </div>
             </div>
@@ -345,7 +345,7 @@ export const CommunityManageSettings = ({
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {isVi ? "Bất kỳ người chơi nào cũng có thể tự do tham gia ngay lập tức." : "Anyone can join."}
+                            {t('hub.communitymanagesettings_218')}
                         </p>
                     </div>
 
@@ -368,7 +368,7 @@ export const CommunityManageSettings = ({
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {isVi ? "Người dùng gửi yêu cầu và cần được Điều hành viên hoặc Trưởng nhóm phê duyệt." : "Users request access and moderators/admin approve."}
+                            {t('hub.communitymanagesettings_219')}
                         </p>
                     </div>
 
@@ -391,14 +391,14 @@ export const CommunityManageSettings = ({
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {isVi ? "Chỉ những người dùng được mời trực tiếp mới có thể gia nhập." : "Only invited users can join."}
+                            {t('hub.communitymanagesettings_220')}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40 mt-1">
                     <span className="text-xs text-text-muted">
-                        {isVi ? "Yêu cầu ghi chú số giờ chơi khi nộp đơn gia nhập" : "Require playtime note on join request"}
+                        {t('hub.communitymanagesettings_221')}
                     </span>
                     <input
                         type="checkbox"
@@ -418,7 +418,7 @@ export const CommunityManageSettings = ({
 
                 <div className="flex flex-col gap-2">
                     <label className="text-xs font-semibold text-text-muted">
-                        {isVi ? "Định dạng bài viết cho phép" : "Allowed post types"}
+                        {t('hub.communitymanagesettings_222')}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                         {Object.entries(allowedPostTypes).map(([typeKey, isAllowed]) => (
@@ -446,7 +446,7 @@ export const CommunityManageSettings = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs text-text-muted">
-                            {isVi ? "Cho phép upload video trực tiếp" : "Allow video uploads"}
+                            {t('hub.communitymanagesettings_223')}
                         </span>
                         <input
                             type="checkbox"
@@ -458,7 +458,7 @@ export const CommunityManageSettings = ({
 
                     <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs text-text-muted">
-                            {isVi ? "Giới hạn dung lượng file" : "Max upload size"}
+                            {t('hub.communitymanagesettings_224')}
                         </span>
                         <select
                             value={maxMediaSizeMB}
@@ -473,7 +473,7 @@ export const CommunityManageSettings = ({
 
                     <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs text-text-muted">
-                            {isVi ? "Tự động xem trước link" : "Auto-embed link"}
+                            {t('hub.communitymanagesettings_225')}
                         </span>
                         <input
                             type="checkbox"
@@ -495,48 +495,48 @@ export const CommunityManageSettings = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs font-semibold text-text">
-                            {isVi ? "Tuổi tài khoản tối thiểu" : "Minimum account age"}
+                            {t('hub.communitymanagesettings_226')}
                         </span>
                         <span className="text-[11px] text-text-muted">
-                            {isVi ? "Ngăn chặn clone bot spam" : "Prevent new spam accounts"}
+                            {t('hub.communitymanagesettings_227')}
                         </span>
                         <select
                             value={minAccountAgeDays}
                             onChange={(e) => setMinAccountAgeDays(Number(e.target.value))}
                             className="h-7 px-2 rounded bg-surface-inner border border-divider-primary text-xs font-mono text-text focus:outline-none mt-1"
                         >
-                            <option value={0}>{isVi ? "Không giới hạn" : "No restriction"}</option>
-                            <option value={1}>{isVi ? "1 ngày" : "1 day"}</option>
-                            <option value={3}>{isVi ? "3 ngày (Khuyên dùng)" : "3 days (Recommended)"}</option>
-                            <option value={7}>{isVi ? "7 ngày" : "7 days"}</option>
+                            <option value={0}>{t('hub.communitymanagesettings_228')}</option>
+                            <option value={1}>{t('hub.communitymanagesettings_229')}</option>
+                            <option value={3}>{t('hub.communitymanagesettings_230')}</option>
+                            <option value={7}>{t('hub.communitymanagesettings_231')}</option>
                         </select>
                     </div>
 
                     <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs font-semibold text-text">
-                            {isVi ? "Tự động ẩn sau số báo cáo" : "Auto-flag report threshold"}
+                            {t('hub.communitymanagesettings_232')}
                         </span>
                         <span className="text-[11px] text-text-muted">
-                            {isVi ? "Tự động tạm ẩn bài vi phạm" : "Hide content pending review"}
+                            {t('hub.communitymanagesettings_233')}
                         </span>
                         <select
                             value={autoFlagThreshold}
                             onChange={(e) => setAutoFlagThreshold(Number(e.target.value))}
                             className="h-7 px-2 rounded bg-surface-inner border border-divider-primary text-xs font-mono text-text focus:outline-none mt-1"
                         >
-                            <option value={2}>2 {isVi ? "báo cáo" : "reports"}</option>
-                            <option value={3}>3 {isVi ? "báo cáo" : "reports"}</option>
-                            <option value={5}>5 {isVi ? "báo cáo" : "reports"}</option>
+                            <option value={2}>2 {t('hub.communitymanagesettings_234')}</option>
+                            <option value={3}>3 {t('hub.communitymanagesettings_235')}</option>
+                            <option value={5}>5 {t('hub.communitymanagesettings_236')}</option>
                         </select>
                     </div>
 
                     <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40 justify-between">
                         <div>
                             <span className="text-xs font-semibold text-text block">
-                                {isVi ? "Quyền ghim bài của Điều hành viên" : "Allow mods to pin posts"}
+                                {t('hub.communitymanagesettings_237')}
                             </span>
                             <span className="text-[11px] text-text-muted">
-                                {isVi ? "Cho phép ghim bài thông báo" : "Can pin community announcements"}
+                                {t('hub.communitymanagesettings_238')}
                             </span>
                         </div>
                         <input
@@ -563,12 +563,10 @@ export const CommunityManageSettings = ({
                     <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex flex-col max-w-xl">
                             <span className="text-xs font-bold text-text">
-                                {isVi ? "Chuyển giao quyền sở hữu cộng đồng" : "Transfer community ownership"}
+                                {t('hub.communitymanagesettings_239')}
                             </span>
                             <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                                {isVi
-                                    ? "Chuyển giao toàn bộ quyền quản trị cao nhất của cộng đồng này cho một thành viên khác. Bạn sẽ trở thành Điều hành viên thông thường."
-                                    : "Ownership transfer gives another member full administrative control of this community."}
+                                {t('hub.communitymanagesettings_240')}
                             </p>
                         </div>
                         <button
@@ -576,7 +574,7 @@ export const CommunityManageSettings = ({
                             onClick={() => setIsTransferModalOpen(true)}
                             className="px-3 py-1.5 rounded-[4px] bg-surface hover:bg-amber-500/15 border border-amber-500/40 text-xs font-bold text-amber-400 transition-colors cursor-pointer shrink-0 self-start sm:self-center"
                         >
-                            {isVi ? "Chuyển quyền sở hữu..." : "Transfer Ownership..."}
+                            {t('hub.communitymanagesettings_241')}
                         </button>
                     </div>
 
@@ -584,12 +582,10 @@ export const CommunityManageSettings = ({
                     <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex flex-col max-w-xl">
                             <span className="text-xs font-bold text-rose-400">
-                                {isVi ? "Xóa vĩnh viễn cộng đồng này" : "Delete this community"}
+                                {t('hub.communitymanagesettings_242')}
                             </span>
                             <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                                {isVi
-                                    ? "Thao tác này sẽ xóa toàn bộ bài viết, thảo luận, danh sách thành viên và tệp đa phương tiện của cộng đồng này. Không thể khôi phục."
-                                    : "Permanently delete this community, all posts, guides, and member associations. This action cannot be undone."}
+                                {t('hub.communitymanagesettings_243')}
                             </p>
                         </div>
                         <button
@@ -598,7 +594,7 @@ export const CommunityManageSettings = ({
                             className="px-3 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 self-start sm:self-center shadow-sm"
                         >
                             <FontAwesomeIcon icon={faTrashCan} className="text-xs mr-1.5" />
-                            <span>{isVi ? "Xóa cộng đồng..." : "Delete Community..."}</span>
+                            <span>{t('hub.communitymanagesettings_244')}</span>
                         </button>
                     </div>
                 </div>
@@ -612,7 +608,7 @@ export const CommunityManageSettings = ({
                             <div className="flex items-center gap-2 text-amber-400">
                                 <FontAwesomeIcon icon={faCrown} />
                                 <span className="text-xs font-mono font-bold uppercase tracking-wider">
-                                    {isVi ? "XÁC NHẬN CHUYỂN QUYỀN SỞ HỮU" : "TRANSFER OWNERSHIP"}
+                                    {t('hub.communitymanagesettings_245')}
                                 </span>
                             </div>
                             <button
@@ -625,14 +621,12 @@ export const CommunityManageSettings = ({
                         </div>
 
                         <p className="text-xs text-text-muted leading-relaxed">
-                            {isVi
-                                ? "Hành động này sẽ chuyển quyền Trưởng cộng đồng cao nhất cho thành viên được chỉ định. Bạn sẽ không thể tự hoàn tác nếu không có sự đồng ý của họ."
-                                : "Ownership transfer gives another member full administrative control of this community."}
+                            {t('hub.communitymanagesettings_246')}
                         </p>
 
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-text">
-                                {isVi ? "Chọn thành viên nhận quyền sở hữu" : "Select member"}
+                                {t('hub.communitymanagesettings_247')}
                             </label>
                             <select
                                 value={transferTargetUser}
@@ -649,7 +643,7 @@ export const CommunityManageSettings = ({
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-text flex items-center gap-1.5">
                                 <FontAwesomeIcon icon={faKey} className="text-amber-400 text-xs" />
-                                <span>{isVi ? "Xác thực mật khẩu của bạn" : "Re-authenticate (Enter your password)"}</span>
+                                <span>{t('hub.communitymanagesettings_248')}</span>
                             </label>
                             <input
                                 type="password"
@@ -666,14 +660,14 @@ export const CommunityManageSettings = ({
                                 onClick={() => setIsTransferModalOpen(false)}
                                 className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                             >
-                                {isVi ? "Hủy" : "Cancel"}
+                                {t('hub.communitymanagesettings_249')}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleConfirmTransfer}
                                 className="px-4 py-1.5 rounded-[4px] bg-amber-500 hover:bg-amber-600 text-xs font-bold text-black transition-colors cursor-pointer"
                             >
-                                {isVi ? "Xác nhận chuyển giao" : "Confirm Transfer"}
+                                {t('hub.communitymanagesettings_250')}
                             </button>
                         </div>
                     </div>
@@ -688,7 +682,7 @@ export const CommunityManageSettings = ({
                             <div className="flex items-center gap-2 text-rose-400">
                                 <FontAwesomeIcon icon={faTrashCan} />
                                 <span className="text-xs font-mono font-bold uppercase tracking-wider">
-                                    {isVi ? "XÓA VĨNH VIỄN CỘNG ĐỒNG" : "DELETE COMMUNITY"}
+                                    {t('hub.communitymanagesettings_251')}
                                 </span>
                             </div>
                             <button
@@ -725,7 +719,7 @@ export const CommunityManageSettings = ({
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-text flex items-center gap-1.5">
                                 <FontAwesomeIcon icon={faKey} className="text-rose-400 text-xs" />
-                                <span>{isVi ? "Xác thực mật khẩu tài khoản của bạn" : "Re-authenticate password"}</span>
+                                <span>{t('hub.communitymanagesettings_252')}</span>
                             </label>
                             <input
                                 type="password"
@@ -742,14 +736,14 @@ export const CommunityManageSettings = ({
                                 onClick={() => setIsDeleteModalOpen(false)}
                                 className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                             >
-                                {isVi ? "Hủy" : "Cancel"}
+                                {t('hub.communitymanagesettings_253')}
                             </button>
                             <button
                                 type="button"
                                 onClick={handleConfirmDelete}
                                 className="px-4 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer"
                             >
-                                {isVi ? "Xác nhận xóa vĩnh viễn" : "Delete Community"}
+                                {t('hub.communitymanagesettings_254')}
                             </button>
                         </div>
                     </div>

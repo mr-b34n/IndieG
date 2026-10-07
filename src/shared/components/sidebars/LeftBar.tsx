@@ -256,9 +256,6 @@ export const LeftBar = () => {
                         <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400">
                             {t('common.adminSection', { defaultValue: 'Quản trị hệ thống' })}
                         </p>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                            ADMIN
-                        </span>
                     </div>
 
                     <button

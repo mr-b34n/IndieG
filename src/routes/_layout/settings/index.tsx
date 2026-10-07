@@ -43,13 +43,13 @@ const ToggleSwitch = ({ checked, onChange, disabled, ariaLabel }: ToggleSwitchPr
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
-            checked ? 'bg-primary' : 'bg-surface-hover border border-border/80'
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-40 ${
+            checked ? 'bg-primary border border-transparent' : 'bg-surface-hover border border-border/80'
         }`}
     >
         <span
-            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                checked ? 'translate-x-5' : 'translate-x-0'
+            className={`pointer-events-none absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-md ring-0 transition-all duration-200 ease-in-out ${
+                checked ? 'left-[22px]' : 'left-[2px]'
             }`}
         />
     </button>
@@ -415,72 +415,6 @@ export function SettingsPage() {
                                         />
                                     </div>
 
-                                    {/* 2-Option Cards */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                                        {/* Dark Mode Card */}
-                                        <button
-                                            type="button"
-                                            onClick={() => setTheme('dark')}
-                                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex items-start gap-3 ${
-                                                theme === 'dark'
-                                                    ? 'bg-surface border-primary ring-1 ring-primary/40 shadow-xs'
-                                                    : 'bg-surface/50 border-border hover:bg-surface-hover text-text-muted hover:text-text'
-                                            }`}
-                                        >
-                                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                                                theme === 'dark' ? 'bg-primary/15 text-primary' : 'bg-surface-inner text-text-muted'
-                                            }`}>
-                                                <FontAwesomeIcon icon={faMoon} className="text-sm" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className={`text-xs font-bold ${theme === 'dark' ? 'text-primary' : 'text-text'}`}>
-                                                        Chế độ tối (Dark Mode)
-                                                    </span>
-                                                    {theme === 'dark' && (
-                                                        <span className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">
-                                                            <FontAwesomeIcon icon={faCheck} />
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[11px] text-text-faint mt-1 leading-relaxed">
-                                                    Nền tối gaming chuẩn OLED, giảm mỏi mắt khi chơi game đêm.
-                                                </p>
-                                            </div>
-                                        </button>
-
-                                        {/* Light Mode Card */}
-                                        <button
-                                            type="button"
-                                            onClick={() => setTheme('light')}
-                                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex items-start gap-3 ${
-                                                theme === 'light'
-                                                    ? 'bg-surface border-primary ring-1 ring-primary/40 shadow-xs'
-                                                    : 'bg-surface/50 border-border hover:bg-surface-hover text-text-muted hover:text-text'
-                                            }`}
-                                        >
-                                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                                                theme === 'light' ? 'bg-primary/15 text-primary' : 'bg-surface-inner text-text-muted'
-                                            }`}>
-                                                <FontAwesomeIcon icon={faSun} className="text-sm" />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between">
-                                                    <span className={`text-xs font-bold ${theme === 'light' ? 'text-primary' : 'text-text'}`}>
-                                                        Chế độ sáng (Light Mode)
-                                                    </span>
-                                                    {theme === 'light' && (
-                                                        <span className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[10px]">
-                                                            <FontAwesomeIcon icon={faCheck} />
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[11px] text-text-faint mt-1 leading-relaxed">
-                                                    Nền sáng rõ ràng, độ tương phản sắc nét khi sử dụng ban ngày.
-                                                </p>
-                                            </div>
-                                        </button>
-                                    </div>
                                 </div>
 
                                 {/* Language Row */}
@@ -773,199 +707,208 @@ export function SettingsPage() {
                                 </div>
                             )}
 
-                            {/* Email Row */}
-                            <div className="space-y-3 pb-4 border-b border-divider-primary/50">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold uppercase text-text-faint tracking-wider">
-                                        {t('authenticate.email', { defaultValue: 'Email tài khoản' })}
-                                    </span>
-                                    <span
-                                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                            isEmailVerified
-                                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                            {/* Settings Cards Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                
+                                {/* Email Card */}
+                                <div className="p-4 rounded-xl border border-divider-primary/60 bg-surface/50 flex flex-col space-y-4 shadow-sm">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold uppercase text-text-faint tracking-wider">
+                                            {t('authenticate.email', { defaultValue: 'Email tài khoản' })}
+                                        </span>
+                                        <span
+                                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                isEmailVerified
+                                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                                    : emailPendingVerify
+                                                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                                                    : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                                            }`}
+                                        >
+                                            {isEmailVerified
+                                                ? t('settings.account.verified', { defaultValue: 'Đã xác minh' })
                                                 : emailPendingVerify
-                                                ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                                                : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
-                                        }`}
-                                    >
-                                        {isEmailVerified
-                                            ? t('settings.account.verified', { defaultValue: 'Đã xác minh' })
-                                            : emailPendingVerify
-                                            ? t('settings.account.pendingVerify', { defaultValue: 'Đang chờ xác nhận' })
-                                            : t('settings.account.unverified', { defaultValue: 'Chưa xác minh' })}
-                                    </span>
-                                </div>
-
-                                <div className="p-2.5 rounded bg-surface border border-divider-primary/60 text-xs font-bold text-text">
-                                    {currentEmail}
-                                </div>
-
-                                {!isEmailVerified && (
-                                    <div className="space-y-2 pt-1">
-                                        {emailPendingVerify ? (
-                                            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs space-y-2.5">
-                                                <p className="text-amber-200 font-medium leading-relaxed">
-                                                    {t('settings.account.pendingVerifyNotice', {
-                                                        defaultValue: 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư của bạn để hoàn tất.'
-                                                    })}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleConfirmVerification}
-                                                        className="px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
-                                                    >
-                                                        {t('settings.account.confirmVerifiedBtn', { defaultValue: 'Tôi đã xác minh' })}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleSendVerificationEmail}
-                                                        className="px-3 py-1.5 rounded border border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500 hover:text-slate-950 font-bold text-xs cursor-pointer transition-colors"
-                                                    >
-                                                        {t('settings.account.resendVerificationEmail', { defaultValue: 'Gửi lại email' })}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={handleSendVerificationEmail}
-                                                className="w-full py-2 rounded border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors font-bold text-xs cursor-pointer"
-                                            >
-                                                {t('settings.account.sendVerificationEmail', { defaultValue: 'Gửi email xác thực' })}
-                                            </button>
-                                        )}
+                                                ? t('settings.account.pendingVerify', { defaultValue: 'Đang chờ xác nhận' })
+                                                : t('settings.account.unverified', { defaultValue: 'Chưa xác minh' })}
+                                        </span>
                                     </div>
-                                )}
 
-                                <form onSubmit={handleChangeEmailSubmit} className="space-y-2 pt-2">
-                                    <div className="text-xs font-bold text-text-faint">{t('settings.account.changeEmailTitle', { defaultValue: 'Đổi Email:' })}</div>
-                                    <input
-                                        type="email"
-                                        value={newEmail}
-                                        onChange={(e) => setNewEmail(e.target.value)}
-                                        placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'Email mới...' })}
-                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={emailPasswordConfirm}
-                                        onChange={(e) => setEmailPasswordConfirm(e.target.value)}
-                                        placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
-                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors"
-                                    >
-                                        {t('settings.account.updateEmailBtn', { defaultValue: 'Cập nhật Email' })}
-                                    </button>
-                                </form>
-                            </div>
-
-                            {/* Password Form */}
-                            <form onSubmit={handleChangePasswordSubmit} className="space-y-3 pb-4 border-b border-divider-primary/50">
-                                <div className="text-xs font-bold uppercase text-text-faint tracking-wider">{t('settings.account.changePasswordTitle', { defaultValue: 'Đổi mật khẩu' })}</div>
-
-                                {changePwdError && (
-                                    <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold">
-                                        {changePwdError}
+                                    <div className="p-2.5 rounded bg-surface border border-divider-primary/60 text-xs font-bold text-text">
+                                        {currentEmail}
                                     </div>
-                                )}
-                                {changePwdSuccess && (
-                                    <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faCheckCircle} />
-                                        <span>{changePwdSuccess}</span>
-                                    </div>
-                                )}
 
-                                <div className="space-y-2">
-                                    <input
-                                        type="password"
-                                        value={changePwdState.currentPassword}
-                                        onChange={(e) => setChangePwdState({ ...changePwdState, currentPassword: e.target.value })}
-                                        placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
-                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={changePwdState.newPassword}
-                                        onChange={(e) => setChangePwdState({ ...changePwdState, newPassword: e.target.value })}
-                                        placeholder={t('settings.account.newPasswordPlaceholder', { defaultValue: 'Mật khẩu mới (≥8 ký tự)...' })}
-                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
-                                    />
-                                    <input
-                                        type="password"
-                                        value={changePwdState.confirmPassword}
-                                        onChange={(e) => setChangePwdState({ ...changePwdState, confirmPassword: e.target.value })}
-                                        placeholder={t('settings.account.confirmPasswordPlaceholder', { defaultValue: 'Xác nhận mật khẩu mới...' })}
-                                        className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={changePwdLoading}
-                                    className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50"
-                                >
-                                    {changePwdLoading ? t('settings.account.pwdProcessing', { defaultValue: 'Đang xử lý...' }) : t('settings.account.updatePasswordBtn', { defaultValue: 'Cập nhật Mật khẩu' })}
-                                </button>
-                            </form>
-
-                            {/* Active Sessions */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-text-faint uppercase tracking-wider">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({remoteSessions?.length || 0}):</span>
-                                </div>
-
-                                <div className="divide-y divide-divider-primary/50 border border-divider-primary/60 bg-surface rounded overflow-hidden">
-                                    {sessionsLoading && <div className="p-3 text-xs text-text-faint">{t('common.loading', { defaultValue: 'Đang tải...' })}</div>}
-                                    {!sessionsLoading && remoteSessions?.map((s) => {
-                                        const isRevoked = Boolean(s.revoked_at);
-                                        return (
-                                            <div key={s.id} className="p-3 flex items-center justify-between gap-3 text-xs">
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    <FontAwesomeIcon icon={s.userAgent?.toLowerCase().includes("mobile") ? faMobileScreen : faLaptop} className="text-primary text-sm shrink-0" />
-                                                    <div className="min-w-0">
-                                                        <div className="font-bold text-text flex items-center gap-1.5 truncate">
-                                                            <span>{s.userAgent?.substring(0, 30) || "Unknown Device"}</span>
-                                                        </div>
-                                                        <div className="text-[10px] text-text-faint truncate">
-                                                            IP: {s.ip_address} • {new Date(s.created_at).toLocaleString()}
-                                                        </div>
+                                    {!isEmailVerified && (
+                                        <div className="space-y-2 pt-1">
+                                            {emailPendingVerify ? (
+                                                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded text-xs space-y-2.5">
+                                                    <p className="text-amber-200 font-medium leading-relaxed">
+                                                        {t('settings.account.pendingVerifyNotice', {
+                                                            defaultValue: 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư của bạn để hoàn tất.'
+                                                        })}
+                                                    </p>
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleConfirmVerification}
+                                                            className="flex-1 px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs cursor-pointer transition-colors"
+                                                        >
+                                                            {t('settings.account.confirmVerifiedBtn', { defaultValue: 'Tôi đã xác minh' })}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleSendVerificationEmail}
+                                                            className="flex-1 px-3 py-1.5 rounded border border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500 hover:text-slate-950 font-bold text-xs cursor-pointer transition-colors"
+                                                        >
+                                                            {t('settings.account.resendVerificationEmail', { defaultValue: 'Gửi lại email' })}
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    {isRevoked ? (
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                                                            {t('settings.account.revokedSession', { defaultValue: 'Đã thu hồi' })}
-                                                        </span>
-                                                    ) : (
-                                                        <>
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                                                                {t('settings.account.runningSession', { defaultValue: 'Đang hoạt động' })}
-                                                            </span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => revokeSessionMutation.mutate(s.id)}
-                                                                disabled={revokeSessionMutation.isPending}
-                                                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-bold border border-rose-500/30 transition-colors cursor-pointer disabled:opacity-50"
-                                                            >
-                                                                {t('settings.account.revokeSession', { defaultValue: 'Thu hồi' })}
-                                                            </button>
-                                                        </>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSendVerificationEmail}
+                                                    className="w-full py-2 rounded border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition-colors font-bold text-xs cursor-pointer"
+                                                >
+                                                    {t('settings.account.sendVerificationEmail', { defaultValue: 'Gửi email xác thực' })}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleChangeEmailSubmit} className="space-y-2 pt-3 border-t border-divider-primary/50 mt-auto">
+                                        <div className="text-xs font-bold text-text-faint">{t('settings.account.changeEmailTitle', { defaultValue: 'Đổi Email:' })}</div>
+                                        <input
+                                            type="email"
+                                            value={newEmail}
+                                            onChange={(e) => setNewEmail(e.target.value)}
+                                            placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'Email mới...' })}
+                                            className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        />
+                                        <input
+                                            type="password"
+                                            value={emailPasswordConfirm}
+                                            onChange={(e) => setEmailPasswordConfirm(e.target.value)}
+                                            placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
+                                            className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors mt-2"
+                                        >
+                                            {t('settings.account.updateEmailBtn', { defaultValue: 'Cập nhật Email' })}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {/* Password Card */}
+                                <div className="p-4 rounded-xl border border-divider-primary/60 bg-surface/50 flex flex-col space-y-4 shadow-sm">
+                                    <form onSubmit={handleChangePasswordSubmit} className="flex flex-col h-full space-y-3">
+                                        <div className="text-xs font-bold uppercase text-text-faint tracking-wider">{t('settings.account.changePasswordTitle', { defaultValue: 'Đổi mật khẩu' })}</div>
+
+                                        {changePwdError && (
+                                            <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold">
+                                                {changePwdError}
+                                            </div>
+                                        )}
+                                        {changePwdSuccess && (
+                                            <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
+                                                <FontAwesomeIcon icon={faCheckCircle} />
+                                                <span>{changePwdSuccess}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2 flex-1">
+                                            <input
+                                                type="password"
+                                                value={changePwdState.currentPassword}
+                                                onChange={(e) => setChangePwdState({ ...changePwdState, currentPassword: e.target.value })}
+                                                placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
+                                                className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                            />
+                                            <input
+                                                type="password"
+                                                value={changePwdState.newPassword}
+                                                onChange={(e) => setChangePwdState({ ...changePwdState, newPassword: e.target.value })}
+                                                placeholder={t('settings.account.newPasswordPlaceholder', { defaultValue: 'Mật khẩu mới (≥8 ký tự)...' })}
+                                                className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                            />
+                                            <input
+                                                type="password"
+                                                value={changePwdState.confirmPassword}
+                                                onChange={(e) => setChangePwdState({ ...changePwdState, confirmPassword: e.target.value })}
+                                                placeholder={t('settings.account.confirmPasswordPlaceholder', { defaultValue: 'Xác nhận mật khẩu mới...' })}
+                                                className="w-full bg-surface border border-divider-primary/80 rounded p-2 text-xs text-text focus:outline-none focus:border-primary"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={changePwdLoading}
+                                            className="w-full py-2 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
+                                        >
+                                            {changePwdLoading ? t('settings.account.pwdProcessing', { defaultValue: 'Đang xử lý...' }) : t('settings.account.updatePasswordBtn', { defaultValue: 'Cập nhật Mật khẩu' })}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {/* Sessions Card */}
+                                <div className="p-4 rounded-xl border border-divider-primary/60 bg-surface/50 lg:col-span-2 space-y-4 shadow-sm">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-divider-primary/50">
+                                        <FontAwesomeIcon icon={faLaptopCode} className="text-text-faint text-sm" />
+                                        <span className="font-bold text-text-faint uppercase tracking-wider">{t('settings.account.activeSessions', { defaultValue: 'Phiên làm việc' })} ({remoteSessions?.length || 0})</span>
+                                    </div>
+
+                                    {sessionsLoading ? (
+                                        <div className="p-6 text-center text-xs text-text-faint">
+                                            <FontAwesomeIcon icon={faSpinner} className="animate-spin text-lg text-primary mb-2" />
+                                            <p>{t('common.loading', { defaultValue: 'Đang tải...' })}</p>
+                                        </div>
+                                    ) : remoteSessions && remoteSessions.length > 0 ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {remoteSessions.map((session) => (
+                                                <div key={session.id} className="p-3 bg-surface border border-divider-primary/80 rounded-lg flex items-center justify-between gap-3 group">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="w-8 h-8 rounded bg-surface-hover flex items-center justify-center text-text-muted shrink-0">
+                                                            <FontAwesomeIcon icon={session.device.toLowerCase().includes('mobile') || session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('android') ? faMobileScreen : faLaptopCode} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="text-xs font-bold text-text truncate">{session.device}</div>
+                                                            <div className="text-[10px] text-text-faint flex items-center gap-1.5 mt-0.5">
+                                                                <span className={session.isRevoked ? "text-rose-400" : session.isCurrent ? "text-emerald-400" : ""}>
+                                                                    {session.isRevoked 
+                                                                        ? t('settings.account.revokedSession', { defaultValue: 'Đã thu hồi' })
+                                                                        : session.isCurrent 
+                                                                            ? t('settings.account.runningSession', { defaultValue: 'Đang hoạt động' }) 
+                                                                            : session.ip}
+                                                                </span>
+                                                                <span>•</span>
+                                                                <span>{new Date(session.lastActive).toLocaleDateString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {!session.isCurrent && !session.isRevoked && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRevokeSession(session.id)}
+                                                            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[10px] font-bold transition-all cursor-pointer whitespace-nowrap"
+                                                        >
+                                                            {t('settings.account.revokeSession', { defaultValue: 'Thu hồi' })}
+                                                        </button>
                                                     )}
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {!sessionsLoading && remoteSessions?.length === 0 && (
-                                        <div className="p-3 text-xs text-text-faint text-center">{t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}</div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 text-xs text-text-faint text-center bg-surface border border-divider-primary/50 rounded-lg">
+                                            {t('settings.account.noSessions', { defaultValue: 'Không có phiên đăng nhập nào khác' })}
+                                        </div>
                                     )}
                                 </div>
+
                             </div>
                         </div>
                     )}
+
 
                     {/* TAB 6: BLOCKED USERS */}
                     {activeTab === "blocked" && (

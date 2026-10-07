@@ -11,6 +11,6 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute('/_layout/search')({
-    validateSearch: searchSchema,
+    validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
     component: SearchResultsPage,
 });

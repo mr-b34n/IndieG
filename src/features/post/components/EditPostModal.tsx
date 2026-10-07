@@ -6,6 +6,7 @@ import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
 
 export interface EditPostModalProps {
     initialTitle: string;
@@ -80,6 +81,10 @@ export const EditPostModal = ({
         onClose();
     };
 
+    useKeyboardShortcut(["Escape"], () => {
+        handleClose();
+    });
+
     return createPortal(
         <div
             className="fixed inset-0 z-200 flex items-center justify-center animate-fade-in px-4"
@@ -105,7 +110,7 @@ export const EditPostModal = ({
                     </button>
                 </div>
 
-                <div className="flex flex-col p-5 gap-4 overflow-y-auto no-scrollbar">
+                <div className="flex flex-col p-5 gap-4 overflow-y-auto scrollbar-none">
                     <div className="flex flex-col gap-2">
                         <label htmlFor="edit-post-title" className="text-sm font-semibold text-text">
                             {t('feed.postTitle')}

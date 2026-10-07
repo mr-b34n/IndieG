@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '@/shared/hooks/useTheme';
+import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut';
 import { CommentSection, getCurrentAuthor, Post, usePostsStore, type PostData } from '@/features/post';
 import { usePostDetailQuery, useUpdatePostMutation, useDeletePostMutation } from '@/shared/api/useQueries';
 import { mapPostDtoToPostData } from '@/shared/api';
@@ -56,6 +57,10 @@ function PostDetail() {
             navigate({ to: '/' });
         }
     };
+
+    useKeyboardShortcut(["Escape"], () => {
+        handleGoBack();
+    });
 
     const handleEditPost = async (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {

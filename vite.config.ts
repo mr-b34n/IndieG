@@ -710,10 +710,10 @@ export default defineConfig({
 	],
 	resolve: {
 		alias: {
-			"@": path.resolve(__dirname, "./src"),
-			"@/features": path.resolve(__dirname, "./src/features"),
-			"@/shared": path.resolve(__dirname, "./src/shared"),
-			"@/app": path.resolve(__dirname, "./src/app"),
+			"@": path.resolve(import.meta.dirname, "./src"),
+			"@/features": path.resolve(import.meta.dirname, "./src/features"),
+			"@/shared": path.resolve(import.meta.dirname, "./src/shared"),
+			"@/app": path.resolve(import.meta.dirname, "./src/app"),
 		},
 	},
 	build: {

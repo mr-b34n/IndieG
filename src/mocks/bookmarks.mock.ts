@@ -14,7 +14,7 @@ export const MOCK_BOOKMARKS: BookmarkDto[] = [
         userId: "user-me",
         targetType: "post",
         targetId: "post-1",
-        target: MOCK_POST_DTOS[0],
+        target: MOCK_POST_DTOS[0], // CS2 Highlight
         createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
     },
     {
@@ -22,31 +22,55 @@ export const MOCK_BOOKMARKS: BookmarkDto[] = [
         userId: "user-me",
         targetType: "post",
         targetId: "post-2",
-        target: MOCK_POST_DTOS[1],
+        target: MOCK_POST_DTOS[1], // CS2 Economy
         createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
     },
     {
         id: "bm-3",
         userId: "user-me",
         targetType: "post",
-        targetId: "post-6",
-        target: MOCK_POST_DTOS[5] || MOCK_POST_DTOS[0],
+        targetId: "post-4",
+        target: MOCK_POST_DTOS[3] || MOCK_POST_DTOS[0], // Elden Ring Ranni
         createdAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
     },
     {
         id: "bm-4",
         userId: "user-me",
         targetType: "post",
-        targetId: "post-8",
-        target: MOCK_POST_DTOS[7] || MOCK_POST_DTOS[1],
+        targetId: "post-7",
+        target: MOCK_POST_DTOS[6] || MOCK_POST_DTOS[1], // Valorant Ascent
         createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
     },
     {
         id: "bm-5",
         userId: "user-me",
         targetType: "post",
-        targetId: "post-11",
-        target: MOCK_POST_DTOS[10] || MOCK_POST_DTOS[0],
+        targetId: "post-9",
+        target: MOCK_POST_DTOS[8] || MOCK_POST_DTOS[0], // Genshin Mualani
         createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
     },
+    {
+        id: "bm-6",
+        userId: "user-me",
+        targetType: "post",
+        targetId: "post-11",
+        target: MOCK_POST_DTOS[10] || MOCK_POST_DTOS[0], // Cyberpunk Katana
+        createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+    },
+    {
+        id: "bm-7",
+        userId: "user-me",
+        targetType: "post",
+        targetId: "post-13",
+        target: MOCK_POST_DTOS[12] || MOCK_POST_DTOS[0], // RDR2 Photo
+        createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
+    },
+    {
+        id: "bm-8",
+        userId: "user-me",
+        targetType: "post",
+        targetId: "post-14",
+        target: MOCK_POST_DTOS[13] || MOCK_POST_DTOS[0], // Apex Movement
+        createdAt: new Date(Date.now() - 96 * 3600 * 1000).toISOString(),
+    }
 ];

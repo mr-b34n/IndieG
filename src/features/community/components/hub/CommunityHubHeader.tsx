@@ -142,10 +142,10 @@ export const CommunityHubHeader = ({
                         {isJoined ? (
                             <>
                                 <FontAwesomeIcon icon={faCheck} className="text-[10px] text-emerald-400" />
-                                <span>{isVi ? "Đã tham gia" : "Joined"}</span>
+                                <span>{t('hub.communityhubheader_25')}</span>
                             </>
                         ) : (
-                            <span>{isVi ? "+ Tham gia" : "+ Join"}</span>
+                            <span>{t('hub.communityhubheader_26')}</span>
                         )}
                     </button>
 
@@ -161,7 +161,7 @@ export const CommunityHubHeader = ({
                         }`}
                     >
                         <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                        <span>{isVi ? "Tạo bài viết" : "Create Post"}</span>
+                        <span>{t('hub.communityhubheader_27')}</span>
                     </button>
                 </div>
             </div>

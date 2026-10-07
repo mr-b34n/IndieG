@@ -20,6 +20,9 @@ import {
 import { useAuthStore } from '@/features/auth';
 import { getCurrentAuthor } from "@/features/post";
 import { useCreatePostModalStore } from '@/features/feed/store/useCreatePostModalStore';
+import { useReportsQuery } from "@/shared/api/useQueries";
+import { extractReportList } from "@/shared/api";
+import { useMemo } from "react";
 
 export const Header = () => {
     const { t } = useTranslation();
@@ -63,6 +66,12 @@ export const Header = () => {
         user?.email === "admin@indieg.com"
     );
 
+    const { data: reportsData } = useReportsQuery(undefined, { enabled: isAdmin });
+    const pendingReportsCount = useMemo(() => {
+        if (!isAdmin) return 0;
+        return extractReportList(reportsData).filter((r) => r.status === "pending").length;
+    }, [isAdmin, reportsData]);
+
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -80,7 +89,14 @@ export const Header = () => {
             navigate({ to: "/auth" });
             return;
         }
-        openCreatePost();
+        let currentCommunityId = undefined;
+        if (pathname.startsWith('/community/')) {
+            const parts = pathname.split('/');
+            if (parts.length >= 3 && parts[2]) {
+                currentCommunityId = parts[2];
+            }
+        }
+        openCreatePost(currentCommunityId);
     };
 
     const handleLogout = () => {
