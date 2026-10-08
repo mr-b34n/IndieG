@@ -115,11 +115,11 @@ export const ProfileHero = ({
                     />
                 ) : null}
                 
-                {/* Clean vignette overlay */}
+                {/* Clean bottom-up gradient overlay */}
                 <div 
                     className="absolute inset-0" 
                     style={{
-                        background: "linear-gradient(180deg, rgba(8,9,10,0.15) 0%, rgba(8,9,10,0.55) 50%, rgba(10,12,14,0.98) 100%), linear-gradient(90deg, rgba(8,9,10,0.75) 0%, transparent 65%)"
+                        background: "linear-gradient(to top, rgba(10,12,14,0.95) 0%, rgba(10,12,14,0.4) 40%, transparent 100%)"
                     }}
                 />
 
@@ -153,7 +153,7 @@ export const ProfileHero = ({
 
                 {/* Avatar Overlay & Gamer Identity Text */}
                 <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                    <div className="flex items-end gap-4">
+                    <div className="flex items-end gap-4 relative z-10">
                         {/* Avatar Box with Initial Letter Fallback */}
                         <div className="relative shrink-0 group">
                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[#181F2C] ring-2 ring-[#0A0C0E] relative shadow-md flex items-center justify-center">
@@ -221,7 +221,7 @@ export const ProfileHero = ({
                         </div>
 
                         {/* Text Identity Block */}
-                        <div className="flex flex-col gap-1 pb-1">
+                        <div className="flex flex-col gap-1 pb-1 drop-shadow-md">
                             {isEditing ? (
                                 <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-2">
@@ -280,7 +280,7 @@ export const ProfileHero = ({
                     </div>
 
                     {/* Actions Bar */}
-                    <div className="flex items-center gap-2 shrink-0 self-end flex-wrap">
+                    <div className="flex items-center gap-2 shrink-0 self-end flex-wrap relative z-10">
                         {isOwnProfile ? (
                             <>
                                 {!isEditing ? (
@@ -290,7 +290,7 @@ export const ProfileHero = ({
                                             if (onStartEditMode) onStartEditMode();
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
-                                        className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs"
+                                        className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs border border-[#222834]"
                                         title={t("profile.editProfile", { defaultValue: "Chỉnh sửa hồ sơ" })}
                                     >
                                         <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
@@ -304,7 +304,7 @@ export const ProfileHero = ({
                                                 if (onDiscardEdit) onDiscardEdit();
                                                 else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                             }}
-                                            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A] hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A]/90 backdrop-blur hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs border border-[#222834]"
                                             title={t("profile.cancel", { defaultValue: "Hủy" })}
                                         >
                                             <FontAwesomeIcon icon={faXmark} className="text-xs" />
@@ -339,7 +339,7 @@ export const ProfileHero = ({
                                 <button
                                     type="button"
                                     onClick={() => handleProtectedAction("gửi tin nhắn", () => {})}
-                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faMessage} className="text-[#1688E8] text-xs" />
                                     <span>Nhắn tin</span>
@@ -349,7 +349,7 @@ export const ProfileHero = ({
                                     <button
                                         type="button"
                                         disabled
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] text-[#9A9DA3] text-xs font-semibold"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur text-[#9A9DA3] text-xs font-semibold border border-[#222834]"
                                     >
                                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
                                         <span>Đang xử lý...</span>
@@ -358,7 +358,7 @@ export const ProfileHero = ({
                                     <button
                                         type="button"
                                         onClick={() => handleProtectedAction("quản lý bạn bè", () => setShowFriendMenu((v) => !v))}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A]/20 text-[#2EE09E] text-xs font-bold hover:bg-[#24C58A]/30 transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A]/20 backdrop-blur text-[#2EE09E] text-xs font-bold hover:bg-[#24C58A]/30 transition-all cursor-pointer border border-[#24C58A]/30"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
                                         <span>{t("profile.friendAdded")}</span>
@@ -377,7 +377,7 @@ export const ProfileHero = ({
                                     <button
                                         type="button"
                                         onClick={() => handleProtectedAction("hủy lời mời", () => onCancelRequest?.())}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 backdrop-blur hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer border border-[#E5A93D]/30"
                                         title="Nhấn để hủy lời mời"
                                     >
                                         <FontAwesomeIcon icon={faClock} />
@@ -397,7 +397,7 @@ export const ProfileHero = ({
                                 <button
                                     type="button"
                                     onClick={() => handleProtectedAction("mở tùy chọn", () => setShowFriendMenu((v) => !v))}
-                                    className="w-8 h-8 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-xs transition-all cursor-pointer"
+                                    className="w-8 h-8 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-xs transition-all cursor-pointer border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faEllipsisV} />
                                 </button>
@@ -453,31 +453,28 @@ export const ProfileHero = ({
             {/* ── Quiet & Mature Level, XP & Typography Stats Bar ─────────────────────────────── */}
             <div className="w-full bg-[#0E1116] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
                 
-                {/* Level & XP Progress */}
-                <div className="flex items-center gap-3 min-w-[220px] max-w-xs flex-1">
-                    <div className="flex items-baseline gap-1 font-bold text-xs shrink-0">
-                        <span className="text-[10px] text-[#8A8F98] uppercase tracking-wider font-semibold">LEVEL</span>
-                        <span className="text-sm text-[#F0F1F2] font-extrabold">{level}</span>
+                {/* Compact Level + XP Pill */}
+                <div 
+                    className="flex items-center gap-3 px-3 py-1.5 bg-[#14171D] rounded-full border border-[#1A1F2A]"
+                    title={`${currentXp.toLocaleString()} / ${maxXp.toLocaleString()} XP`}
+                >
+                    <div className="flex items-baseline gap-1 font-bold shrink-0">
+                        <span className="text-[10px] text-[#8A8F98] uppercase font-semibold">LVL</span>
+                        <span className="text-sm text-[#1688E8] font-extrabold">{level}</span>
                     </div>
 
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <div className="flex items-center justify-between text-[10px] font-semibold">
-                            <span className="text-[#9A9DA3]">XP</span>
-                            <span className="text-[#8A8F98] font-mono">{currentXp.toLocaleString()} / {maxXp.toLocaleString()}</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-[#181C24] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                                style={{ width: `${xpPercent}%` }}
-                            />
-                        </div>
+                    <div className="w-24 h-1.5 bg-[#0A0C0E] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
+                            style={{ width: `${xpPercent}%` }}
+                        />
                     </div>
                 </div>
 
                 {/* Gamer Metrics: Typography with generous spacing */}
                 <div className="flex items-center gap-5 sm:gap-8 flex-wrap">
-                    <div className="flex flex-col">
-                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{reputationPercent}%</span>
+                    <div className="flex flex-col" title="Community Reputation Score">
+                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{reputationPercent}</span>
                         <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Reputation</span>
                     </div>
 

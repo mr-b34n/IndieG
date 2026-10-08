@@ -27,6 +27,7 @@ export interface LibraryGame {
     id?: string | number;
     name: string;
     logo: string;
+    coverUrl?: string;
     hours: number;
     lastPlayed: string;
     achievements: number;
