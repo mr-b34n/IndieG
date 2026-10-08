@@ -51,10 +51,7 @@ export const ProfileTabBar = ({
     };
 
     return (
-        <div 
-            className="sticky top-0 z-40 py-3 mb-2 transition-all bg-[rgba(255,255,255,0.03)] backdrop-blur-[8px] border-none"
-            style={{ boxShadow: "0 8px 12px -8px rgba(0,0,0,0.5)" }}
-        >
+        <div className="sticky top-0 z-40 py-3 mb-2 transition-all border-none">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto px-4 sm:px-0">
                 
                 {/* Segmented Pill Tabs */}
