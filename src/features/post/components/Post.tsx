@@ -1039,117 +1039,131 @@ export const Post = ({
     const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
     const rank = getRankConfigIfPresent(rawRank);
 
+    const hasImages = post.images && post.images.length > 0;
+
     return (
         <article
             onClick={handleNavigate}
             className={`
-                w-full transition-all duration-200 ease-in-out border-none
-                ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "relative"}
+                w-full border-none
+                ${(showActionMenu || showShareMenu) ? "!overflow-visible z-[100]" : "z-0"}
                 ${isDetailView 
-                    ? "py-4 pb-5 mb-0" 
-                    : "cursor-pointer group px-3.5 sm:px-4 py-4 rounded-[12px] sm:rounded-[16px] bg-[#161b22] shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.4)] hover:-translate-y-[2px]"
+                    ? "py-4 pb-5 mb-0 relative" 
+                    : "cursor-pointer group px-3.5 sm:px-4 py-4 relative"
                 }
             `}
         >
-            {/* 1. Header (Avatar 40x40, Name, Rank, Community, @username, Time, More 32x32) */}
-            <PostHeader
-                authorName={authorName}
-                authorUsername={authorUsername}
-                authorAvatar={authorAvatar}
-                rank={rank}
-                postCommunity={postCommunity}
-                gameTag={post.gameTag}
-                timeAgo={post.timeAgo}
-                onAuthorClick={handleAuthorClick}
-                onCommunityClick={(e) => {
-                    e?.stopPropagation();
-                    if (postCommunity) {
-                        navigate({ to: `/community/${postCommunity.id}` });
-                    } else if (post.gameTag) {
-                        const gameInfo = getGameBySlug(post.gameTag);
-                        navigate({ to: `/game/${gameInfo.slug}` });
-                    }
-                }}
-                isOwner={isOwner}
-                showActionMenu={showActionMenu}
-                setShowActionMenu={setShowActionMenu}
-                setShowShareMenu={setShowShareMenu}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-                handleReport={(e) => {
-                    e.stopPropagation();
-                    setShowActionMenu(false);
-                    setShowReportModal(true);
-                }}
-                t={t}
-                language={language}
-            />
+            {/* Permanent Background for Text-Only */}
+            {!isDetailView && !hasImages && (
+                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.03)] z-0" />
+            )}
+            
+            {/* Hover Background Layer */}
+            {!isDetailView && (
+                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.04)] opacity-0 scale-96 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.25)] motion-reduce:transition-opacity motion-reduce:group-hover:scale-96 z-0" />
+            )}
 
-            {/* 2. Title (18–20px / 700 / max 2 lines) */}
-            <PostTitle
-                title={post.title}
-                isDetailView={isDetailView}
-                isSpoiler={post.isSpoiler}
-                isNsfw={post.isNsfw}
-            />
+            <div className="relative z-10 w-full flex flex-col">
+                {/* 1. Header (Avatar 40x40, Name, Rank, Community, @username, Time, More 32x32) */}
+                <PostHeader
+                    authorName={authorName}
+                    authorUsername={authorUsername}
+                    authorAvatar={authorAvatar}
+                    rank={rank}
+                    postCommunity={postCommunity}
+                    gameTag={post.gameTag}
+                    timeAgo={post.timeAgo}
+                    onAuthorClick={handleAuthorClick}
+                    onCommunityClick={(e) => {
+                        e?.stopPropagation();
+                        if (postCommunity) {
+                            navigate({ to: `/community/${postCommunity.id}` });
+                        } else if (post.gameTag) {
+                            const gameInfo = getGameBySlug(post.gameTag);
+                            navigate({ to: `/game/${gameInfo.slug}` });
+                        }
+                    }}
+                    isOwner={isOwner}
+                    showActionMenu={showActionMenu}
+                    setShowActionMenu={setShowActionMenu}
+                    setShowShareMenu={setShowShareMenu}
+                    handleEdit={handleEdit}
+                    handleDelete={handleDelete}
+                    handleReport={(e) => {
+                        e.stopPropagation();
+                        setShowActionMenu(false);
+                        setShowReportModal(true);
+                    }}
+                    t={t}
+                    language={language}
+                />
 
-            {/* 3. Content (14–15px / 1.5 leading / max 3–5 lines / ...more) */}
-            <PostContent
-                content={post.content}
-                isDetailView={isDetailView}
-                isExpanded={isContentExpanded}
-                onExpand={(e) => {
-                    e.stopPropagation();
-                    setIsContentExpanded(true);
-                }}
-            />
+                {/* 2. Title (18–20px / 700 / max 2 lines) */}
+                <PostTitle
+                    title={post.title}
+                    isDetailView={isDetailView}
+                    isSpoiler={post.isSpoiler}
+                    isNsfw={post.isNsfw}
+                />
 
-            {/* 4. Media (1 ảnh full width, 2 ảnh 50/50, 3+ gallery, radius 8–10px) */}
-            <PostMedia
-                images={post.images}
-                files={post.files}
-                isSpoiler={post.isSpoiler}
-                isNsfw={post.isNsfw}
-                isRevealed={isRevealed}
-                onRevealWarning={(e) => {
-                    e.stopPropagation();
-                    setIsRevealed(true);
-                }}
-                onImageClick={setLightboxIndex}
-                t={t}
-            />
+                {/* 3. Content (14–15px / 1.5 leading / max 3–5 lines / ...more) */}
+                <PostContent
+                    content={post.content}
+                    isDetailView={isDetailView}
+                    isExpanded={isContentExpanded}
+                    onExpand={(e) => {
+                        e.stopPropagation();
+                        setIsContentExpanded(true);
+                    }}
+                />
 
-            {/* 5. Tags (#CS2 #Clutch #Premier / 12px / accent color / max 3–5 tags) */}
-            <PostTags
-                tags={post.tags}
-                onTagClick={(tag) => {
-                    navigate({ to: `/search?q=${encodeURIComponent(tag)}` });
-                }}
-            />
+                {/* 4. Media (1 ảnh full width, 2 ảnh 50/50, 3+ gallery, radius 8–10px) */}
+                <PostMedia
+                    images={post.images}
+                    files={post.files}
+                    isSpoiler={post.isSpoiler}
+                    isNsfw={post.isNsfw}
+                    isRevealed={isRevealed}
+                    onRevealWarning={(e) => {
+                        e.stopPropagation();
+                        setIsRevealed(true);
+                    }}
+                    onImageClick={setLightboxIndex}
+                    t={t}
+                />
 
-            {/* 6. Actions ([↑] (score) [↓]   💬 24   ↗   🔖) */}
-            <PostActions
-                score={score}
-                isLiked={isLiked}
-                isDownvoted={isDownvoted}
-                onLike={handleLike}
-                onDownvote={handleDownvote}
-                commentsCount={post.comments}
-                allowComments={post.allowComments}
-                onCommentClick={(e) => {
-                    e.stopPropagation();
-                    if (!isDetailView) handleNavigate();
-                }}
-                showShareMenu={showShareMenu}
-                setShowShareMenu={setShowShareMenu}
-                handleCopyLink={handleCopyLink}
-                handleShareX={handleShareX}
-                handleShareFacebook={handleShareFacebook}
-                linkCopied={linkCopied}
-                bookmarked={bookmarked}
-                onToggleBookmark={handleToggleBookmark}
-                t={t}
-            />
+                {/* 5. Tags (#CS2 #Clutch #Premier / 12px / accent color / max 3–5 tags) */}
+                <PostTags
+                    tags={post.tags}
+                    onTagClick={(tag) => {
+                        navigate({ to: `/search?q=${encodeURIComponent(tag)}` });
+                    }}
+                />
+
+                {/* 6. Actions ([↑] (score) [↓]   💬 24   ↗   🔖) */}
+                <PostActions
+                    score={score}
+                    isLiked={isLiked}
+                    isDownvoted={isDownvoted}
+                    onLike={handleLike}
+                    onDownvote={handleDownvote}
+                    commentsCount={post.comments}
+                    allowComments={post.allowComments}
+                    onCommentClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDetailView) handleNavigate();
+                    }}
+                    showShareMenu={showShareMenu}
+                    setShowShareMenu={setShowShareMenu}
+                    handleCopyLink={handleCopyLink}
+                    handleShareX={handleShareX}
+                    handleShareFacebook={handleShareFacebook}
+                    linkCopied={linkCopied}
+                    bookmarked={bookmarked}
+                    onToggleBookmark={handleToggleBookmark}
+                    t={t}
+                />
+            </div>
 
             {lightboxIndex !== null && post.images && (
                 <Lightbox
