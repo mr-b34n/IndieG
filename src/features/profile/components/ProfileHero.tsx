@@ -201,7 +201,7 @@ export const ProfileHero = ({
                                 </button>
 
                                 {isEditingStatus && isOwnProfile && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#14171D] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
+                                    <div className="absolute bottom-full left-0 mb-2 w-40 bg-[#14171D] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
                                         {STATUS_OPTIONS.map((s) => (
                                              <button
                                                 key={s.val}
