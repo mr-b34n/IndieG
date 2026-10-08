@@ -6,6 +6,11 @@ import {
     faGamepad,
     faStar,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+    faDiscord,
+    faSteam,
+    faFacebook,
+} from "@fortawesome/free-brands-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
@@ -173,62 +178,6 @@ export const CommunityHubRightRail = ({
 
     return (
         <aside className="w-full flex flex-col gap-5 text-text select-none py-1">
-            {/* 0. INDIEG GAME HUB WIDGET (Direct Link to IndieG Game Page) */}
-            {gameSlug && (
-                <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-brand-400 flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
-                        <span>INDIEG GAME HUB</span>
-                    </span>
-
-                    <div
-                        onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
-                        className="p-3 rounded-[6px] bg-surface-inner/80 hover:bg-surface-hover/90 border border-brand-500/30 hover:border-brand-500/50 transition-all cursor-pointer group flex flex-col gap-2.5 shadow-xs"
-                    >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            {gameData?.logoUrl ? (
-                                <img
-                                    src={gameData.logoUrl}
-                                    alt={gameData.name || gameName || "Game"}
-                                    className="w-10 h-10 rounded-[6px] object-cover bg-surface border border-border shrink-0 shadow-xs"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 rounded-[6px] bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
-                                    <FontAwesomeIcon icon={faGamepad} className="text-lg" />
-                                </div>
-                            )}
-                            <div className="flex flex-col min-w-0 flex-1 leading-tight">
-                                <h4 className="text-xs font-bold text-text group-hover:text-brand-400 transition-colors truncate">
-                                    {gameData?.name || gameName || communityName}
-                                </h4>
-                                <span className="text-[10px] text-text-muted truncate mt-0.5">
-                                    {gameData?.developer || "IndieG Store"}
-                                </span>
-                                {gameData?.rating && (
-                                    <div className="flex items-center gap-1 text-[10px] font-mono text-amber-400 mt-1">
-                                        <FontAwesomeIcon icon={faStar} className="text-[8px]" />
-                                        <span>{gameData.rating}</span>
-                                        {gameData.activePlayers && (
-                                            <>
-                                                <span className="text-text-faint">•</span>
-                                                <span className="text-emerald-400 font-sans">
-                                                    {formatCompactNumber(gameData.activePlayers)} {isVi ? "đang chơi" : "players"}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1.5 border-t border-border/30 text-xs font-bold text-brand-400 group-hover:underline">
-                            <span className="text-[11px]">{isVi ? "Xem trang game trên IndieG" : "View on IndieG"}</span>
-                            <FontAwesomeIcon icon={faArrowRight} className="text-[9px] group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* 1. ABOUT SECTION */}
             <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
@@ -290,49 +239,61 @@ export const CommunityHubRightRail = ({
             {/* 3. COMMUNITY LINKS */}
             <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
-                    COMMUNITY LINKS
+                    {isVi ? "LIÊN KẾT CỘNG ĐỒNG" : "COMMUNITY LINKS"}
                 </span>
 
-                <div className="flex flex-col gap-1.5 pt-0.5">
-                    {/* Direct link to IndieG Game Page inside Community Links */}
-                    {gameSlug && (
+                <div className="grid grid-cols-4 gap-2 pt-0.5">
+                    {/* Gamepad (IndieG Game Page) */}
+                    {gameSlug ? (
                         <button
                             type="button"
                             onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
-                            className="w-full flex items-center justify-between p-2 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 transition-colors group cursor-pointer text-left"
+                            title={isVi ? "Trang Game trên IndieG" : "IndieG Game Page"}
+                            className="h-9 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center transition-all cursor-pointer shadow-xs group"
                         >
-                            <span className="text-xs font-semibold text-brand-400 group-hover:text-brand-300 transition-colors flex items-center gap-1.5">
-                                <FontAwesomeIcon icon={faGamepad} className="text-[11px]" />
-                                <span>{isVi ? "Trang Game trên IndieG" : "IndieG Game Page"}</span>
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-brand-400/80 font-bold">
-                                    IndieG Hub
-                                </span>
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[9px] text-brand-400" />
-                            </div>
+                            <FontAwesomeIcon icon={faGamepad} className="text-sm group-hover:scale-110 transition-transform" />
                         </button>
+                    ) : (
+                        <div
+                            title={isVi ? "Chưa có trang Game" : "No Game Page linked"}
+                            className="h-9 rounded-[6px] bg-surface-inner/40 border border-border/30 text-text-faint flex items-center justify-center opacity-40 cursor-not-allowed"
+                        >
+                            <FontAwesomeIcon icon={faGamepad} className="text-sm" />
+                        </div>
                     )}
 
-                    {communityLinks.map((link) => (
-                        <a
-                            key={link.label}
-                            href={link.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center justify-between p-2 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover/80 border border-border/40 transition-colors group cursor-pointer"
-                        >
-                            <span className="text-xs font-semibold text-text group-hover:text-primary transition-colors">
-                                {link.label}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-text-faint">
-                                    {link.tag}
-                                </span>
-                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[9px] text-text-faint group-hover:text-primary" />
-                            </div>
-                        </a>
-                    ))}
+                    {/* Discord */}
+                    <a
+                        href="https://discord.gg/indieg"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Discord Server"
+                        className="h-9 rounded-[6px] bg-[#5865F2]/10 hover:bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faDiscord} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
+
+                    {/* Steam */}
+                    <a
+                        href="https://steamcommunity.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Steam Community"
+                        className="h-9 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover border border-border/50 hover:border-text/50 text-text flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faSteam} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
+
+                    {/* Facebook */}
+                    <a
+                        href="https://facebook.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Facebook Group"
+                        className="h-9 rounded-[6px] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#1877F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faFacebook} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
                 </div>
             </div>
 

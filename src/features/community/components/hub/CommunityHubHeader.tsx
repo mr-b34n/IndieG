@@ -147,12 +147,10 @@ export const CommunityHubHeader = ({
                         <button
                             type="button"
                             onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
-                            className="px-3.5 py-1.5 rounded-[6px] text-xs font-bold transition-all flex items-center gap-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/30 shadow-xs cursor-pointer active:scale-[0.98] group"
+                            className="w-8 h-8 rounded-[6px] flex items-center justify-center transition-all bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/30 shadow-xs cursor-pointer active:scale-[0.98] group shrink-0"
                             title={isVi ? `Xem trang game ${gameName || ""} trên IndieG` : `View ${gameName || ""} game page on IndieG`}
                         >
-                            <FontAwesomeIcon icon={faGamepad} className="text-xs text-brand-400 group-hover:scale-110 transition-transform" />
-                            <span>{isVi ? "Trang Game IndieG" : "IndieG Game Page"}</span>
-                            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] opacity-70" />
+                            <FontAwesomeIcon icon={faGamepad} className="text-sm text-brand-400 group-hover:scale-110 transition-transform" />
                         </button>
                     )}
 

@@ -1308,7 +1308,7 @@ export const vi = {
         communitymanagesettings_200: "Vui lòng nhập mật khẩu để xác thực lại danh tính.",
         communitymanagesettings_201: "Vui lòng nhập mật khẩu xác thực.",
         communitymanagesettings_202: "Cộng đồng đã được đánh dấu xóa vĩnh viễn.",
-        communitymanagesettings_203: "Lưu tất cả thay đổi",
+        communitymanagesettings_203: "Lưu",
         communitymanagesettings_204: "Tên cộng đồng",
         communitymanagesettings_205: "Tựa game liên kết",
         communitymanagesettings_206: "Đường dẫn cộng đồng (URL Slug)",

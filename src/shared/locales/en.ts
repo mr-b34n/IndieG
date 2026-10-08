@@ -1308,7 +1308,7 @@ export const en = {
         communitymanagesettings_200: "Please enter your password to re-authenticate.",
         communitymanagesettings_201: "Please enter your password to confirm deletion.",
         communitymanagesettings_202: "Community scheduled for permanent deletion.",
-        communitymanagesettings_203: "Save All Changes",
+        communitymanagesettings_203: "Save",
         communitymanagesettings_204: "Community name",
         communitymanagesettings_205: "Associated Game",
         communitymanagesettings_206: "Community URL",

@@ -360,8 +360,8 @@ const FormattingToolbar = ({
     onAddImage: () => void;
 }) => {
     return (
-        <div className="flex items-center justify-between gap-1 py-1 px-1.5 bg-surface-hover/40 border border-border/40 rounded-lg text-text-muted flex-wrap">
-            <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1 py-1 px-1.5 bg-surface-hover/40 border border-border/40 rounded-lg text-text-muted flex-wrap">
+            <div className="flex items-center gap-1 flex-wrap w-full">
                 <button
                     type="button"
                     onClick={() => onFormat("**", "**", "in đậm")}
@@ -411,17 +411,17 @@ const FormattingToolbar = ({
                 >
                     <FontAwesomeIcon icon={faQuoteLeft} />
                 </button>
+                <span className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
+                {/* Top Media Upload Trigger */}
+                <button
+                    type="button"
+                    onClick={onAddImage}
+                    title="Tải lên hình ảnh"
+                    className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-primary transition-colors text-xs cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faImage} className="text-emerald-400" />
+                </button>
             </div>
-
-            {/* Top Media Upload Trigger */}
-            <button
-                type="button"
-                onClick={onAddImage}
-                title="Tải lên hình ảnh"
-                className="flex items-center justify-center w-7 h-7 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
-            >
-                <FontAwesomeIcon icon={faImage} className="text-emerald-400 text-xs" />
-            </button>
         </div>
     );
 };

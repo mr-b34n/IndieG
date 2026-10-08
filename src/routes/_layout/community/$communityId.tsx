@@ -794,31 +794,33 @@ export function CommunityDetailPage() {
 
                 {/* CENTER COLUMN: Main Content & Activity Feed */}
                 <main className="flex-1 w-full min-w-0 flex flex-col gap-6">
-                    {/* Compact Community Header */}
-                    <CommunityHubHeader
-                        name={community.name}
-                        description={community.description}
-                        coverUrl={community.backdrop || community.bannerUrl || community.banner || community.logo}
-                        iconUrl={community.logo || community.avatarUrl || community.avatar || community.icon || community.backdrop || community.bannerUrl}
-                        membersCount={displayMembersCount}
-                        onlineCount={community.onlineNow ?? 1}
-                        isJoined={isUserJoined}
-                        onToggleJoin={() => {
-                            if (!requireVerifiedEmail("tham gia cộng đồng")) return;
-                            toggleJoin(community.id);
-                        }}
-                        onStartDiscussion={() => {
-                            if (!requireVerifiedEmail("tạo bài viết")) return;
-                            setIsCreateModalOpen(true);
-                        }}
-                        isVi={isVi}
-                        isLocked={community.isLocked}
-                        announcement={community.announcement}
-                        featured={community.featured}
-                        userRole={userRole}
-                        gameSlug={resolvedGameSlug}
-                        gameName={gameData?.name || community.gameName}
-                    />
+                    {/* Compact Community Header (Hidden when inside manage tab) */}
+                    {!isManageView && (
+                        <CommunityHubHeader
+                            name={community.name}
+                            description={community.description}
+                            coverUrl={community.backdrop || community.bannerUrl || community.banner || community.logo}
+                            iconUrl={community.logo || community.avatarUrl || community.avatar || community.icon || community.backdrop || community.bannerUrl}
+                            membersCount={displayMembersCount}
+                            onlineCount={community.onlineNow ?? 1}
+                            isJoined={isUserJoined}
+                            onToggleJoin={() => {
+                                if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+                                toggleJoin(community.id);
+                            }}
+                            onStartDiscussion={() => {
+                                if (!requireVerifiedEmail("tạo bài viết")) return;
+                                setIsCreateModalOpen(true);
+                            }}
+                            isVi={isVi}
+                            isLocked={community.isLocked}
+                            announcement={community.announcement}
+                            featured={community.featured}
+                            userRole={userRole}
+                            gameSlug={resolvedGameSlug}
+                            gameName={gameData?.name || community.gameName}
+                        />
+                    )}
 
                     {/* VIEW SWITCHER: Display content according to selected destination */}
                     {activeNav === "manage-overview" ? (
@@ -869,6 +871,7 @@ export function CommunityDetailPage() {
                             communitySlug={community.slug || community.id}
                             userRole={userRole}
                             isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
                         />
                     ) : activeNav === "members" ? (
                         <CommunityHubMembers

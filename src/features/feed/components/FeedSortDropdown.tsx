@@ -33,9 +33,8 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
     }, []);
 
     const options: { id: FeedSortOption; labelKey: string; defaultLabel: string; icon: typeof faClock }[] = [
-        { id: "latest", labelKey: "feed.sortLatest", defaultLabel: "Latest", icon: faClock },
-        { id: "popular", labelKey: "feed.sortPopular", defaultLabel: "Popular", icon: faFire },
-        { id: "discussed", labelKey: "feed.sortDiscussed", defaultLabel: "Discussed", icon: faComments },
+        { id: "popular", labelKey: "feed.sortPopular", defaultLabel: "Hot", icon: faFire },
+        { id: "latest", labelKey: "feed.sortLatest", defaultLabel: "Newest", icon: faClock },
     ];
 
     const currentOption = options.find((o) => o.id === value) || options[0];
@@ -46,14 +45,13 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 text-xs font-bold text-text-muted hover:text-text transition-colors cursor-pointer py-0.5 px-1 rounded hover:bg-surface-hover/50 whitespace-nowrap"
+                className="flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors cursor-pointer whitespace-nowrap"
             >
-                <FontAwesomeIcon icon={faArrowDownWideShort} className="text-text-faint text-[10px]" />
-                <span className="text-text text-xs">{t(currentOption.labelKey, { defaultValue: currentOption.defaultLabel })}</span>
+                <span>{t(currentOption.labelKey, { defaultValue: currentOption.defaultLabel })}</span>
                 <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-[9px] text-text-faint transition-transform duration-200 ml-0.5 ${
-                        isOpen ? "rotate-180 text-primary" : ""
+                    className={`text-[10px] transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
                     }`}
                 />
             </button>

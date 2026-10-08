@@ -122,10 +122,10 @@ export const CommunityManageReports = ({
                     {(["all", "pending", "resolved", "dismissed"] as const).map((mode) => {
                         const count = mode === "all" ? reports.length : reports.filter((r) => r.status === mode).length;
                         const label =
-                            mode === "all" ? "Tất cả"
-                            : mode === "pending" ? "Đang chờ"
-                            : mode === "resolved" ? "Đã xử lý"
-                            : "Đã từ chối";
+                            mode === "all" ? (isVi ? "Tất cả" : "All")
+                            : mode === "pending" ? (isVi ? "Đang chờ" : "Pending")
+                            : mode === "resolved" ? (isVi ? "Đã xử lý" : "Resolved")
+                            : (isVi ? "Đã từ chối" : "Dismissed");
                         const isActive = reportFilter === mode;
                         return (
                             <button
@@ -151,7 +151,7 @@ export const CommunityManageReports = ({
                 <div className="flex flex-col gap-3">
                     {reports.filter((r) => reportFilter === "all" || r.status === reportFilter).length === 0 ? (
                         <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
-                            <p className="text-sm text-text-muted">Không có báo cáo nào</p>
+                            <p className="text-sm text-text-muted">{isVi ? "Không có báo cáo nào" : "No reports found"}</p>
                         </div>
                     ) : (
                         reports

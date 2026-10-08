@@ -2,21 +2,9 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faShareNodes,
-    faCheck,
-    faCircleInfo,
-    faDesktop,
-    faCode,
-    faBuilding,
-    faEye,
-    faFire,
-    faArrowLeft,
-    faComments,
-    faFolderPlus,
-    faNewspaper,
-    faGamepad,
+    faShareNodes, faCheck, faArrowLeft, faUsers, faChevronLeft, faChevronRight
 } from "@fortawesome/free-solid-svg-icons";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
+import { faSteam, faWindows, faApple, faLinux } from "@fortawesome/free-brands-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { Lightbox } from "@/shared/components/ui/Lightbox";
 import { useGameStore } from "../store/useGameStore";
@@ -31,397 +19,355 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     const navigate = useNavigate();
     const isVietnamese = lang === "vi";
 
-    // 1. Get game data by slug from store
     const getGameBySlug = useGameStore((state) => state.getGameBySlug);
     const game = useMemo(() => getGameBySlug(slug), [slug, getGameBySlug]);
 
-    // 2. Store hooks
     const followedSlugs = useGameStore((state) => state.followedSlugs);
     const isFollowing = followedSlugs.includes((game?.slug || slug).toLowerCase());
     const toggleFollowGame = useGameStore((state) => state.toggleFollowGame);
 
-    // 3. Related Posts
     const allPosts = usePostsStore((state) => state.posts);
     const relatedPosts = useMemo(() => {
         if (!game) return [];
-        const gameNameLower = (game.name || "").toLowerCase();
         const gameTagLower = (game.tag || game.name || "").toLowerCase();
-        const gameSlugLower = (game.slug || "").toLowerCase();
         const communityIdLower = (game.communityId || "").toString().toLowerCase();
 
         return allPosts.filter((p) => {
             const postTag = (p.gameTag || "").toLowerCase();
             const postCommunity = (p.communityId || "").toString().toLowerCase();
-            const postTags = (p.tags || []).map((t) => t.toLowerCase());
-
             return (
                 postTag.includes(gameTagLower) ||
                 gameTagLower.includes(postTag) ||
-                (communityIdLower && postCommunity === communityIdLower) ||
-                postTags.some(
-                    (tag) =>
-                        tag.includes(gameSlugLower) ||
-                        tag.includes(gameTagLower) ||
-                        tag.includes(gameNameLower)
-                )
+                (communityIdLower && postCommunity === communityIdLower)
             );
-        });
+        }).slice(0, 5);
     }, [allPosts, game]);
 
-    // 4. UI States
-    const [sysReqType, setSysReqType] = useState<"minimum" | "recommended">("minimum");
     const [copied, setCopied] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [showFullDesc, setShowFullDesc] = useState(false);
+    const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
-    // Handlers
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
     };
 
-    // Localized text resolvers
+    const handlePrevMedia = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedMediaIndex(prev => (prev === 0 ? game.screenshots.length - 1 : prev - 1));
+    };
+
+    const handleNextMedia = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedMediaIndex(prev => (prev === game.screenshots.length - 1 ? 0 : prev + 1));
+    };
+
     const descriptionText = isVietnamese ? (game.descriptionVi || game.description) : game.description;
     const featuresList = isVietnamese ? (game.featuresVi || game.features) : game.features;
+    // @ts-ignore
+    const summaryText = game.summary || descriptionText.slice(0, 150) + "...";
+    
+    // Derived values
+    const hasMedia = game.screenshots && game.screenshots.length > 0;
+    const isFree = game.price === "Miễn phí (Free to Play)" || game.price?.toLowerCase().includes("free");
 
     return (
-        <div className="w-full pb-20 animate-fade-in">
-            {/* Back Navigation & Header Title */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate({ to: "/" })}
-                        className="w-10 h-10 rounded-full bg-surface hover:bg-surface-hover border border-border flex items-center justify-center text-text-muted hover:text-text transition-all shadow-sm cursor-pointer"
-                        title={t('common.back', { defaultValue: "Quay lại" })}
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} />
-                    </button>
-                    <div>
-                        <h1 className="font-bold text-xl sm:text-2xl text-text flex items-center gap-2">
-                            {game.name}
-                            {game.genre?.[0] && (
-                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                    {game.genre[0]}
-                                </span>
-                            )}
-                        </h1>
-                    </div>
-                </div>
+        <div className="w-full pb-24 animate-fade-in bg-background min-h-screen text-text">
+            {/* Top Navigation */}
+            <div className="flex items-center justify-between mb-2 sticky top-0 z-50 bg-background/95 backdrop-blur-lg py-4 px-4 md:px-8 border-b border-border/10">
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/" })}
+                    className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text transition-colors cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                </button>
+                <div className="flex-1 text-center font-bold text-base tracking-tight">{game.name}</div>
+                <button
+                    type="button"
+                    onClick={handleShare}
+                    className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-text transition-colors relative cursor-pointer"
+                >
+                    <FontAwesomeIcon icon={copied ? faCheck : faShareNodes} className={copied ? "text-emerald-500" : ""} />
+                    {copied && (
+                        <span className="absolute top-10 right-0 bg-surface px-2 py-1 rounded text-xs text-emerald-400 whitespace-nowrap shadow-md">
+                            Copied
+                        </span>
+                    )}
+                </button>
+            </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={handleShare}
-                        className="w-10 h-10 rounded-xl bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border flex items-center justify-center shadow-sm transition-all relative cursor-pointer"
-                        title={t('common.share', { defaultValue: "Chia sẻ" })}
-                    >
-                        <FontAwesomeIcon icon={copied ? faCheck : faShareNodes} className={copied ? "text-emerald-500" : ""} />
-                        {copied && (
-                            <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-surface border border-border px-2.5 py-1 rounded-lg text-[11px] font-semibold text-emerald-400 shadow-lg whitespace-nowrap animate-fade-in z-20">
-                                {t('game.shared', { defaultValue: "Đã sao chép liên kết!" })}
-                            </span>
-                        )}
-                    </button>
+            {/* 1. GAME HERO */}
+            <div className="relative w-full overflow-hidden mb-12">
+                {/* Background Artwork */}
+                <div className="absolute inset-0 h-[450px] w-full overflow-hidden pointer-events-none">
+                    <img
+                        src={game.bannerUrl || game.logoUrl}
+                        alt=""
+                        className="w-full h-full object-cover opacity-[0.15]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                </div>
+                
+                <div className="relative z-10 px-4 md:px-8 flex flex-col md:flex-row gap-8 pt-16 md:pt-24 max-w-[1200px] mx-auto">
+                    {/* Capsule */}
+                    <div className="w-32 h-44 md:w-48 md:h-64 rounded-xl overflow-hidden shrink-0 shadow-2xl bg-surface-hover">
+                        <img
+                            src={game.logoUrl || game.bannerUrl}
+                            alt={game.name}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    
+                    {/* Title & Actions */}
+                    <div className="flex flex-col justify-end flex-1 pb-1">
+                        <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight leading-tight">{game.name}</h1>
+                        <p className="text-text-muted text-sm md:text-base mb-8 max-w-2xl leading-relaxed">{summaryText}</p>
+                        
+                        <div className="flex flex-wrap items-center gap-3">
+                            {game.communityId && (
+                                <button
+                                    onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(game.communityId) } })}
+                                    className="px-6 py-2.5 rounded-lg font-bold bg-primary text-white hover:bg-primary-hover transition-colors text-sm cursor-pointer"
+                                >
+                                    Join Community
+                                </button>
+                            )}
+                            <button
+                                onClick={() => toggleFollowGame(game.slug)}
+                                className={`px-6 py-2.5 rounded-lg font-bold transition-colors text-sm cursor-pointer ${
+                                    isFollowing ? "bg-surface-hover text-text" : "bg-primary/10 text-primary hover:bg-primary/20"
+                                }`}
+                            >
+                                {isFollowing ? "Following" : "Follow"}
+                            </button>
+                            {game.steamUrl && (
+                                <button
+                                    onClick={() => window.open(game.steamUrl, '_blank')}
+                                    className="px-6 py-2.5 rounded-lg font-bold bg-surface-hover hover:bg-surface text-text transition-colors flex items-center gap-2 text-sm cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faSteam} />
+                                    Steam Store
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* HERO BANNER & POSTER HEADER SECTION */}
-            <div className="relative w-full rounded-3xl overflow-hidden border border-border bg-surface shadow-md mb-8">
-                {/* Backdrop Banner Image */}
-                <div className="absolute inset-0 h-72 sm:h-96 w-full overflow-hidden pointer-events-none">
-                    <img
-                        src={game.bannerUrl || game.logoUrl}
-                        alt={game.name}
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover object-top sm:object-center opacity-90"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-surface via-surface/40 to-transparent" />
-                    <div className="absolute inset-0 bg-linear-to-r from-surface/40 via-transparent to-transparent" />
-                </div>
+            {/* MAIN CONTENT TWO-COLUMN */}
+            <div className="flex flex-col lg:flex-row gap-16 max-w-[1200px] mx-auto px-4 md:px-8">
+                
+                {/* LEFT COLUMN: Main Game Content */}
+                <div className="flex-1 flex flex-col gap-14 min-w-0">
+                    
+                    {/* ABOUT THE GAME */}
+                    <section className="flex flex-col gap-4">
+                        <h2 className="text-xl font-bold tracking-tight">About the Game</h2>
+                        <div className="relative text-[15px] text-text-muted leading-relaxed whitespace-pre-line">
+                            <p className={!showFullDesc ? "line-clamp-6 md:line-clamp-none md:max-h-[250px] overflow-hidden" : ""}>
+                                {descriptionText}
+                            </p>
+                            {!showFullDesc && (
+                                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent md:hidden pointer-events-none" />
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setShowFullDesc(!showFullDesc)}
+                            className="text-sm font-semibold text-primary hover:text-primary-hover self-start transition-colors md:hidden"
+                        >
+                            {showFullDesc ? "Show less" : "Read more"}
+                        </button>
+                    </section>
 
-                {/* Banner Artwork Spacer */}
-                <div className="h-32 sm:h-44 w-full relative z-10" />
+                    {/* MEDIA VIEWER */}
+                    {hasMedia && (
+                        <section className="flex flex-col gap-4">
+                            <h2 className="text-xl font-bold tracking-tight">Media</h2>
+                            
+                            {/* Interactive Media Viewer */}
+                            <div className="flex flex-col gap-3">
+                                {/* Large Selected Image */}
+                                <div 
+                                    className="w-full aspect-video bg-surface rounded-xl overflow-hidden cursor-pointer relative group"
+                                    onClick={() => setLightboxIndex(selectedMediaIndex)}
+                                >
+                                    <img 
+                                        src={game.screenshots[selectedMediaIndex]} 
+                                        alt="Selected gameplay" 
+                                        className="w-full h-full object-cover transition-opacity duration-300"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                        <div className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform scale-95 group-hover:scale-100 font-medium text-sm tracking-wide">
+                                            Click to expand gallery
+                                        </div>
+                                    </div>
 
-                {/* Content Overlay */}
-                <div className="relative z-10 p-5 sm:p-8 pt-0 flex flex-col gap-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                        {/* Poster Logo + Title & Genres */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
-                            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-4 border-surface bg-surface shadow-2xl shrink-0 p-1">
-                                <img
-                                    src={game.logoUrl || game.bannerUrl}
-                                    alt={game.name}
-                                    referrerPolicy="no-referrer"
-                                    className="w-full h-full object-cover rounded-xl"
-                                    onError={(e) => {
-                                        if (game.bannerUrl && e.currentTarget.src !== game.bannerUrl) {
-                                            e.currentTarget.src = game.bannerUrl;
-                                        }
-                                    }}
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-2 flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    {game.genre?.map((g) => (
-                                        <span key={g} className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-surface/90 backdrop-blur-md text-text-muted border border-border/60 shadow-sm">
-                                            {g}
-                                        </span>
-                                    ))}
-                                    {game.activePlayers !== undefined && game.activePlayers > 0 && (
-                                        <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5 shadow-sm">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                                            {t('game.activePlayers', { count: game.activePlayers.toLocaleString() })}
-                                        </span>
+                                    {/* Navigation Arrows */}
+                                    {game.screenshots.length > 1 && (
+                                        <>
+                                            <button 
+                                                onClick={handlePrevMedia}
+                                                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 shadow-md backdrop-blur-sm cursor-pointer"
+                                            >
+                                                <FontAwesomeIcon icon={faChevronLeft} />
+                                            </button>
+                                            <button 
+                                                onClick={handleNextMedia}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80 shadow-md backdrop-blur-sm cursor-pointer"
+                                            >
+                                                <FontAwesomeIcon icon={faChevronRight} />
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                                 
-                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-text tracking-tight drop-shadow-sm">
-                                    {game.name}
-                                </h2>
+                                {/* Thumbnail Strip */}
+                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                                    {game.screenshots.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setSelectedMediaIndex(idx)}
+                                            className={`relative w-28 md:w-36 aspect-video shrink-0 rounded-lg overflow-hidden snap-start transition-all ${
+                                                selectedMediaIndex === idx 
+                                                    ? "ring-2 ring-primary opacity-100" 
+                                                    : "opacity-40 hover:opacity-100"
+                                            }`}
+                                        >
+                                            <img src={img} className="w-full h-full object-cover" alt={`Thumbnail ${idx + 1}`} />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Integrated Game Specs Bar: Developer, Publisher, Release Date, Platforms */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 py-4 px-5 bg-surface-hover/60 rounded-2xl border border-border/60 text-xs sm:text-sm">
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-semibold text-text-faint flex items-center gap-1.5 mb-1">
-                                <FontAwesomeIcon icon={faBuilding} className="text-primary shrink-0" />
-                                <span>{t('game.developer', { defaultValue: "Nhà phát triển" })}</span>
-                            </span>
-                            <span className="font-semibold text-text leading-snug break-words">{game.developer}</span>
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-semibold text-text-faint flex items-center gap-1.5 mb-1">
-                                <FontAwesomeIcon icon={faCode} className="text-brand-400 shrink-0" />
-                                <span>{t('game.publisher', { defaultValue: "Nhà xuất bản" })}</span>
-                            </span>
-                            <span className="font-semibold text-text leading-snug break-words">{game.publisher}</span>
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-semibold text-text-faint flex items-center gap-1.5 mb-1">
-                                <FontAwesomeIcon icon={faCircleInfo} className="text-amber-400 shrink-0" />
-                                <span>{t('game.releaseDate', { defaultValue: "Ngày phát hành" })}</span>
-                            </span>
-                            <span className="font-semibold text-text leading-snug break-words">{game.releaseDate}</span>
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-[11px] font-semibold text-text-faint flex items-center gap-1.5 mb-1">
-                                <FontAwesomeIcon icon={faDesktop} className="text-emerald-400 shrink-0" />
-                                <span>{t('game.platforms', { defaultValue: "Nền tảng" })}</span>
-                            </span>
-                            <span className="font-semibold text-text leading-snug break-words">{game.platforms?.join(", ")}</span>
-                        </div>
-                    </div>
-
-                    {/* Action Toolbar */}
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-                            <button
-                                type="button"
-                                onClick={() => toggleFollowGame(game.slug)}
-                                className={`flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer ${
-                                    isFollowing
-                                        ? "bg-primary text-white hover:bg-primary-hover shadow-primary/25"
-                                        : "bg-surface-hover hover:bg-border/80 text-text border border-border"
-                                }`}
-                            >
-                                <FontAwesomeIcon icon={isFollowing ? faCheck : faFolderPlus} className={isFollowing ? "text-white" : "text-primary"} />
-                                <span>{isFollowing ? t('game.following', { defaultValue: "Đã theo dõi" }) : t('game.follow', { defaultValue: "Theo dõi" })}</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => window.open(game.steamUrl || `https://store.steampowered.com/search/?term=${encodeURIComponent(game.name)}`, '_blank')}
-                                className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-surface-hover hover:bg-border/80 text-text border border-border flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                            >
-                                <FontAwesomeIcon icon={faSteam} className="text-text-muted text-base" />
-                                <span>{t('game.steamStore', { defaultValue: "Cửa hàng Steam" })}</span>
-                            </button>
-
+                        </section>
+                    )}
+                    
+                    {/* COMMUNITY / RECENT DISCUSSIONS */}
+                    <section className="flex flex-col gap-6 pt-4 border-t border-border/20">
+                        <div className="flex items-end justify-between">
+                            <h2 className="text-xl font-bold tracking-tight">Recent Discussions</h2>
                             {game.communityId && (
                                 <button
-                                    type="button"
                                     onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(game.communityId) } })}
-                                    className="flex-1 sm:flex-initial px-4.5 py-2 rounded-xl font-semibold text-sm bg-accent-500 hover:bg-accent-600 text-white flex items-center justify-center gap-2 shadow-md shadow-accent-500/25 transition-all cursor-pointer"
+                                    className="text-sm font-semibold text-text hover:text-text-muted transition-colors cursor-pointer"
                                 >
-                                    <FontAwesomeIcon icon={faComments} />
-                                    <span>{t('game.joinCommunity', { defaultValue: "Tham gia Cộng đồng" })}</span>
+                                    View Community Feed →
                                 </button>
                             )}
                         </div>
-
-                        <div className="text-xs font-semibold text-text-muted self-center ml-auto hidden md:flex items-center gap-2 bg-surface-hover px-3.5 py-2 rounded-xl border border-border/60">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            <span>{t('game.verifiedHub', { defaultValue: "Trang thông tin chính thức" })}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* MAIN CONTENT LAYOUT */}
-            <div className="flex flex-col gap-8 min-w-0">
-                {/* 1. GAME STORY & FEATURES CARD */}
-                <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col gap-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border/60">
-                        <h3 className="font-bold text-lg sm:text-xl text-text flex items-center gap-2.5">
-                            <span className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-sm shrink-0">
-                                <FontAwesomeIcon icon={faCircleInfo} />
-                            </span>
-                            <span>{t('game.tabOverview', { defaultValue: "Tổng quan" })} & Features</span>
-                        </h3>
-                        {game.genre?.[0] && (
-                            <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full shrink-0">
-                                {game.genre.join(" • ")}
-                            </span>
+                        
+                        {relatedPosts.length > 0 ? (
+                            <div className="flex flex-col gap-4">
+                                {relatedPosts.map(post => (
+                                    <Post key={post.id} post={post} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-8 text-text-muted text-sm">
+                                No recent activity. Be the first to start a discussion!
+                            </div>
                         )}
-                    </div>
+                    </section>
+                </div>
+
+                {/* RIGHT COLUMN: Compact Metadata & Community */}
+                <div className="w-full lg:w-72 shrink-0 flex flex-col gap-10">
                     
-                    <p className="text-text-muted text-sm sm:text-base leading-relaxed whitespace-pre-line break-words">
-                        {descriptionText}
-                    </p>
-
-                    {featuresList && featuresList.length > 0 && (
-                        <div>
-                            <h4 className="font-bold text-text text-base mb-3 flex items-center gap-2">
-                                <FontAwesomeIcon icon={faFire} className="text-amber-500" />
-                                <span>{t('game.featuresTitle', { defaultValue: "Đặc điểm nổi bật" })}</span>
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {featuresList.map((feat, idx) => (
-                                    <div key={idx} className="flex items-start gap-3 p-3.5 rounded-2xl bg-surface-hover/50 border border-border/50 text-sm text-text-muted">
-                                        <span className="w-6 h-6 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                                            <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                        </span>
-                                        <span className="font-medium text-text break-words">{feat}</span>
-                                    </div>
-                                ))}
+                    {/* GAME INFORMATION */}
+                    <section className="flex flex-col gap-4">
+                        <h3 className="text-xs font-bold tracking-widest text-text-muted uppercase">Game Information</h3>
+                        <div className="flex flex-col gap-3 text-sm">
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-text-muted">Developer</span>
+                                <span className="font-medium text-text text-right">{game.developer}</span>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Screenshots Gallery */}
-                    {game.screenshots && game.screenshots.length > 0 && (
-                        <div className="pt-6 border-t border-border/60">
-                            <h4 className="font-bold text-text text-base mb-3 flex items-center gap-2">
-                                <FontAwesomeIcon icon={faDesktop} className="text-primary" />
-                                <span>{t('game.screenshotsTitle', { defaultValue: "Hình ảnh xem trước" })}</span>
-                            </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {game.screenshots.map((img, idx) => (
-                                    <div
-                                        key={idx}
-                                        onClick={() => setLightboxIndex(idx)}
-                                        className="rounded-2xl overflow-hidden border border-border/80 group aspect-video relative bg-surface-hover shadow-sm cursor-pointer"
-                                    >
-                                        <img src={img} alt={`${game.name} screenshot ${idx + 1}`} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <FontAwesomeIcon icon={faEye} className="text-white text-xl" />
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-text-muted">Publisher</span>
+                                <span className="font-medium text-text text-right">{game.publisher}</span>
                             </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* 2. SYSTEM REQUIREMENTS CARD */}
-                {game.systemReqs && (
-                    <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col gap-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
-                            <h3 className="font-bold text-lg sm:text-xl text-text flex items-center gap-2.5">
-                                <span className="w-8 h-8 rounded-xl bg-brand-400/10 text-brand-400 flex items-center justify-center text-sm shrink-0">
-                                    <FontAwesomeIcon icon={faCode} />
-                                </span>
-                                <span>{t('game.systemReqsTitle', { defaultValue: "Cấu hình hệ thống" })}</span>
-                            </h3>
-                            <div className="grid grid-cols-2 p-1 bg-surface-hover rounded-xl border border-border/80 w-full sm:w-auto shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={() => setSysReqType("minimum")}
-                                    className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "minimum" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
-                                >
-                                    {t('game.minimumReqs', { defaultValue: "Tối thiểu" })}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setSysReqType("recommended")}
-                                    className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer text-center ${sysReqType === "recommended" ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text"}`}
-                                >
-                                    {t('game.recommendedReqs', { defaultValue: "Khuyên dùng" })}
-                                </button>
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-text-muted">Release Date</span>
+                                <span className="font-medium text-text text-right">{game.releaseDate}</span>
                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {Object.entries(game.systemReqs[sysReqType]).map(([key, val]) => (
-                                <div key={key} className="flex flex-col p-4 rounded-2xl bg-surface-hover/40 border border-border/50">
-                                    <span className="font-semibold uppercase tracking-wider text-text-faint text-[11px] mb-1">{key}</span>
-                                    <span className="text-text font-medium text-sm leading-relaxed break-words">{val}</span>
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-text-muted">Type</span>
+                                <span className="font-medium text-text text-right">{isFree ? "Free to Play" : "Paid"}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-text-muted">Platforms</span>
+                                <div className="flex gap-2.5 text-text-muted text-base justify-end">
+                                    {game.platforms ? game.platforms.map(p => {
+                                        const pLower = p.toLowerCase();
+                                        if (pLower.includes('win')) return <FontAwesomeIcon key={p} icon={faWindows} title={p} />;
+                                        if (pLower.includes('mac')) return <FontAwesomeIcon key={p} icon={faApple} title={p} />;
+                                        if (pLower.includes('lin')) return <FontAwesomeIcon key={p} icon={faLinux} title={p} />;
+                                        return <span key={p} className="text-xs">{p}</span>;
+                                    }) : (
+                                        <>
+                                            <FontAwesomeIcon icon={faWindows} title="Windows" />
+                                            <FontAwesomeIcon icon={faApple} title="macOS" />
+                                            <FontAwesomeIcon icon={faLinux} title="Linux" />
+                                        </>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* 3. RELATED POSTS SECTION */}
-                <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm flex flex-col gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
-                        <div className="flex items-center gap-3">
-                            <span className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-base shrink-0 border border-primary/20">
-                                <FontAwesomeIcon icon={faNewspaper} />
-                            </span>
-                            <div>
-                                <h3 className="font-bold text-lg sm:text-xl text-text flex items-center gap-2">
-                                    <span>{t('game.relatedPosts', { defaultValue: "Bài viết liên quan" })}</span>
-                                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
-                                        {relatedPosts.length}
-                                    </span>
-                                </h3>
-                                <p className="text-xs text-text-muted mt-0.5">
-                                    {t('game.relatedPostsSub', { defaultValue: "Các bài thảo luận & cập nhật mới nhất từ cộng đồng về " }) + game.name}
-                                </p>
+                            </div>
+                            <div className="flex flex-col gap-1 border-t border-border/20 pt-3 mt-1">
+                                <span className="text-text-muted">Genres</span>
+                                <span className="font-medium text-text leading-snug">{game.genre?.join(" · ")}</span>
                             </div>
                         </div>
+                    </section>
 
-                        {game.communityId && (
-                            <button
-                                type="button"
-                                onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(game.communityId) } })}
-                                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-surface-hover hover:bg-border/80 text-text border border-border transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-                            >
-                                <FontAwesomeIcon icon={faComments} />
-                                <span>{t('game.viewCommunityFeed', { defaultValue: "Xem Bảng tin Cộng đồng" })}</span>
-                            </button>
-                        )}
-                    </div>
-
-                    {relatedPosts.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {relatedPosts.map((post) => (
-                                <Post key={post.id} post={post} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="w-full bg-surface-hover/30 rounded-2xl border border-border/60 p-8 text-center text-text-muted flex flex-col items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center text-text-faint text-xl">
-                                <FontAwesomeIcon icon={faGamepad} />
+                    {/* FEATURES / CAPABILITIES (Secondary Metadata) */}
+                    {((featuresList && featuresList.length > 0) || (game.tags && game.tags.length > 0)) && (
+                        <section className="flex flex-col gap-3">
+                            <h3 className="text-xs font-bold tracking-widest text-text-muted uppercase">Features</h3>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
+                                {(featuresList || game.tags || []).map((feat, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 text-[13px] text-text-muted font-medium">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-text-faint" />
+                                        {feat}
+                                    </div>
+                                ))}
                             </div>
-                            <span className="font-semibold text-sm">
-                                {t('game.noRelatedPosts', { defaultValue: "Chưa có bài viết liên quan cho trò chơi này." })}
-                            </span>
-                            <p className="text-xs text-text-faint max-w-sm">
-                                {t('game.noRelatedPostsSub', { defaultValue: "Hãy là người đầu tiên thảo luận hoặc đăng tin tức về trò chơi này!" })}
-                            </p>
-                        </div>
+                        </section>
+                    )}
+
+                    {/* RATINGS & STATS */}
+                    {(game.ratingScore || game.totalReviewsCount) && (
+                        <section className="flex flex-col gap-4">
+                            <h3 className="text-xs font-bold tracking-widest text-text-muted uppercase">Ratings & Stats</h3>
+                            <div className="flex flex-col gap-5">
+                                <div className="flex items-center gap-6">
+                                    {game.ratingScore && (
+                                        <div className="flex flex-col">
+                                            <span className="text-3xl font-bold tracking-tight text-text">{game.ratingScore}</span>
+                                            <span className="text-[10px] text-text-muted font-bold mt-1 uppercase tracking-wider">Score</span>
+                                        </div>
+                                    )}
+                                    {game.totalReviewsCount && (
+                                        <div className="flex flex-col">
+                                            <span className="text-3xl font-bold tracking-tight text-text">{(game.totalReviewsCount/1000).toFixed(0)}K</span>
+                                            <span className="text-[10px] text-text-muted font-bold mt-1 uppercase tracking-wider">Reviews</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {game.sentiment && (
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-text">{game.sentiment}</span>
+                                        <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider mt-0.5">Overall Sentiment</span>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
                     )}
                 </div>
             </div>
 
             {/* Lightbox for Screenshots */}
-            {lightboxIndex !== null && game.screenshots && game.screenshots.length > 0 && (
+            {lightboxIndex !== null && hasMedia && (
                 <Lightbox
                     images={game.screenshots}
                     initialIndex={lightboxIndex}

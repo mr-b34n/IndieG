@@ -24,6 +24,7 @@ interface CommunityManageSettingsProps {
     gameName?: string;
     isVi: boolean;
     onUpdateCommunityInfo?: (name: string, desc: string) => void;
+    onNavigateRules?: () => void;
 }
 
 export const CommunityManageSettings = ({
@@ -33,6 +34,7 @@ export const CommunityManageSettings = ({
     gameName = "Raft",
     isVi,
     onUpdateCommunityInfo,
+    onNavigateRules,
 }: CommunityManageSettingsProps) => {
     const { t } = useTranslation();
     // 1. GENERAL SECTION STATE
@@ -151,7 +153,8 @@ export const CommunityManageSettings = ({
                 <button
                     type="button"
                     onClick={handleSaveGeneral}
-                    className="px-4 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shadow-sm"
+                    title={isVi ? "Lưu thay đổi" : "Save changes"}
+                    className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shadow-sm"
                 >
                     <FontAwesomeIcon icon={faCheck} className="text-xs" />
                     <span>{t('hub.communitymanagesettings_203')}</span>
@@ -538,6 +541,36 @@ export const CommunityManageSettings = ({
                     </div>
                 </div>
             </div>
+
+
+            {/* SECTION 6: COMMUNITY RULES */}
+            <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-4">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <span>{isVi ? "QUY TẮC CỘNG ĐỒNG" : "COMMUNITY RULES"}</span>
+                </span>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-[6px] bg-surface border border-divider-primary/60">
+                    <div className="flex flex-col gap-1 min-w-0">
+                        <span className="text-xs font-bold text-text">
+                            {isVi ? "Quản lý quy tắc cộng đồng" : "Manage Community Rules"}
+                        </span>
+                        <span className="text-[11px] text-text-muted">
+                            {isVi
+                                ? "Thiết lập và chỉnh sửa các quy tắc để thành viên tuân thủ."
+                                : "Set and edit rules for members to follow."}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onNavigateRules}
+                        className="px-4 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover border border-divider-primary text-xs font-semibold text-text transition-colors cursor-pointer shrink-0"
+                    >
+                        {isVi ? "Chỉnh sửa quy tắc" : "Edit Rules"}
+                    </button>
+                </div>
+            </div>
+
 
             {/* SECTION 6: DANGER ZONE (Carefully separated at the bottom) */}
             <div className="p-4 rounded-[6px] bg-rose-950/20 border border-rose-500/30 flex flex-col gap-4 mt-2">
