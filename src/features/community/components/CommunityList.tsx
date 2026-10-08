@@ -10,6 +10,7 @@ import { Pagination } from "@/shared/components/ui/Pagination";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
+import { isGenericTestCommunity } from "@/shared/api";
 
 export const CommunityList = () => {
     const { t } = useTranslation();
@@ -58,17 +59,17 @@ export const CommunityList = () => {
     const isLoading = isQueryLoading || storeLoading;
 
     const categories = useMemo(
-        () => Array.from(new Set(communities.map((c) => c.category).filter(Boolean))),
+        () => Array.from(new Set(communities.filter((c) => !isGenericTestCommunity(c)).map((c) => c.category).filter(Boolean))),
         [communities]
     );
 
     const joinedCount = useMemo(
-        () => communities.filter((c) => c.joined).length,
+        () => communities.filter((c) => c.joined && !isGenericTestCommunity(c)).length,
         [communities]
     );
 
     const filtered = useMemo(() => {
-        let list = [...communities];
+        let list = communities.filter((c) => !isGenericTestCommunity(c));
 
         if (activeTab === "joined") {
             list = list.filter((c) => c.joined);

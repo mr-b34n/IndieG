@@ -11,9 +11,11 @@ import {
     faHouse,
     faCircleQuestion,
     faImages,
+    faGamepad,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCommunitiesStore } from '@/features/community';
 import { INITIAL_COMMUNITIES } from '@/features/community/constants';
+import { useGameStore } from '@/features/game';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
 import {
@@ -35,6 +37,7 @@ import {
     type ProfileEntity,
     type CommunityMemberDto,
 } from '@/shared/api';
+import { DEFAULT_BG, DEFAULT_GAME_LOGO, DEFAULT_AVATAR } from '@/shared/constants/images';
 import type { CommunityData } from '@/features/community/types';
 
 import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
@@ -72,7 +75,8 @@ export const Route = createFileRoute('/_layout/community/$communityId')({
 });
 
 function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
-    const rawType = (dto.tags?.find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t)) || "discussion") as PostType;
+    const matchedTag = dto.tags?.map((t) => t.toLowerCase()).find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t));
+    const rawType = (matchedTag || "discussion") as PostType;
     const upvotes = dto.upvotes ?? dto.likes ?? 0;
     const downvotes = dto.downvotes ?? 0;
 
@@ -135,15 +139,44 @@ export function CommunityDetailPage() {
 
     // Fetch active community
     const community: CommunityData = useMemo(() => {
+        const target = (communityId || "").toLowerCase();
         const found = communities.find(
-            (c) => c.id === communityId || c.slug === communityId || c.id.toString() === communityId
+            (c) =>
+                c.id.toString().toLowerCase() === target ||
+                (c.slug && c.slug.toLowerCase() === target) ||
+                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
+                (target === "cs2" && c.id === "cs2-vietnam") ||
+                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
+                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
+                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
+                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
+                (target === "valorant" && c.id === "valorant-vietnam") ||
+                (target === "minecraft" && c.id === "minecraft-vietnam") ||
+                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
+                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
+                (target === "genshin" && c.id === "genshin-impact-vn") ||
+                (target === "apex" && c.id === "apex-legends-vn")
         );
         if (found) return found;
         if (communityDto) {
             return mapCommunityDtoToCommunityData(communityDto);
         }
         const initialFound = INITIAL_COMMUNITIES.find(
-            (c) => c.id === communityId || c.slug === communityId
+            (c) =>
+                c.id.toString().toLowerCase() === target ||
+                (c.slug && c.slug.toLowerCase() === target) ||
+                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
+                (target === "cs2" && c.id === "cs2-vietnam") ||
+                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
+                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
+                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
+                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
+                (target === "valorant" && c.id === "valorant-vietnam") ||
+                (target === "minecraft" && c.id === "minecraft-vietnam") ||
+                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
+                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
+                (target === "genshin" && c.id === "genshin-impact-vn") ||
+                (target === "apex" && c.id === "apex-legends-vn")
         );
         if (initialFound) return initialFound;
         return {
@@ -153,10 +186,10 @@ export function CommunityDetailPage() {
             category: "Gaming",
             tags: ["gaming", communityId],
             description: "Cộng đồng chính thức: trao đổi kinh nghiệm, mẹo chơi, thiết kế căn cứ và hoạt động nổi bật.",
-            bannerUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-            avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
-            backdrop: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-            logo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80",
+            bannerUrl: DEFAULT_BG,
+            avatarUrl: DEFAULT_AVATAR,
+            backdrop: DEFAULT_BG,
+            logo: DEFAULT_GAME_LOGO,
             members: 1,
             onlineNow: 1,
             joined: true,
@@ -169,6 +202,31 @@ export function CommunityDetailPage() {
             ],
         };
     }, [communityId, communities, communityDto]);
+
+    // Resolve associated Game on IndieG for this community
+    const getGameBySlug = useGameStore((state) => state.getGameBySlug);
+    const resolvedGameSlug = useMemo(() => {
+        if (community.gameSlug) return community.gameSlug;
+        if (typeof community.game === "object" && community.game?.slug) return community.game.slug;
+        const target = (community.id || communityId || "").toLowerCase();
+        if (target.includes("cs2")) return "counter-strike-2";
+        if (target.includes("elden")) return "elden-ring";
+        if (target.includes("wukong")) return "black-myth-wukong";
+        if (target.includes("cyberpunk")) return "cyberpunk-2077";
+        if (target.includes("raft") || target.includes("indie")) return "raft";
+        if (target.includes("wilds") || target.includes("monster")) return "monster-hunter-wilds";
+        if (target.includes("valorant")) return "valorant";
+        if (target.includes("minecraft")) return "minecraft";
+        if (target.includes("genshin")) return "genshin-impact";
+        if (target.includes("red-dead") || target.includes("rdr2")) return "red-dead-redemption-2";
+        if (target.includes("apex")) return "apex-legends";
+        return undefined;
+    }, [community, communityId]);
+
+    const gameData = useMemo(() => {
+        if (!resolvedGameSlug) return undefined;
+        return getGameBySlug(resolvedGameSlug);
+    }, [resolvedGameSlug, getGameBySlug]);
 
     // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about, manage-*
     const searchParams = Route.useSearch();
@@ -363,7 +421,7 @@ export function CommunityDetailPage() {
             id: "showcase",
             titleVi: "Showcase",
             titleEn: "Showcase",
-            descVi: "Khoe thành quả, hình ảnh & video đẹp",
+            descVi: "Khoe thành quả & hình ảnh đẹp",
             descEn: "Share creations, screenshots & artwork",
             threadsCount: "0",
             icon: faImages,
@@ -666,6 +724,22 @@ export function CommunityDetailPage() {
                             </span>
                         </>
                     )}
+
+                    {/* Associated Game Page Link in Breadcrumb */}
+                    {resolvedGameSlug && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-text-faint">•</span>
+                            <button
+                                type="button"
+                                onClick={() => navigate({ to: `/game/${resolvedGameSlug}` })}
+                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 hover:border-primary text-[11px] font-mono font-semibold transition-colors cursor-pointer"
+                                title={`Đến trang game ${gameData?.name || community.gameName || resolvedGameSlug}`}
+                            >
+                                <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
+                                <span className="uppercase">Game: {gameData?.name || community.gameName || resolvedGameSlug}</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right controls: Search Input */}
@@ -713,6 +787,8 @@ export function CommunityDetailPage() {
                         userRole={userRole}
                         pendingCount={pendingCount}
                         reportsCount={reportsCount}
+                        gameSlug={resolvedGameSlug}
+                        gameName={gameData?.name || community.gameName}
                     />
                 </div>
 
@@ -722,8 +798,8 @@ export function CommunityDetailPage() {
                     <CommunityHubHeader
                         name={community.name}
                         description={community.description}
-                        coverUrl={community.backdrop || community.bannerUrl || community.logo}
-                        iconUrl={community.logo || community.avatarUrl}
+                        coverUrl={community.backdrop || community.bannerUrl || community.banner || community.logo}
+                        iconUrl={community.logo || community.avatarUrl || community.avatar || community.icon || community.backdrop || community.bannerUrl}
                         membersCount={displayMembersCount}
                         onlineCount={community.onlineNow ?? 1}
                         isJoined={isUserJoined}
@@ -740,6 +816,8 @@ export function CommunityDetailPage() {
                         announcement={community.announcement}
                         featured={community.featured}
                         userRole={userRole}
+                        gameSlug={resolvedGameSlug}
+                        gameName={gameData?.name || community.gameName}
                     />
 
                     {/* VIEW SWITCHER: Display content according to selected destination */}
@@ -817,6 +895,8 @@ export function CommunityDetailPage() {
                             communityName={community.name}
                             description={community.description}
                             isVi={isVi}
+                            gameSlug={resolvedGameSlug}
+                            gameName={gameData?.name || community.gameName}
                         />
                     ) : (
                         /* Default: Activity Feed (Home, Discussions, Guides) */
@@ -850,6 +930,9 @@ export function CommunityDetailPage() {
                         pendingCount={pendingCount}
                         reportsCount={reportsCount}
                         modsCount={modsCount}
+                        gameSlug={resolvedGameSlug}
+                        gameName={gameData?.name || community.gameName}
+                        gameData={gameData}
                     />
                 </div>
             </div>

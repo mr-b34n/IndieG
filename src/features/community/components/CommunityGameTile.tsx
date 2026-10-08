@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faLock,
     faCheck,
+    faGamepad,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import type { CommunityData } from "../types";
@@ -82,9 +83,15 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                 {/* Identity: Icon + Community Name + Persistent Status Indicator */}
                 <div className="flex items-start gap-2.5 min-w-0">
                     <img
-                        src={community.logo}
+                        src={community.logo || community.avatarUrl || community.backdrop || community.bannerUrl}
                         alt={community.name}
                         className="w-8 h-8 rounded-[4px] object-cover bg-surface border border-divider-primary/60 shrink-0 mt-0.5"
+                        onError={(e) => {
+                            const fallback = community.backdrop || community.bannerUrl;
+                            if (fallback && e.currentTarget.src !== fallback) {
+                                e.currentTarget.src = fallback;
+                            }
+                        }}
                     />
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -108,10 +115,30 @@ export const CommunityGameTile = ({ community }: CommunityGameTileProps) => {
                             )}
                         </div>
 
-                        {/* Category */}
-                        <p className="font-semibold text-text-faint uppercase text-[11px] tracking-wide mt-0.5 truncate">
-                            {community.category}
-                        </p>
+                        {/* Category & Associated Game */}
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span className="font-semibold text-text-faint uppercase text-[11px] tracking-wide truncate">
+                                {community.category}
+                            </span>
+                            {(community.gameName || community.gameSlug) && (
+                                <>
+                                    <span className="text-[10px] text-text-faint">•</span>
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate({
+                                                to: `/game/${community.gameSlug || community.id}`
+                                            });
+                                        }}
+                                        className="text-[10px] font-mono font-semibold text-primary/90 hover:text-primary hover:underline flex items-center gap-1 bg-primary/10 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                                        title={`Xem trang game ${community.gameName || community.gameSlug} trên IndieG`}
+                                    >
+                                        <FontAwesomeIcon icon={faGamepad} className="text-[9px]" />
+                                        <span className="truncate max-w-[120px]">{community.gameName || community.gameSlug}</span>
+                                    </span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 

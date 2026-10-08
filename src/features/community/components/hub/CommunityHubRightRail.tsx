@@ -3,7 +3,10 @@ import {
     faArrowRight,
     faCircle,
     faArrowUpRightFromSquare,
+    faGamepad,
+    faStar,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
 
@@ -40,6 +43,18 @@ interface CommunityHubRightRailProps {
     pendingCount?: number;
     reportsCount?: number;
     modsCount?: number;
+    gameSlug?: string;
+    gameName?: string;
+    gameData?: {
+        name: string;
+        slug: string;
+        logoUrl?: string;
+        bannerUrl?: string;
+        developer?: string;
+        rating?: number;
+        price?: string;
+        activePlayers?: number;
+    };
 }
 
 export const CommunityHubRightRail = ({
@@ -54,9 +69,13 @@ export const CommunityHubRightRail = ({
     userRole,
     pendingCount,
     reportsCount,
-    modsCount
+    modsCount,
+    gameSlug,
+    gameName,
+    gameData,
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const isAdminOrMod = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
@@ -154,6 +173,62 @@ export const CommunityHubRightRail = ({
 
     return (
         <aside className="w-full flex flex-col gap-5 text-text select-none py-1">
+            {/* 0. INDIEG GAME HUB WIDGET (Direct Link to IndieG Game Page) */}
+            {gameSlug && (
+                <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-brand-400 flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
+                        <span>INDIEG GAME HUB</span>
+                    </span>
+
+                    <div
+                        onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                        className="p-3 rounded-[6px] bg-surface-inner/80 hover:bg-surface-hover/90 border border-brand-500/30 hover:border-brand-500/50 transition-all cursor-pointer group flex flex-col gap-2.5 shadow-xs"
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            {gameData?.logoUrl ? (
+                                <img
+                                    src={gameData.logoUrl}
+                                    alt={gameData.name || gameName || "Game"}
+                                    className="w-10 h-10 rounded-[6px] object-cover bg-surface border border-border shrink-0 shadow-xs"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-[6px] bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
+                                    <FontAwesomeIcon icon={faGamepad} className="text-lg" />
+                                </div>
+                            )}
+                            <div className="flex flex-col min-w-0 flex-1 leading-tight">
+                                <h4 className="text-xs font-bold text-text group-hover:text-brand-400 transition-colors truncate">
+                                    {gameData?.name || gameName || communityName}
+                                </h4>
+                                <span className="text-[10px] text-text-muted truncate mt-0.5">
+                                    {gameData?.developer || "IndieG Store"}
+                                </span>
+                                {gameData?.rating && (
+                                    <div className="flex items-center gap-1 text-[10px] font-mono text-amber-400 mt-1">
+                                        <FontAwesomeIcon icon={faStar} className="text-[8px]" />
+                                        <span>{gameData.rating}</span>
+                                        {gameData.activePlayers && (
+                                            <>
+                                                <span className="text-text-faint">•</span>
+                                                <span className="text-emerald-400 font-sans">
+                                                    {formatCompactNumber(gameData.activePlayers)} {isVi ? "đang chơi" : "players"}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1.5 border-t border-border/30 text-xs font-bold text-brand-400 group-hover:underline">
+                            <span className="text-[11px]">{isVi ? "Xem trang game trên IndieG" : "View on IndieG"}</span>
+                            <FontAwesomeIcon icon={faArrowRight} className="text-[9px] group-hover:translate-x-1 transition-transform" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 1. ABOUT SECTION */}
             <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
@@ -219,6 +294,26 @@ export const CommunityHubRightRail = ({
                 </span>
 
                 <div className="flex flex-col gap-1.5 pt-0.5">
+                    {/* Direct link to IndieG Game Page inside Community Links */}
+                    {gameSlug && (
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                            className="w-full flex items-center justify-between p-2 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 transition-colors group cursor-pointer text-left"
+                        >
+                            <span className="text-xs font-semibold text-brand-400 group-hover:text-brand-300 transition-colors flex items-center gap-1.5">
+                                <FontAwesomeIcon icon={faGamepad} className="text-[11px]" />
+                                <span>{isVi ? "Trang Game trên IndieG" : "IndieG Game Page"}</span>
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono text-brand-400/80 font-bold">
+                                    IndieG Hub
+                                </span>
+                                <FontAwesomeIcon icon={faArrowRight} className="text-[9px] text-brand-400" />
+                            </div>
+                        </button>
+                    )}
+
                     {communityLinks.map((link) => (
                         <a
                             key={link.label}

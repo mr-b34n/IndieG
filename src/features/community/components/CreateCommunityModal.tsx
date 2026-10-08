@@ -19,10 +19,10 @@ const DEFAULT_LOGOS = [
 ];
 
 const DEFAULT_BACKDROPS = [
-    "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1200&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop",
+    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg",
+    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/library_hero.jpg",
+    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2358720/library_hero.jpg",
+    "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/library_hero.jpg",
 ];
 
 interface CreateCommunityModalProps {
@@ -81,12 +81,15 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
             .map((r) => r.trim())
             .filter(Boolean);
 
+        const resolvedBackdrop = backdrop || DEFAULT_BG;
+        const resolvedLogo = logo || resolvedBackdrop || DEFAULT_GAME_LOGO;
+
         let createdCommunity: CommunityData | null = null;
         if (createCommunity) {
             createdCommunity = await createCommunity({
                 name: name.trim(),
-                logo,
-                backdrop,
+                logo: resolvedLogo,
+                backdrop: resolvedBackdrop,
                 category,
                 description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
                 tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
@@ -98,8 +101,8 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
             createdCommunity = {
                 id: newId,
                 name: name.trim(),
-                logo,
-                backdrop,
+                logo: resolvedLogo,
+                backdrop: resolvedBackdrop,
                 category,
                 description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
                 members: 1,

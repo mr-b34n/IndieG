@@ -29,8 +29,8 @@ const DEFAULT_GAMES: any[] = [
     {
         id: "1",
         name: "Elden Ring",
-        logo: "https://images.unsplash.com/photo-1605901309584-818e25960b8f?w=600&q=80",
-        banner: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/library_hero.jpg",
         completion: 100,
         achievements: { current: 42, total: 42 },
         difficulty: "Very Hard",
@@ -40,49 +40,56 @@ const DEFAULT_GAMES: any[] = [
     {
         id: "2",
         name: "Sekiro: Shadows Die Twice",
-        logo: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/814380/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/814380/library_hero.jpg",
         completion: 100,
         hours: 120,
     },
     {
         id: "3",
-        name: "Bloodborne",
-        logo: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=600&q=80",
+        name: "Dark Souls III",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/374320/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/374320/library_hero.jpg",
         completion: 100,
         hours: 155,
     },
     {
         id: "4",
         name: "Ghost of Tsushima",
-        logo: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215430/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2215430/library_hero.jpg",
         completion: 100,
         hours: 80,
     },
     {
         id: "5",
         name: "Cyberpunk 2077",
-        logo: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/library_hero.jpg",
         completion: 95,
         hours: 140,
     },
     {
         id: "6",
         name: "Hades",
-        logo: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/library_hero.jpg",
         completion: 90,
         hours: 95,
     },
     {
         id: "7",
         name: "Hollow Knight",
-        logo: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/library_hero.jpg",
         completion: 85,
         hours: 60,
     },
     {
         id: "8",
         name: "Returnal",
-        logo: "https://images.unsplash.com/photo-1612287233207-6f8e77a41490?w=600&q=80",
+        logo: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1649240/capsule_616x353.jpg",
+        banner: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1649240/library_hero.jpg",
         completion: 80,
         hours: 45,
     }
@@ -223,9 +230,15 @@ export const GamesTab = ({
                     >
                         <div className="relative aspect-[2/3] w-full rounded-[14px] overflow-hidden bg-[#161b22] transition-all duration-300 group-hover:shadow-[0_8px_25px_rgba(0,0,0,0.6)] group-hover:-translate-y-1">
                             <img 
-                                src={game.logo} 
+                                src={game.logo || game.banner || game.coverUrl || game.iconUrl} 
                                 alt={game.name} 
                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                                onError={(e) => {
+                                    const fallback = game.banner || game.coverUrl;
+                                    if (fallback && e.currentTarget.src !== fallback) {
+                                        e.currentTarget.src = fallback;
+                                    }
+                                }}
                             />
                             {/* Gradient Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300" />

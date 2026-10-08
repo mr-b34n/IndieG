@@ -38,7 +38,7 @@ const VIETNAM_GAMES: VietnamGame[] = [
         releaseDate: "Mới Cập Nhật 2026",
         descriptionVi: "Trải nghiệm không gian Hà Nội thập niên 90 âm u kỳ bí với những câu chuyện tâm linh, truyền thuyết đô thị Việt Nam gây sốt cộng đồng.",
         descriptionEn: "Psychological horror set in 1990s Hanoi exploring authentic Vietnamese folklore and urban legends.",
-        bannerUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200&auto=format&fit=crop",
+        bannerUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1726400/header.jpg",
         tags: ["Kinh Dị Việt", "Hà Nội 1990s", "DUT Studio"],
         accentColor: "from-rose-600/90 via-red-900/80 to-black/90",
         linkSlug: "than-trung"
@@ -53,7 +53,7 @@ const VIETNAM_GAMES: VietnamGame[] = [
         releaseDate: "Bản Siêu Đẹp 4K",
         descriptionVi: "Tuyệt phẩm indie Việt Nam với đồ họa vẽ tay thủ công đẹp ảo diệu phong cách Ghibli và âm hưởng piano êm dịu.",
         descriptionEn: "Award-winning Vietnamese indie game featuring breathtaking hand-drawn artwork and relaxing piano soundtrack.",
-        bannerUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop",
+        bannerUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1484900/header.jpg",
         tags: ["Đồ Họa Vẽ Tay", "Ghibli", "Thư Giãn"],
         accentColor: "from-emerald-600/90 via-teal-900/80 to-black/90",
         linkSlug: "hoa"
@@ -68,7 +68,7 @@ const VIETNAM_GAMES: VietnamGame[] = [
         releaseDate: "Q4 2026",
         descriptionVi: "Hành trình tái hiện câu chuyện Sơn Tinh Thủy Tinh & các vị thần sử Việt bằng công nghệ đồ họa Unreal Engine 5 đỉnh cao.",
         descriptionEn: "Epic action RPG bringing Vietnamese mythology & Son Tinh Thuy Tinh legends into modern UE5 graphics.",
-        bannerUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=1200&auto=format&fit=crop",
+        bannerUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2358720/library_hero.jpg",
         tags: ["Unreal Engine 5", "Sơn Tinh Thủy Tinh", "Sắp Ra Mắt"],
         accentColor: "from-amber-600/90 via-orange-900/80 to-black/90"
     },
@@ -82,7 +82,7 @@ const VIETNAM_GAMES: VietnamGame[] = [
         releaseDate: "Phiên Bản Kỷ Niệm",
         descriptionVi: "Hào hùng trận chiến lịch sử Điện Biên Phủ lừng lẫy. Tái hiện tinh thần quả cảm của các chiến sĩ quân đội nhân dân Việt Nam.",
         descriptionEn: "Historical Vietnam War FPS game remastered celebrating heroic history and nation-building spirit.",
-        bannerUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop",
+        bannerUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/library_hero.jpg",
         tags: ["Bắn Súng Lịch Sử", "Điện Biên Phủ", "Hào Hùng"],
         accentColor: "from-blue-600/90 via-indigo-900/80 to-black/90"
     }

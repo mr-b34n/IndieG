@@ -1,5 +1,6 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
+import { DEFAULT_AVATAR, DEFAULT_BG } from "@/shared/constants/images";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faLock,
@@ -38,8 +39,8 @@ export const CommunityManageSettings = ({
     const [name, setName] = useState(communityName);
     const [description, setDescription] = useState(communityDescription);
     const [game, setGame] = useState(gameName);
-    const [avatarUrl] = useState("https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&auto=format&fit=crop&q=80");
-    const [coverUrl] = useState("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80");
+    const [avatarUrl] = useState(DEFAULT_AVATAR);
+    const [coverUrl] = useState(DEFAULT_BG);
 
     // 2. DISCOVERY SECTION STATE
     const [tags, setTags] = useState("survival, building, ocean, multiplayer, co-op");
@@ -443,18 +444,7 @@ export const CommunityManageSettings = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
-                        <span className="text-xs text-text-muted">
-                            {t('hub.communitymanagesettings_223')}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={allowVideoUploads}
-                            onChange={(e) => setAllowVideoUploads(e.target.checked)}
-                            className="w-4 h-4 accent-primary cursor-pointer"
-                        />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
 
                     <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
                         <span className="text-xs text-text-muted">

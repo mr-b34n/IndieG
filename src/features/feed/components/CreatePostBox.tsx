@@ -417,7 +417,7 @@ const FormattingToolbar = ({
             <button
                 type="button"
                 onClick={onAddImage}
-                title="Tải lên hình ảnh hoặc video"
+                title="Tải lên hình ảnh"
                 className="flex items-center justify-center w-7 h-7 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
             >
                 <FontAwesomeIcon icon={faImage} className="text-emerald-400 text-xs" />
@@ -700,7 +700,7 @@ export const CreatePostModal = ({
             <input
                 ref={imageInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
                 multiple
                 onChange={handleQuickImageChange}
                 className="hidden"

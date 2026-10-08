@@ -27,7 +27,7 @@ export const ExplorePage = () => {
     // Filter media tiles based on content tab
     const filteredViralTiles = (() => {
         if (activeType === "media") {
-            return VIRAL_TILES.filter((tile) => tile.contentType === "VIDEO" || tile.contentType === "SCREENSHOT");
+            return VIRAL_TILES.filter((tile) => tile.contentType === "SCREENSHOT");
         }
         if (activeType === "viral") {
             return VIRAL_TILES;
@@ -92,7 +92,7 @@ export const ExplorePage = () => {
                     {activeType === "news" && (
                         <div className="flex flex-col gap-8">
                             <EditorialNewsSection items={VIETNAMESE_NEWS_ITEMS} />
-                            <FeaturedHeroMagazine stories={FEATURED_STORIES.slice(0, 2)} />
+                            <FeaturedHeroMagazine stories={FEATURED_STORIES} />
                         </div>
                     )}
 

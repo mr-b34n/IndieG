@@ -8,6 +8,7 @@ import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityI
 import type { CommunityDto } from "@/shared/api/types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
+import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import { BioEditor, BioRenderer, isBioEmpty, parseBio } from "../../bio";
 
 interface OverviewTabProps {
@@ -227,7 +228,7 @@ export const OverviewTab = ({
                                 {/* Artwork & Title Column */}
                                 <div className="lg:col-span-5 flex items-center gap-4 relative z-10">
                                     <img
-                                        src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=240&auto=format&fit=crop&q=80"}
+                                        src={featuredGame.logo || DEFAULT_GAME_LOGO}
                                         alt={featuredGame.name || "Game"}
                                         className="w-20 h-20 sm:w-24 sm:h-24 rounded-[10px] object-cover shrink-0 shadow-md border border-[#222834]/60"
                                     />
@@ -316,7 +317,7 @@ export const OverviewTab = ({
                                             }`}
                                         >
                                             <img 
-                                                src={game.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"} 
+                                                src={game.logo || DEFAULT_GAME_LOGO} 
                                                 alt={game.name || "Game"} 
                                                 className="w-10 h-10 rounded-[6px] object-cover shrink-0" 
                                             />

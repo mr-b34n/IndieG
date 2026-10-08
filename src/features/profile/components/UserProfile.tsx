@@ -14,6 +14,7 @@ import {
     DEFAULT_COVER,
     COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES,
 } from "../constants";
+import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
 import { OverviewTab } from "./tabs/OverviewTab";
@@ -702,7 +703,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return rawLibraryGames.map((g) => ({
             id: g.id,
             name: g.name,
-            logo: g.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+            logo: g.logo || DEFAULT_GAME_LOGO,
             hours: g.hours ?? 0,
             lastPlayed: g.lastPlayed || "Gần đây",
             achievements: g.achievements ?? 0,
@@ -722,7 +723,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 name: gameData.name,
                 hours: gameData.hours || 0,
                 rank: gameData.rank || "Player",
-                logo: gameData.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+                logo: gameData.logo || DEFAULT_GAME_LOGO,
                 keyStat: `${gameData.hours || 0}h chơi`,
             });
             triggerToast(true, "Đã thêm game vào thư viện thành công!");
@@ -764,7 +765,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-text-muted">
                 <FontAwesomeIcon icon={faSpinner} className="text-3xl animate-spin text-primary" />
-                <span className="text-sm font-semibold">{t("profile.loadingProfile")}</span>
+                <span className="text-sm font-semibold">{t("profile.loadingProfile", { defaultValue: "Đang tải hồ sơ..." })}</span>
             </div>
         );
     }

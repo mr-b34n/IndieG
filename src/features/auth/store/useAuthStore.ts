@@ -194,8 +194,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 email: "gamer@indieg.com",
                 username: "IndieGamer",
                 name: "IndieGamer",
-                avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
-                avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
+                avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
+                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
                 isVerified: true,
                 role: "user",
             };

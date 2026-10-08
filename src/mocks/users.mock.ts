@@ -498,7 +498,7 @@ export const MOCK_USERS: MockUserEntity[] = [
         email: "archon@teyvat.world",
         avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=GenshinArchon",
         avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=GenshinArchon",
-        coverUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1920&auto=format&fit=crop&q=80",
+        coverUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1687950/library_hero.jpg",
         bio: "Nhà Lữ Hành AR60 | Collector toàn nhân vật & vũ khí 5 sao | Chuyên La Hoàn 36 sao mỗi tháng. Chia sẻ team comp tối ưu, artifact builds và pull history.",
         level: 16,
         badge: "AR60 ARCHON",

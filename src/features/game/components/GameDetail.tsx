@@ -150,10 +150,15 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
                             <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-4 border-surface bg-surface shadow-2xl shrink-0 p-1">
                                 <img
-                                    src={game.logoUrl}
+                                    src={game.logoUrl || game.bannerUrl}
                                     alt={game.name}
                                     referrerPolicy="no-referrer"
                                     className="w-full h-full object-cover rounded-xl"
+                                    onError={(e) => {
+                                        if (game.bannerUrl && e.currentTarget.src !== game.bannerUrl) {
+                                            e.currentTarget.src = game.bannerUrl;
+                                        }
+                                    }}
                                 />
                             </div>
 

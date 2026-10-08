@@ -291,10 +291,10 @@ export const ProfileHero = ({
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
                                         className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                        title="Chỉnh sửa thông tin và tùy chỉnh giao diện hồ sơ"
+                                        title={t("profile.editProfile", { defaultValue: "Chỉnh sửa hồ sơ" })}
                                     >
                                         <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
-                                        <span>Chỉnh sửa hồ sơ</span>
+                                        <span>{t("profile.editProfile", { defaultValue: "Chỉnh sửa hồ sơ" })}</span>
                                     </button>
                                 ) : (
                                     <>
@@ -305,10 +305,10 @@ export const ProfileHero = ({
                                                 else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                             }}
                                             className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A] hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
-                                            title="Hủy bỏ thay đổi và hoàn tác"
+                                            title={t("profile.cancel", { defaultValue: "Hủy" })}
                                         >
                                             <FontAwesomeIcon icon={faXmark} className="text-xs" />
-                                            <span>Hủy</span>
+                                            <span>{t("profile.cancel", { defaultValue: "Hủy" })}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -317,10 +317,10 @@ export const ProfileHero = ({
                                                 else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                             }}
                                             className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                            title="Lưu tất cả thay đổi hồ sơ"
+                                            title={t("profile.saveChanges", { defaultValue: "Lưu thay đổi" })}
                                         >
                                             <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                            <span>Lưu thay đổi</span>
+                                            <span>{t("profile.saveChanges", { defaultValue: "Lưu thay đổi" })}</span>
                                         </button>
                                     </>
                                 )}

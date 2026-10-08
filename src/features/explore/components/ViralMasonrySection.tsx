@@ -2,7 +2,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faFire,
     faHeart,
-    faPlay,
     faComment,
     faImage,
     faMessage,
@@ -21,8 +20,6 @@ const getContentTypeMeta = (type: ViralMediaTile["contentType"], t: (key: string
     switch (type) {
         case "DISCUSSION":
             return { label: t('explore.contentTypes.discussion', { defaultValue: 'DISCUSSION' }), icon: faMessage, color: "text-blue-400" };
-        case "VIDEO":
-            return { label: t('explore.contentTypes.video', { defaultValue: 'VIDEO' }), icon: faPlay, color: "text-purple-400" };
         case "SCREENSHOT":
             return { label: t('explore.contentTypes.screenshot', { defaultValue: 'SCREENSHOT' }), icon: faImage, color: "text-emerald-400" };
         case "NEWS":
@@ -99,15 +96,6 @@ export const ViralMasonrySection = ({ tiles }: ViralMasonrySectionProps) => {
                                 </div>
                             </div>
 
-                            {/* Center Play Button for Videos */}
-                            {tile.contentType === "VIDEO" && (
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                    <div className="w-11 h-11 rounded-[6px] bg-black/65 backdrop-blur-xs border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-primary transition-all duration-300 shadow-xl">
-                                        <FontAwesomeIcon icon={faPlay} className="text-xs ml-0.5" />
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Bottom Title & Game Tag Overlay */}
                             <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4 z-10 flex flex-col gap-1">
                                 {tile.gameTag && (
@@ -127,11 +115,6 @@ export const ViralMasonrySection = ({ tiles }: ViralMasonrySectionProps) => {
                                         <span className="flex items-center gap-1 text-gray-300">
                                             <FontAwesomeIcon icon={faComment} className="text-[9px]" />
                                             {tile.commentsCount}
-                                        </span>
-                                    )}
-                                    {tile.videoDuration && (
-                                        <span className="font-mono text-gray-300 bg-black/60 px-1 rounded">
-                                            {tile.videoDuration}
                                         </span>
                                     )}
                                 </div>

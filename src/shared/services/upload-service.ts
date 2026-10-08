@@ -1,5 +1,5 @@
 import { processImagePipeline, type UploadType, type ProcessedImageResult } from '../utils/image-processor';
-import { getApiBaseUrl, buildSafeApiUrl, apiRequest } from '../api/client';
+import { getApiBaseUrl, buildSafeApiUrl, apiRequest, isApiEnabled } from '../api/client';
 
 export interface UploadOptions {
     file: File;
@@ -72,6 +72,15 @@ export async function requestPresignedUrl(
     payload: PresignedUrlPayload,
     token?: string | null
 ): Promise<PresignedUrlResponse> {
+    if (!isApiEnabled()) {
+        const mockKey = `mock_${Date.now()}_upload`;
+        return {
+            presignedUrl: `https://mock-storage.indieg.local/${mockKey}`,
+            fileKey: mockKey,
+            raw: { fileKey: mockKey, url: `https://mock-storage.indieg.local/${mockKey}` },
+        };
+    }
+
     const activeToken = token || getStoredToken();
     const endpoint = buildBackendUrl('storage/presigned-url');
 
@@ -133,6 +142,9 @@ export async function requestPresignedUrl(
  * BƯỚC 3: Tải trực tiếp Blob WebP lên Cloudflare R2 bằng PUT request
  */
 export async function uploadToR2Bucket(presignedUrl: string, blob: Blob): Promise<void> {
+    if (!isApiEnabled()) {
+        return;
+    }
     console.group('[Storage Pipeline] ☁️ Bước 3: PUT lên Cloudflare R2');
     console.log('R2 Presigned URL:', presignedUrl);
     console.log('Blob size:', blob.size, 'bytes, type: image/webp');
@@ -228,6 +240,16 @@ export async function confirmUploadWithBackend(
     token?: string | null,
     presignedUrl?: string
 ): Promise<UploadImageResult> {
+    if (!isApiEnabled()) {
+        return {
+            fileKey: fileKeyOrUrl,
+            avatarUrl: type === 'avatar' ? fileKeyOrUrl : undefined,
+            coverUrl: type === 'cover' ? fileKeyOrUrl : undefined,
+            imageUrl: type === 'post' ? fileKeyOrUrl : undefined,
+            url: fileKeyOrUrl,
+        };
+    }
+
     const activeToken = token || getStoredToken();
 
     // Đảm bảo public URL hợp lệ chuẩn bị gửi lên Backend (cho các endpoint yêu cầu @IsUrl)
@@ -294,6 +316,20 @@ export async function uploadImageToR2({
 
     if (type === 'post' && !postId) {
         throw new Error('Thiếu postId khi upload ảnh cho bài viết.');
+    }
+
+    // Standalone mock mode: convert file to local URL without making network calls
+    if (!isApiEnabled()) {
+        const localUrl = URL.createObjectURL(file);
+        return {
+            avatarUrl: type === 'avatar' ? localUrl : undefined,
+            coverUrl: type === 'cover' ? localUrl : undefined,
+            imageUrl: type === 'post' ? localUrl : undefined,
+            url: localUrl,
+            fileKey: `mock_${Date.now()}_${file.name}`,
+            width: 800,
+            height: 600,
+        };
     }
 
     // BƯỚC 1: Xin Presigned URL từ NestJS Backend

@@ -210,7 +210,7 @@ export const vi = {
         selectCommunityRequired: "Vui lòng chọn cộng đồng",
         selectCommunityPlaceholder: "Chọn cộng đồng",
         noCommunitiesJoined: "Chưa tham gia cộng đồng nào",
-        mediaButton: "Ảnh / Video",
+        mediaButton: "Hình ảnh",
         gameDiscussion: "Thảo luận Game",
         tagsPlaceholder: "Thêm thẻ (cách nhau bằng dấu phẩy)...",
         spoiler: "Cảnh báo nội dung (Spoiler)",
@@ -640,6 +640,7 @@ export const vi = {
     },
     profile: {
         title: "Hồ sơ cá nhân",
+        loadingProfile: "Đang tải hồ sơ...",
         editProfile: "Chỉnh sửa hồ sơ",
         saveChanges: "Lưu thay đổi",
         cancel: "Hủy",

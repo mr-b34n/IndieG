@@ -2,9 +2,10 @@ import type { ReportDto, ReportHistoryItemDto, ResolveReportDto } from "@/shared
 
 /**
  * =========================================================================
- * MOCK REPORTS DATA
+ * MOCK REPORTS DATA (PROFESSIONAL GAMING COMMUNITY MODERATION)
  * =========================================================================
- * Dữ liệu báo cáo vi phạm nội dung / người dùng mẫu và lịch sử xử lý kiểm duyệt.
+ * Dữ liệu báo cáo kiểm duyệt chuẩn mực, chuyên nghiệp, sạch sẽ và gắn liền với
+ * từng cộng đồng game cụ thể.
  */
 
 export const MOCK_REPORTS: ReportDto[] = [
@@ -13,9 +14,11 @@ export const MOCK_REPORTS: ReportDto[] = [
         targetType: "post",
         targetId: "post-1",
         postId: "post-1",
+        communityId: "cs2-vietnam",
+        communityName: "Counter-Strike 2 Vietnam",
         reporterId: "user-3",
         status: "pending",
-        reason: "Spam liên kết quảng cáo: Bài viết có dấu hiệu chèn link nhóm kéo rank cá cược bên ngoài.",
+        reason: "Quảng bá máy chủ ngoài: Bài viết tuyển đội Premier có kèm liên kết máy chủ Discord riêng chưa qua đăng ký xác minh cộng đồng.",
         createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
         reporter: {
@@ -27,8 +30,8 @@ export const MOCK_REPORTS: ReportDto[] = [
         },
         post: {
             id: "post-1",
-            title: "Pha Clutch 1v4 nghẹt thở tại map Mirage Premier rank 20k Elo!",
-            content: "Hôm qua vừa có pha clutch 1 cân 4 cứu cả trận đấu ở round 12-11...",
+            title: "Pha Clutch 1v4 nghẹt thở tại map Mirage Premier 20k ELO",
+            content: "Hôm qua vừa có pha clutch 1 cân 4 cứu cả trận đấu ở round 12-11. Quả smoke ninja defuse vào CT spawn khiến cả đối thủ bắn mù mờ...",
         },
     },
     {
@@ -36,9 +39,11 @@ export const MOCK_REPORTS: ReportDto[] = [
         targetType: "comment",
         targetId: "cmt-bad-1",
         commentId: "cmt-bad-1",
+        communityId: "cs2-vietnam",
+        communityName: "Counter-Strike 2 Vietnam",
         reporterId: "user-2",
         status: "in_review",
-        reason: "Ngôn từ thù địch: Xúc phạm danh dự và lăng mạ người chơi khác trong bình luận.",
+        reason: "Ngôn từ thiếu xây dựng: Bình luận công kích cá nhân và mỉa mai lối chơi của thành viên khác trong bài phân tích kinh tế MR12.",
         createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
         reporter: {
@@ -50,181 +55,23 @@ export const MOCK_REPORTS: ReportDto[] = [
         },
         comment: {
             id: "cmt-bad-1",
-            content: "Bắn gà thế này thì xóa game đi chứ lên rank 20k làm trò cười à!",
+            content: "Kê tâm thế này thì bắn làm sao lên nổi 20k Elo, nên vào map bot tập lại trước khi viết bài hướng dẫn.",
         },
     },
     {
         id: "rep-103",
         targetType: "post",
-        targetId: "post-cheat-1",
-        reporterId: "user-1",
-        status: "resolved",
-        moderationAction: "user_banned",
-        reason: "Gian lận phần mềm (Hack/Cheat): Chia sẻ video hướng dẫn cài phần mềm can thiệp bộ nhớ game CS2.",
-        moderatorNote: "Đã xác minh bằng chứng video vi phạm nghiêm trọng. Đã khóa tài khoản vĩnh viễn và gỡ bài viết.",
-        createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-1",
-            username: "eldenlord",
-            name: "EldenLord_VN",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
-        },
-        post: {
-            id: "post-cheat-1",
-            title: "Bản mod hỗ trợ auto headshot cực nhẹ không bị phát hiện",
-            content: "Chia sẻ file DLL can thiệp vào game CS2 không lo VAC ban...",
-        },
-    },
-    {
-        id: "rep-104",
-        targetType: "comment",
-        targetId: "cmt-scam-1",
-        commentId: "cmt-scam-1",
-        reporterId: "user-me",
-        status: "resolved",
-        moderationAction: "content_removed",
-        reason: "Lừa đảo: Chèn link phishing giả mạo Steam nhận quà skin Dragon Lore miễn phí.",
-        moderatorNote: "Đã xóa nội dung độc hại và chặn tên miền lừa đảo trên toàn bộ diễn đàn.",
-        createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-me",
-            username: "IndieGamer",
-            name: "Indie Gamer Pro",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
-        },
-        comment: {
-            id: "cmt-scam-1",
-            content: "Bấm vào link steam-community-free-skins.xyz để nhận quà skin nhé mọi người!",
-        },
-    },
-    {
-        id: "rep-105",
-        targetType: "post",
-        targetId: "post-4",
-        postId: "post-4",
-        reporterId: "user-4",
-        status: "dismissed",
-        moderationAction: "no_action",
-        reason: "Bài viết sai chuyên mục: Đăng tìm bạn coop Raft trong cộng đồng Indie Games.",
-        moderatorNote: "Cộng đồng Indie Games cho phép giao lưu tìm bạn chơi sinh tồn. Báo cáo không hợp lệ.",
-        createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 60 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-4",
-            username: "pixelcraft",
-            name: "PixelCraft",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=PixelCraft",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=PixelCraft",
-        },
-    },
-    {
-        id: "rep-106",
-        targetType: "user",
-        targetId: "usr_banned_cheater",
-        reporterId: "user-2",
-        status: "resolved",
-        moderationAction: "user_banned",
-        reason: "Tài khoản gian lận (Cheater): Bán tool can thiệp file CS2 và dịch vụ cày thuê rank Premier lừa đảo.",
-        moderatorNote: "Đã kiểm duyệt log chat và demo: xác nhận đối tượng phát tán mã độc. Tài khoản đã bị khóa vĩnh viễn (status: banned).",
-        createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-2",
-            username: "shadowhunter",
-            name: "ShadowHunter",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowHunter",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=ShadowHunter",
-        },
-        post: {
-            id: "usr_banned_cheater",
-            title: "Người dùng vi phạm: @viper_cheats (ViperCS Hacks)",
-            content: "Đối tượng liên tục spam tin nhắn riêng tư mời chào mua tool gian lận.",
-        },
-    },
-    {
-        id: "rep-107",
-        targetType: "user",
-        targetId: "usr_banned_toxic",
-        reporterId: "user-streamer",
-        status: "resolved",
-        moderationAction: "user_banned",
-        reason: "Quấy rối và đe dọa thành viên: Spam xúc phạm người sáng tạo nội dung trong lúc livestream.",
-        moderatorNote: "Tài khoản @toxichunter99 tái phạm lần thứ 4. Đã thi hành lệnh cấm tài khoản vĩnh viễn.",
-        createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-streamer",
-            username: "LunaStream",
-            name: "Luna Valkyrie",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=LunaValkyrie",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LunaValkyrie",
-        },
-        post: {
-            id: "usr_banned_toxic",
-            title: "Người dùng vi phạm: @toxichunter99 (Toxic Hunter)",
-            content: "Liên tục bình luận thù địch, dọa dẫm và quấy rối thành viên trong buổi stream Raft.",
-        },
-    },
-    {
-        id: "rep-108",
-        targetType: "post",
         targetId: "post-3",
         postId: "post-3",
-        reporterId: "user-1",
-        status: "pending",
-        reason: "Cảnh báo bảo mật: File đính kèm nghi ngờ chứa mã độc trojan ngụy trang mod đồ họa Cyberpunk.",
-        createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-1",
-            username: "eldenlord",
-            name: "EldenLord_VN",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
-        },
-        post: {
-            id: "post-3",
-            title: "Tối ưu hóa Cyberpunk 2077 Ray Tracing Overdrive mượt mà trên RTX 3060",
-            content: "Chia sẻ file tinh chỉnh engine.ini giúp tăng 25% FPS...",
-        },
-    },
-    {
-        id: "rep-109",
-        targetType: "comment",
-        targetId: "cmt-trade-scam",
-        commentId: "cmt-trade-scam",
-        reporterId: "user-3",
-        status: "pending",
-        reason: "Giao dịch phi pháp: Rao bán tài khoản Steam và vật phẩm bằng tiền mặt (RMT cấm).",
-        createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-        reporter: {
-            id: "user-3",
-            username: "cybersamurai",
-            name: "CyberSamurai",
-            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSamurai",
-            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSamurai",
-        },
-        comment: {
-            id: "cmt-trade-scam",
-            content: "Cần thanh lý gấp acc CS2 có dao Butterfly Doppler giá 5 triệu chuyển khoản trực tiếp liên hệ Zalo 09xx...",
-        },
-    },
-    {
-        id: "rep-110",
-        targetType: "post",
-        targetId: "post-nsfw-1",
+        communityId: "elden-ring-vietnam",
+        communityName: "Elden Ring Vietnam",
         reporterId: "user-5",
         status: "resolved",
-        moderationAction: "content_removed",
-        reason: "Hình ảnh không phù hợp: Chia sẻ ảnh chụp mod 18+ không gắn thẻ cảnh báo trong cộng đồng Elden Ring.",
-        moderatorNote: "Đã gỡ bài đăng và nhắc nhở thành viên về quy định gắn thẻ NSFW.",
-        createdAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+        moderationAction: "content_restored",
+        reason: "Chưa gắn thẻ Cảnh báo Spoilers: Tiết lộ chi tiết điểm yếu của trùm ẩn trong DLC Shadow of the Erdtree mà không dùng thẻ ẩn nội dung.",
+        moderatorNote: "Điều hành viên đã hỗ trợ tác giả bổ sung nhãn [Spoiler Alert] và mở lại hiển thị bài viết bình thường.",
+        createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
         reporter: {
             id: "user-5",
             username: "ranni_witch",
@@ -233,9 +80,88 @@ export const MOCK_REPORTS: ReportDto[] = [
             avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Ranni",
         },
         post: {
-            id: "post-nsfw-1",
-            title: "Tổng hợp mod trang phục tùy biến nhân vật trong Elden Ring",
-            content: "Bộ sưu tập mod trang phục dành cho nữ Tarnished...",
+            id: "post-3",
+            title: "Tại sao cơ chế Stagger và Poise trong Elden Ring lại hấp dẫn hơn Dark Souls 3?",
+            content: "Sau hàng trăm giờ cày cuốc cả DS3 lẫn Elden Ring (đặc biệt sau DLC Shadow of the Erdtree), mình nhận ra hệ thống Poise ngầm tạo ra nhịp độ đối kháng hồi hộp...",
+        },
+    },
+    {
+        id: "rep-104",
+        targetType: "post",
+        targetId: "post-5",
+        postId: "post-5",
+        communityId: "black-myth-wukong-vn",
+        communityName: "Black Myth: Wukong Vietnam",
+        reporterId: "user-1",
+        status: "resolved",
+        moderationAction: "no_action",
+        reason: "Đăng sai danh mục: Hướng dẫn tìm kiếm Tinh Phách nhưng gắn nhãn Sự kiện thay vì Cẩm nang qua ải.",
+        moderatorNote: "Điều hành viên đã điều chỉnh bài viết về đúng danh mục Hướng dẫn & Bí kíp qua ải.",
+        createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
+        reporter: {
+            id: "user-1",
+            username: "eldenlord",
+            name: "EldenLord_VN",
+            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
+            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=EldenLord",
+        },
+        post: {
+            id: "post-5",
+            title: "Cách đánh boss Tiểu Hoàng Long không mất giọt máu nào",
+            content: "Chiến thuật giữ khoảng cách và dùng Biến hình Thạch Viên kết hợp Định Thân Thuật chuẩn từng nhịp...",
+        },
+    },
+    {
+        id: "rep-105",
+        targetType: "post",
+        targetId: "post-11",
+        postId: "post-11",
+        communityId: "cyberpunk-2077-vn",
+        communityName: "Cyberpunk 2077 Vietnam",
+        reporterId: "user-me",
+        status: "pending",
+        reason: "Bản mod chưa đính kèm link tác giả: Chia sẻ tinh chỉnh cấu hình đồ họa nhưng thiếu ghi nguồn tác giả gốc trên NexusMods.",
+        createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+        reporter: {
+            id: "user-me",
+            username: "IndieGamer",
+            name: "Indie Gamer Pro",
+            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
+            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
+        },
+        post: {
+            id: "post-11",
+            title: "Tối ưu hóa Cyberpunk 2077 Ray Tracing Overdrive mượt mà trên RTX 3060",
+            content: "Chia sẻ file tinh chỉnh engine.ini giúp tăng 25% FPS khi bật Path Tracing mà không làm mờ hình ảnh...",
+        },
+    },
+    {
+        id: "rep-106",
+        targetType: "post",
+        targetId: "post-12",
+        postId: "post-12",
+        communityId: "indie-games-vietnam",
+        communityName: "Indie Games Vietnam",
+        reporterId: "user-4",
+        status: "resolved",
+        moderationAction: "content_removed",
+        reason: "Đăng trùng lặp: Thành viên tạo liên tiếp 3 bài tìm bạn coop sinh tồn bè Raft trong vòng 10 phút.",
+        moderatorNote: "Đã gỡ bài đăng trùng lặp và nhắc nhở thành viên sử dụng bài viết ghim Tìm đồng đội hàng tuần.",
+        createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+        updatedAt: new Date(Date.now() - 30 * 3600 * 1000).toISOString(),
+        reporter: {
+            id: "user-4",
+            username: "pixelcraft",
+            name: "PixelCraft",
+            avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=PixelCraft",
+            avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=PixelCraft",
+        },
+        post: {
+            id: "post-12",
+            title: "Tìm 2 bạn chơi Raft mượt mà cuối tuần này",
+            content: "Mình mới mở world mới, cần 2 bạn voice Discord sinh tồn mở rộng bè...",
         },
     },
 ];
@@ -270,7 +196,7 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
                 name: "IndieG Administrator",
                 avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
             },
-            moderatorNote: "Đang xem xét nhật ký chat và bình luận liên quan.",
+            moderatorNote: "Đang xem xét ngữ cảnh đoạn tranh luận trong bài viết.",
             createdAt: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
         },
     ],
@@ -285,7 +211,7 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
         {
             id: "hist-103-2",
             reportId: "rep-103",
-            action: "user_banned",
+            action: "content_restored",
             status: "resolved",
             moderatorId: "usr_admin",
             moderator: {
@@ -294,7 +220,7 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
                 name: "IndieG Administrator",
                 avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
             },
-            moderatorNote: "Đã kiểm tra demo trận đấu, xác nhận gian lận và khóa tài khoản vĩnh viễn.",
+            moderatorNote: "Đã bổ sung thẻ cảnh báo spoiler và khôi phục bài viết.",
             createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
         },
     ],
@@ -304,12 +230,12 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
             reportId: "rep-104",
             action: "report_created",
             status: "pending",
-            createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+            createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
         },
         {
             id: "hist-104-2",
             reportId: "rep-104",
-            action: "content_removed",
+            action: "no_action",
             status: "resolved",
             moderatorId: "usr_admin",
             moderator: {
@@ -318,8 +244,8 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
                 name: "IndieG Administrator",
                 avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
             },
-            moderatorNote: "Đã gỡ bỏ bình luận lừa đảo và kích hoạt bộ lọc từ khóa độc hại.",
-            createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
+            moderatorNote: "Đã chuyển bài viết về đúng chuyên mục.",
+            createdAt: new Date(Date.now() - 20 * 3600 * 1000).toISOString(),
         },
     ],
     "rep-105": [
@@ -328,22 +254,7 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
             reportId: "rep-105",
             action: "report_created",
             status: "pending",
-            createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-        },
-        {
-            id: "hist-105-2",
-            reportId: "rep-105",
-            action: "dismissed",
-            status: "dismissed",
-            moderatorId: "usr_admin",
-            moderator: {
-                id: "usr_admin",
-                username: "IndieAdmin",
-                name: "IndieG Administrator",
-                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
-            },
-            moderatorNote: "Báo cáo không chính xác. Nội dung bài viết tuân thủ đúng nội quy.",
-            createdAt: new Date(Date.now() - 60 * 3600 * 1000).toISOString(),
+            createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
         },
     ],
     "rep-106": [
@@ -352,77 +263,11 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
             reportId: "rep-106",
             action: "report_created",
             status: "pending",
-            createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+            createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
         },
         {
             id: "hist-106-2",
             reportId: "rep-106",
-            action: "user_banned",
-            status: "resolved",
-            moderatorId: "usr_admin",
-            moderator: {
-                id: "usr_admin",
-                username: "IndieAdmin",
-                name: "IndieG Administrator",
-                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
-            },
-            moderatorNote: "Khóa vĩnh viễn tài khoản @viper_cheats và cấm địa chỉ IP gian lận.",
-            createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000 + 3600 * 1000).toISOString(),
-        },
-    ],
-    "rep-107": [
-        {
-            id: "hist-107-1",
-            reportId: "rep-107",
-            action: "report_created",
-            status: "pending",
-            createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-        },
-        {
-            id: "hist-107-2",
-            reportId: "rep-107",
-            action: "user_banned",
-            status: "resolved",
-            moderatorId: "usr_admin",
-            moderator: {
-                id: "usr_admin",
-                username: "IndieAdmin",
-                name: "IndieG Administrator",
-                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
-            },
-            moderatorNote: "Ban vĩnh viễn @toxichunter99 do vi phạm chính sách chống quấy rối.",
-            createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000 + 1800 * 1000).toISOString(),
-        },
-    ],
-    "rep-108": [
-        {
-            id: "hist-108-1",
-            reportId: "rep-108",
-            action: "report_created",
-            status: "pending",
-            createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-        },
-    ],
-    "rep-109": [
-        {
-            id: "hist-109-1",
-            reportId: "rep-109",
-            action: "report_created",
-            status: "pending",
-            createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-        },
-    ],
-    "rep-110": [
-        {
-            id: "hist-110-1",
-            reportId: "rep-110",
-            action: "report_created",
-            status: "pending",
-            createdAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-        },
-        {
-            id: "hist-110-2",
-            reportId: "rep-110",
             action: "content_removed",
             status: "resolved",
             moderatorId: "usr_admin",
@@ -432,18 +277,25 @@ export const MOCK_REPORT_HISTORY: Record<string, ReportHistoryItemDto[]> = {
                 name: "IndieG Administrator",
                 avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieAdmin",
             },
-            moderatorNote: "Đã gỡ bài viết không gắn nhãn 18+ và cảnh cáo tác giả.",
-            createdAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+            moderatorNote: "Đã gỡ bài đăng trùng lặp và nhắc nhở thành viên.",
+            createdAt: new Date(Date.now() - 30 * 3600 * 1000).toISOString(),
         },
     ],
 };
 
-export const getMockReports = (): ReportDto[] => {
-    return [...MOCK_REPORTS];
+export const getMockReports = (params?: { communityId?: string; status?: string }): ReportDto[] => {
+    let list = [...MOCK_REPORTS];
+    if (params?.communityId) {
+        list = list.filter((r) => !r.communityId || r.communityId === params.communityId);
+    }
+    if (params?.status) {
+        list = list.filter((r) => r.status === params.status);
+    }
+    return list;
 };
 
-export const getMockReportById = (id: string): ReportDto => {
-    return MOCK_REPORTS.find((r) => r.id === id) || MOCK_REPORTS[0];
+export const getMockReportById = (id: string): ReportDto | undefined => {
+    return MOCK_REPORTS.find((r) => r.id === id);
 };
 
 export const getMockReportHistory = (reportId: string): ReportHistoryItemDto[] => {

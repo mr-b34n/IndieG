@@ -4,6 +4,7 @@ import {
     mapPostDtoToPost,
     mapGameDtoToGameData,
     mapUserProfileDtoToSearchUser,
+    isGenericTestCommunity,
     type PostDto,
     type CommunityDto,
     type GameDto,
@@ -279,7 +280,9 @@ function parseSearchResponse(
     if (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data) && (raw.data as Record<string, unknown>).posts) {
         const existingData = raw.data as Record<string, unknown>;
         const posts = Array.isArray(existingData.posts) ? existingData.posts.map(mapPostDtoToPost) : [];
-        const communities = Array.isArray(existingData.communities) ? existingData.communities.map(mapCommunityDtoToCommunityData) : [];
+        const communities = Array.isArray(existingData.communities)
+            ? existingData.communities.map(mapCommunityDtoToCommunityData).filter((c) => !isGenericTestCommunity(c))
+            : [];
         const games = Array.isArray(existingData.games) ? existingData.games.map(mapGameDtoToGameData) : [];
         const users = Array.isArray(existingData.users)
             ? existingData.users.map(mapUserProfileDtoToSearchUser)
@@ -345,7 +348,9 @@ function parseSearchResponse(
         games = rawGames.map((g) => mapGameDtoToGameData(g as GameDto));
     }
     if (Array.isArray(rawCommunities)) {
-        communities = rawCommunities.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto));
+        communities = rawCommunities
+            .map((c) => mapCommunityDtoToCommunityData(c as CommunityDto))
+            .filter((c) => !isGenericTestCommunity(c));
     }
     if (Array.isArray(rawProfiles)) {
         users = rawProfiles.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto));
@@ -358,7 +363,9 @@ function parseSearchResponse(
     if ((searchType === "game" || tab === "games") && rawList.length > 0) {
         games = rawList.map((g) => mapGameDtoToGameData(g as GameDto));
     } else if ((searchType === "community" || tab === "communities") && rawList.length > 0) {
-        communities = rawList.map((c) => mapCommunityDtoToCommunityData(c as CommunityDto));
+        communities = rawList
+            .map((c) => mapCommunityDtoToCommunityData(c as CommunityDto))
+            .filter((c) => !isGenericTestCommunity(c));
     } else if ((searchType === "profile" || searchType === "user" || tab === "users") && rawList.length > 0) {
         users = rawList.map((u) => mapUserProfileDtoToSearchUser(u as UserProfileDto));
     } else if ((searchType === "post" || tab === "posts") && rawList.length > 0) {

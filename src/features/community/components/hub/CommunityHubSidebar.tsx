@@ -15,7 +15,10 @@ import {
     faGear,
     faSliders,
     faGavel,
+    faGamepad,
+    faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 
 interface CommunityHubSidebarProps {
     activeNav: string;
@@ -26,6 +29,8 @@ interface CommunityHubSidebarProps {
     userRole?: "owner" | "admin" | "moderator" | "member";
     pendingCount?: number;
     reportsCount?: number;
+    gameSlug?: string;
+    gameName?: string;
 }
 
 export const CommunityHubSidebar = ({
@@ -37,8 +42,11 @@ export const CommunityHubSidebar = ({
     userRole = "owner",
     pendingCount,
     reportsCount,
+    gameSlug,
+    gameName,
 }: CommunityHubSidebarProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     // 1. Primary community feed & content navigation
@@ -210,6 +218,37 @@ export const CommunityHubSidebar = ({
                         <nav className="w-full flex flex-col gap-0.5">
                             {manageNavItems.map(renderNavButton)}
                         </nav>
+                    </div>
+                )}
+
+                {/* 4. SECTION: INDIEG GAME PAGE SHORTCUT */}
+                {gameSlug && (
+                    <div className="w-full flex flex-col gap-1 pt-2 border-t border-border/40">
+                        {!isCollapsed && (
+                            <div className="px-2 py-0.5 text-text-faint">
+                                <span className="text-[10px] font-mono font-bold tracking-widest text-brand-400 uppercase">
+                                    GAME PAGE
+                                </span>
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                            title={isVi ? `Trang Game: ${gameName || ""}` : `Game Page: ${gameName || ""}`}
+                            className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold transition-all cursor-pointer bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 ${
+                                isCollapsed ? "justify-center px-0 w-8 h-8 mx-auto" : "justify-between"
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 min-w-0">
+                                <FontAwesomeIcon icon={faGamepad} className="text-xs shrink-0 text-brand-400" />
+                                {!isCollapsed && (
+                                    <span className="truncate">{isVi ? "Trang Game IndieG" : "IndieG Game"}</span>
+                                )}
+                            </div>
+                            {!isCollapsed && (
+                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[9px] opacity-70" />
+                            )}
+                        </button>
                     </div>
                 )}
             </div>

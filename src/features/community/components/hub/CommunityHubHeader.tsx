@@ -6,7 +6,10 @@ import {
     faStar,
     faCheckCircle,
     faBullhorn,
+    faGamepad,
+    faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 import { formatCompactNumber } from "../../constants";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
@@ -26,6 +29,8 @@ interface CommunityHubHeaderProps {
     featured?: boolean;
     isVerified?: boolean;
     userRole?: "owner" | "admin" | "moderator" | "member";
+    gameSlug?: string;
+    gameName?: string;
 }
 
 export const CommunityHubHeader = ({
@@ -43,8 +48,11 @@ export const CommunityHubHeader = ({
     featured,
     isVerified = true,
     isVi,
+    gameSlug,
+    gameName,
 }: CommunityHubHeaderProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     return (
         <div className="w-full flex flex-col gap-3 select-none">
@@ -73,9 +81,14 @@ export const CommunityHubHeader = ({
                 {/* Left: Community Avatar & Metadata */}
                 <div className="flex items-start gap-3.5 min-w-0 flex-1">
                     <img
-                        src={iconUrl}
+                        src={iconUrl || coverUrl}
                         alt={name}
                         className="w-14 h-14 sm:w-16 sm:h-16 rounded-[8px] object-cover bg-surface border-2 border-border shrink-0 shadow-md"
+                        onError={(e) => {
+                            if (coverUrl && e.currentTarget.src !== coverUrl) {
+                                e.currentTarget.src = coverUrl;
+                            }
+                        }}
                     />
 
                     <div className="flex flex-col min-w-0 flex-1">
@@ -127,8 +140,22 @@ export const CommunityHubHeader = ({
                     </div>
                 </div>
 
-                {/* Right: Actions [Joined / Join] [+ Create] [Manage] */}
+                {/* Right: Actions [IndieG Game Page] [Joined / Join] [+ Create] */}
                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-center flex-wrap">
+                    {/* Link to IndieG Game Page */}
+                    {gameSlug && (
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                            className="px-3.5 py-1.5 rounded-[6px] text-xs font-bold transition-all flex items-center gap-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/30 shadow-xs cursor-pointer active:scale-[0.98] group"
+                            title={isVi ? `Xem trang game ${gameName || ""} trên IndieG` : `View ${gameName || ""} game page on IndieG`}
+                        >
+                            <FontAwesomeIcon icon={faGamepad} className="text-xs text-brand-400 group-hover:scale-110 transition-transform" />
+                            <span>{isVi ? "Trang Game IndieG" : "IndieG Game Page"}</span>
+                            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] opacity-70" />
+                        </button>
+                    )}
+
                     {/* Joined State / Action Button */}
                     <button
                         type="button"

@@ -64,7 +64,10 @@ export const CommunityManageReports = ({
 
     const reports: ReportItem[] = useMemo(() => {
         const items = extractReportList(reportsData);
-        return items.map((r: any) => {
+        const filteredByCommunity = communityId
+            ? items.filter((r: any) => !r.communityId || r.communityId === communityId)
+            : items;
+        return filteredByCommunity.map((r: any) => {
             const reporterProfile = r.reporterId ? profilesMap.get(r.reporterId) : undefined;
             const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
             const reporterHandle = r.reporter?.username ? `@${r.reporter.username}` : reporterProfile?.username ? `@${reporterProfile.username}` : (r.reporterId ? `@user_${r.reporterId.slice(0, 6)}` : "@reporter");
@@ -99,7 +102,7 @@ export const CommunityManageReports = ({
                 status,
             };
         });
-    }, [reportsData, profilesMap, isVi]);
+    }, [reportsData, profilesMap, isVi, communityId]);
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in">

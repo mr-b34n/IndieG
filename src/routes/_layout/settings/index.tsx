@@ -482,7 +482,7 @@ export function SettingsPage() {
                                                         <span className="w-5 h-5 rounded bg-primary text-white font-bold flex items-center justify-center text-[10px] shrink-0">
                                                             {idx + 1}
                                                         </span>
-                                                        <img src={gameObj.logoUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-divider-primary/40 shrink-0" />
+                                                        <img src={gameObj.logoUrl || gameObj.bannerUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-divider-primary/40 shrink-0" />
                                                         <span className="font-bold text-text truncate">{gameObj.name}</span>
                                                     </div>
 
@@ -543,7 +543,7 @@ export function SettingsPage() {
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <img src={game.logoUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-divider-primary/40" />
+                                                    <img src={game.logoUrl || game.bannerUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-divider-primary/40" />
                                                     <span className="text-xs font-bold text-text truncate">{game.name}</span>
                                                 </div>
                                                 <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? "bg-primary border-primary text-white" : "border-divider-primary/60 bg-surface"}`}>

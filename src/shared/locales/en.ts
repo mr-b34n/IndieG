@@ -210,7 +210,7 @@ export const en = {
         selectCommunityRequired: "Please select a community",
         selectCommunityPlaceholder: "Choose community",
         noCommunitiesJoined: "No communities joined",
-        mediaButton: "Media / Video",
+        mediaButton: "Photos / Media",
         gameDiscussion: "Game Discussion",
         tagsPlaceholder: "Add tags (separated by commas)...",
         spoiler: "Content Warning (Spoiler)",
@@ -640,6 +640,7 @@ export const en = {
     },
     profile: {
         title: "User Profile",
+        loadingProfile: "Loading profile...",
         editProfile: "Edit Profile",
         saveChanges: "Save Changes",
         cancel: "Cancel",
