@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ProfileTab } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch, faShareNodes, faEllipsisV, faPen, faLink, faFlag } from "@fortawesome/free-solid-svg-icons";
+import { faShareNodes, faEllipsisV, faPen, faLink, faFlag } from "@fortawesome/free-solid-svg-icons";
 import { useClickOutside } from "../hooks/useClickOutside";
 
 interface ProfileTabBarProps {
@@ -38,8 +38,6 @@ export const ProfileTabBar = ({
         { id: "guestbook", label: t("profile.guestbookTitle") || "Guestbook" },
     ];
 
-    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
     const [showOverflowMenu, setShowOverflowMenu] = useState(false);
     const [toastMsg, setToastMsg] = useState("");
     
@@ -53,11 +51,11 @@ export const ProfileTabBar = ({
     };
 
     return (
-        <div className="sticky top-0 z-40 bg-[#0A0C0E]/85 backdrop-blur-md border-b border-[#1A1F2A]/60 py-3 mb-2 transition-all">
+        <div className="py-3 mb-2 z-40">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto px-4 sm:px-0">
                 
                 {/* Segmented Pill Tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+                <div className="flex items-center gap-1 bg-[#14171D] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border border-[#1A1F2A]/80 shadow-xs">
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
                         const isLocked = isCustomizeMode && tab.id !== "overview";
@@ -91,34 +89,6 @@ export const ProfileTabBar = ({
 
                 {/* Utility Cluster */}
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                    {/* Search */}
-                    <div className="relative flex items-center">
-                        <input 
-                            type="text" 
-                            placeholder="Search profile..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchExpanded(true)}
-                            onBlur={() => !searchQuery && setIsSearchExpanded(false)}
-                            className={`bg-[#14171D] border border-[#222834] text-[#F0F1F2] text-xs rounded-full pl-8 pr-3 py-1.5 focus:outline-none focus:border-[#1688E8] transition-all duration-300 ${
-                                isSearchExpanded || searchQuery ? "w-40 sm:w-48 opacity-100" : "w-8 sm:w-10 opacity-0 sm:opacity-100 sm:w-32 cursor-pointer"
-                            }`}
-                        />
-                        <FontAwesomeIcon 
-                            icon={faSearch} 
-                            className={`absolute left-2.5 text-xs pointer-events-none transition-colors ${isSearchExpanded || searchQuery ? "text-[#1688E8]" : "text-[#8A8F98]"}`} 
-                        />
-                        {/* Mobile collapsed search icon trigger */}
-                        {!(isSearchExpanded || searchQuery) && (
-                            <button 
-                                className="sm:hidden absolute inset-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#14171D] border border-[#222834] text-[#8A8F98]"
-                                onClick={() => setIsSearchExpanded(true)}
-                            >
-                                <FontAwesomeIcon icon={faSearch} className="text-xs" />
-                            </button>
-                        )}
-                    </div>
-
                     {/* Share */}
                     <div className="relative">
                         <button 
