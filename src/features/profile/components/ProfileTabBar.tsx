@@ -57,7 +57,7 @@ export const ProfileTabBar = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto px-4 sm:px-0">
                 
                 {/* Segmented Pill Tabs */}
-                <div className="flex items-center gap-1 bg-[#14171D] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border border-[#1A1F2A]/80 shadow-xs">
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
                         const isLocked = isCustomizeMode && tab.id !== "overview";
