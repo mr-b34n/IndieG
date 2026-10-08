@@ -283,20 +283,7 @@ export const ProfileHero = ({
                     <div className="flex items-center gap-2 shrink-0 self-end flex-wrap relative z-10">
                         {isOwnProfile ? (
                             <>
-                                {!isEditing ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (onStartEditMode) onStartEditMode();
-                                            else if (onToggleCustomizeMode) onToggleCustomizeMode();
-                                        }}
-                                        className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs border border-[#222834]"
-                                        title={t("profile.editProfile", { defaultValue: "Chỉnh sửa hồ sơ" })}
-                                    >
-                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
-                                        <span>{t("profile.editProfile", { defaultValue: "Chỉnh sửa hồ sơ" })}</span>
-                                    </button>
-                                ) : (
+                                {isEditing && (
                                     <>
                                         <button
                                             type="button"

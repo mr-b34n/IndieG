@@ -890,6 +890,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 friendsCount={friendsList.length}
                 showBookmarks={showBookmarks}
                 isCustomizeMode={isCustomizeMode}
+                isOwnProfile={isOwnProfile}
+                onStartEditMode={handleStartEditMode}
+                onToggleCustomizeMode={handleToggleCustomizeMode}
                 t={t}
             />
 

@@ -34,7 +34,6 @@ import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { type PostFileAttachment, type PostData } from "../types";
-import { POST_BADGE_MAP } from "../constants";
 import { getGameBySlug } from "@/features/game";
 import { usePostVoteInteraction, useBookmarkInteraction } from "../api/interaction-api";
 import { usePostsStore } from "../store/usePostsStore";
@@ -55,8 +54,8 @@ export interface PostProps {
 
 /* =========================================================================
    1. PostHeader Component
-   [Avatar] Username   Badge
-            Community · Time       (...)
+   [Avatar] Name   [Rank] · Community
+            @username · Time       (...)
    ========================================================================= */
 export interface PostHeaderProps {
     authorName: string;
@@ -96,9 +95,6 @@ export const PostHeader = ({
     authorUsername,
     authorAvatar,
     rank,
-    badge,
-    authorBadge,
-    gameBadge,
     postCommunity,
     gameTag,
     timeAgo,
@@ -148,7 +144,7 @@ export const PostHeader = ({
 
                 {/* Author Information */}
                 <div className="flex flex-col min-w-0 leading-tight">
-                    {/* Line 1: Username & Badge (14–15px / 600, badge 11–12px, max 2–3) */}
+                    {/* Line 1: Name, Rank & Community */}
                     <div className="flex flex-row items-center gap-1.5 flex-wrap">
                         <span
                             onClick={onAuthorClick}
@@ -159,48 +155,20 @@ export const PostHeader = ({
                             {authorName}
                         </span>
 
-                        {authorUsername && (
-                            <span
-                                onClick={onAuthorClick}
-                                className="text-[12px] sm:text-[13px] text-text-muted font-normal hover:underline cursor-pointer"
-                            >
-                                @{authorUsername.replace(/^@/, "")}
-                            </span>
-                        )}
-
-                        {/* Badges: 11-12px, maximum 2-3 */}
-                        {authorBadge && (
-                            <span className="px-1.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/25">
-                                {authorBadge}
-                            </span>
-                        )}
-
                         {rank && (
-                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${rank.classes}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider shrink-0 ${rank.classes}`}>
                                 {getRankLabel(rank, language)}
                             </span>
                         )}
 
-                        {badge && (
-                            <span className={`flex flex-row items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${badge.classes}`}>
-                                <FontAwesomeIcon icon={badge.icon} />
-                                {badge.label}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Line 2: Game Badge -> Community · Time (12–13px / muted, 12px / muted) */}
-                    <div className="flex flex-row items-center gap-1.5 text-xs sm:text-[13px] text-text-muted mt-1 flex-wrap">
-                        {gameBadge && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase tracking-wide bg-primary/15 text-primary border border-primary/25 shrink-0 select-none">
-                                {gameBadge}
-                            </span>
+                        {(postCommunity || gameTag) && (
+                            <span className="text-text-muted text-xs select-none">·</span>
                         )}
 
                         {postCommunity ? (
                             <span
                                 onClick={onCommunityClick}
-                                className="text-text-muted hover:text-primary transition-colors cursor-pointer font-normal truncate flex items-center gap-1.5"
+                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate flex items-center gap-1.5"
                             >
                                 {postCommunity.logo && (
                                     <img
@@ -214,12 +182,25 @@ export const PostHeader = ({
                         ) : gameTag ? (
                             <span
                                 onClick={onCommunityClick}
-                                className="text-text-muted hover:text-primary transition-colors cursor-pointer font-normal"
+                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate"
                             >
                                 {gameTag}
                             </span>
                         ) : null}
-                        {(postCommunity || gameTag) && <span>·</span>}
+                    </div>
+
+                    {/* Line 2: @username · Time */}
+                    <div className="flex flex-row items-center gap-1.5 text-xs sm:text-[13px] text-text-muted mt-0.5 flex-wrap">
+                        {authorUsername && (
+                            <span
+                                onClick={onAuthorClick}
+                                className="hover:underline cursor-pointer truncate"
+                            >
+                                @{authorUsername.replace(/^@/, "")}
+                            </span>
+                        )}
+
+                        {authorUsername && <span className="select-none">·</span>}
                         <span className="text-xs text-text-muted shrink-0">{formatTimeAgo(timeAgo, t)}</span>
                     </div>
                 </div>
@@ -1055,7 +1036,6 @@ export const Post = ({
         onEdit?.(post.id, data);
     };
 
-    const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
     const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
     const rank = getRankConfigIfPresent(rawRank);
 
@@ -1071,15 +1051,12 @@ export const Post = ({
                 }
             `}
         >
-            {/* 1. Header (Avatar 40x40, Username, Badges, Community · Time, More 32x32) */}
+            {/* 1. Header (Avatar 40x40, Name, Rank, Community, @username, Time, More 32x32) */}
             <PostHeader
                 authorName={authorName}
                 authorUsername={authorUsername}
                 authorAvatar={authorAvatar}
                 rank={rank}
-                badge={badge}
-                authorBadge={post.authorBadge}
-                gameBadge={post.gameBadge || (post.gameTag && post.gameTag.length <= 10 ? post.gameTag : undefined)}
                 postCommunity={postCommunity}
                 gameTag={post.gameTag}
                 timeAgo={post.timeAgo}
