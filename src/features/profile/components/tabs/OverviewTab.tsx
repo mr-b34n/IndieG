@@ -194,9 +194,7 @@ export const OverviewTab = ({
                             if (playedGames.length === 0) {
                                 return (
                                     <div className="py-7 px-5 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/80 text-center flex flex-col items-center justify-center gap-2.5">
-                                        <div className="w-10 h-10 rounded-full bg-[#1688E8]/10 text-[#1688E8] flex items-center justify-center text-base">
-                                            <FontAwesomeIcon icon={faGamepad} />
-                                        </div>
+
                                         <div className="flex flex-col gap-1">
                                             <h4 className="text-xs font-bold text-[#F0F1F2] uppercase tracking-wider">
                                                 {tr("profile.gameMastery.emptyTitle", { defaultValue: "Chưa có dữ liệu Game Mastery" })}
