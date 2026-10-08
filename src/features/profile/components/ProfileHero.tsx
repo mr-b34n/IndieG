@@ -156,7 +156,7 @@ export const ProfileHero = ({
                     <div className="flex items-end gap-4 relative z-10">
                         {/* Avatar Box with Initial Letter Fallback */}
                         <div className="relative shrink-0 group">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[#181F2C] ring-2 ring-[#0A0C0E] relative shadow-md flex items-center justify-center">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[#181F2C] relative shadow-md flex items-center justify-center border-none ring-0">
                                 {avatarUrl ? (
                                     <img
                                         src={avatarUrl}
@@ -192,7 +192,8 @@ export const ProfileHero = ({
                                 <button
                                     type="button"
                                     onClick={() => isOwnProfile && setIsEditingStatus((v) => !v)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#14171D] text-[#F0F1F2] shadow-sm ${isOwnProfile ? "cursor-pointer hover:bg-[#1D212A]" : "cursor-default"}`}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[rgba(255,255,255,0.03)] text-[#F0F1F2] border-none ring-0 ${isOwnProfile ? "cursor-pointer hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200" : "cursor-default"}`}
+                                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
                                     <span>{cfg.label}</span>
@@ -200,14 +201,14 @@ export const ProfileHero = ({
                                 </button>
 
                                 {isEditingStatus && isOwnProfile && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#14171D] rounded-[8px] p-1.5 shadow-2xl z-30 flex flex-col gap-0.5 animate-fade-in">
+                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[rgba(13,17,23,0.8)] backdrop-blur-[12px] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
                                         {STATUS_OPTIONS.map((s) => (
                                              <button
                                                 key={s.val}
                                                 type="button"
                                                 onClick={() => { onIdentityChange({ status: s.val }); setIsEditingStatus(false); onSaveIdentity?.(); }}
-                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors text-left cursor-pointer ${
-                                                    identity.status === s.val ? "bg-[#1F2430] text-[#F0F1F2]" : "text-[#9A9DA3] hover:bg-[#1A1E28] hover:text-[#F0F1F2]"
+                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all duration-200 text-left cursor-pointer border-none ring-0 ${
+                                                    identity.status === s.val ? "bg-[rgba(255,255,255,0.08)] text-[#F0F1F2]" : "text-[#9A9DA3] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F0F1F2]"
                                                 }`}
                                             >
                                                 <span className={`w-2 h-2 rounded-full shrink-0 ${s.dotColor}`} />
