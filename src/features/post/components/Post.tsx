@@ -368,7 +368,7 @@ const ImageGallery = ({
             <img
                 src={images[0]}
                 alt=""
-                className="w-full max-h-[520px] object-cover rounded-[10px] cursor-pointer hover:opacity-95 transition-opacity"
+                className="w-full max-h-[520px] object-cover rounded-[8px] cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={(e) => {
                     e.stopPropagation();
                     onImageClick(0);
@@ -379,7 +379,7 @@ const ImageGallery = ({
 
     if (count === 2) {
         return (
-            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
                 <img
                     src={images[0]}
                     alt=""
@@ -404,7 +404,7 @@ const ImageGallery = ({
 
     if (count === 3) {
         return (
-            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
                 <img
                     src={images[0]}
                     alt=""
@@ -439,7 +439,7 @@ const ImageGallery = ({
     }
 
     return (
-        <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+        <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
             <div className="flex flex-col gap-2 h-full min-h-0">
                 <img
                     src={images[0]}
@@ -500,7 +500,7 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
                     href={file.url}
                     download={file.name}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex flex-row items-center gap-2.5 px-3 py-2 rounded-[10px] bg-surface-hover/60 hover:bg-surface-hover transition-colors"
+                    className="flex flex-row items-center gap-2.5 px-3 py-2 rounded-[8px] bg-surface-hover/60 hover:bg-surface-hover transition-colors"
                 >
                     <FontAwesomeIcon icon={faFile} className="text-primary text-sm shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -549,7 +549,7 @@ export const PostMedia = ({
             {hasWarning && !isRevealed && (
                 <div
                     onClick={onRevealWarning}
-                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-lg rounded-[10px] cursor-pointer hover:bg-black/70 transition-colors p-4 text-center"
+                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-lg rounded-[8px] cursor-pointer hover:bg-black/70 transition-colors p-4 text-center"
                 >
                     {isNsfw ? (
                         <div className="px-3.5 py-2 bg-black/90 border border-rose-500/50 rounded-lg text-white text-xs font-bold flex items-center gap-2 shadow-2xl animate-fade-in">
@@ -1043,11 +1043,11 @@ export const Post = ({
         <article
             onClick={handleNavigate}
             className={`
-                w-full transition-colors duration-150
+                w-full transition-all duration-200 ease-in-out border-none
                 ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "relative"}
                 ${isDetailView 
-                    ? "py-4 pb-5" 
-                    : "cursor-pointer group px-3.5 sm:px-4 py-4 rounded-xl hover:bg-surface-hover/60 dark:hover:bg-[#16181B]"
+                    ? "py-4 pb-5 mb-0" 
+                    : "cursor-pointer group px-3.5 sm:px-4 py-4 rounded-[12px] sm:rounded-[16px] bg-[#161b22] shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.4)] hover:-translate-y-[2px]"
                 }
             `}
         >

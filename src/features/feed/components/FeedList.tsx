@@ -252,23 +252,25 @@ export const FeedList = () => {
                 </div>
             )}
 
-            {/* Create Post Area */}
-            {isLoggedIn && (
-                <CreatePostBox
-                    key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
-                    defaultCommunityId={activeCommunityFilter}
-                    onPostCreated={handleCreatePost}
-                />
-            )}
+            {/* Creation and Filtering Area */}
+            <div className="flex flex-col gap-2 sm:gap-3 mb-2 sm:mb-4">
+                {isLoggedIn && (
+                    <CreatePostBox
+                        key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
+                        defaultCommunityId={activeCommunityFilter}
+                        onPostCreated={handleCreatePost}
+                    />
+                )}
 
-            {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
-            <CommunitySwitcherRail
-                joinedCommunities={joinedCommunities}
-                activeCommunityId={activeCommunityFilter}
-                onSelectCommunity={setActiveCommunityFilter}
-                sortOrder={sortOrder}
-                onSortChange={setSortOrder}
-            />
+                {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
+                <CommunitySwitcherRail
+                    joinedCommunities={joinedCommunities}
+                    activeCommunityId={activeCommunityFilter}
+                    onSelectCommunity={setActiveCommunityFilter}
+                    sortOrder={sortOrder}
+                    onSortChange={setSortOrder}
+                />
+            </div>
 
             {/* Error State Display */}
             {hasError ? (
