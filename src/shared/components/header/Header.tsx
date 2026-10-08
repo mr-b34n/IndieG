@@ -166,7 +166,7 @@ export const Header = () => {
                     type="button"
                     onClick={handleCreatePostClick}
                     title={t('feed.createPost', { defaultValue: 'Tạo bài viết' })}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent border border-border text-text-muted hover:text-text hover:bg-surface-hover transition-all shrink-0 cursor-pointer select-none active:scale-95 outline-none"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent text-text-muted hover:text-text hover:bg-surface-hover transition-all shrink-0 cursor-pointer select-none active:scale-95 outline-none"
                 >
                     <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
                 </button>
@@ -176,7 +176,7 @@ export const Header = () => {
                         type="button"
                         onClick={toggleRight}
                         title={t('common.openExplore')}
-                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full border border-border bg-transparent
+                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                             text-text-muted hover:text-text hover:bg-surface-hover
                             transition-colors duration-150 cursor-pointer shrink-0 outline-none"
                     >
@@ -189,7 +189,7 @@ export const Header = () => {
                         type="button"
                         onClick={() => navigate({ to: '/' })}
                         title={t('common.home')}
-                        className="w-9 h-9 flex items-center justify-center rounded-full border border-border bg-transparent
+                        className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                             text-text-muted hover:text-text hover:bg-surface-hover
                             transition-colors duration-150 cursor-pointer shrink-0 outline-none"
                     >
@@ -207,7 +207,7 @@ export const Header = () => {
                                     setShowUserMenu(false);
                                 }}
                                 title={t('notification.title')}
-                                className="relative w-9 h-9 flex items-center justify-center rounded-full border border-border bg-transparent
+                                className="relative w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                                     text-text-muted hover:text-text hover:bg-surface-hover
                                     transition-colors duration-150 cursor-pointer outline-none"
                             >
@@ -230,7 +230,7 @@ export const Header = () => {
                                         setShowUserMenu(!showUserMenu);
                                         setNotificationOpen?.(false);
                                     }}
-                                    className="flex items-center gap-1.5 p-1 pr-2 rounded-full border border-border bg-transparent hover:bg-surface-hover transition-colors cursor-pointer group outline-none"
+                                    className="flex items-center gap-1.5 p-1 pr-2 rounded-full bg-transparent hover:bg-surface-hover transition-colors cursor-pointer group outline-none"
                                 >
                                     {avatarUrl ? (
                                         <img
@@ -256,7 +256,7 @@ export const Header = () => {
 
                                 {/* User Dropdown */}
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface border border-border shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
                                         <div className="px-4 py-2.5 border-b border-border">
                                             <p className="font-bold text-xs text-text truncate">{displayName}</p>
                                             <p className="text-[11px] text-text-muted truncate">{user?.email || "demo@indieg.com"}</p>
