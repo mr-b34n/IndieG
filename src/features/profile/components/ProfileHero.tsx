@@ -187,12 +187,11 @@ export const ProfileHero = ({
                                 </label>
                             )}
 
-                            {/* Status Indicator Dot / Badge */}
                             <div className="absolute -bottom-1 -right-1 z-20" ref={statusMenuRef}>
                                 <button
                                     type="button"
                                     onClick={() => isOwnProfile && setIsEditingStatus((v) => !v)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[rgba(255,255,255,0.03)] text-[#F0F1F2] border-none ring-0 ${isOwnProfile ? "cursor-pointer hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200" : "cursor-default"}`}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[rgba(255,255,255,0.03)] text-[#F0F1F2] border-none ring-0 outline-none focus:outline-none focus:ring-0 ${isOwnProfile ? "cursor-pointer hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200" : "cursor-default"}`}
                                     style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
@@ -201,13 +200,13 @@ export const ProfileHero = ({
                                 </button>
 
                                 {isEditingStatus && isOwnProfile && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[rgba(13,17,23,0.8)] backdrop-blur-[12px] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
+                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#14171D] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
                                         {STATUS_OPTIONS.map((s) => (
                                              <button
                                                 key={s.val}
                                                 type="button"
                                                 onClick={() => { onIdentityChange({ status: s.val }); setIsEditingStatus(false); onSaveIdentity?.(); }}
-                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all duration-200 text-left cursor-pointer border-none ring-0 ${
+                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all duration-200 text-left cursor-pointer border-none ring-0 outline-none focus:outline-none ${
                                                     identity.status === s.val ? "bg-[rgba(255,255,255,0.08)] text-[#F0F1F2]" : "text-[#9A9DA3] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F0F1F2]"
                                                 }`}
                                             >

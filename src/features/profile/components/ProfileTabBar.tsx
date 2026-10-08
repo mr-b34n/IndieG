@@ -125,7 +125,7 @@ export const ProfileTabBar = ({
                         </button>
                         
                         {showOverflowMenu && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-[rgba(13,17,23,0.8)] backdrop-blur-[12px] border-none rounded-[8px] p-1 z-50 animate-scale-up flex flex-col gap-0.5" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1f27] border-none rounded-[8px] p-1 z-50 animate-scale-up flex flex-col gap-0.5" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
                                 {isOwnProfile && !isCustomizeMode && (
                                     <button 
                                         type="button"
@@ -134,7 +134,7 @@ export const ProfileTabBar = ({
                                             if (onStartEditMode) onStartEditMode();
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] rounded-[6px] transition-all duration-200 cursor-pointer border-none"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] rounded-[6px] transition-all duration-200 cursor-pointer border-none outline-none focus:outline-none"
                                     >
                                         <FontAwesomeIcon icon={faPen} className="text-[#1688E8] w-4" />
                                         <span>Edit Profile</span>
