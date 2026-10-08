@@ -136,11 +136,10 @@ export const ProfileHero = ({
 
                     {isOwnProfile && (
                         <label
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-black/60 backdrop-blur-md text-[#F0F1F2] text-xs font-semibold hover:bg-black/80 transition-all cursor-pointer"
+                            className="w-8 h-8 flex items-center justify-center rounded-[8px] bg-black/60 backdrop-blur-md text-[#F0F1F2] hover:bg-black/80 transition-all cursor-pointer"
                             title={t("profile.uploadCover")}
                         >
                             <FontAwesomeIcon icon={faImage} className="text-[#1688E8] text-xs" />
-                            <span>{t("profile.uploadCover")}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -175,9 +174,11 @@ export const ProfileHero = ({
 
                             {/* Avatar upload overlay */}
                             {isOwnProfile && (
-                                <label className="absolute inset-0 rounded-full bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[#F0F1F2] text-[10px] font-bold cursor-pointer gap-1">
-                                    <FontAwesomeIcon icon={faCamera} className="text-sm" />
-                                    <span>{t("profile.changeAvatar")}</span>
+                                <label 
+                                    className="absolute inset-0 rounded-full bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#F0F1F2] cursor-pointer"
+                                    title={t("profile.changeAvatar")}
+                                >
+                                    <FontAwesomeIcon icon={faCamera} className="text-xl" />
                                     <input
                                         type="file"
                                         accept="image/*"
