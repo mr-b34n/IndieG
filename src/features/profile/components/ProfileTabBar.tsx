@@ -51,11 +51,17 @@ export const ProfileTabBar = ({
     };
 
     return (
-        <div className="py-3 mb-2 z-40">
+        <div 
+            className="sticky top-0 z-40 py-3 mb-2 transition-all bg-[rgba(255,255,255,0.03)] backdrop-blur-[8px] border-none"
+            style={{ boxShadow: "0 8px 12px -8px rgba(0,0,0,0.5)" }}
+        >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto px-4 sm:px-0">
                 
                 {/* Segmented Pill Tabs */}
-                <div className="flex items-center gap-1 bg-[#14171D] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border border-[#1A1F2A]/80 shadow-xs">
+                <div 
+                    className="flex items-center gap-1 bg-[#1a1f27] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border-none"
+                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25)" }}
+                >
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
                         const isLocked = isCustomizeMode && tab.id !== "overview";
@@ -66,18 +72,19 @@ export const ProfileTabBar = ({
                                 aria-selected={isActive}
                                 onClick={() => onChange(tab.id)}
                                 title={isLocked ? "Vui lòng lưu hoặc hủy chỉnh sửa ở tab Tổng quan trước khi đổi tab" : undefined}
-                                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold whitespace-nowrap transition-all rounded-[8px] cursor-pointer ${
+                                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold whitespace-nowrap transition-all rounded-[8px] cursor-pointer border-none ${
                                     isActive
-                                        ? "bg-[#222834] text-[#F0F1F2] shadow-sm"
+                                        ? "bg-[#222834] text-[#F0F1F2]"
                                         : isLocked
                                         ? "text-[#666A71] opacity-35 hover:opacity-50"
                                         : "text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28]"
                                 }`}
+                                style={isActive ? { boxShadow: "0 0 12px rgba(22, 136, 232, 0.25)" } : undefined}
                             >
                                 <span>{tab.label}</span>
                                 {tab.count !== undefined && !isLocked && (
-                                    <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none transition-colors ${
-                                        isActive ? "bg-[#1688E8] text-white" : "bg-[#0A0C0E] text-[#8A8F98]"
+                                    <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none transition-colors border-none ${
+                                        isActive ? "bg-[#1688E8] text-white" : "bg-[#0d1117] text-[#8A8F98]"
                                     }`}>
                                         {tab.count}
                                     </span>
@@ -94,13 +101,13 @@ export const ProfileTabBar = ({
                         <button 
                             type="button"
                             onClick={handleShare}
-                            className="w-8 h-8 rounded-full bg-[#14171D] border border-[#222834] flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-[#0d1117] border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#161b22] transition-all cursor-pointer"
                             title="Share Profile"
                         >
                             <FontAwesomeIcon icon={faShareNodes} className="text-xs" />
                         </button>
                         {toastMsg && (
-                            <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-[#24C58A] text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap animate-fade-in">
+                            <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-[#24C58A] text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap animate-fade-in border-none">
                                 {toastMsg}
                             </div>
                         )}
@@ -111,13 +118,13 @@ export const ProfileTabBar = ({
                         <button 
                             type="button"
                             onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-                            className="w-8 h-8 rounded-full bg-[#14171D] border border-[#222834] flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-[#0d1117] border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#161b22] transition-all cursor-pointer"
                         >
                             <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
                         </button>
                         
                         {showOverflowMenu && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-[#14171D] border border-[#222834] rounded-[8px] shadow-xl p-1 z-50 animate-scale-up flex flex-col gap-0.5">
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1f27] border-none rounded-[8px] p-1 z-50 animate-scale-up flex flex-col gap-0.5" style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.5)" }}>
                                 {isOwnProfile && !isCustomizeMode && (
                                     <button 
                                         type="button"
@@ -126,7 +133,7 @@ export const ProfileTabBar = ({
                                             if (onStartEditMode) onStartEditMode();
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-colors cursor-pointer"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#222834] rounded-[6px] transition-colors cursor-pointer border-none"
                                     >
                                         <FontAwesomeIcon icon={faPen} className="text-[#1688E8] w-4" />
                                         <span>Edit Profile</span>
@@ -138,7 +145,7 @@ export const ProfileTabBar = ({
                                         setShowOverflowMenu(false);
                                         handleShare();
                                     }}
-                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-colors cursor-pointer"
+                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#222834] rounded-[6px] transition-colors cursor-pointer border-none"
                                 >
                                     <FontAwesomeIcon icon={faLink} className="text-[#8A8F98] w-4" />
                                     <span>Copy Profile Link</span>
@@ -147,7 +154,7 @@ export const ProfileTabBar = ({
                                     <button 
                                         type="button"
                                         onClick={() => setShowOverflowMenu(false)}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#FF6B6B] hover:bg-rose-500/10 rounded-[6px] transition-colors cursor-pointer"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#FF6B6B] hover:bg-rose-500/10 rounded-[6px] transition-colors cursor-pointer border-none"
                                     >
                                         <FontAwesomeIcon icon={faFlag} className="w-4" />
                                         <span>Report User</span>
