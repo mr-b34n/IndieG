@@ -123,7 +123,7 @@ export const Header = () => {
     };
 
     return (
-        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-surface/95 backdrop-blur-md border-b border-border select-none transition-colors">
+        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-surface/95 backdrop-blur-md  select-none transition-colors">
 
             {/* LEFT: Logo & Mobile Toggle */}
             <div className="flex items-center gap-3 shrink-0">
@@ -236,13 +236,13 @@ export const Header = () => {
                                         <img
                                             src={avatarUrl}
                                             alt="User avatar"
-                                            className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
+                                            className="w-8 h-8 rounded-full  object-cover"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).style.display = "none";
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full bg-surface-hover ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
+                                        <div className="w-8 h-8 rounded-full bg-surface-hover  flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
                                             {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
                                         </div>
                                     )}
@@ -257,7 +257,7 @@ export const Header = () => {
                                 {/* User Dropdown */}
                                 {showUserMenu && (
                                     <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
-                                        <div className="px-4 py-2.5 border-b border-border">
+                                        <div className="px-4 py-2.5 ">
                                             <p className="font-bold text-xs text-text truncate">{displayName}</p>
                                             <p className="text-[11px] text-text-muted truncate">{user?.email || "demo@indieg.com"}</p>
                                         </div>
@@ -316,7 +316,7 @@ export const Header = () => {
                                             </button>
                                         </div>
 
-                                        <div className="border-t border-border pt-1 mt-1">
+                                        <div className=" pt-1 mt-1">
                                             <button
                                                 type="button"
                                                 onClick={handleLogout}
