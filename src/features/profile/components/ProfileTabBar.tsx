@@ -56,7 +56,7 @@ export const ProfileTabBar = ({
                 
                 {/* Segmented Pill Tabs */}
                 <div 
-                    className="flex items-center gap-1 bg-[rgba(255,255,255,0.03)] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border-none"
+                    className="flex items-center gap-1 bg-[#14171D] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border-none"
                     style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25)" }}
                 >
                     {tabs.map((tab) => {
