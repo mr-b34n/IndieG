@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getRankLabel, getRankConfigIfPresent } from "@/features/post/helpers/userRanks";
@@ -14,6 +15,7 @@ import {
     DEFAULT_COVER,
     COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES,
 } from "../constants";
+import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
 import { OverviewTab } from "./tabs/OverviewTab";
@@ -356,6 +358,18 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         setActiveTab(tab);
     };
 
+    // Quick tab switching: 1 - 7
+    useHotkeys(["1"], () => handleTabChange("overview"));
+    useHotkeys(["2"], () => handleTabChange("games"));
+    useHotkeys(["3"], () => handleTabChange("posts"));
+    useHotkeys(["4"], () => handleTabChange("communities"));
+    useHotkeys(["5"], () => handleTabChange("friends"));
+    useHotkeys(["6"], () => {
+        if (showBookmarks) handleTabChange("bookmarks");
+        else handleTabChange("guestbook");
+    });
+    useHotkeys(["7"], () => handleTabChange("guestbook"));
+
     // Target user ID for API calls
     const profileUserId = isOwnProfile
         ? myProfileData?.id || user?.id
@@ -634,7 +648,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 id: c.id,
                 author: authorName,
                 avatar: authorAvatar,
-                date: c.createdAt ? new Date(c.createdAt).toLocaleDateString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Vừa xong",
+                date: c.createdAt ? new Date(c.createdAt).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", { hour: "2-digit", minute: "2-digit" }) : t("feed.justNow", { defaultValue: "Vừa xong" }),
                 content: c.content,
                 likes: (c.likes || 0) + (isLiked ? 1 : 0),
                 isLiked,
@@ -642,18 +656,18 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 canDelete,
             };
         });
-    }, [rawGuestbookComments, likedCommentsMap, isOwnProfile, user]);
+    }, [rawGuestbookComments, likedCommentsMap, isOwnProfile, user, language, t]);
 
     const handleAddGuestbook = async (e: React.FormEvent) => {
         e.preventDefault();
         const commentContent = newCommentText.trim();
         if (!commentContent) return;
         if (!targetProfileId) {
-            triggerToast(false, "Không tìm thấy thông tin hồ sơ để gửi lời nhắn.");
+            triggerToast(false, t("profile.notFoundTitle", { defaultValue: "Không tìm thấy thông tin hồ sơ để gửi lời nhắn." }));
             return;
         }
         if (!isLoggedIn) {
-            triggerToast(false, "Vui lòng đăng nhập để gửi lời nhắn.");
+            triggerToast(false, t("auth.loginSubtitle", { defaultValue: "Vui lòng đăng nhập để gửi lời nhắn." }));
             return;
         }
 
@@ -663,9 +677,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 data: { content: commentContent },
             });
             setNewCommentText("");
-            triggerToast(true, "Đã gửi lời nhắn lên sổ lưu bút thành công!");
+            triggerToast(true, t("profile.guestbookSendSuccess", { defaultValue: "Đã gửi lời nhắn lên sổ lưu bút thành công!" }));
         } catch (err: unknown) {
-            const errorMsg = (err as { message?: string })?.message || "Không thể gửi lời nhắn, vui lòng thử lại.";
+            const errorMsg = (err as { message?: string })?.message || t("profile.guestbookSendError", { defaultValue: "Không thể gửi lời nhắn, vui lòng thử lại." });
             triggerToast(false, errorMsg);
         }
     };
@@ -677,9 +691,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 profileId: targetProfileId,
                 id: commentId,
             });
-            triggerToast(true, "Đã xóa lời nhắn.");
+            triggerToast(true, t("profile.guestbookDeleteSuccess", { defaultValue: "Đã xóa lời nhắn." }));
         } catch (err: unknown) {
-            const errorMsg = (err as { message?: string })?.message || "Không thể xóa lời nhắn.";
+            const errorMsg = (err as { message?: string })?.message || t("profile.guestbookDeleteError", { defaultValue: "Không thể xóa lời nhắn." });
             triggerToast(false, errorMsg);
         }
     };
@@ -702,19 +716,19 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return rawLibraryGames.map((g) => ({
             id: g.id,
             name: g.name,
-            logo: g.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
+            logo: g.logo || DEFAULT_GAME_LOGO,
             hours: g.hours ?? 0,
-            lastPlayed: g.lastPlayed || "Gần đây",
+            lastPlayed: g.lastPlayed || t("profile.recently", { defaultValue: "Gần đây" }),
             achievements: g.achievements ?? 0,
             totalAchievements: g.totalAchievements ?? 0,
-            keyStat: g.keyStat || (g.hours ? `${g.hours}h chơi` : "Đang chơi"),
+            keyStat: g.keyStat || (g.hours ? `${g.hours}h` : t("profile.playing", { defaultValue: "Đang chơi" })),
             rank: g.rank || "Player",
             mvpCount: g.mvpCount || "0",
             kdRatio: g.kdRatio || "1.0",
             tagColor: g.tagColor || "bg-[#1688E8]",
             isFeatured: false,
         }));
-    }, [rawLibraryGames]);
+    }, [rawLibraryGames, t]);
 
     const handleAddLibraryGame = async (gameData: { name: string; hours?: number; rank?: string; logo?: string }) => {
         try {
@@ -722,12 +736,12 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 name: gameData.name,
                 hours: gameData.hours || 0,
                 rank: gameData.rank || "Player",
-                logo: gameData.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80",
-                keyStat: `${gameData.hours || 0}h chơi`,
+                logo: gameData.logo || DEFAULT_GAME_LOGO,
+                keyStat: `${gameData.hours || 0}h`,
             });
-            triggerToast(true, "Đã thêm game vào thư viện thành công!");
+            triggerToast(true, t("profile.addGameSuccess", { defaultValue: "Đã thêm game vào thư viện thành công!" }));
         } catch (err: unknown) {
-            const errorMsg = (err as { message?: string })?.message || "Không thể thêm game vào thư viện.";
+            const errorMsg = (err as { message?: string })?.message || t("profile.addGameError", { defaultValue: "Không thể thêm game vào thư viện." });
             triggerToast(false, errorMsg);
         }
     };
@@ -735,9 +749,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const handleDeleteLibraryGame = async (gameId: string | number) => {
         try {
             await deleteLibraryGameMutation.mutateAsync(String(gameId));
-            triggerToast(true, "Đã xóa game khỏi thư viện.");
+            triggerToast(true, t("profile.removeGameSuccess", { defaultValue: "Đã xóa game khỏi thư viện." }));
         } catch (err: unknown) {
-            const errorMsg = (err as { message?: string })?.message || "Không thể xóa game khỏi thư viện.";
+            const errorMsg = (err as { message?: string })?.message || t("profile.removeGameError", { defaultValue: "Không thể xóa game khỏi thư viện." });
             triggerToast(false, errorMsg);
         }
     };
@@ -764,7 +778,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-text-muted">
                 <FontAwesomeIcon icon={faSpinner} className="text-3xl animate-spin text-primary" />
-                <span className="text-sm font-semibold">{t("profile.loadingProfile")}</span>
+                <span className="text-sm font-semibold">{t("profile.loadingProfile", { defaultValue: "Đang tải hồ sơ..." })}</span>
             </div>
         );
     }
@@ -775,14 +789,14 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-3xl">
                     <FontAwesomeIcon icon={faExclamationTriangle} />
                 </div>
-                <h3 className="text-xl font-extrabold text-text">Không tìm thấy hồ sơ người dùng</h3>
-                <p className="text-sm text-text-muted">Hồ sơ người dùng này không tồn tại, đã bị xóa hoặc đường dẫn không chính xác.</p>
+                <h3 className="text-xl font-extrabold text-text">{t("profile.notFoundTitle", { defaultValue: "Không tìm thấy hồ sơ người dùng" })}</h3>
+                <p className="text-sm text-text-muted">{t("profile.notFoundDesc", { defaultValue: "Hồ sơ người dùng này không tồn tại, đã bị xóa hoặc đường dẫn không chính xác." })}</p>
                 <button
                     onClick={() => window.history.back()}
                     className="mt-2 px-6 py-2.5 rounded-2xl bg-primary text-white text-xs font-bold hover:bg-primary-hover flex items-center gap-2 transition-all cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faArrowLeft} />
-                    <span>Quay lại</span>
+                    <span>{t("common.back", { defaultValue: "Quay lại" })}</span>
                 </button>
             </div>
         );
@@ -889,6 +903,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 friendsCount={friendsList.length}
                 showBookmarks={showBookmarks}
                 isCustomizeMode={isCustomizeMode}
+                isOwnProfile={isOwnProfile}
+                onStartEditMode={handleStartEditMode}
+                onToggleCustomizeMode={handleToggleCustomizeMode}
                 t={t}
             />
 

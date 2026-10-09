@@ -49,7 +49,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <div className="flex items-center justify-between px-6 py-4">
                     <h3 className="text-lg font-black text-[#F2F5FA] flex items-center gap-2">
                         <FontAwesomeIcon icon={faUser} className="text-[#1597FF]" />
-                        <span>Chỉnh Sửa Hồ Sơ</span>
+                        <span>{t("profile.editProfile", { defaultValue: "Chỉnh Sửa Hồ Sơ" })}</span>
                     </h3>
                     <button
                         onClick={onClose}
@@ -65,7 +65,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="grid grid-cols-2 gap-3 p-3 rounded-[12px] bg-[#151A29]">
                         <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[8px] bg-[#0D1220] hover:bg-[#1A2032] text-xs font-bold text-[#F2F5FA] cursor-pointer transition-all">
                             <FontAwesomeIcon icon={faCamera} className="text-[#1597FF]" />
-                            <span>Đổi Avatar</span>
+                            <span>{t("profile.changeAvatar", { defaultValue: "Đổi Avatar" })}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -79,7 +79,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
                         <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-[8px] bg-[#0D1220] hover:bg-[#1A2032] text-xs font-bold text-[#F2F5FA] cursor-pointer transition-all">
                             <FontAwesomeIcon icon={faImage} className="text-[#F5B83D]" />
-                            <span>Đổi Ảnh Bìa</span>
+                            <span>{t("profile.uploadCover", { defaultValue: "Đổi Ảnh Bìa" })}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -96,13 +96,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-[#8D97AA] flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faUser} className="text-[#1597FF] text-xs" />
-                            <span>Tên hiển thị</span>
+                            <span>{t("profile.displayNameLabel", { defaultValue: "Tên hiển thị" })}</span>
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Nhập tên hiển thị"
+                            placeholder={t("profile.displayNameLabel", { defaultValue: "Nhập tên hiển thị" })}
                             className="h-11 px-3.5 rounded-[10px] bg-[#151A29] text-sm text-[#F2F5FA] placeholder-[#5F697C] font-semibold focus:outline-none focus:ring-1 focus:ring-[#1597FF] transition-all"
                             required
                         />
@@ -112,7 +112,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-[#8D97AA] flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faAt} className="text-[#1597FF] text-xs" />
-                            <span>Username (@handle)</span>
+                            <span>{t("profile.usernameLabel", { defaultValue: "Username (@handle)" })}</span>
                         </label>
                         <input
                             type="text"
@@ -128,13 +128,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-[#8D97AA] flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faQuoteLeft} className="text-[#1597FF] text-xs" />
-                            <span>Tiểu sử (Bio)</span>
+                            <span>{t("profile.empty.bio", { defaultValue: "Tiểu sử (Bio)" })}</span>
                         </label>
                         <textarea
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
                             rows={3}
-                            placeholder="Giới thiệu đôi nét về bản thân hoặc phong cách chơi game..."
+                            placeholder={t("profile.bioPlaceholder", { defaultValue: "Giới thiệu đôi nét về bản thân hoặc phong cách chơi game..." })}
                             className="p-3.5 rounded-[10px] bg-[#151A29] text-sm text-[#F2F5FA] placeholder-[#5F697C] font-medium focus:outline-none focus:ring-1 focus:ring-[#1597FF] resize-none transition-all"
                         />
                     </div>
@@ -143,7 +143,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-[#8D97AA] flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faGlobe} className="text-[#1597FF] text-xs" />
-                            <span>Khu vực / Quốc gia</span>
+                            <span>{t("profile.locationLabel", { defaultValue: "Khu vực / Quốc gia" })}</span>
                         </label>
                         <input
                             type="text"
@@ -168,7 +168,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             className="px-5 py-2.5 rounded-[8px] bg-[#1597FF] hover:bg-[#35A8FF] text-white text-xs font-black shadow-md shadow-[#1597FF]/25 transition-all cursor-pointer flex items-center gap-1.5"
                         >
                             <FontAwesomeIcon icon={faCheck} />
-                            <span>Lưu thay đổi</span>
+                            <span>{t("profile.saveChanges", { defaultValue: "Lưu thay đổi" })}</span>
                         </button>
                     </div>
                 </form>
