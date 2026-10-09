@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { type AuthState, type AuthUser } from "../types";
 import { authApi, profilesApi, usersApi } from "@/shared/api";
+import { useThemeStore } from "@/shared/store/useThemeStore";
 
 export * from "../types";
 
@@ -194,8 +195,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 email: "gamer@indieg.com",
                 username: "IndieGamer",
                 name: "IndieGamer",
-                avatar_url: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
-                avatarUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150",
+                avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
+                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
                 isVerified: true,
                 role: "user",
             };
@@ -216,16 +217,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isVerifyModalOpen: false, verifyModalMessage: null });
     },
 
-    requireVerifiedEmail: (actionName?: string, onSuccess?: () => void) => {
+    requireVerifiedEmail: (actionName?: string | { vi: string; en: string }, onSuccess?: () => void) => {
         const { user } = get();
+        const isEn = useThemeStore.getState().language === "en";
         if (!user) {
-            get().openVerifyModal("Vui lòng đăng nhập để thực hiện thao tác này.");
+            get().openVerifyModal(
+                isEn
+                    ? "Please log in to perform this action."
+                    : "Vui lòng đăng nhập để thực hiện thao tác này."
+            );
             return false;
         }
         if (user.isVerified === false || !user.isVerified) {
-            const msg = actionName
-                ? `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để ${actionName}.`
-                : `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để thực hiện thao tác này.`;
+            let actionStrEn = "";
+            let actionStrVi = "";
+            if (typeof actionName === "object" && actionName !== null) {
+                actionStrEn = actionName.en;
+                actionStrVi = actionName.vi;
+            } else if (typeof actionName === "string") {
+                actionStrVi = actionName;
+                const mapping: Record<string, string> = {
+                    "đăng bài viết mới": "create a new post",
+                    "tạo bài viết": "create a post",
+                    "tham gia cộng đồng": "join this community",
+                    "tạo cộng đồng": "create a community",
+                    "gửi tin nhắn chat": "send chat messages",
+                    "tạo thảo luận mới": "create a new thread",
+                    "bình luận": "leave a comment",
+                    "thực hiện hành động này": "perform this action",
+                };
+                actionStrEn = mapping[actionName] || actionName;
+            }
+
+            const msg = isEn
+                ? (actionStrEn
+                    ? `Account email not verified! Please verify your email (${user.email}) to ${actionStrEn}.`
+                    : `Account email not verified! Please verify your email (${user.email}) to perform this action.`)
+                : (actionStrVi
+                    ? `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để ${actionStrVi}.`
+                    : `Tài khoản chưa xác thực email! Vui lòng xác minh địa chỉ email (${user.email}) để thực hiện thao tác này.`);
             get().openVerifyModal(msg);
             return false;
         }

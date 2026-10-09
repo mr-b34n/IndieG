@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShieldHalved, faCheckCircle, faCircleXmark, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from "@/features/auth";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export const Route = createFileRoute("/_layout/verify-email")({
     component: VerifyEmailRoutePage,
@@ -12,6 +13,8 @@ function VerifyEmailRoutePage() {
     const navigate = useNavigate();
     const searchParams = useSearch({ from: "/_layout/verify-email" }) as { token?: string };
     const { verifyEmail, user } = useAuthStore();
+    const { t, language } = useTranslation();
+    const isVi = language === "vi";
 
     const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
     const [errorMsg, setErrorMsg] = useState("");
@@ -24,7 +27,7 @@ function VerifyEmailRoutePage() {
             if (!token) {
                 if (isMounted) {
                     setStatus("error");
-                    setErrorMsg("Không tìm thấy token xác thực trong liên kết.");
+                    setErrorMsg(t("auth.verifyEmailTokenNotFound", { defaultValue: "Không tìm thấy token xác thực trong liên kết." }));
                 }
                 return;
             }
@@ -35,7 +38,7 @@ function VerifyEmailRoutePage() {
                     setStatus("success");
                 } else {
                     setStatus("error");
-                    setErrorMsg(res.error || "Token xác thực không hợp lệ hoặc đã hết hạn.");
+                    setErrorMsg(res.error || t("auth.verifyEmailInvalidToken", { defaultValue: "Token xác thực không hợp lệ hoặc đã hết hạn." }));
                 }
             }
         };
@@ -44,7 +47,7 @@ function VerifyEmailRoutePage() {
         return () => {
             isMounted = false;
         };
-    }, [token, verifyEmail]);
+    }, [token, verifyEmail, t]);
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -56,10 +59,10 @@ function VerifyEmailRoutePage() {
                 {status === "verifying" && (
                     <div className="space-y-2">
                         <h2 className="text-xl font-black text-[#F1F3F7] uppercase tracking-tight">
-                            Đang xác minh email...
+                            {t("auth.verifyEmailPageTitle", { defaultValue: "Đang xác minh email..." })}
                         </h2>
                         <p className="text-xs text-[#8B93A7]">
-                            Vui lòng chờ trong giây lát trong khi hệ thống kiểm tra token xác thực.
+                            {t("auth.verifyEmailPageSubtitle", { defaultValue: "Vui lòng chờ trong giây lát trong khi hệ thống kiểm tra token xác thực." })}
                         </p>
                         <div className="w-8 h-8 border-2 border-[#FFB020] border-t-transparent rounded-full animate-spin mx-auto pt-2" />
                     </div>
@@ -72,10 +75,14 @@ function VerifyEmailRoutePage() {
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-[#F1F3F7] uppercase tracking-tight">
-                                Xác minh email thành công!
+                                {t("auth.verifyEmailSuccessTitle", { defaultValue: "Xác minh email thành công!" })}
                             </h2>
                             <p className="text-xs text-[#8B93A7] mt-1">
-                                Tài khoản <strong className="text-[#FFB020]">{user?.email || "của bạn"}</strong> đã được mở khóa đầy đủ quyền truy cập.
+                                {isVi ? (
+                                    <>Tài khoản <strong className="text-[#FFB020]">{user?.email || "của bạn"}</strong> đã được mở khóa đầy đủ quyền truy cập.</>
+                                ) : (
+                                    <>Account <strong className="text-[#FFB020]">{user?.email || "yours"}</strong> has been unlocked with full access.</>
+                                )}
                             </p>
                         </div>
                         <button
@@ -83,7 +90,7 @@ function VerifyEmailRoutePage() {
                             onClick={() => navigate({ to: "/" })}
                             className="w-full py-3 px-4 rounded-[12px] bg-[#FFB020] hover:bg-[#ffa500] text-black font-extrabold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-500/20"
                         >
-                            <span>Về Trang Chủ</span>
+                            <span>{t("auth.verifyEmailBackHome", { defaultValue: "Về Trang Chủ" })}</span>
                             <FontAwesomeIcon icon={faArrowRight} />
                         </button>
                     </div>
@@ -96,7 +103,7 @@ function VerifyEmailRoutePage() {
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-[#F1F3F7] uppercase tracking-tight">
-                                Xác minh không thành công
+                                {t("auth.verifyEmailFailedTitle", { defaultValue: "Xác minh không thành công" })}
                             </h2>
                             <p className="text-xs text-rose-300 mt-1">{errorMsg}</p>
                         </div>
@@ -105,7 +112,7 @@ function VerifyEmailRoutePage() {
                             onClick={() => navigate({ to: "/" })}
                             className="w-full py-3 px-4 rounded-[12px] bg-[#121827] hover:bg-[#1A2130] text-[#F1F3F7] font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer border border-[#20283A]"
                         >
-                            Quay lại Trang Chủ
+                            {t("auth.verifyEmailBackHome", { defaultValue: "Quay lại Trang Chủ" })}
                         </button>
                     </div>
                 )}
