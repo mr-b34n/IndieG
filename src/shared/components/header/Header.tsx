@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useSidebarStore } from "../../store/useSidebarStore";
 import { useNotificationStore, NotificationDropdown, useNotificationPolling } from '@/features/notification';
 import { useTranslation } from '@/shared/hooks/useTranslate';
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 import { Search } from '../search/Search';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -43,11 +44,27 @@ export const Header = () => {
         pathname.startsWith('/game') ||
         (pathname.startsWith('/community/') && pathname !== '/community');
 
-    const [showNotifications, setShowNotifications] = useState(false);
+    const isNotificationOpen = useNotificationStore((state) => state.isOpen ?? false);
+    const setNotificationOpen = useNotificationStore((state) => state.setIsOpen);
+    const toggleNotificationOpen = useNotificationStore((state) => state.toggleOpen);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const notifications = useNotificationStore((state) => state.notifications);
     const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+    useRegisterOverlay({
+        id: "header-notifications",
+        isOpen: isNotificationOpen,
+        onClose: () => setNotificationOpen?.(false),
+        priority: 60,
+    });
+
+    useRegisterOverlay({
+        id: "header-user-menu",
+        isOpen: showUserMenu,
+        onClose: () => setShowUserMenu(false),
+        priority: 50,
+    });
 
     useNotificationPolling(15000);
 
@@ -106,7 +123,7 @@ export const Header = () => {
     };
 
     return (
-        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-surface/95 backdrop-blur-md border-b border-border select-none transition-colors">
+        <header className="w-full h-16 sticky top-0 z-[60] flex items-center justify-between gap-4 px-4 sm:px-6 bg-surface/95 backdrop-blur-md  select-none transition-colors">
 
             {/* LEFT: Logo & Mobile Toggle */}
             <div className="flex items-center gap-3 shrink-0">
@@ -149,7 +166,7 @@ export const Header = () => {
                     type="button"
                     onClick={handleCreatePostClick}
                     title={t('feed.createPost', { defaultValue: 'Tạo bài viết' })}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary hover:bg-primary-hover text-white transition-all shadow-xs shrink-0 cursor-pointer select-none active:scale-95"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent text-text-muted hover:text-text hover:bg-surface-hover transition-all shrink-0 cursor-pointer select-none active:scale-95 outline-none"
                 >
                     <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
                 </button>
@@ -159,9 +176,9 @@ export const Header = () => {
                         type="button"
                         onClick={toggleRight}
                         title={t('common.openExplore')}
-                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg
+                        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                             text-text-muted hover:text-text hover:bg-surface-hover
-                            transition-colors duration-150 cursor-pointer shrink-0"
+                            transition-colors duration-150 cursor-pointer shrink-0 outline-none"
                     >
                         <FontAwesomeIcon icon={faGamepad} className="text-sm" />
                     </button>
@@ -172,9 +189,9 @@ export const Header = () => {
                         type="button"
                         onClick={() => navigate({ to: '/' })}
                         title={t('common.home')}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg
+                        className="w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                             text-text-muted hover:text-text hover:bg-surface-hover
-                            transition-colors duration-150 cursor-pointer shrink-0"
+                            transition-colors duration-150 cursor-pointer shrink-0 outline-none"
                     >
                         <FontAwesomeIcon icon={faHouse} className="text-sm" />
                     </button>
@@ -186,21 +203,21 @@ export const Header = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setShowNotifications(!showNotifications);
+                                    toggleNotificationOpen?.();
                                     setShowUserMenu(false);
                                 }}
                                 title={t('notification.title')}
-                                className="relative w-9 h-9 flex items-center justify-center rounded-lg
+                                className="relative w-9 h-9 flex items-center justify-center rounded-full bg-transparent
                                     text-text-muted hover:text-text hover:bg-surface-hover
-                                    transition-colors duration-150 cursor-pointer"
+                                    transition-colors duration-150 cursor-pointer outline-none"
                             >
                                 <FontAwesomeIcon icon={faBell} className="text-sm" />
                                 {unreadCount > 0 && (
                                     <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ef4444]" />
                                 )}
                             </button>
-                            {showNotifications && (
-                                <NotificationDropdown onClose={() => setShowNotifications(false)} />
+                            {isNotificationOpen && (
+                                <NotificationDropdown onClose={() => setNotificationOpen?.(false)} />
                             )}
                         </div>
 
@@ -211,21 +228,21 @@ export const Header = () => {
                                     type="button"
                                     onClick={() => {
                                         setShowUserMenu(!showUserMenu);
-                                        setShowNotifications(false);
+                                        setNotificationOpen?.(false);
                                     }}
-                                    className="flex items-center gap-1.5 p-1 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer group"
+                                    className="flex items-center gap-1.5 p-1 pr-2 rounded-full bg-transparent hover:bg-surface-hover transition-colors cursor-pointer group outline-none"
                                 >
                                     {avatarUrl ? (
                                         <img
                                             src={avatarUrl}
                                             alt="User avatar"
-                                            className="w-8 h-8 rounded-full ring-1 ring-border/80 object-cover"
+                                            className="w-8 h-8 rounded-full  object-cover"
                                             onError={(e) => {
                                                 (e.currentTarget as HTMLImageElement).style.display = "none";
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-full bg-surface-hover ring-1 ring-border/80 flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
+                                        <div className="w-8 h-8 rounded-full bg-surface-hover  flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
                                             {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
                                         </div>
                                     )}
@@ -239,8 +256,8 @@ export const Header = () => {
 
                                 {/* User Dropdown */}
                                 {showUserMenu && (
-                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface border border-border shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
-                                        <div className="px-4 py-2.5 border-b border-border">
+                                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface shadow-2xl py-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="px-4 py-2.5 ">
                                             <p className="font-bold text-xs text-text truncate">{displayName}</p>
                                             <p className="text-[11px] text-text-muted truncate">{user?.email || "demo@indieg.com"}</p>
                                         </div>
@@ -299,7 +316,7 @@ export const Header = () => {
                                             </button>
                                         </div>
 
-                                        <div className="border-t border-border pt-1 mt-1">
+                                        <div className=" pt-1 mt-1">
                                             <button
                                                 type="button"
                                                 onClick={handleLogout}
@@ -318,7 +335,7 @@ export const Header = () => {
                     <button
                         type="button"
                         onClick={() => navigate({ to: "/auth" })}
-                        className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer shadow-sm shadow-primary/20"
+                        className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer shadow-sm shadow-primary/20 outline-none"
                     >
                         {t('authenticate.login', { defaultValue: 'Đăng nhập' })}
                     </button>

@@ -129,7 +129,7 @@ export const RightBar = () => {
                             key={m.name}
                             onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name}` } })}
                             className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-hover/70 transition-colors cursor-pointer group"
-                            title={`Xem trang cá nhân của ${m.name}`}
+                            title={t('common.viewProfileOf', { name: m.name, defaultValue: `Xem trang cá nhân của ${m.name}` })}
                         >
                             <div className="relative shrink-0">
                                 <img

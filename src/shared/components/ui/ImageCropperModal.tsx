@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCrop, faXmark, faCheck, faSearchPlus } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface ImageCropperModalProps {
     rawImageSrc: string;
@@ -16,9 +17,11 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     onClose,
     onSave,
     aspectRatio = 1,
-    title = "Căn chỉnh ảnh đại diện",
+    title,
     outputWidth = 400
 }) => {
+    const { t } = useTranslation();
+    const modalTitle = title || t("common.adjustAvatar", { defaultValue: "Căn chỉnh ảnh đại diện" });
     const CONTAINER_WIDTH = 256;
     const CONTAINER_HEIGHT = 256 / aspectRatio;
     const [zoom, setZoom] = useState(1);
@@ -129,9 +132,9 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
                 <div className="w-full flex items-center justify-between border-b border-border/40 pb-3">
                     <h4 className="font-bold text-text flex items-center gap-2">
                         <FontAwesomeIcon icon={faCrop} className="text-primary" />
-                        <span>{title}</span>
+                        <span>{modalTitle}</span>
                     </h4>
-                    <button type="button" onClick={onClose} className="text-text-faint hover:text-text p-1 cursor-pointer">
+                    <button type="button" onClick={onClose} className="text-text-faint hover:text-text p-1 cursor-pointer" aria-label={t("common.close", { defaultValue: "Đóng" })}>
                         <FontAwesomeIcon icon={faXmark} className="text-lg" />
                     </button>
                 </div>
@@ -165,7 +168,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
 
                 <div className="w-full flex flex-col gap-2 pt-2">
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-text-muted shrink-0">Thu phóng:</span>
+                        <span className="text-xs font-semibold text-text-muted shrink-0">{t("common.zoom", { defaultValue: "Thu phóng:" })}</span>
                         <input
                             type="range"
                             min="1"
@@ -174,19 +177,20 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
                             value={zoom}
                             onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
                             className="flex-1 accent-primary cursor-pointer"
+                            aria-label={t("common.zoom", { defaultValue: "Thu phóng ảnh" })}
                         />
-                        <button type="button" onClick={() => handleZoomChange(Math.min(3, zoom + 0.1))} className="text-text-faint hover:text-text p-1 cursor-pointer">
+                        <button type="button" onClick={() => handleZoomChange(Math.min(3, zoom + 0.1))} className="text-text-faint hover:text-text p-1 cursor-pointer" aria-label={t("common.zoomIn", { defaultValue: "Phóng to" })}>
                             <FontAwesomeIcon icon={faSearchPlus} />
                         </button>
                     </div>
                     <p className="text-[11px] text-center text-text-faint italic mt-1">
-                        * Kéo thả ảnh để di chuyển.
+                        {t("common.dragToMove", { defaultValue: "* Kéo thả ảnh để di chuyển." })}
                     </p>
                 </div>
 
                 <div className="w-full flex items-center justify-end gap-3 pt-2">
                     <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-surface-hover hover:bg-border text-text font-bold text-xs transition-colors cursor-pointer">
-                        Hủy
+                        {t("common.cancel", { defaultValue: "Hủy" })}
                     </button>
                     <button
                         type="button"
@@ -194,7 +198,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
                         className="px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors shadow-md cursor-pointer flex items-center gap-2"
                     >
                         <FontAwesomeIcon icon={faCheck} />
-                        <span>Cắt & Lưu ảnh</span>
+                        <span>{t("common.cropAndSave", { defaultValue: "Cắt & Lưu ảnh" })}</span>
                     </button>
                 </div>
             </div>
