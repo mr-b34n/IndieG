@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useSquadStore } from "@/features/squad";
@@ -47,18 +48,15 @@ export const Search = () => {
         }
     });
 
-    useKeyboardShortcut(["Mod", "k"], () => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    });
-
-    useKeyboardShortcut(["Escape"], () => {
-        if (focused || document.activeElement === inputRef.current) {
+    useRegisterOverlay({
+        id: "global-search-dropdown",
+        isOpen: focused,
+        onClose: () => {
             setFocused(false);
             inputRef.current?.blur();
-        }
-    }, { ignoreInput: false });
+        },
+        priority: 70,
+    });
 
     // Data stores
     const { posts } = usePostsStore();
@@ -95,18 +93,6 @@ export const Search = () => {
             // ignore
         }
     };
-
-    // Keyboard shortcut '/'
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
-                e.preventDefault();
-                inputRef.current?.focus();
-            }
-        };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, []);
 
     const debouncedValue = useDebounce(value, 300);
 
@@ -203,6 +189,7 @@ export const Search = () => {
                 />
 
                 <input
+                    id="global-search-input"
                     ref={inputRef}
                     type="text"
                     value={value}
@@ -218,12 +205,9 @@ export const Search = () => {
                 />
 
                 {!focused && !value && (
-                    <div className="hidden sm:flex shrink-0 items-center gap-1">
+                    <div className="hidden sm:flex shrink-0 items-center">
                         <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
                             /
-                        </kbd>
-                        <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono text-text-faint bg-surface border border-border/40">
-                            {typeof window !== "undefined" && navigator.userAgent.includes("Mac") ? "⌘ K" : "Ctrl K"}
                         </kbd>
                     </div>
                 )}
@@ -350,7 +334,8 @@ export const Search = () => {
                                                 <span>{t("search.discussionsAndPosts", { defaultValue: "Thảo luận & Bài viết" })} ({(searchResults.posts || []).length})</span>
                                             </p>
                                             {searchResults.posts.slice(0, 3).map((post) => {
-                                                const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || "Vô danh") : (post.author || "Vô danh");
+                                                const defaultAuthor = t("common.anonymous", { defaultValue: "Vô danh" });
+                                                const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || defaultAuthor) : (post.author || defaultAuthor);
                                                 return (
                                                     <button
                                                         key={post.id}
@@ -402,7 +387,7 @@ export const Search = () => {
                                         className="text-[10px] font-semibold text-[#656A72] hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faTrash} className="text-[9px]" />
-                                        <span>Xóa tất cả</span>
+                                        <span>{t("search.clearAll", { defaultValue: "Xóa tất cả" })}</span>
                                     </button>
                                 )}
                             </div>
@@ -441,7 +426,7 @@ export const Search = () => {
                                     ))
                                 ) : (
                                     <div className="px-4 py-3 text-xs text-[#656A72] italic">
-                                        Chưa có lịch sử tìm kiếm.
+                                        {t("search.noHistory", { defaultValue: "Chưa có lịch sử tìm kiếm." })}
                                     </div>
                                 )}
                             </div>

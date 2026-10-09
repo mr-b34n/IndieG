@@ -17,10 +17,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useGameStore } from "@/features/game";
 import { fetchSearchResults } from "../api/searchApi";
+import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import { MOCK_USERS } from "../mockUsers";
 import { type SearchTabCategory, type SearchResponse, type SearchUser, normalizeTabCategory } from "../types";
 import { useSendFriendRequestMutation, useCancelFriendRequestMutation, useUnfriendMutation } from "@/shared/api/useQueries";
@@ -207,6 +209,13 @@ export const SearchResultsPage = () => {
             });
         });
     };
+
+    // Quick tab switching: 1 - 5
+    useHotkeys(["1"], () => handleTabChange("all"));
+    useHotkeys(["2"], () => handleTabChange("games"));
+    useHotkeys(["3"], () => handleTabChange("communities"));
+    useHotkeys(["4"], () => handleTabChange("users"));
+    useHotkeys(["5"], () => handleTabChange("posts"));
 
     const handlePageChange = (newPage: number) => {
         if (newPage < 1 || newPage > searchData.pagination.totalPages) return;
@@ -434,7 +443,7 @@ export const SearchResultsPage = () => {
                                                         loading="lazy"
                                                         onError={(e) => {
                                                             e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&auto=format&fit=crop&q=80";
+                                                            e.currentTarget.src = DEFAULT_GAME_LOGO;
                                                         }}
                                                     />
                                                 </div>
@@ -528,11 +537,17 @@ export const SearchResultsPage = () => {
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-[#17191C]">
                                                 <img
-                                                    src={comm.avatarUrl || comm.logo}
+                                                    src={comm.avatarUrl || comm.logo || comm.backdrop || comm.bannerUrl}
                                                     alt={comm.name}
                                                     referrerPolicy="no-referrer"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                                     loading="lazy"
+                                                    onError={(e) => {
+                                                        const fallback = comm.backdrop || comm.bannerUrl;
+                                                        if (fallback && e.currentTarget.src !== fallback) {
+                                                            e.currentTarget.src = fallback;
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                             <div className="flex flex-col min-w-0">
