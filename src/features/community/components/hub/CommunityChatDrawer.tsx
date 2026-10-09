@@ -7,6 +7,8 @@ import {
     faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from "@/features/auth";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 
 interface ChatMessage {
     id: string;
@@ -38,10 +40,15 @@ export const CommunityChatDrawer = ({
 
     const user = useAuthStore((state) => state.user);
 
-    if (!isOpen) return null;
+    useRegisterOverlay({
+        id: "community-chat-drawer",
+        isOpen,
+        onClose,
+        priority: 40,
+    });
 
-    const handleSend = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSend = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!input.trim()) return;
         if (!useAuthStore.getState().requireVerifiedEmail("gửi tin nhắn chat")) return;
 
@@ -55,6 +62,16 @@ export const CommunityChatDrawer = ({
         setMessages((prev) => [...prev, newMsg]);
         setInput("");
     };
+
+    useHotkeys(
+        ["Mod", "Enter"],
+        (e) => {
+            handleSend(e);
+        },
+        { ignoreInput: false, enabled: isOpen }
+    );
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed bottom-4 right-4 z-50 w-80 sm:w-88 bg-surface border border-divider-primary rounded-[4px] shadow-2xl overflow-hidden flex flex-col animate-slide-up">
@@ -91,13 +108,13 @@ export const CommunityChatDrawer = ({
             {/* Input Form */}
             {user && user.isVerified === false ? (
                 <div className="p-2.5 border-t border-divider-primary bg-amber-500/10 text-[11px] flex items-center justify-between gap-2">
-                    <span className="text-amber-500 font-bold truncate">🔒 Cần xác nhận email để chat</span>
+                    <span className="text-amber-500 font-bold truncate">🔒 {isVi ? "Cần xác nhận email để chat" : "Email verification required to chat"}</span>
                     <button
                         type="button"
-                        onClick={() => useAuthStore.getState().openVerifyModal("Xác nhận email để gửi tin nhắn chat.")}
+                        onClick={() => useAuthStore.getState().openVerifyModal(isVi ? "Xác nhận email để gửi tin nhắn chat." : "Verify email to send chat messages.")}
                         className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shrink-0 cursor-pointer text-[10px] shadow-xs"
                     >
-                        Xác thực
+                        {isVi ? "Xác thực" : "Verify"}
                     </button>
                 </div>
             ) : (

@@ -10,6 +10,7 @@ import { Pagination } from "@/shared/components/ui/Pagination";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
+import { isGenericTestCommunity } from "@/shared/api";
 
 export const CommunityList = () => {
     const { t } = useTranslation();
@@ -58,17 +59,17 @@ export const CommunityList = () => {
     const isLoading = isQueryLoading || storeLoading;
 
     const categories = useMemo(
-        () => Array.from(new Set(communities.map((c) => c.category).filter(Boolean))),
+        () => Array.from(new Set(communities.filter((c) => !isGenericTestCommunity(c)).map((c) => c.category).filter(Boolean))),
         [communities]
     );
 
     const joinedCount = useMemo(
-        () => communities.filter((c) => c.joined).length,
+        () => communities.filter((c) => c.joined && !isGenericTestCommunity(c)).length,
         [communities]
     );
 
     const filtered = useMemo(() => {
-        let list = [...communities];
+        let list = communities.filter((c) => !isGenericTestCommunity(c));
 
         if (activeTab === "joined") {
             list = list.filter((c) => c.joined);
@@ -142,11 +143,11 @@ export const CommunityList = () => {
             {isLoading && communities.length === 0 ? (
                 <div className="w-full flex flex-col items-center justify-center gap-3 py-20 px-4 bg-surface border border-divider-primary rounded-[6px] text-text-muted text-sm text-center">
                     <FontAwesomeIcon icon={faSpinner} className="text-2xl text-primary animate-spin" />
-                    <p className="text-xs font-semibold text-text-muted">Đang tải danh sách cộng đồng...</p>
+                    <p className="text-xs font-semibold text-text-muted">{t('community.loadingCommunities', { defaultValue: 'Đang tải danh sách cộng đồng...' })}</p>
                 </div>
             ) : filtered.length > 0 ? (
                 <div className="flex flex-col gap-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                         {paginatedCommunities.map((community, idx) => (
                             <CommunityGameTile key={`${community.id || community.slug || 'comm'}-${idx}`} community={community} />
                         ))}

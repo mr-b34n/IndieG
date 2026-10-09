@@ -64,9 +64,12 @@ export const CommunityManageReports = ({
 
     const reports: ReportItem[] = useMemo(() => {
         const items = extractReportList(reportsData);
-        return items.map((r: any) => {
+        const filteredByCommunity = communityId
+            ? items.filter((r: any) => !r.communityId || r.communityId === communityId)
+            : items;
+        return filteredByCommunity.map((r: any) => {
             const reporterProfile = r.reporterId ? profilesMap.get(r.reporterId) : undefined;
-            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
+            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : (isVi ? "Người báo cáo" : "Reporter"));
             const reporterHandle = r.reporter?.username ? `@${r.reporter.username}` : reporterProfile?.username ? `@${reporterProfile.username}` : (r.reporterId ? `@user_${r.reporterId.slice(0, 6)}` : "@reporter");
 
             const targetType = (r.targetType || (r.postId ? "post" : r.commentId ? "comment" : "user")) as "post" | "comment" | "user";
@@ -81,7 +84,7 @@ export const CommunityManageReports = ({
                 r.post?.content?.slice(0, 120) ||
                 r.comment?.content?.slice(0, 120) ||
                 r.reason ||
-                "Nội dung bị ẩn hoặc không thể tải được.";
+                (isVi ? "Nội dung bị ẩn hoặc không thể tải được." : "Content is hidden or unavailable.");
             const status = (
                 r.status === "resolved" ? "resolved" : r.status === "dismissed" ? "dismissed" : "pending"
             ) as "pending" | "resolved" | "dismissed";
@@ -94,12 +97,12 @@ export const CommunityManageReports = ({
                 authorName: reporterName,
                 authorHandle: reporterHandle,
                 reporterName: reporterHandle,
-                reason: r.reason || "Lý do báo cáo không xác định",
-                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : "Mới đây",
+                reason: r.reason || (isVi ? "Lý do báo cáo không xác định" : "Unspecified report reason"),
+                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString(isVi ? "vi-VN" : "en-US", { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Mới đây" : "Recently"),
                 status,
             };
         });
-    }, [reportsData, profilesMap, isVi]);
+    }, [reportsData, profilesMap, isVi, communityId]);
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in">
@@ -119,10 +122,10 @@ export const CommunityManageReports = ({
                     {(["all", "pending", "resolved", "dismissed"] as const).map((mode) => {
                         const count = mode === "all" ? reports.length : reports.filter((r) => r.status === mode).length;
                         const label =
-                            mode === "all" ? "Tất cả"
-                            : mode === "pending" ? "Đang chờ"
-                            : mode === "resolved" ? "Đã xử lý"
-                            : "Đã từ chối";
+                            mode === "all" ? (isVi ? "Tất cả" : "All")
+                            : mode === "pending" ? (isVi ? "Đang chờ" : "Pending")
+                            : mode === "resolved" ? (isVi ? "Đã xử lý" : "Resolved")
+                            : (isVi ? "Đã từ chối" : "Dismissed");
                         const isActive = reportFilter === mode;
                         return (
                             <button
@@ -148,7 +151,7 @@ export const CommunityManageReports = ({
                 <div className="flex flex-col gap-3">
                     {reports.filter((r) => reportFilter === "all" || r.status === reportFilter).length === 0 ? (
                         <div className="p-8 text-center bg-surface-inner/40 rounded-[6px] border border-divider-primary/40">
-                            <p className="text-sm text-text-muted">Không có báo cáo nào</p>
+                            <p className="text-sm text-text-muted">{isVi ? "Không có báo cáo nào" : "No reports found"}</p>
                         </div>
                     ) : (
                         reports

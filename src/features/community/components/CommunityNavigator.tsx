@@ -143,7 +143,7 @@ export const CommunityNavigator = ({
                                             : "text-text-muted hover:text-text hover:bg-surface-hover/70"
                                     }`}
                                 >
-                                    <span>all (Tất cả)</span>
+                                    <span>all ({t('common.all', { defaultValue: 'Tất cả' })})</span>
                                     {activeTab === "discover" && activeCategory === null && (
                                         <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                                     )}
@@ -163,7 +163,7 @@ export const CommunityNavigator = ({
                                     }`}
                                 >
                                     <span className="flex items-center gap-1.5">
-                                        <span>joined (Đã tham gia)</span>
+                                        <span>joined ({t('community.tabJoined', { defaultValue: 'Đã tham gia' })})</span>
                                         <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-surface-hover text-text-faint">
                                             {joinedCount}
                                         </span>
@@ -186,7 +186,7 @@ export const CommunityNavigator = ({
                                             : "text-text-muted hover:text-text hover:bg-surface-hover/70"
                                     }`}
                                 >
-                                    <span>trending (Nổi bật)</span>
+                                    <span>trending ({t('community.tabTrending', { defaultValue: 'Nổi bật' })})</span>
                                     {activeTab === "trending" && activeCategory === null && (
                                         <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
                                     )}

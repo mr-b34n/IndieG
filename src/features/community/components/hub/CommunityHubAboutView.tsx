@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -15,6 +16,8 @@ interface CommunityHubAboutViewProps {
     communityName: string;
     description: string;
     isVi: boolean;
+    gameSlug?: string;
+    gameName?: string;
 }
 
 export const CommunityHubAboutView = ({
@@ -22,8 +25,11 @@ export const CommunityHubAboutView = ({
     communityName,
     description,
     isVi,
+    gameSlug,
+    gameName,
 }: CommunityHubAboutViewProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
 
     const rules = [
@@ -79,6 +85,19 @@ export const CommunityHubAboutView = ({
     ];
 
     const links = [
+        ...(gameSlug
+            ? [
+                  {
+                      title: isVi ? "Trang Game trên IndieG" : "IndieG Game Page",
+                      desc: isVi
+                          ? `Xem chi tiết cấu hình, cẩm nang, đánh giá của ${gameName || communityName}`
+                          : `View specs, guides and reviews on IndieG`,
+                      url: `/game/${gameSlug}`,
+                      icon: faGamepad,
+                      isInternal: true,
+                  },
+              ]
+            : []),
         {
             title: "Official Game Website",
             desc: "Trang chủ chính thức của nhà phát triển",
@@ -173,24 +192,38 @@ export const CommunityHubAboutView = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {links.map((link, idx) => (
-                        <a
+                        <div
                             key={idx}
-                            href={link.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-3.5 rounded-[4px] bg-surface/70 border border-divider-primary/60 hover:border-primary/50 transition-all flex items-center justify-between gap-3 group"
+                            onClick={() => {
+                                if (link.isInternal && link.url) {
+                                    navigate({ to: link.url as string });
+                                } else if (link.url && link.url !== "#") {
+                                    window.open(link.url, "_blank");
+                                }
+                            }}
+                            className={`p-3.5 rounded-[4px] border transition-all flex items-center justify-between gap-3 group cursor-pointer ${
+                                link.isInternal
+                                    ? "bg-brand-500/10 border-brand-500/40 hover:border-brand-500/70"
+                                    : "bg-surface/70 border-divider-primary/60 hover:border-primary/50"
+                            }`}
                         >
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-surface-inner flex items-center justify-center text-primary text-xs shrink-0">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                    link.isInternal ? "bg-brand-500/20 text-brand-400" : "bg-surface-inner text-primary"
+                                }`}>
                                     <FontAwesomeIcon icon={link.icon} />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="font-bold text-xs text-text group-hover:text-primary transition-colors truncate">{link.title}</span>
+                                    <span className={`font-bold text-xs truncate transition-colors ${
+                                        link.isInternal ? "text-brand-400 group-hover:text-brand-300" : "text-text group-hover:text-primary"
+                                    }`}>
+                                        {link.title}
+                                    </span>
                                     <span className="text-[11px] text-text-muted truncate">{link.desc}</span>
                                 </div>
                             </div>
                             <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs text-text-faint group-hover:text-primary transition-colors shrink-0" />
-                        </a>
+                        </div>
                     ))}
                 </div>
             </div>

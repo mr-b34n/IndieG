@@ -24,6 +24,8 @@ export interface CommunityData {
     onlineCount?: number;
     game?: string | { name: string; slug?: string; id?: string | number };
     gameSlug?: string;
+    gameName?: string;
+    gameId?: string;
     tags: string[];
     joined: boolean;
     featured?: boolean;
