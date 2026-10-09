@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { type CommunityData } from "@/features/community";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 
 interface CommunityDrawerModalProps {
     isOpen: boolean;
@@ -49,16 +50,12 @@ export const CommunityDrawerModal = ({
         onClose();
     };
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen) {
-                setSearchQuery("");
-                onClose();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onClose]);
+    useRegisterOverlay({
+        id: "community-drawer-modal",
+        isOpen,
+        onClose: handleClose,
+        priority: 90,
+    });
 
     // Filter communities
     const filteredCommunities = useMemo(() => {

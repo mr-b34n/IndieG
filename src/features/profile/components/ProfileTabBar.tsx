@@ -56,8 +56,7 @@ export const ProfileTabBar = ({
                 
                 {/* Segmented Pill Tabs */}
                 <div 
-                    className="flex items-center gap-1 bg-[#14171D] p-1.5 rounded-[12px] overflow-x-auto scrollbar-none border-none"
-                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25)" }}
+                    className="flex items-center gap-1 bg-[#0A0C0E] border border-[#181C24]/60 p-1 rounded-[10px] overflow-x-auto scrollbar-none"
                 >
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
@@ -71,17 +70,16 @@ export const ProfileTabBar = ({
                                 title={isLocked ? "Vui lòng lưu hoặc hủy chỉnh sửa ở tab Tổng quan trước khi đổi tab" : undefined}
                                 className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold whitespace-nowrap transition-all rounded-[8px] cursor-pointer border-none ${
                                     isActive
-                                        ? "bg-[#222834] text-[#F0F1F2]"
-                                        : isLocked
+                                        ? "bg-[#1A1F2A] text-[#F0F1F2]" : isLocked
                                         ? "text-[#666A71] opacity-35 hover:opacity-50"
                                         : "text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28]"
                                 }`}
-                                style={isActive ? { boxShadow: "0 0 12px rgba(22, 136, 232, 0.25)" } : undefined}
+                                
                             >
                                 <span>{tab.label}</span>
                                 {tab.count !== undefined && !isLocked && (
                                     <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none transition-colors border-none ${
-                                        isActive ? "bg-[#1688E8] text-white" : "bg-[rgba(255,255,255,0.03)] text-[#8A8F98]"
+                                        isActive ? "bg-[#1688E8] text-white" : "bg-transparent text-[#8A8F98]"
                                     }`}>
                                         {tab.count}
                                     </span>
@@ -99,7 +97,7 @@ export const ProfileTabBar = ({
                         <button 
                             type="button"
                             onClick={handleShare}
-                            className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)] border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-transparent border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all duration-200 cursor-pointer"
                             title="Share Profile"
                         >
                             <FontAwesomeIcon icon={faShareNodes} className="text-xs" />
@@ -116,7 +114,7 @@ export const ProfileTabBar = ({
                         <button 
                             type="button"
                             onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-                            className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)] border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200 cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-transparent border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all duration-200 cursor-pointer"
                         >
                             <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
                         </button>
@@ -131,7 +129,7 @@ export const ProfileTabBar = ({
                                             if (onStartEditMode) onStartEditMode();
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] rounded-[6px] transition-all duration-200 cursor-pointer border-none outline-none focus:outline-none"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-all duration-200 cursor-pointer border-none outline-none focus:outline-none"
                                     >
                                         <FontAwesomeIcon icon={faPen} className="text-[#1688E8] w-4" />
                                         <span>Edit Profile</span>
@@ -143,7 +141,7 @@ export const ProfileTabBar = ({
                                         setShowOverflowMenu(false);
                                         handleShare();
                                     }}
-                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[rgba(255,255,255,0.05)] rounded-[6px] transition-all duration-200 cursor-pointer border-none"
+                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-all duration-200 cursor-pointer border-none"
                                 >
                                     <FontAwesomeIcon icon={faLink} className="text-[#8A8F98] w-4" />
                                     <span>Copy Profile Link</span>

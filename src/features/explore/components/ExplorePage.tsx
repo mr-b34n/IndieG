@@ -64,8 +64,8 @@ export const ExplorePage = () => {
                         <FontAwesomeIcon icon={faCompass} />
                     </div>
                     <div className="flex flex-col gap-1 max-w-sm">
-                        <p className="font-extrabold text-text text-sm">Chưa có nội dung khám phá</p>
-                        <p className="text-text-muted text-xs leading-relaxed">Nội dung mới và các sự kiện sẽ được cập nhật tại đây.</p>
+                        <p className="font-extrabold text-text text-sm">{t('explore.noContentTitle', { defaultValue: 'Chưa có nội dung khám phá' })}</p>
+                        <p className="text-text-muted text-xs leading-relaxed">{t('explore.noContentDesc', { defaultValue: 'Nội dung mới và các sự kiện sẽ được cập nhật tại đây.' })}</p>
                     </div>
                 </div>
             ) : (

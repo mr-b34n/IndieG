@@ -59,7 +59,8 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
     onClose,
     onUpdateMembers,
 }) => {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
+    const isVi = language === "vi";
     const authorUsername = getCurrentAuthor();
     const { user, customAvatar } = useAuthStore.getState();
     const currentDisplayName = user?.user_metadata?.full_name || user?.username || authorUsername;
@@ -103,13 +104,13 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                 roleLower === "owner" ? "owner" : roleLower === "admin" ? "admin" : roleLower === "moderator" || roleLower === "mod" ? "mod" : "member";
             return {
                 username: m.user?.username || m.user?.name || profile?.username || `user_${uid.slice(0, 6)}`,
-                displayName: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`,
+                displayName: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || (isVi ? `Thành viên (${uid.slice(0, 6)})` : `Member (${uid.slice(0, 6)})`),
                 avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`,
                 role,
-                joinedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "Thành viên",
+                joinedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString(isVi ? "vi-VN" : "en-US") : (isVi ? "Thành viên" : "Member"),
             };
         });
-    }, [apiMembersData, profilesMap]);
+    }, [apiMembersData, profilesMap, isVi]);
 
     const [localOverrides, setLocalOverrides] = useState<CommunityMember[] | null>(null);
 
@@ -118,10 +119,10 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
         if (community.memberList && community.memberList.length > 0) {
             return community.memberList.map((m) => ({
                 username: m.username || "anonymous",
-                displayName: m.displayName || m.username || "Thành viên",
+                displayName: m.displayName || m.username || (isVi ? "Thành viên" : "Member"),
                 avatar: m.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${m.username || "anon"}`,
                 role: m.role || "member",
-                joinedAt: m.joinedAt || "Gần đây",
+                joinedAt: m.joinedAt || (isVi ? "Gần đây" : "Recently"),
             }));
         }
         const base = [...DEFAULT_MEMBERS];
@@ -131,11 +132,11 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                 displayName: currentDisplayName,
                 avatar: currentAvatar,
                 role: community.owner === authorUsername ? "owner" : "member",
-                joinedAt: "Vừa xong",
+                joinedAt: isVi ? "Vừa xong" : "Just now",
             });
         }
         return base;
-    }, [apiMembers, community, authorUsername, currentDisplayName, currentAvatar]);
+    }, [apiMembers, community, authorUsername, currentDisplayName, currentAvatar, isVi]);
 
     const members = localOverrides ?? baseMembers;
 
@@ -188,7 +189,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
             default:
                 return (
                     <span className="bg-surface-hover text-text-muted border border-border px-2 py-0.5 rounded-md text-[10px] font-bold">
-                        THÀNH VIÊN
+                        {t('community.roleMember', { defaultValue: 'THÀNH VIÊN' })}
                     </span>
                 );
         }
@@ -201,7 +202,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faUserCheck} className="text-primary" />
-                        <h3 className="text-lg font-extrabold text-text">Danh Sách Thành Viên</h3>
+                        <h3 className="text-lg font-extrabold text-text">{t('community.memberList', { defaultValue: 'Danh Sách Thành Viên' })}</h3>
                         <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-black">
                             {members.length}
                         </span>
@@ -225,7 +226,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Tìm kiếm thành viên..."
+                            placeholder={t('community.searchMembersPlaceholder', { defaultValue: 'Tìm kiếm thành viên...' })}
                             className="w-full h-10 pl-9 pr-4 rounded-xl border border-border bg-bg text-xs font-semibold text-text focus:outline-none focus:border-primary transition-all"
                         />
                     </div>
@@ -237,7 +238,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                 roleFilter === "all" ? "bg-primary text-white shadow-xs" : "bg-surface hover:bg-surface-hover text-text-muted"
                             }`}
                         >
-                            Tất cả ({members.length})
+                            {t('community.filterAll', { defaultValue: 'Tất cả' })} ({members.length})
                         </button>
                         <button
                             onClick={() => setRoleFilter("staff")}
@@ -245,7 +246,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                 roleFilter === "staff" ? "bg-primary text-white shadow-xs" : "bg-surface hover:bg-surface-hover text-text-muted"
                             }`}
                         >
-                            Ban quản trị ({members.filter((m) => m.role !== "member").length})
+                            {t('community.filterStaff', { defaultValue: 'Ban quản trị' })} ({members.filter((m) => m.role !== "member").length})
                         </button>
                         <button
                             onClick={() => setRoleFilter("member")}
@@ -253,7 +254,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                 roleFilter === "member" ? "bg-primary text-white shadow-xs" : "bg-surface hover:bg-surface-hover text-text-muted"
                             }`}
                         >
-                            Thành viên ({members.filter((m) => m.role === "member").length})
+                            {t('community.filterMembers', { defaultValue: 'Thành viên' })} ({members.filter((m) => m.role === "member").length})
                         </button>
                     </div>
                 </div>
@@ -290,7 +291,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                             <button
                                                 onClick={() => handleRoleChange(m.username, "mod")}
                                                 className="px-2.5 py-1 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold border border-primary/20 transition-all cursor-pointer"
-                                                title="Thăng cấp làm MOD"
+                                                title={t('community.promoteMod', { defaultValue: 'Thăng cấp làm MOD' })}
                                             >
                                                 + MOD
                                             </button>
@@ -299,7 +300,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                             <button
                                                 onClick={() => handleRoleChange(m.username, "member")}
                                                 className="px-2.5 py-1 rounded-xl bg-surface hover:bg-surface-hover text-text-muted text-[11px] font-bold border border-border transition-all cursor-pointer"
-                                                title="Hạ cấp xuống thành viên"
+                                                title={t('community.demoteMember', { defaultValue: 'Hạ cấp xuống thành viên' })}
                                             >
                                                 - MOD
                                             </button>
@@ -307,7 +308,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                                         <button
                                             onClick={() => handleKickMember(m.username)}
                                             className="w-7 h-7 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 flex items-center justify-center transition-all cursor-pointer"
-                                            title="Mời ra khỏi nhóm"
+                                            title={t('community.kickMember', { defaultValue: 'Mời ra khỏi nhóm' })}
                                         >
                                             <FontAwesomeIcon icon={faUserMinus} className="text-xs" />
                                         </button>
@@ -318,7 +319,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
                     ) : (
                         <div className="py-12 flex flex-col items-center justify-center gap-2 text-text-muted text-xs">
                             <FontAwesomeIcon icon={faUser} className="text-2xl text-text-faint mb-1" />
-                            <span>Không tìm thấy thành viên phù hợp</span>
+                            <span>{t('community.noMembersMatch', { defaultValue: 'Không tìm thấy thành viên phù hợp' })}</span>
                         </div>
                     )}
                 </div>

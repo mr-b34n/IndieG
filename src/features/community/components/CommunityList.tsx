@@ -143,11 +143,11 @@ export const CommunityList = () => {
             {isLoading && communities.length === 0 ? (
                 <div className="w-full flex flex-col items-center justify-center gap-3 py-20 px-4 bg-surface border border-divider-primary rounded-[6px] text-text-muted text-sm text-center">
                     <FontAwesomeIcon icon={faSpinner} className="text-2xl text-primary animate-spin" />
-                    <p className="text-xs font-semibold text-text-muted">Đang tải danh sách cộng đồng...</p>
+                    <p className="text-xs font-semibold text-text-muted">{t('community.loadingCommunities', { defaultValue: 'Đang tải danh sách cộng đồng...' })}</p>
                 </div>
             ) : filtered.length > 0 ? (
                 <div className="flex flex-col gap-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                         {paginatedCommunities.map((community, idx) => (
                             <CommunityGameTile key={`${community.id || community.slug || 'comm'}-${idx}`} community={community} />
                         ))}

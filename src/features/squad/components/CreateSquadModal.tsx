@@ -21,7 +21,7 @@ interface CreateSquadModalProps {
 }
 
 export const CreateSquadModal = ({ isOpen, onClose }: CreateSquadModalProps) => {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const addSquad = useSquadStore((state) => state.addSquad);
 
     const [name, setName] = useState("");
@@ -133,7 +133,7 @@ export const CreateSquadModal = ({ isOpen, onClose }: CreateSquadModalProps) => 
                             >
                                 {GAME_OPTIONS.map((g) => (
                                     <option key={g} value={g} className="bg-surface text-text">
-                                        {g}
+                                        {g === "Khác..." ? (language === "en" ? "Other..." : "Khác...") : g}
                                     </option>
                                 ))}
                             </select>
@@ -182,11 +182,20 @@ export const CreateSquadModal = ({ isOpen, onClose }: CreateSquadModalProps) => 
                             onChange={(e) => setVoice(e.target.value as SquadVoiceType)}
                             className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs text-text focus:outline-none focus:border-primary font-medium cursor-pointer"
                         >
-                            {VOICE_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value} className="bg-surface text-text font-medium">
-                                    {opt.label}
-                                </option>
-                            ))}
+                            {VOICE_OPTIONS.map((opt) => {
+                                let label = opt.label;
+                                if (language === "en") {
+                                    if (opt.value === "Discord Required") label = "🎧 Discord Mic Required";
+                                    else if (opt.value === "In-game Voice") label = "🎙️ In-game Voice Chat";
+                                    else if (opt.value === "Optional") label = "👌 Mic Optional";
+                                    else if (opt.value === "No Mic") label = "🔇 Text Chat Only / No Mic";
+                                }
+                                return (
+                                    <option key={opt.value} value={opt.value} className="bg-surface text-text font-medium">
+                                        {label}
+                                    </option>
+                                );
+                            })}
                         </select>
                     </div>
 

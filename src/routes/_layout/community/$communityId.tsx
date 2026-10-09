@@ -733,7 +733,7 @@ export function CommunityDetailPage() {
                                 type="button"
                                 onClick={() => navigate({ to: `/game/${resolvedGameSlug}` })}
                                 className="flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 hover:border-primary text-[11px] font-mono font-semibold transition-colors cursor-pointer"
-                                title={`Đến trang game ${gameData?.name || community.gameName || resolvedGameSlug}`}
+                                title={isVi ? `Đến trang game ${gameData?.name || community.gameName || resolvedGameSlug}` : `Go to game page for ${gameData?.name || community.gameName || resolvedGameSlug}`}
                             >
                                 <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
                                 <span className="uppercase">Game: {gameData?.name || community.gameName || resolvedGameSlug}</span>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faGamepad, faSpinner,
+    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faUser, faBolt, faGamepad, faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
@@ -125,8 +125,8 @@ export const OverviewTab = ({
                 <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs relative overflow-visible z-10 transition-all ${cardCustomStyle("playerIdentity")}`}>
                     <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60 mb-3">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm">🎯</span>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#8A8F98]">Player Identity</h3>
+                            <FontAwesomeIcon icon={faUser} className="text-[#1688E8] text-xs" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
                         </div>
                         <div className="flex items-center gap-2">
                             {renderToggleBtn("playerIdentity")}
@@ -165,12 +165,15 @@ export const OverviewTab = ({
                 </div>
             )}
 
-            {/* ── SECTION 2: GAME MASTERY (Visual Cards with Game Artwork) ────────── */}
-            {showGameMastery && (
-                <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("gameMastery")}`}>
+            
+            {/* ── PRIMARY CONTENT: GAMING IDENTITY ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                {showGameMastery && (
+    <div className={showCommunityReputation ? "lg:col-span-7" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("gameMastery")}`}>
                     <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                         <div className="flex items-center gap-2">
-                            <FontAwesomeIcon icon={faCrown} className="text-[#E5A93D] text-xs" />
+                            <FontAwesomeIcon icon={faGamepad} className="text-[#1688E8] text-xs" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">
                                 {tr("profile.gameMastery.title", { defaultValue: "Game Mastery" })}
                             </h3>
@@ -205,7 +208,7 @@ export const OverviewTab = ({
                                                     : tr("profile.gameMastery.emptyDescOther", { defaultValue: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery." })}
                                             </p>
                                         </div>
-                                        {isOwnProfile && onNavigateToGames && (
+                                        {isCustomizeMode && onNavigateToGames && (
                                             <button
                                                 type="button"
                                                 onClick={onNavigateToGames}
@@ -318,7 +321,7 @@ export const OverviewTab = ({
                                             onClick={onNavigateToGames}
                                             className="mt-2 text-xs font-semibold text-[#8A8F98] hover:text-[#F0F1F2] flex items-center justify-center gap-1.5 transition-colors"
                                         >
-                                            View all in Library →
+                                            {tr("profile.viewAllInLibrary", { defaultValue: "View all in Library →" })}
                                         </button>
                                     )}
                                 </>
@@ -326,59 +329,11 @@ export const OverviewTab = ({
                         })()
                     )}
                 </div>
-            )}
-
-            {/* ── SECTION 3: RECENT ACTIVITY (Medium Weight Feed) ────────────────── */}
-            {showRecentActivity && (activities.length > 0 || isOwnProfile) && (
-                <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-3 transition-all ${cardCustomStyle("recentActivity")}`}>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm">⚡</span>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {renderToggleBtn("recentActivity")}
-                            <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
-                        </div>
-                    </div>
-
-                    {activities.length === 0 ? (
-                        <div className="py-4 px-4 rounded-[8px] bg-[#13161C] flex flex-col items-center gap-2 border border-[#1A1F2A]/40 text-center">
-                            <span className="text-[#8A8F98] text-xs">No recent activity.</span>
-                            {isOwnProfile && (
-                                <button type="button" className="text-[11px] font-bold text-[#1688E8] hover:text-[#1478D0]">
-                                    Link your Steam account to see your activity
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                            {activities.map((act) => (
-                                <div key={act.id} className="flex items-start gap-3 p-2.5 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all border border-[#1A1F2A]/40">
-                                    <span className="text-sm shrink-0 mt-0.5">{act.icon || "🎮"}</span>
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h5 className="font-bold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
-                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
-                                        </div>
-                                        {act.subtitle && (
-                                            <p className="text-[11px] text-[#8A8F98] leading-normal mt-0.5">{act.subtitle}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* ── SECTION 4: COMMUNITY REPUTATION + BATTLESTATION LOADOUT (Split Grid) ─ */}
-            {(showCommunityReputation || (showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile))) && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-                    
-                    {/* COMMUNITY REPUTATION */}
-                    {showCommunityReputation && (
-                        <div className={`${(showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile)) ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
+    </div>
+)}
+                {showCommunityReputation && (
+    <div className={showGameMastery ? "lg:col-span-5" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
                             <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUsers} className="text-[#1688E8] text-xs" />
@@ -426,11 +381,59 @@ export const OverviewTab = ({
                                 </div>
                             )}
                         </div>
-                    )}
+    </div>
+)}
+            </div>
 
-                    {/* BATTLESTATION LOADOUT */}
-                    {showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile) && (
-                        <div className={`${showCommunityReputation ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
+            {/* ── SECONDARY CONTENT: SOCIAL ACTIVITY AND GAMING SETUP ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                {showRecentActivity && (activities.length > 0 || isOwnProfile) && (
+    <div className={showConnectedAccounts ? "lg:col-span-7" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-3 transition-all ${cardCustomStyle("recentActivity")}`}>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
+                        <div className="flex items-center gap-2">
+                            <FontAwesomeIcon icon={faBolt} className="text-[#1688E8] text-xs" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {renderToggleBtn("recentActivity")}
+                            <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
+                        </div>
+                    </div>
+
+                    {activities.length === 0 ? (
+                        <div className="py-4 px-4 rounded-[8px] bg-[#13161C] flex flex-col items-center gap-2 border border-[#1A1F2A]/40 text-center">
+                            <span className="text-[#8A8F98] text-xs">No recent activity.</span>
+                            {isOwnProfile && (
+                                <button type="button" className="text-[11px] font-bold text-[#1688E8] hover:text-[#1478D0]">
+                                    Link your Steam account to see your activity
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            {activities.map((act) => (
+                                <div key={act.id} className="flex items-start gap-3 p-2.5 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all border border-[#1A1F2A]/40">
+                                    <span className="text-sm shrink-0 mt-0.5">{act.icon || "🎮"}</span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h5 className="font-bold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
+                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
+                                        </div>
+                                        {act.subtitle && (
+                                            <p className="text-[11px] text-[#8A8F98] leading-normal mt-0.5">{act.subtitle}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+    </div>
+)}
+                {showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile) && (
+    <div className={(showRecentActivity && (activities.length > 0 || isOwnProfile)) ? "lg:col-span-5" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
                             <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faDesktop} className="text-[#1688E8] text-xs" />
@@ -443,9 +446,9 @@ export const OverviewTab = ({
 
                             {/* Public View: Gaming Hardware Loadout vs Edit Mode: Form */}
                             {isCustomizeMode ? (
-                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px] max-h-[300px] overflow-y-auto">
+                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px]">
                                     <span className="text-[10px] font-mono font-bold text-[#1688E8] uppercase tracking-wider">
-                                        Cập nhật thông tin thiết bị góc máy
+                                        {tr("profile.battlestationUpdate", { defaultValue: "Cập nhật thông tin thiết bị góc máy" })}
                                     </span>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                         {GEAR_CATEGORIES.map((cat) => (
@@ -458,7 +461,7 @@ export const OverviewTab = ({
                                                     type="text"
                                                     value={gearData[cat.value] || ""}
                                                     onChange={(e) => onGearChange?.(cat.value, e.target.value)}
-                                                    placeholder={`Nhập ${cat.value}...`}
+                                                    placeholder={tr("profile.battlestationPlaceholder", { item: cat.value, defaultValue: `Nhập ${cat.value}...` })}
                                                     className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] px-2.5 py-1.5 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
                                                 />
                                             </div>
@@ -468,15 +471,9 @@ export const OverviewTab = ({
                             ) : (
                                 <>
                                     {filledGear.length === 0 ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => isOwnProfile && onToggleHideSection && onToggleHideSection("connectedAccounts")}
-                                            className="w-full py-5 px-4 rounded-[10px] border border-dashed border-[#222834] bg-[#13161C] hover:bg-[#1A1E28] transition-all text-center flex flex-col items-center justify-center gap-1 cursor-pointer"
-                                        >
-                                            <span className="text-xs font-bold text-[#1688E8] uppercase tracking-wider font-mono">
-                                                + Add your first gear
-                                            </span>
-                                        </button>
+                                        <div className="py-4 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
+                                            <span>{tr("profile.battlestationEmpty", { defaultValue: "Chưa có thông tin thiết bị." })}</span>
+                                        </div>
                                     ) : (
                                         /* Public Gaming Loadout Presentation */
                                         <div className="flex flex-col divide-y divide-[#181C24]/50">
@@ -498,11 +495,9 @@ export const OverviewTab = ({
                                 </>
                             )}
                         </div>
-                    )}
-
-                </div>
-            )}
-
+    </div>
+)}
+            </div>
         </div>
     );
 };

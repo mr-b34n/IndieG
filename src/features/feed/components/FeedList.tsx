@@ -14,7 +14,7 @@ import { useTranslation } from "@/shared/hooks/useTranslate"
 import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
 import { prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
-import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";
+import { getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type PostData } from "@/features/post";
 
 import { useCommunitiesStore } from "@/features/community";
 import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
@@ -211,6 +211,11 @@ export const FeedList = () => {
     const displayedPosts = useMemo(() => {
         return filteredPosts.slice(0, displayLimit);
     }, [filteredPosts, displayLimit]);
+
+    const registerPostIds = useFeedNavigationStore((state) => state.registerPostIds);
+    useEffect(() => {
+        registerPostIds(displayedPosts.map((p) => p.id));
+    }, [displayedPosts, registerPostIds]);
 
     const hasMore = displayLimit < filteredPosts.length;
 

@@ -69,7 +69,7 @@ export const CommunityManageReports = ({
             : items;
         return filteredByCommunity.map((r: any) => {
             const reporterProfile = r.reporterId ? profilesMap.get(r.reporterId) : undefined;
-            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : "Người báo cáo");
+            const reporterName = r.reporter?.name || r.reporter?.username || reporterProfile?.name || reporterProfile?.username || (r.reporterId ? `User (${r.reporterId.slice(0, 6)})` : (isVi ? "Người báo cáo" : "Reporter"));
             const reporterHandle = r.reporter?.username ? `@${r.reporter.username}` : reporterProfile?.username ? `@${reporterProfile.username}` : (r.reporterId ? `@user_${r.reporterId.slice(0, 6)}` : "@reporter");
 
             const targetType = (r.targetType || (r.postId ? "post" : r.commentId ? "comment" : "user")) as "post" | "comment" | "user";
@@ -84,7 +84,7 @@ export const CommunityManageReports = ({
                 r.post?.content?.slice(0, 120) ||
                 r.comment?.content?.slice(0, 120) ||
                 r.reason ||
-                "Nội dung bị ẩn hoặc không thể tải được.";
+                (isVi ? "Nội dung bị ẩn hoặc không thể tải được." : "Content is hidden or unavailable.");
             const status = (
                 r.status === "resolved" ? "resolved" : r.status === "dismissed" ? "dismissed" : "pending"
             ) as "pending" | "resolved" | "dismissed";
@@ -97,8 +97,8 @@ export const CommunityManageReports = ({
                 authorName: reporterName,
                 authorHandle: reporterHandle,
                 reporterName: reporterHandle,
-                reason: r.reason || "Lý do báo cáo không xác định",
-                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString("vi-VN", { hour: '2-digit', minute: '2-digit' }) : "Mới đây",
+                reason: r.reason || (isVi ? "Lý do báo cáo không xác định" : "Unspecified report reason"),
+                createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString(isVi ? "vi-VN" : "en-US", { hour: '2-digit', minute: '2-digit' }) : (isVi ? "Mới đây" : "Recently"),
                 status,
             };
         });

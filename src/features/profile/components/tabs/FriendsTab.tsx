@@ -101,7 +101,7 @@ export const FriendsTab = ({
         return (
             <div className="bg-[#0A0C0E] rounded-[12px] p-12 text-center text-[#9A9DA3] text-sm flex flex-col items-center justify-center gap-3 shadow-xs">
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-2xl text-[#1688E8]" />
-                <span>Đang tải danh sách bạn bè...</span>
+                <span>{t("profile.friendsLoading")}</span>
             </div>
         );
     }
@@ -153,7 +153,7 @@ export const FriendsTab = ({
                                 }`}
                             >
                                 <FontAwesomeIcon icon={faPaperPlane} className="text-[11px]" />
-                                <span>Đã gửi ({outgoingRequests.length})</span>
+                                <span>{t("profile.outgoingRequests")} ({outgoingRequests.length})</span>
                             </button>
 
                             {blockedUsers.length > 0 && (
@@ -167,7 +167,7 @@ export const FriendsTab = ({
                                     }`}
                                 >
                                     <FontAwesomeIcon icon={faBan} className="text-[11px]" />
-                                    <span>Đã chặn ({blockedUsers.length})</span>
+                                    <span>{t("profile.blockedUsers")} ({blockedUsers.length})</span>
                                 </button>
                             )}
                         </>
@@ -324,7 +324,7 @@ export const FriendsTab = ({
                                         <span className="text-xs font-medium text-[#9A9DA3] mt-0.5">{req.game || "Game"}</span>
                                         <span className="text-[10px] text-[#666A71] mt-0.5 flex items-center gap-1">
                                             <FontAwesomeIcon icon={faClock} className="text-[10px]" />
-                                            <span>Đã gửi {req.time}</span>
+                                            <span>{t("profile.sentAt")} {req.time}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -335,7 +335,7 @@ export const FriendsTab = ({
                                         className="px-3.5 py-1.5 rounded-[6px] bg-[#E05252]/15 hover:bg-[#E05252]/25 text-[#FF6B6B] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border border-[#E05252]/30"
                                     >
                                         <FontAwesomeIcon icon={faXmark} />
-                                        <span>Hủy lời mời</span>
+                                        <span>{t("profile.cancelFriendRequest")}</span>
                                     </button>
                                 </div>
                             </div>
@@ -343,7 +343,7 @@ export const FriendsTab = ({
                     ) : (
                         <div className="bg-[#0A0C0E] rounded-[12px] p-8 text-center text-[#9A9DA3] text-xs flex flex-col items-center gap-2 shadow-xs">
                             <FontAwesomeIcon icon={faPaperPlane} className="text-2xl text-[#666A71]" />
-                            <span>Bạn chưa gửi lời mời kết bạn nào.</span>
+                            <span>{t("profile.noOutgoingRequests")}</span>
                         </div>
                     )}
                 </div>
@@ -361,12 +361,12 @@ export const FriendsTab = ({
                                         alt={b.name}
                                         className="w-12 h-12 rounded-[8px] object-cover bg-[#13161C] grayscale opacity-70"
                                         onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).src = raftLogo;
+                                             (e.currentTarget as HTMLImageElement).src = raftLogo;
                                         }}
                                     />
                                     <div className="flex flex-col min-w-0">
                                         <h4 className="font-bold text-[#F0F1F2] text-sm truncate">{b.name}</h4>
-                                        <span className="text-xs font-medium text-[#FF6B6B] mt-0.5">Đã chặn</span>
+                                        <span className="text-xs font-medium text-[#FF6B6B] mt-0.5">{t("profile.blockedLabel")}</span>
                                         <span className="text-[10px] text-[#666A71] mt-0.5">ID: {b.handle || `@${b.name}`}</span>
                                     </div>
                                 </div>
@@ -377,7 +377,7 @@ export const FriendsTab = ({
                                         className="px-3.5 py-1.5 rounded-[6px] bg-[#13161C] hover:bg-[#181C24] text-[#24C58A] hover:text-[#2EE09E] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border border-[#24C58A]/30"
                                     >
                                         <FontAwesomeIcon icon={faBan} />
-                                        <span>Bỏ chặn</span>
+                                        <span>{t("profile.unblock")}</span>
                                     </button>
                                 </div>
                             </div>
@@ -385,7 +385,7 @@ export const FriendsTab = ({
                     ) : (
                         <div className="bg-[#0A0C0E] rounded-[12px] p-8 text-center text-[#9A9DA3] text-xs flex flex-col items-center gap-2 shadow-xs">
                             <FontAwesomeIcon icon={faBan} className="text-2xl text-[#666A71]" />
-                            <span>Chưa chặn người dùng nào.</span>
+                            <span>{t("profile.noBlockedUsers")}</span>
                         </div>
                     )}
                 </div>

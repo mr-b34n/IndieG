@@ -20,7 +20,7 @@ import {
     faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons";
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
 import { formatFileSize } from "../helpers/postAttachmentLimits";
@@ -37,6 +37,8 @@ import { type PostFileAttachment, type PostData } from "../types";
 import { getGameBySlug } from "@/features/game";
 import { usePostVoteInteraction, useBookmarkInteraction } from "../api/interaction-api";
 import { usePostsStore } from "../store/usePostsStore";
+import { useFeedNavigationStore } from "../store/useFeedNavigationStore";
+import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
 
 export type { PostData, PostFileAttachment };
 
@@ -132,14 +134,6 @@ export const PostHeader = ({
                             {(authorName || "G").replace(/^@/, "").charAt(0) || "G"}
                         </div>
                     )}
-                    {rank && (
-                        <span
-                            title={getRankLabel(rank, language)}
-                            className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-bg text-[8px] ${rank.classes}`}
-                        >
-                            <FontAwesomeIcon icon={rank.icon} />
-                        </span>
-                    )}
                 </div>
 
                 {/* Author Information */}
@@ -156,8 +150,9 @@ export const PostHeader = ({
                         </span>
 
                         {rank && (
-                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider shrink-0 ${rank.classes}`}>
-                                {getRankLabel(rank, language)}
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider shrink-0 ${rank.classes}`}>
+                                <FontAwesomeIcon icon={rank.icon} className="text-[10px]" />
+                                <span>{getRankLabel(rank, language)}</span>
                             </span>
                         )}
 
@@ -312,6 +307,7 @@ export interface PostContentProps {
     isDetailView?: boolean;
     isExpanded: boolean;
     onExpand: (e: React.MouseEvent) => void;
+    onCollapse?: (e: React.MouseEvent) => void;
 }
 
 export const PostContent = ({
@@ -319,23 +315,71 @@ export const PostContent = ({
     isDetailView = false,
     isExpanded,
     onExpand,
+    onCollapse,
 }: PostContentProps) => {
+    const { t } = useTranslation();
     if (!content) return null;
 
-    const isLong = content.length > 220;
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    const lines = useMemo(() => {
+        return content.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    }, [content]);
+
+    // Triggers if content has multiple lines, exceeds typical card length, or actually overflows DOM
+    const isLong = isOverflowing || content.length > 180 || lines.length > 2;
+
+    useEffect(() => {
+        if (!contentRef.current) return;
+        const el = contentRef.current;
+        if (el.scrollHeight > el.clientHeight + 2) {
+            setIsOverflowing(true);
+        }
+    }, [content]);
 
     return (
-        <div className="text-[14px] sm:text-[15px] leading-[1.5] text-text/90 font-normal break-words whitespace-pre-line mb-3">
+        <div className="text-[14px] sm:text-[15px] leading-[1.6] text-text/90 font-normal break-words mb-3">
             {isDetailView || isExpanded ? (
-                <span>{content}</span>
+                <div>
+                    <MarkdownContent content={content} />
+                    {!isDetailView && isLong && onCollapse && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCollapse(e);
+                            }}
+                            className="block font-semibold text-text-muted hover:text-text hover:underline cursor-pointer mt-1.5 text-xs sm:text-sm select-none"
+                        >
+                            {t('common.showLess', { defaultValue: 'Thu gọn' })}
+                        </button>
+                    )}
+                </div>
             ) : (
-                <div className="relative">
-                    <div className="line-clamp-3">{content}</div>
+                <div
+                    className={`relative ${isLong ? "cursor-pointer group/content" : ""}`}
+                    onClick={(e) => {
+                        if (isLong) {
+                            e.stopPropagation();
+                            onExpand(e);
+                        }
+                    }}
+                >
+                    <div
+                        ref={contentRef}
+                        className="max-h-[4.8em] overflow-hidden line-clamp-3"
+                    >
+                        <MarkdownContent content={content} isClamped />
+                    </div>
                     {isLong && (
                         <button
                             type="button"
-                            onClick={onExpand}
-                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onExpand(e);
+                            }}
+                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm select-none"
                         >
                             ...more
                         </button>
@@ -667,8 +711,8 @@ export const PostActions = ({
                             ? "text-primary bg-primary/10 scale-105"
                             : "text-text-muted hover:text-text hover:bg-surface-hover/60"
                     }`}
-                    title={isLiked ? "Bỏ upvote" : "Upvote"}
-                    aria-label="Upvote"
+                    title={isLiked ? t('post.unupvote', { defaultValue: "Bỏ upvote" }) : t('post.upvote', { defaultValue: "Upvote" })}
+                    aria-label={t('post.upvote', { defaultValue: "Upvote" })}
                 >
                     <FontAwesomeIcon icon={faCaretUp} className="text-base sm:text-lg" />
                 </button>
@@ -692,8 +736,8 @@ export const PostActions = ({
                             ? "text-rose-500 bg-rose-500/10 scale-105"
                             : "text-text-muted hover:text-text hover:bg-surface-hover/60"
                     }`}
-                    title={isDownvoted ? "Bỏ downvote" : "Downvote"}
-                    aria-label="Downvote"
+                    title={isDownvoted ? t('post.undownvote', { defaultValue: "Bỏ downvote" }) : t('post.downvote', { defaultValue: "Downvote" })}
+                    aria-label={t('post.downvote', { defaultValue: "Downvote" })}
                 >
                     <FontAwesomeIcon icon={faCaretDown} className="text-base sm:text-lg" />
                 </button>
@@ -712,7 +756,7 @@ export const PostActions = ({
                 <button
                     onClick={onCommentClick}
                     className="h-8 sm:h-9 px-2.5 rounded-full hover:bg-surface-hover/60 flex items-center gap-1.5 font-semibold text-text-muted hover:text-text transition-colors cursor-pointer text-xs sm:text-[13px]"
-                    title="Bình luận"
+                    title={t('post.comment', { defaultValue: "Bình luận" })}
                 >
                     <FontAwesomeIcon icon={faComment} className="text-sm sm:text-base text-text-muted" />
                     <span>{commentsCount}</span>
@@ -959,7 +1003,7 @@ export const Post = ({
     const postUrl = typeof window !== "undefined" ? `${window.location.origin}/post/${post.id}` : "";
 
     const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
-    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : "Thành viên");
+    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : t('community.roleMember', { defaultValue: "Thành viên" }));
     const authorUsername = authorObj?.username || (typeof post.author === "object" ? (post.author as { handle?: string })?.handle : undefined);
     const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl || post.authorAvatar) : post.authorAvatar;
 
@@ -1041,12 +1085,55 @@ export const Post = ({
 
     const hasImages = post.images && post.images.length > 0;
 
+    const isFocused = useFeedNavigationStore(
+        (state) => state.focusedPostId !== null && String(state.focusedPostId) === String(post.id)
+    );
+    const setFocusedPostId = useFeedNavigationStore((state) => state.setFocusedPostId);
+    const registerPostActions = useFeedNavigationStore((state) => state.registerPostActions);
+
+    const handleTogglePin = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (!isLoggedIn) return;
+        if (!requireVerifiedEmail("ghim bài viết")) return;
+
+        const isMe = authorName === getCurrentAuthor() || (authorUsername && authorUsername === getCurrentAuthor());
+        const isAdmin = Boolean(
+            user?.role === "admin" ||
+            user?.id === "usr_admin" ||
+            user?.username === "IndieAdmin" ||
+            user?.email === "admin@indieg.com"
+        );
+
+        if (!isMe && !isAdmin) return;
+
+        const nextPinned = !post.pinned;
+        usePostsStore.getState().updatePost(post.id, { pinned: nextPinned });
+        if (onEdit) {
+            onEdit(post.id, { pinned: nextPinned });
+        }
+    };
+
+    useEffect(() => {
+        if (!isFocused && !isDetailView) return;
+        return registerPostActions(post.id, {
+            upvote: () => handleLike({ stopPropagation: () => {} } as React.MouseEvent),
+            downvote: () => handleDownvote({ stopPropagation: () => {} } as React.MouseEvent),
+            bookmark: () => handleToggleBookmark({ stopPropagation: () => {} } as React.MouseEvent),
+            pin: () => handleTogglePin(),
+        });
+    }, [isFocused, isDetailView, post.id, handleLike, handleDownvote, handleToggleBookmark, post.pinned, authorName, authorUsername]);
+
     return (
         <article
-            onClick={handleNavigate}
+            id={`post-article-${post.id}`}
+            onClick={(e) => {
+                setFocusedPostId(post.id);
+                handleNavigate();
+            }}
             className={`
-                w-full border-none
+                w-full border-none transition-all duration-150
                 ${(showActionMenu || showShareMenu) ? "!overflow-visible z-[100]" : "z-0"}
+                ${isFocused && !isDetailView ? "ring-2 ring-primary/60 shadow-lg rounded-[14px]" : ""}
                 ${isDetailView 
                     ? "py-4 pb-5 mb-0 relative" 
                     : "cursor-pointer group px-3.5 sm:px-4 py-4 relative"
@@ -1114,6 +1201,10 @@ export const Post = ({
                     onExpand={(e) => {
                         e.stopPropagation();
                         setIsContentExpanded(true);
+                    }}
+                    onCollapse={(e) => {
+                        e.stopPropagation();
+                        setIsContentExpanded(false);
                     }}
                 />
 

@@ -573,7 +573,7 @@ const CommentItem = ({
                             <button 
                                 onClick={toggleLike} 
                                 className={`p-0.5 rounded-full hover:text-primary transition-colors ${liked ? "text-primary font-bold scale-110" : ""}`}
-                                title={liked ? "Đã upvote" : "Upvote"}
+                                title={liked ? t('post.upvoted', { defaultValue: "Đã upvote" }) : t('post.upvote', { defaultValue: "Upvote" })}
                             >
                                 <FontAwesomeIcon icon={faCaretUp} className="text-xs sm:text-sm" />
                             </button>
@@ -587,7 +587,7 @@ const CommentItem = ({
                             <button 
                                 onClick={toggleDownvote} 
                                 className={`p-0.5 rounded-full hover:text-rose-500 transition-colors ${downvoted ? "text-rose-500 font-bold scale-110" : ""}`}
-                                title={downvoted ? "Đã downvote" : "Downvote"}
+                                title={downvoted ? t('post.downvoted', { defaultValue: "Đã downvote" }) : t('post.downvote', { defaultValue: "Downvote" })}
                             >
                                 <FontAwesomeIcon icon={faCaretDown} className="text-xs sm:text-sm" />
                             </button>
@@ -611,6 +611,16 @@ const CommentItem = ({
                                 ref={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
+                                onKeyDown={(e) => {
+                                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                                        e.preventDefault();
+                                        const textLen = replyText.trim().length;
+                                        const valid = (textLen >= 6 || (!textLen && replyImage.previewUrl)) && textLen <= 1000;
+                                        if (valid) {
+                                            handleSubmitSubReply();
+                                        }
+                                    }
+                                }}
                                 placeholder={t('comment.placeholderReply', { author: comment.author })}
                                 className="w-full bg-transparent text-sm text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-[24px]"
                                 rows={1}
@@ -1275,6 +1285,14 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                                 ref={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
+                                onKeyDown={(e) => {
+                                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                                        e.preventDefault();
+                                        if (canSubmitMain) {
+                                            handleMainReplySubmit();
+                                        }
+                                    }
+                                }}
                                 placeholder={t('comment.placeholderMain')}
                                 className="w-full bg-transparent text-sm sm:text-[15px] text-text placeholder:text-text-faint resize-none overflow-hidden focus:outline-none min-h-[24px]"
                                 rows={1}

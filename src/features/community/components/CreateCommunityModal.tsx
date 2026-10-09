@@ -139,7 +139,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-divider-primary">
                     <h3 className="text-sm font-black text-text uppercase tracking-wider flex items-center gap-2">
                         <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
-                        <span>Tạo Cộng Đồng Mới</span>
+                        <span>{t('community.createModalTitle', { defaultValue: 'Tạo Cộng Đồng Mới' })}</span>
                     </h3>
                     <button
                         type="button"
@@ -156,13 +156,13 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faUsers} className="text-primary text-[10px]" />
-                            <span>Tên cộng đồng</span>
+                            <span>{t('community.nameLabel', { defaultValue: 'Tên cộng đồng' })}</span>
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="VD: Valorant Vietnam Esports"
+                            placeholder={t('community.namePlaceholder', { defaultValue: 'VD: Valorant Vietnam Esports' })}
                             className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary transition-colors"
                             required
                         />
@@ -178,7 +178,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faLayerGroup} className="text-primary text-[10px]" />
-                            <span>Thể loại Game</span>
+                            <span>{t('community.categoryLabel', { defaultValue: 'Thể loại Game' })}</span>
                         </label>
                         <select
                             value={category}
@@ -195,12 +195,12 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
 
                     {/* Description */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-xs font-bold text-text-muted">Mô tả ngắn</label>
+                        <label className="text-xs font-bold text-text-muted">{t('community.descLabel', { defaultValue: 'Mô tả ngắn' })}</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={3}
-                            placeholder="Giới thiệu mục tiêu, phong cách chơi hoặc chủ đề thảo luận chính của cộng đồng..."
+                            placeholder={t('community.descPlaceholder', { defaultValue: 'Giới thiệu mục tiêu, phong cách chơi hoặc chủ đề thảo luận chính của cộng đồng...' })}
                             className="p-2.5 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-medium focus:outline-none focus:border-primary resize-none transition-colors"
                         />
                         {description.trim().length > 0 && description.trim().length < 6 && (
@@ -215,7 +215,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faImage} className="text-primary text-[10px]" />
-                            <span>Biểu tượng (Logo)</span>
+                            <span>{t('community.logoLabel', { defaultValue: 'Biểu tượng (Logo)' })}</span>
                         </label>
                         <div className="flex items-center gap-2 overflow-x-auto pb-1">
                             {DEFAULT_LOGOS.map((url, idx) => (
@@ -237,7 +237,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faImage} className="text-amber-500 text-[10px]" />
-                            <span>Ảnh bìa (Backdrop)</span>
+                            <span>{t('community.backdropLabel', { defaultValue: 'Ảnh bìa (Backdrop)' })}</span>
                         </label>
                         <div className="grid grid-cols-2 gap-2">
                             {DEFAULT_BACKDROPS.map((url, idx) => (
@@ -259,7 +259,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faTag} className="text-primary text-[10px]" />
-                            <span>Thẻ tìm kiếm (Tags, phân cách bằng dấu phẩy)</span>
+                            <span>{t('community.tagsLabel', { defaultValue: 'Thẻ tìm kiếm (Tags, phân cách bằng dấu phẩy)' })}</span>
                         </label>
                         <input
                             type="text"
@@ -274,7 +274,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                     <div className="flex flex-col gap-1">
                         <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
                             <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-500 text-[10px]" />
-                            <span>Nội quy cộng đồng (mỗi dòng 1 quy tắc)</span>
+                            <span>{t('community.rulesInputLabel', { defaultValue: 'Nội quy cộng đồng (mỗi dòng 1 quy tắc)' })}</span>
                         </label>
                         <textarea
                             value={rulesInput}
@@ -291,14 +291,14 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                             onClick={onClose}
                             className="px-3.5 py-1.5 rounded-[4px] bg-surface-hover text-text-muted text-xs font-bold hover:text-text transition-colors cursor-pointer border border-divider-primary"
                         >
-                            Hủy
+                            {t('common.cancel', { defaultValue: 'Hủy' })}
                         </button>
                         <button
                             type="submit"
                             className="px-4 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                         >
                             <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                            <span>Tạo cộng đồng</span>
+                            <span>{t('community.createBtn', { defaultValue: 'Tạo cộng đồng' })}</span>
                         </button>
                     </div>
                 </form>

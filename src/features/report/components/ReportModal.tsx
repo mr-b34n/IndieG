@@ -7,6 +7,7 @@ import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
 import { REPORT_REASONS } from "../constants";
 import { useCreateReportMutation } from "@/shared/api/useQueries";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 
 export const ReportModal = ({ postId, author = "người dùng", onClose }: ReportModalProps) => {
     const { t } = useTranslation();
@@ -14,6 +15,13 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
     const [details, setDetails] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
     const createReportMutation = useCreateReportMutation();
+
+    useRegisterOverlay({
+        id: `report-modal-${postId}`,
+        isOpen: true,
+        onClose,
+        priority: 120,
+    });
 
     const isDetailsValid = details.trim().length === 0 || details.trim().length >= 6;
 

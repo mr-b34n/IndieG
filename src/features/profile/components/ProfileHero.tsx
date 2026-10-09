@@ -231,7 +231,7 @@ export const ProfileHero = ({
                                             value={identity.name}
                                             onChange={(e) => onIdentityChange({ name: e.target.value })}
                                             className="px-3 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-[#F0F1F2] font-bold text-base w-48 sm:w-60 focus:outline-none focus:border-[#1688E8] transition-colors"
-                                            placeholder="Tên hiển thị"
+                                            placeholder={t("profile.displayNameLabel", { defaultValue: "Tên hiển thị" })}
                                         />
                                         <input
                                             type="text"
@@ -326,11 +326,11 @@ export const ProfileHero = ({
                             <div className="relative flex items-center gap-2" ref={friendMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => handleProtectedAction("gửi tin nhắn", () => {})}
+                                    onClick={() => handleProtectedAction(t("profile.message", { defaultValue: "gửi tin nhắn" }), () => {})}
                                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faMessage} className="text-[#1688E8] text-xs" />
-                                    <span>Nhắn tin</span>
+                                    <span>{t("profile.message", { defaultValue: "Nhắn tin" })}</span>
                                 </button>
 
                                 {isFriendActionLoading ? (
@@ -340,12 +340,12 @@ export const ProfileHero = ({
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur text-[#9A9DA3] text-xs font-semibold border border-[#222834]"
                                     >
                                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
-                                        <span>Đang xử lý...</span>
+                                        <span>{t("common.loading", { defaultValue: "Đang xử lý..." })}</span>
                                     </button>
                                 ) : isFriend ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("quản lý bạn bè", () => setShowFriendMenu((v) => !v))}
+                                        onClick={() => handleProtectedAction(t("profile.friendsWidgetTitle", { defaultValue: "quản lý bạn bè" }), () => setShowFriendMenu((v) => !v))}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A]/20 backdrop-blur text-[#2EE09E] text-xs font-bold hover:bg-[#24C58A]/30 transition-all cursor-pointer border border-[#24C58A]/30"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
@@ -355,7 +355,7 @@ export const ProfileHero = ({
                                 ) : isPendingIncoming ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("chấp nhận kết bạn", () => onAcceptRequest?.())}
+                                        onClick={() => handleProtectedAction(t("profile.accept", { defaultValue: "chấp nhận kết bạn" }), () => onAcceptRequest?.())}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A] hover:bg-[#1fa976] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
@@ -364,17 +364,17 @@ export const ProfileHero = ({
                                 ) : isPendingOutgoing ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("hủy lời mời", () => onCancelRequest?.())}
+                                        onClick={() => handleProtectedAction(t("profile.cancelFriendRequest", { defaultValue: "hủy lời mời" }), () => onCancelRequest?.())}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 backdrop-blur hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer border border-[#E5A93D]/30"
-                                        title="Nhấn để hủy lời mời"
+                                        title={t("profile.cancelFriendRequest", { defaultValue: "Nhấn để hủy lời mời" })}
                                     >
                                         <FontAwesomeIcon icon={faClock} />
-                                        <span>Đã gửi lời mời</span>
+                                        <span>{t("profile.friendRequestSent", { defaultValue: "Đã gửi lời mời" })}</span>
                                     </button>
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("kết bạn", onAddFriend)}
+                                        onClick={() => handleProtectedAction(t("profile.addFriend", { defaultValue: "kết bạn" }), onAddFriend)}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                                     >
                                         <FontAwesomeIcon icon={faUserPlus} />
@@ -384,7 +384,7 @@ export const ProfileHero = ({
 
                                 <button
                                     type="button"
-                                    onClick={() => handleProtectedAction("mở tùy chọn", () => setShowFriendMenu((v) => !v))}
+                                    onClick={() => handleProtectedAction(t("common.settings", { defaultValue: "mở tùy chọn" }), () => setShowFriendMenu((v) => !v))}
                                     className="w-8 h-8 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-xs transition-all cursor-pointer border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faEllipsisV} />
@@ -423,8 +423,8 @@ export const ProfileHero = ({
                 <div className="w-full bg-rose-950/40 border-y border-rose-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-rose-200">
                     <FontAwesomeIcon icon={faBan} className="text-rose-400 text-sm shrink-0" />
                     <div className="min-w-0 flex-1">
-                        <span className="font-bold text-rose-300">Tài khoản này đã bị khóa: </span>
-                        <span className="text-rose-200/90">{identity.banReason || "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG."}</span>
+                        <span className="font-bold text-rose-300">{t("profile.bannedAccountTitle", { defaultValue: "Tài khoản này đã bị khóa: " })}</span>
+                        <span className="text-rose-200/90">{identity.banReason || t("profile.defaultBanReason", { defaultValue: "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG." })}</span>
                     </div>
                 </div>
             )}
@@ -432,8 +432,8 @@ export const ProfileHero = ({
                 <div className="w-full bg-amber-950/30 border-y border-amber-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-amber-200">
                     <FontAwesomeIcon icon={faClock} className="text-amber-400 text-sm shrink-0" />
                     <div className="min-w-0 flex-1">
-                        <span className="font-bold text-amber-300">Hồ sơ đã lưu trữ (Archived): </span>
-                        <span className="text-amber-200/90">Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn.</span>
+                        <span className="font-bold text-amber-300">{t("profile.archivedProfileTitle", { defaultValue: "Hồ sơ đã lưu trữ (Archived): " })}</span>
+                        <span className="text-amber-200/90">{t("profile.archivedProfileDesc", { defaultValue: "Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn." })}</span>
                     </div>
                 </div>
             )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { uploadImageToR2 } from '../shared/services/upload-service';
 import { ImageCropperModal } from '../features/profile/components/ImageCropperModal';
+import { useTranslation } from '@/shared/hooks/useTranslate';
 
 export interface AvatarUploaderProps {
     authToken?: string;
@@ -30,6 +31,8 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     onError,
     className = '',
 }) => {
+    const { t, language } = useTranslation();
+    const isVi = language === 'vi';
     const [loading, setLoading] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -59,7 +62,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
         try {
             setLoading(true);
-            setStatusMsg('Đang nén WebP và tải lên Cloudflare R2...');
+            setStatusMsg(isVi ? 'Đang nén WebP và tải lên Cloudflare R2...' : 'Compressing WebP and uploading...');
 
             const fileToUpload = croppedFile || dataUrlToFile(croppedDataUrl, 'avatar.jpg');
             const result = await uploadImageToR2({
@@ -73,9 +76,9 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                 setPreviewUrl(newAvatarUrl);
                 onUploadSuccess?.(newAvatarUrl);
             }
-            setStatusMsg('Cập nhật Avatar thành công!');
+            setStatusMsg(isVi ? 'Cập nhật Avatar thành công!' : 'Avatar updated successfully!');
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Upload thất bại';
+            const message = err instanceof Error ? err.message : (isVi ? 'Upload thất bại' : 'Upload failed');
             setErrorMsg(message);
             onError?.(err instanceof Error ? err : new Error(message));
         } finally {
@@ -93,7 +96,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                     onClose={() => setRawCropSrc(null)}
                     onSave={handleSaveCropped}
                     aspectRatio={1}
-                    title="Căn chỉnh ảnh đại diện"
+                    title={isVi ? "Căn chỉnh ảnh đại diện" : "Adjust Avatar"}
                     outputWidth={400}
                 />
             )}
@@ -121,7 +124,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                     ? 'bg-[#1D263B] text-[#8D97AA] cursor-not-allowed'
                     : 'bg-[#1597FF] hover:bg-[#0084F0] text-white shadow-md hover:shadow-cyan-500/20'
             }`}>
-                <span>{loading ? 'Đang xử lý...' : 'Chọn ảnh đại diện mới'}</span>
+                <span>{loading ? t('common.loading', { defaultValue: 'Đang xử lý...' }) : (isVi ? 'Chọn ảnh đại diện mới' : 'Select new avatar')}</span>
                 <input
                     type="file"
                     className="hidden"
@@ -132,7 +135,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             </label>
 
             <span className="text-xs text-[#8D97AA] text-center">
-                JPG, PNG, WebP • Tối đa 5MB • Hỗ trợ căn chỉnh crop trước khi nén WebP
+                {isVi ? 'JPG, PNG, WebP • Tối đa 5MB • Hỗ trợ căn chỉnh crop trước khi nén WebP' : 'JPG, PNG, WebP • Max 5MB • Crop preview supported before WebP compression'}
             </span>
 
             {statusMsg && !errorMsg && (

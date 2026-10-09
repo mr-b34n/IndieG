@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faChevronLeft, faChevronRight, faMagnifyingGlassPlus, faMagnifyingGlassMinus, faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 
 interface LightboxProps {
     images: string[];
@@ -15,6 +17,13 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+    useRegisterOverlay({
+        id: "lightbox-modal",
+        isOpen: true,
+        onClose,
+        priority: 150,
+    });
 
     const resetZoom = () => {
         setScale(1);
@@ -31,16 +40,8 @@ export const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         resetZoom();
     };
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
-            if (e.key === "ArrowRight") showNext();
-            if (e.key === "ArrowLeft") showPrev();
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentIndex]);
+    useHotkeys(["ArrowRight"], () => showNext(), { ignoreInput: false });
+    useHotkeys(["ArrowLeft"], () => showPrev(), { ignoreInput: false });
 
     useEffect(() => {
         document.body.style.overflow = "hidden";

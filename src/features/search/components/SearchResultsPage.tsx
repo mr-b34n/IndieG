@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
 import { useGameStore } from "@/features/game";
@@ -208,6 +209,13 @@ export const SearchResultsPage = () => {
             });
         });
     };
+
+    // Quick tab switching: 1 - 5
+    useHotkeys(["1"], () => handleTabChange("all"));
+    useHotkeys(["2"], () => handleTabChange("games"));
+    useHotkeys(["3"], () => handleTabChange("communities"));
+    useHotkeys(["4"], () => handleTabChange("users"));
+    useHotkeys(["5"], () => handleTabChange("posts"));
 
     const handlePageChange = (newPage: number) => {
         if (newPage < 1 || newPage > searchData.pagination.totalPages) return;
