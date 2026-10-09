@@ -14,7 +14,7 @@ import { useTranslation } from "@/shared/hooks/useTranslate"
 import { DEFAULT_AVATAR as avatarGame } from "@/shared/constants/images";
 import { prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
-import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";
+import { getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type PostData } from "@/features/post";
 
 import { useCommunitiesStore } from "@/features/community";
 import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
@@ -212,6 +212,11 @@ export const FeedList = () => {
         return filteredPosts.slice(0, displayLimit);
     }, [filteredPosts, displayLimit]);
 
+    const registerPostIds = useFeedNavigationStore((state) => state.registerPostIds);
+    useEffect(() => {
+        registerPostIds(displayedPosts.map((p) => p.id));
+    }, [displayedPosts, registerPostIds]);
+
     const hasMore = displayLimit < filteredPosts.length;
 
     // Infinite Scroll IntersectionObserver
@@ -252,23 +257,25 @@ export const FeedList = () => {
                 </div>
             )}
 
-            {/* Create Post Area */}
-            {isLoggedIn && (
-                <CreatePostBox
-                    key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
-                    defaultCommunityId={activeCommunityFilter}
-                    onPostCreated={handleCreatePost}
-                />
-            )}
+            {/* Creation and Filtering Area */}
+            <div className="flex flex-col gap-2 sm:gap-3 mb-2 sm:mb-4">
+                {isLoggedIn && (
+                    <CreatePostBox
+                        key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
+                        defaultCommunityId={activeCommunityFilter}
+                        onPostCreated={handleCreatePost}
+                    />
+                )}
 
-            {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
-            <CommunitySwitcherRail
-                joinedCommunities={joinedCommunities}
-                activeCommunityId={activeCommunityFilter}
-                onSelectCommunity={setActiveCommunityFilter}
-                sortOrder={sortOrder}
-                onSortChange={setSortOrder}
-            />
+                {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
+                <CommunitySwitcherRail
+                    joinedCommunities={joinedCommunities}
+                    activeCommunityId={activeCommunityFilter}
+                    onSelectCommunity={setActiveCommunityFilter}
+                    sortOrder={sortOrder}
+                    onSortChange={setSortOrder}
+                />
+            </div>
 
             {/* Error State Display */}
             {hasError ? (

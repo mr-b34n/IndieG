@@ -18,4 +18,5 @@ export { getCurrentAuthor } from "./helpers/getCurrentAuthor";
 export { formatFileSize, validateAttachment, isBlobUrl, MAX_ATTACHMENT_SIZE, MAX_FILES, MAX_IMAGES, IMAGE_ACCEPT, FILE_ACCEPT } from "./helpers/postAttachmentLimits";
 export { type EditableAttachment, postToEditableAttachments, prepareAttachmentsForSave, attachmentsToPostData, createAttachmentFromFile, revokeAttachmentUrl, revokeAttachmentUrls } from "./helpers/postAttachments";
 export { ALL_POSTS } from "./mockPosts";
+export { useFeedNavigationStore } from "./store/useFeedNavigationStore";
 

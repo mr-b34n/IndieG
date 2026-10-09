@@ -8,6 +8,7 @@ import {
     faChevronDown, 
     faCheck, 
     faUsers, 
+    faEye,
     faEyeSlash, 
     faXmark, 
     faTriangleExclamation,
@@ -20,6 +21,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
+import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
 
 import { createAttachmentFromFile, type EditableAttachment, prepareAttachmentsForSave } from "@/features/post/helpers/postAttachments";
 import { useAuthStore } from "@/features/auth";
@@ -143,8 +147,8 @@ const PostSettingsMenu = ({
                 ref={buttonRef}
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className={`relative flex items-center justify-center w-7 h-7 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer border border-border/50 ${
-                    open || isSpoiler || isNsfw || pinned ? "bg-surface-hover text-primary border-primary/40" : ""
+                className={`relative flex items-center justify-center w-7 h-7 rounded-[6px] text-xs font-semibold hover:bg-surface-hover text-text-muted hover:text-text transition-colors cursor-pointer ${
+                    open || isSpoiler || isNsfw || pinned ? "bg-surface-hover text-primary" : ""
                 }`}
                 title={t('feed.settings', { defaultValue: 'Cài đặt bài viết' })}
             >
@@ -352,36 +356,42 @@ export const CommunitySelector = ({
 /* =========================================================================
    6. Content Editor Formatting Toolbar
    ========================================================================= */
-const FormattingToolbar = ({
+export const FormattingToolbar = ({
     onFormat,
     onAddImage,
+    isPreview = false,
+    onTogglePreview,
 }: {
     onFormat: (prefix: string, suffix?: string, placeholder?: string) => void;
-    onAddImage: () => void;
+    onAddImage?: () => void;
+    isPreview?: boolean;
+    onTogglePreview?: (preview: boolean) => void;
 }) => {
+    const { t, language } = useTranslation();
+    const isVi = language === "vi";
     return (
-        <div className="flex items-center justify-between gap-1 py-1 px-1.5 bg-surface-hover/40 border border-border/40 rounded-lg text-text-muted flex-wrap">
+        <div className="flex items-center justify-between gap-2 py-1 px-1.5 bg-surface-hover/40 border border-border/40 rounded-lg text-text-muted flex-wrap">
             <div className="flex items-center gap-1 flex-wrap">
                 <button
                     type="button"
-                    onClick={() => onFormat("**", "**", "in đậm")}
-                    title="In đậm (Bold)"
+                    onClick={() => onFormat("**", "**", isVi ? "in đậm" : "bold")}
+                    title={isVi ? "In đậm (Bold)" : "Bold"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs font-bold cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faBold} />
                 </button>
                 <button
                     type="button"
-                    onClick={() => onFormat("*", "*", "nghiêng")}
-                    title="In nghiêng (Italic)"
+                    onClick={() => onFormat("*", "*", isVi ? "nghiêng" : "italic")}
+                    title={isVi ? "In nghiêng (Italic)" : "Italic"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs italic cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faItalic} />
                 </button>
                 <button
                     type="button"
-                    onClick={() => onFormat("~~", "~~", "gạch ngang")}
-                    title="Gạch ngang (Strikethrough)"
+                    onClick={() => onFormat("~~", "~~", isVi ? "gạch ngang" : "strikethrough")}
+                    title={isVi ? "Gạch ngang (Strikethrough)" : "Strikethrough"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faStrikethrough} />
@@ -389,39 +399,71 @@ const FormattingToolbar = ({
                 <span className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
                 <button
                     type="button"
-                    onClick={() => onFormat("\n- ", "", "mục danh sách")}
-                    title="Danh sách (List)"
+                    onClick={() => onFormat("\n- ", "", isVi ? "mục danh sách" : "list item")}
+                    title={isVi ? "Danh sách (List)" : "List"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faListUl} />
                 </button>
                 <button
                     type="button"
-                    onClick={() => onFormat("[", "](https://)", "tiêu đề liên kết")}
-                    title="Gắn liên kết (Link)"
+                    onClick={() => onFormat("[", "](https://)", isVi ? "tiêu đề liên kết" : "link title")}
+                    title={isVi ? "Gắn liên kết (Link)" : "Link"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faLink} />
                 </button>
                 <button
                     type="button"
-                    onClick={() => onFormat("\n> ", "", "trích dẫn")}
-                    title="Trích dẫn (Quote)"
+                    onClick={() => onFormat("\n> ", "", isVi ? "trích dẫn" : "quote")}
+                    title={isVi ? "Trích dẫn (Quote)" : "Quote"}
                     className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
                 >
                     <FontAwesomeIcon icon={faQuoteLeft} />
                 </button>
+                {onAddImage && (
+                    <>
+                        <span className="w-[1px] h-3.5 bg-border/60 mx-0.5" />
+                        {/* Top Media Upload Trigger */}
+                        <button
+                            type="button"
+                            onClick={onAddImage}
+                            title={t('feed.mediaButton', { defaultValue: 'Tải lên hình ảnh' })}
+                            className="w-7 h-7 rounded flex items-center justify-center hover:bg-surface-hover hover:text-text transition-colors text-xs cursor-pointer"
+                        >
+                            <FontAwesomeIcon icon={faImage} />
+                        </button>
+                    </>
+                )}
             </div>
 
-            {/* Top Media Upload Trigger */}
-            <button
-                type="button"
-                onClick={onAddImage}
-                title="Tải lên hình ảnh hoặc video"
-                className="flex items-center justify-center w-7 h-7 rounded-[6px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text hover:text-primary transition-colors cursor-pointer"
-            >
-                <FontAwesomeIcon icon={faImage} className="text-emerald-400 text-xs" />
-            </button>
+            {onTogglePreview && (
+                <div className="flex items-center gap-1 bg-surface/70 rounded-md p-0.5 border border-border/40 text-[11px] shrink-0 ml-auto">
+                    <button
+                        type="button"
+                        onClick={() => onTogglePreview(false)}
+                        className={`px-2.5 py-1 rounded font-semibold transition-colors cursor-pointer ${
+                            !isPreview
+                                ? "bg-surface-hover text-text shadow-xs"
+                                : "text-text-muted hover:text-text"
+                        }`}
+                    >
+                        {t('feed.write', { defaultValue: 'Soạn thảo' })}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onTogglePreview(true)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded font-semibold transition-colors cursor-pointer ${
+                            isPreview
+                                ? "bg-primary text-white shadow-xs"
+                                : "text-text-muted hover:text-text"
+                        }`}
+                    >
+                        <FontAwesomeIcon icon={faEye} className="text-[10px]" />
+                        <span>{t('feed.preview', { defaultValue: 'Xem trước' })}</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -483,6 +525,7 @@ export const CreatePostModal = ({
     const [attachments, setAttachments] = useState<EditableAttachment[]>([]);
     const [isPosting, setIsPosting] = useState(false);
     const [submitAttempted, setSubmitAttempted] = useState(false);
+    const [isPreview, setIsPreview] = useState(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -529,17 +572,12 @@ export const CreatePostModal = ({
         }
     }, [content, title, communityId, attachments, allowComments, pinned, isSpoiler, isNsfw, saveDraft]);
 
-    // Keyboard support: Escape to cancel
-    useEffect(() => {
-        if (!isVisible) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                handleClose();
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isVisible, handleClose]);
+    useRegisterOverlay({
+        id: "create-post-modal",
+        isOpen: isVisible,
+        onClose: handleClose,
+        priority: 100,
+    });
 
     const targetCommunity = useMemo(() => {
         const targetId = communityId || effectiveDefaultCommunityId;
@@ -575,6 +613,9 @@ export const CreatePostModal = ({
     };
 
     const handleFormat = (prefix: string, suffix: string = prefix, placeholder: string = "") => {
+        if (isPreview) {
+            setIsPreview(false);
+        }
         const textarea = textareaRef.current;
         if (!textarea) return;
         const start = textarea.selectionStart;
@@ -686,11 +727,22 @@ export const CreatePostModal = ({
             setManualTags("");
             setAttachments([]);
             setSubmitAttempted(false);
+            setIsPreview(false);
             handleClose();
         } finally {
             setIsPosting(false);
         }
     };
+
+    useHotkeys(
+        ["Mod", "Enter"],
+        () => {
+            if (canPost) {
+                handlePost();
+            }
+        },
+        { ignoreInput: false, enabled: Boolean(isVisible) }
+    );
 
     if (!isVisible) return null;
 
@@ -700,7 +752,7 @@ export const CreatePostModal = ({
             <input
                 ref={imageInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
                 multiple
                 onChange={handleQuickImageChange}
                 className="hidden"
@@ -779,32 +831,44 @@ export const CreatePostModal = ({
                     <FormattingToolbar
                         onFormat={handleFormat}
                         onAddImage={handleQuickImageClick}
+                        isPreview={isPreview}
+                        onTogglePreview={setIsPreview}
                     />
 
-                    {/* Main Content Textarea */}
-                    <div className="relative w-full flex-1 min-h-[160px] flex flex-col">
-                        <textarea
-                            ref={textareaRef}
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            onFocus={() => setIsEditorFocused(true)}
-                            onBlur={() => setIsEditorFocused(false)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                                    handlePost();
-                                }
-                            }}
-                            placeholder={dynamicPlaceholder}
-                            rows={8}
-                            className="w-full flex-1 min-h-[160px] p-2 bg-transparent border-none outline-none text-sm font-normal text-text placeholder:text-text-faint resize-none leading-relaxed"
-                        />
-                        {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
-                            <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1">
-                                <FontAwesomeIcon icon={faTriangleExclamation} />
-                                <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length, defaultValue: `Nội dung cần tối thiểu 6 ký tự (hiện tại: ${content.trim().length})` })}</span>
-                            </p>
-                        )}
-                    </div>
+                    {/* Main Content Area: Editor or Preview */}
+                    {isPreview ? (
+                        <div className="w-full flex-1 min-h-[180px] p-3 rounded-lg bg-surface-hover/20 border border-border/40 overflow-y-auto max-h-[360px]">
+                            {content.trim() ? (
+                                <MarkdownContent content={content} />
+                            ) : (
+                                <div className="h-full min-h-[140px] flex items-center justify-center text-xs text-text-faint italic">
+                                    {t('feed.previewEmpty', { defaultValue: 'Chưa có nội dung để xem trước' })}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="relative w-full flex-1 min-h-[160px] flex flex-col">
+                            <textarea
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                        handlePost();
+                                    }
+                                }}
+                                placeholder={dynamicPlaceholder}
+                                rows={8}
+                                className="w-full flex-1 min-h-[160px] p-2 bg-transparent border-none outline-none text-sm font-normal text-text placeholder:text-text-faint resize-none leading-relaxed"
+                            />
+                            {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
+                                <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-1">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} />
+                                    <span>{t('feed.contentMinLenError', { min: 6, current: content.trim().length, defaultValue: `Nội dung cần tối thiểu 6 ký tự (hiện tại: ${content.trim().length})` })}</span>
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Attachments Preview */}
                     {attachments.length > 0 && (
@@ -970,7 +1034,7 @@ export const CreatePostBox = ({
                         }}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-surface-hover text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
                     >
-                        <FontAwesomeIcon icon={faImage} className="text-emerald-500 text-xs" />
+                        <FontAwesomeIcon icon={faImage} className="text-xs" />
                         <span className="hidden sm:inline">Media</span>
                     </button>
                 </div>
