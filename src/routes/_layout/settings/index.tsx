@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faShieldHalved, faGlobe, faBug, faLightbulb, faCheckCircle, faArrowLeft, faBan, faGamepad, faCheck,
-    faEye, faBell, faLaptop, faMobileScreen, faExclamationTriangle,
+    faEye, faBell, faLaptop, faLaptopCode, faMobileScreen, faExclamationTriangle,
     faUserClock, faArrowUp, faArrowDown, faLanguage,
     faChevronRight, faXmark, faSliders, faComment, faReply, faHeart, faAt, faUsers,
     faSun, faMoon
@@ -14,6 +14,7 @@ import { useAuthStore } from '@/features/auth';
 import { useUserSessionsQuery, useRevokeSessionMutation } from '@/shared/api/useQueries';
 import { INITIAL_GAMES } from '@/features/game/constants';
 import { useTranslation } from '@/shared/hooks/useTranslate';
+import { useHotkeys } from '@/shared/hooks/useHotkeys';
 
 export const Route = createFileRoute('/_layout/settings/')({
     component: SettingsPage,
@@ -63,6 +64,30 @@ export function SettingsPage() {
     const [activeTab, setActiveTab] = useState<
         "general" | "quickAccess" | "privacy" | "notifications" | "account" | "blocked" | "feedback" | "danger"
     >(initialTab);
+
+    const handleTabChange = (tab: typeof activeTab) => {
+        setActiveTab(tab);
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tab);
+        window.history.replaceState({}, "", url.toString());
+    };
+
+    useEffect(() => {
+        const currentUrlTab = new URLSearchParams(window.location.search).get("tab") as typeof activeTab;
+        if (currentUrlTab && currentUrlTab !== activeTab) {
+            setActiveTab(currentUrlTab);
+        }
+    }, [activeTab]);
+
+    // Quick tab switching: 1 - 8
+    useHotkeys(["1"], () => handleTabChange("general"));
+    useHotkeys(["2"], () => handleTabChange("quickAccess"));
+    useHotkeys(["3"], () => handleTabChange("privacy"));
+    useHotkeys(["4"], () => handleTabChange("notifications"));
+    useHotkeys(["5"], () => handleTabChange("account"));
+    useHotkeys(["6"], () => handleTabChange("blocked"));
+    useHotkeys(["7"], () => handleTabChange("feedback"));
+    useHotkeys(["8"], () => handleTabChange("danger"));
 
     const { data: remoteSessions, isLoading: sessionsLoading } = useUserSessionsQuery();
     const revokeSessionMutation = useRevokeSessionMutation();
@@ -482,7 +507,7 @@ export function SettingsPage() {
                                                         <span className="w-5 h-5 rounded bg-primary text-white font-bold flex items-center justify-center text-[10px] shrink-0">
                                                             {idx + 1}
                                                         </span>
-                                                        <img src={gameObj.logoUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-divider-primary/40 shrink-0" />
+                                                        <img src={gameObj.logoUrl || gameObj.bannerUrl} alt={gameObj.name} className="w-7 h-7 rounded object-cover border border-divider-primary/40 shrink-0" />
                                                         <span className="font-bold text-text truncate">{gameObj.name}</span>
                                                     </div>
 
@@ -543,7 +568,7 @@ export function SettingsPage() {
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
-                                                    <img src={game.logoUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-divider-primary/40" />
+                                                    <img src={game.logoUrl || game.bannerUrl} alt={game.name} className="w-7 h-7 rounded object-cover shrink-0 border border-divider-primary/40" />
                                                     <span className="text-xs font-bold text-text truncate">{game.name}</span>
                                                 </div>
                                                 <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? "bg-primary border-primary text-white" : "border-divider-primary/60 bg-surface"}`}>
@@ -588,7 +613,7 @@ export function SettingsPage() {
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-xs font-bold text-text">{t('settings.privacy.profileVisibility', { defaultValue: 'Quyền xem Hồ sơ cá nhân' })}</div>
-                                            <div className="text-[11px] text-text-faint mt-0.5">Ai có quyền truy cập trang thông tin cá nhân của bạn</div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">{t('settings.privacy.profileVisibilityDesc', { defaultValue: 'Ai có quyền truy cập trang thông tin cá nhân của bạn' })}</div>
                                         </div>
                                     </div>
                                     <select
@@ -628,7 +653,7 @@ export function SettingsPage() {
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-xs font-bold text-text">{t('settings.privacy.gameLibraryVisibility', { defaultValue: 'Tủ game & Thành tích' })}</div>
-                                            <div className="text-[11px] text-text-faint mt-0.5">Quyền xem huy hiệu và tựa game đã chọn</div>
+                                            <div className="text-[11px] text-text-faint mt-0.5">{t('settings.privacy.gameLibraryVisibilityDesc', { defaultValue: 'Quyền xem huy hiệu và tựa game đã chọn' })}</div>
                                         </div>
                                     </div>
                                     <select
@@ -658,11 +683,11 @@ export function SettingsPage() {
 
                             <div className="divide-y divide-divider-primary/50">
                                 {[
-                                    { key: "comments", icon: faComment, label: t('settings.notifications.comments', { defaultValue: 'Bình luận mới trong bài viết' }), desc: 'Nhận thông báo khi ai đó bình luận bài viết của bạn' },
-                                    { key: "replies", icon: faReply, label: t('settings.notifications.replies', { defaultValue: 'Phản hồi bình luận của bạn' }), desc: 'Nhận thông báo khi ai đó trả lời bình luận' },
-                                    { key: "likes", icon: faHeart, label: t('settings.notifications.likes', { defaultValue: 'Lượt thích bài viết & bình luận' }), desc: 'Nhận thông báo khi bài viết nhận lượt thích' },
-                                    { key: "mentions", icon: faAt, label: t('settings.notifications.mentions', { defaultValue: 'Thẻ nhắc tên (@Mentions)' }), desc: 'Nhận thông báo khi có người nhắc đến bạn' },
-                                    { key: "communityActivity", icon: faUsers, label: t('settings.notifications.communityActivity', { defaultValue: 'Hoạt động từ Cộng đồng' }), desc: 'Nhận thông tin cập nhật từ cộng đồng đã tham gia' },
+                                    { key: "comments", icon: faComment, label: t('settings.notifications.comments', { defaultValue: 'Bình luận mới trong bài viết' }), desc: t('settings.notifications.commentsDesc', { defaultValue: 'Nhận thông báo khi ai đó bình luận bài viết của bạn' }) },
+                                    { key: "replies", icon: faReply, label: t('settings.notifications.replies', { defaultValue: 'Phản hồi bình luận của bạn' }), desc: t('settings.notifications.repliesDesc', { defaultValue: 'Nhận thông báo khi ai đó trả lời bình luận' }) },
+                                    { key: "likes", icon: faHeart, label: t('settings.notifications.likes', { defaultValue: 'Lượt thích bài viết & bình luận' }), desc: t('settings.notifications.likesDesc', { defaultValue: 'Nhận thông báo khi bài viết nhận lượt thích' }) },
+                                    { key: "mentions", icon: faAt, label: t('settings.notifications.mentions', { defaultValue: 'Thẻ nhắc tên (@Mentions)' }), desc: t('settings.notifications.mentionsDesc', { defaultValue: 'Nhận thông báo khi có người nhắc đến bạn' }) },
+                                    { key: "communityActivity", icon: faUsers, label: t('settings.notifications.communityActivity', { defaultValue: 'Hoạt động từ Cộng đồng' }), desc: t('settings.notifications.communityActivityDesc', { defaultValue: 'Nhận thông tin cập nhật từ cộng đồng đã tham gia' }) },
                                 ].map((item) => {
                                     const isChecked = notifications[item.key as keyof typeof notifications];
                                     return (
@@ -869,7 +894,7 @@ export function SettingsPage() {
                                                 <div key={session.id} className="p-3 bg-surface border border-divider-primary/80 rounded-lg flex items-center justify-between gap-3 group">
                                                     <div className="flex items-center gap-3 min-w-0">
                                                         <div className="w-8 h-8 rounded bg-surface-hover flex items-center justify-center text-text-muted shrink-0">
-                                                            <FontAwesomeIcon icon={session.device.toLowerCase().includes('mobile') || session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('android') ? faMobileScreen : faLaptopCode} />
+                                                            <FontAwesomeIcon icon={(session.device || '').toLowerCase().includes('mobile') || (session.device || '').toLowerCase().includes('iphone') || (session.device || '').toLowerCase().includes('android') ? faMobileScreen : faLaptopCode} />
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="text-xs font-bold text-text truncate">{session.device}</div>
