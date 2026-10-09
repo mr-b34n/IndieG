@@ -1,6 +1,7 @@
 /**
  * OpenAPI 3.0 TypeScript definitions & UI Mappers for IndieG Backend Services
  */
+import { DEFAULT_GAME_LOGO, DEFAULT_BG, DEFAULT_AVATAR } from "@/shared/constants/images";
 
 export interface AuthRegisterDto {
     email: string;
@@ -83,6 +84,7 @@ export interface ChangePasswordDto {
 export interface CommunityDto {
     id: string;
     name: string;
+    slug?: string;
     logo?: string;
     backdrop?: string;
     category?: string;
@@ -95,6 +97,10 @@ export interface CommunityDto {
     joined?: boolean;
     isJoined?: boolean;
     status?: number;
+    gameSlug?: string;
+    gameName?: string;
+    gameId?: string;
+    game?: string | { name: string; slug?: string; id?: string | number };
     createdAt?: string;
     updatedAt?: string;
 }
@@ -360,6 +366,8 @@ export interface ReportDto {
     reporterId?: string;
     status?: ReportStatus;
     reason: string;
+    communityId?: string;
+    communityName?: string;
     moderatorNote?: string;
     moderationAction?: ModerationAction;
     createdAt?: string;
@@ -731,13 +739,19 @@ export const mapPostDtoToPost = mapPostDtoToPostData;
 
 export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
     const raw = dto as Record<string, unknown>;
-    const resolvedLogo = dto.logo || (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150";
-    const resolvedBackdrop = dto.backdrop || (raw.bannerUrl as string) || (raw.coverUrl as string) || "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200";
+    const resolvedBackdrop = dto.backdrop || (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.banner as string) || (raw.headerImg as string) || (raw.header as string) || DEFAULT_BG;
+    // Fallback avatar/logo to header image / backdrop if logo/avatar is not specified
+    const resolvedLogo = dto.logo || (raw.avatarUrl as string) || (raw.avatar as string) || (raw.icon as string) || (raw.logoUrl as string) || (raw.headerImg as string) || (raw.header as string) || resolvedBackdrop || DEFAULT_GAME_LOGO;
     const resolvedMembers = dto.membersCount ?? dto.members ?? 1;
+
+    const resolvedGameSlug = dto.gameSlug || (raw.gameSlug as string) || (typeof dto.game === "object" ? dto.game?.slug : undefined);
+    const resolvedGameName = dto.gameName || (raw.gameName as string) || (typeof dto.game === "object" ? dto.game?.name : typeof dto.game === "string" ? dto.game : undefined);
+    const resolvedGameId = dto.gameId || (raw.gameId as string) || (typeof dto.game === "object" ? String(dto.game?.id || "") : undefined);
 
     return {
         id: dto.id,
         name: dto.name || "Cộng đồng",
+        slug: dto.slug || (raw.slug as string),
         logo: resolvedLogo,
         avatarUrl: resolvedLogo,
         backdrop: resolvedBackdrop,
@@ -750,6 +764,10 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
         tags: dto.tags || [],
         joined: dto.joined === true || dto.isJoined === true,
         featured: dto.featured ?? false,
+        game: dto.game,
+        gameSlug: resolvedGameSlug,
+        gameName: resolvedGameName,
+        gameId: resolvedGameId,
     };
 }
 
@@ -758,8 +776,12 @@ export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
     const appidNum = typeof raw.appid === "number" ? raw.appid : (typeof raw.appid === "string" && !isNaN(Number(raw.appid)) ? parseInt(raw.appid, 10) : undefined);
     const slug = (raw.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(appidNum || "game"));
 
-    const defaultSteamHeader = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/header.jpg` : "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&auto=format&fit=crop&q=80";
-    const defaultSteamHero = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/library_hero.jpg` : "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80";
+    const defaultSteamHeader = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/header.jpg` : DEFAULT_GAME_LOGO;
+    const defaultSteamHero = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/library_hero.jpg` : DEFAULT_BG;
+
+    const resolvedBanner = (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.backdrop as string) || (raw.header as string) || (raw.headerImg as string) || (raw.libraryHero as string) || defaultSteamHero;
+    // Fallback logo/avatar to header image / banner / cover if logo is not provided
+    const resolvedLogo = (raw.logoUrl as string) || (raw.logo as string) || (raw.iconUrl as string) || (raw.icon as string) || (raw.coverUrl as string) || (raw.header as string) || (raw.headerImg as string) || resolvedBanner || defaultSteamHeader;
 
     return {
         slug,
@@ -779,8 +801,8 @@ export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
         sentiment: (raw.sentiment as "Overwhelmingly Positive" | "Very Positive" | "Positive" | "Mixed") || "Positive",
         sentimentVi: (raw.sentimentVi as string) || undefined,
         activePlayers: typeof raw.activePlayers === "number" ? raw.activePlayers : 0,
-        logoUrl: (raw.logoUrl as string) || (raw.logo as string) || (raw.header as string) || defaultSteamHeader,
-        bannerUrl: (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.backdrop as string) || (raw.libraryHero as string) || defaultSteamHero,
+        logoUrl: resolvedLogo,
+        bannerUrl: resolvedBanner,
         description: (raw.description as string) || (raw.descriptionVi as string) || "",
         descriptionVi: (raw.descriptionVi as string) || (raw.description as string) || "",
         features: Array.isArray(raw.features) ? (raw.features as string[]) : [],
@@ -796,7 +818,7 @@ export function mapUserProfileDtoToSearchUser(dto: UserProfileDto | Record<strin
     const username = (raw.username as string) || "gamer";
     const formattedUsername = username.startsWith("@") ? username : `@${username}`;
     const bioText = typeof raw.bio === "string" ? raw.bio : "";
-    const resolvedAvatar = (raw.avatarUrl as string) || (raw.avatar as string) || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
+    const resolvedAvatar = (raw.avatarUrl as string) || (raw.avatar as string) || DEFAULT_AVATAR;
     const status = (raw.status === "in-game" ? "in-game" : raw.status === "online" ? "online" : "offline") as "online" | "in-game" | "offline";
     const isOnline = Boolean(raw.isOnline ?? (status === "online" || status === "in-game"));
     return {
