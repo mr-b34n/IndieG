@@ -1,0 +1,183 @@
+# BỘ TEST CASE KIỂM THỬ TÍNH NĂNG COMMUNITY & LIÊN KẾT TRANG GAME INDIEG
+**Dự án**: IndieG Platform  
+**Module**: Community Hub (`/community`, `/community/$communityId`) & Game Hub (`/game/$gameSlug`)  
+**Tài liệu**: Kế hoạch kiểm thử tính năng liên kết Game Hub và dữ liệu Mock Test  
+
+---
+
+## 1. TỔNG QUAN TÍNH NĂNG
+1. **Liên kết hai chiều (Bidirectional Linking)**:
+   - Từ trang Cộng đồng (Community Hub) người chơi có thể truy cập trực tiếp vào Trang Chi Tiết Game trên IndieG thông qua:
+     + Nút CTA nổi bật tại Header: **"Trang Game IndieG"** (icon Gamepad).
+     + Widget **"INDIEG GAME HUB"** ở thanh tiện ích bên phải (Right Rail) hiển thị ảnh bìa, điểm đánh giá, nhà phát triển, số lượng người chơi hoạt động và nút truy cập.
+     + Mục **"COMMUNITY LINKS"** tại Right Rail.
+     + Nút lối tắt **"GAME PAGE"** tại Sidebar bên trái.
+     + Tab **"Liên kết / Links"** trong phần Giới thiệu (About View).
+     + Huy hiệu **"GAME: {Tên Game}"** tại thanh Breadcrumb điều hướng ở đầu trang.
+     + Thẻ chip Game tại danh sách cộng đồng (`CommunityGameTile`).
+   - Từ Trang Chi Tiết Game (`/game/$gameSlug`) có thể ấn nút **"Tham gia Cộng đồng"** để quay về đúng trang Community Hub tương ứng.
+2. **Dữ liệu Mock Test ("mocktest")**:
+   - Bổ sung đầy đủ dữ liệu bài viết chuẩn theo từng loại (Discussion, Guide, Showcase/Media, Event, Question).
+   - Kiểm tra hiển thị chính xác theo từng tab điều hướng và bộ lọc danh mục.
+
+---
+
+## 2. DANH SÁCH TEST CASES CHI TIẾT
+
+### TC-COM-01: Kiểm tra liên kết từ Community Header sang IndieG Game Page
+- **Mục tiêu**: Đảm bảo nút "Trang Game IndieG" tại Header chuyển hướng đúng đến `/game/$gameSlug`.
+- **Tiền điều kiện**: Người dùng truy cập cộng đồng bất kỳ có liên kết game (ví dụ: `/community/cs2-vietnam` hoặc `/community/cs2`).
+- **Các bước thực hiện**:
+  1. Mở trang `/community/cs2-vietnam`.
+  2. Quan sát khu vực Header bên phải nút "Đã tham gia / Tham gia".
+  3. Kiểm tra hiển thị nút có icon tay cầm game `faGamepad` và nhãn `"Trang Game IndieG"`.
+  4. Nhấp vào nút "Trang Game IndieG".
+- **Kết quả mong đợi**:
+  - URL chuyển hướng tức thì sang `/game/counter-strike-2`.
+  - Trang Game Detail hiển thị đầy đủ thông tin: Counter-Strike 2, Valve, cấu hình máy, điểm đánh giá.
+
+---
+
+### TC-COM-02: Kiểm tra Widget "INDIEG GAME HUB" ở Right Rail
+- **Mục tiêu**: Xác thực widget thẻ game bên cột phải hiển thị đúng thông tin và điều hướng mượt mà.
+- **Tiền điều kiện**: Truy cập `/community/elden-ring-vietnam` trên màn hình desktop.
+- **Các bước thực hiện**:
+  1. Mở trang `/community/elden-ring-vietnam`.
+  2. Nhìn sang cột Right Rail (bên phải).
+  3. Kiểm tra khối widget đầu tiên có tiêu đề `"INDIEG GAME HUB"`.
+  4. Kiểm tra ảnh bìa game, tên game ("ELDEN RING"), điểm đánh giá (4.9), nhà phát triển ("FromSoftware Inc.") và trạng thái "Đang chơi: 42,500+".
+  5. Nhấp vào nút "XEM TRANG GAME TRÊN INDIEG →".
+- **Kết quả mong đợi**:
+  - Chuyển hướng thành công đến `/game/elden-ring`.
+
+---
+
+### TC-COM-03: Kiểm tra lối tắt Game Page từ Community Sidebar & Breadcrumb
+- **Mục tiêu**: Đảm bảo Sidebar và Breadcrumb hiển thị nút liên kết game khi cộng đồng có `gameSlug`.
+- **Tiền điều kiện**: Truy cập `/community/black-myth-wukong-vn`.
+- **Các bước thực hiện**:
+  1. Mở trang `/community/black-myth-wukong-vn`.
+  2. Quan sát thanh Breadcrumb trên cùng:
+     - Kiểm tra có hiển thị badge `• [🎮 GAME: BLACK MYTH: WUKONG]`.
+     - Nhấp vào badge Game trên Breadcrumb -> Kiểm tra chuyển sang `/game/black-myth-wukong`.
+  3. Quay lại trang cộng đồng, cuộn xuống dưới cùng của Sidebar bên trái:
+     - Kiểm tra khối `"GAME PAGE"` với nút `"Trang Game Black Myth: Wukong"`.
+     - Nhấp vào nút này -> Kiểm tra chuyển hướng sang `/game/black-myth-wukong`.
+- **Kết quả mong đợi**:
+  - Cả 2 vị trí đều điều hướng chính xác đến trang game tương ứng mà không bị reload toàn trang.
+
+---
+
+### TC-COM-04: Kiểm tra thẻ Game trong Tab Links của About View
+- **Mục tiêu**: Đảm bảo tab Links hiển thị card nổi bật liên kết trang game IndieG.
+- **Tiền điều kiện**: Truy cập `/community/indie-games-vietnam`.
+- **Các bước thực hiện**:
+  1. Nhấp vào mục "Liên kết" (Links) ở Sidebar hoặc Right Rail (hoặc truy cập `/community/indie-games-vietnam?nav=links`).
+  2. Kiểm tra phần "LIÊN KẾT NỔI BẬT":
+     - Khối banner "Trang Game trên IndieG" với tag "OFFICIAL GAME PAGE" và nút "TRUY CẬP TRANG GAME →".
+  3. Nhấp vào nút "TRUY CẬP TRANG GAME →".
+- **Kết quả mong đợi**:
+  - Điều hướng thành công đến `/game/raft`.
+
+---
+
+### TC-COM-05: Kiểm tra liên kết ngược từ Game Detail Page về Community Hub
+- **Mục tiêu**: Đảm bảo luồng 2 chiều (Game -> Community) hoạt động chuẩn xác.
+- **Tiền điều kiện**: Mở trang Game bất kỳ có `communityId` (ví dụ: `/game/cyberpunk-2077`).
+- **Các bước thực hiện**:
+  1. Mở trang `/game/cyberpunk-2077`.
+  2. Tại thanh công cụ hành động phía dưới phần giới thiệu, tìm nút `"Tham gia Cộng đồng"` (màu tím/accent, có icon `faComments`).
+  3. Nhấp vào nút "Tham gia Cộng đồng".
+- **Kết quả mong đợi**:
+  - Hệ thống chuyển hướng người dùng trở về `/community/cyberpunk-2077-vn`.
+
+---
+
+### TC-COM-06: Kiểm tra chip Game trên danh sách cộng đồng (CommunityGameTile)
+- **Mục tiêu**: Thẻ cộng đồng hiển thị chip nhận diện game liên kết.
+- **Tiền điều kiện**: Truy cập trang tổng quan cộng đồng `/community`.
+- **Các bước thực hiện**:
+  1. Mở trang `/community`.
+  2. Quan sát các thẻ game (ví dụ: CS2 Vietnam, Elden Ring Vietnam, Minecraft Vietnam...).
+  3. Kiểm tra bên cạnh thể loại (Category) có chip `🎮 {Tên Game}`.
+  4. Nhấp trực tiếp vào chip Game trên card.
+- **Kết quả mong đợi**:
+  - Ngăn không kích hoạt sự kiện click thẻ cộng đồng, chuyển hướng trực tiếp đến trang chi tiết của game đó trên IndieG.
+
+---
+
+### TC-COM-07: Mock Test - Hiển thị bài viết Tab "Hướng dẫn" (Guides Tab)
+- **Mục tiêu**: Đảm bảo tab Guides không bị rỗng và lọc đúng các bài viết có tag `guide`.
+- **Tiền điều kiện**: Truy cập `/community/cs2-vietnam`.
+- **Các bước thực hiện**:
+  1. Nhấp vào tab "Hướng dẫn" (Guides) trên Sidebar trái hoặc menu điều hướng (`?nav=guides`).
+  2. Quan sát danh sách bài viết hiển thị.
+- **Kết quả mong đợi**:
+  - Hiển thị bài viết hướng dẫn (ví dụ: *"Tổng hợp Line-up Smoke Mirage thi đấu Premier 2024 (A Site, Mid, B Apps)"*).
+  - Huy hiệu loại bài viết hiển thị đúng dạng `GUIDE` với màu nhận diện.
+  - Không xuất hiện bài viết thuộc loại khác (như Q&A hay Discussion thông thường).
+
+---
+
+### TC-COM-08: Mock Test - Hiển thị bộ sưu tập ảnh/media Tab "Media" (Media Tab)
+- **Mục tiêu**: Kiểm tra tab Media trích xuất và hiển thị thư viện ảnh screenshot từ các bài viết.
+- **Tiền điều kiện**: Truy cập `/community/elden-ring-vietnam` hoặc `/community/black-myth-wukong-vn`.
+- **Các bước thực hiện**:
+  1. Nhấp vào tab "Media" (`?nav=media`).
+  2. Kiểm tra giao diện lưới ảnh (Media Gallery Grid).
+- **Kết quả mong đợi**:
+  - Hiển thị các hình ảnh screenshot chất lượng cao từ game (ví dụ: Shadow of the Erdtree scenery, Wukong UE5 Ray Tracing).
+  - Hover hiển thị thông tin tác giả, lượt like, bình luận.
+  - Không bị lỗi vỡ layout hoặc rỗng dữ liệu ("No media items").
+
+---
+
+### TC-COM-09: Mock Test - Hiển thị sự kiện Tab "Sự kiện" (Events Tab)
+- **Mục tiêu**: Kiểm tra hiển thị danh sách giải đấu và sự kiện cộng đồng.
+- **Tiền điều kiện**: Truy cập `/community/cs2-vietnam`.
+- **Các bước thực hiện**:
+  1. Nhấp vào tab "Sự kiện" (`?nav=events`).
+  2. Kiểm tra danh sách sự kiện sắp diễn ra và sự kiện nổi bật.
+- **Kết quả mong đợi**:
+  - Hiển thị các sự kiện giải đấu thực tế (ví dụ: *"Giải đấu IndieG Premier Cup Mùa Thu 2024 - Tổng thưởng 20.000.000 VNĐ"*).
+  - Hiển thị ngày tổ chức, thời gian, số lượng đội/người tham gia.
+
+---
+
+### TC-COM-10: Kiểm tra bộ lọc Post Type và tìm kiếm từ khóa
+- **Mục tiêu**: Xác thực bộ lọc con (Sub-filter) và thanh tìm kiếm hoạt động chính xác.
+- **Tiền điều kiện**: Tại trang Feed chính của cộng đồng (`/community/cs2-vietnam`).
+- **Các bước thực hiện**:
+  1. Nhấp vào dropdown bộ lọc chọn "Hỏi đáp" (Questions).
+     - Kết quả: Chỉ các bài hỏi đáp (ví dụ: *"Hỏi về setting chuột và refresh rate màn hình 240Hz"*) được hiển thị.
+  2. Nhập từ khóa `"smoke"` vào ô tìm kiếm ở thanh breadcrumb trên cùng.
+     - Kết quả: Danh sách bài viết được lọc theo thời gian thực chứa từ khóa "smoke".
+  3. Nhấp icon [x] để xóa tìm kiếm.
+     - Kết quả: Danh sách bài viết trở về trạng thái ban đầu.
+
+---
+
+### TC-COM-11: Kiểm tra tính năng Tham gia / Rời khỏi cộng đồng (Join/Leave)
+- **Mục tiêu**: Kiểm tra tính năng Join/Leave hoạt động mượt mà và cập nhật số thành viên tức thì.
+- **Tiền điều kiện**: Đăng nhập tài khoản kiểm thử.
+- **Các bước thực hiện**:
+  1. Mở cộng đồng chưa tham gia (ví dụ: Monster Hunter Wilds Vietnam).
+  2. Nhấp nút "Tham gia".
+  3. Quan sát trạng thái nút chuyển sang "Đã tham gia" kèm icon tích xanh, số lượng thành viên tăng +1.
+  4. Nhấp lại để hủy tham gia (hoặc rời khỏi).
+- **Kết quả mong đợi**:
+  - Trạng thái thay đổi lập tức trên giao diện và lưu trữ vào store.
+
+---
+
+### TC-COM-12: Kiểm tra lọc và loại bỏ hoàn toàn các cộng đồng rác/kiểm thử (Junk & Test Communities Sanitization)
+- **Mục tiêu**: Đảm bảo toàn bộ các cộng đồng có tên chung chung hoặc sinh ra từ test tự động (như "Report Community 123", "Comment Community...", "Community Public/Private...", "Test Vote Community...") không bao giờ xuất hiện trên giao diện người dùng.
+- **Tiền điều kiện**: Truy cập trang danh sách cộng đồng `/community` hoặc thanh tìm kiếm toàn trang `/search`.
+- **Các bước thực hiện**:
+  1. Mở trang `/community`.
+  2. Kiểm tra danh sách cộng đồng hiển thị ở tất cả các tab ("Khám phá", "Thịnh hành", "Đã tham gia").
+  3. Sử dụng thanh tìm kiếm nhanh gõ từ khóa `"Report Community"` hoặc `"Comment Community"`.
+- **Kết quả mong đợi**:
+  - Danh sách cộng đồng chỉ hiển thị các cộng đồng game chính thức và chất lượng cao (Counter-Strike 2, Elden Ring, Black Myth: Wukong, Cyberpunk 2077, VALORANT, Minecraft, Raft, Red Dead Redemption 2, Monster Hunter Wilds, Genshin Impact, Apex Legends, v.v.).
+  - 100% các cộng đồng mẫu kiểm thử ("Report Community ...", "Comment Community ...", "Community Public ...", v.v.) đã được xóa sạch khỏi cơ sở dữ liệu và bị bộ lọc client chặn hoàn toàn.
+

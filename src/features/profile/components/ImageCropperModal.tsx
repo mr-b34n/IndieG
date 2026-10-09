@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark, faSearchPlus, faCrop } from "@fortawesome/free-solid-svg-icons";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -24,9 +25,11 @@ export const ImageCropperModal = ({
     onClose,
     onSave,
     aspectRatio = 1,
-    title = "Căn chỉnh ảnh đại diện",
+    title,
     outputWidth = 400,
 }: ImageCropperModalProps) => {
+    const { t } = useTranslation();
+    const modalTitle = title || t("common.adjustAvatar", { defaultValue: "Căn chỉnh ảnh đại diện" });
     const containerWidth = aspectRatio > 2 ? 360 : 256;
     const containerHeight = Math.round(containerWidth / aspectRatio);
     const [zoom, setZoom] = useState(1);
@@ -116,9 +119,9 @@ export const ImageCropperModal = ({
                 <div className="w-full flex items-center justify-between pb-1">
                     <h4 className="font-black text-[#F2F5FA] flex items-center gap-2">
                         <FontAwesomeIcon icon={faCrop} className="text-[#1597FF]" />
-                        <span>{title}</span>
+                        <span>{modalTitle}</span>
                     </h4>
-                    <button type="button" onClick={onClose} className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer" aria-label="Đóng">
+                    <button type="button" onClick={onClose} className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer" aria-label={t("common.close", { defaultValue: "Đóng" })}>
                         <FontAwesomeIcon icon={faXmark} className="text-lg" />
                     </button>
                 </div>
@@ -152,7 +155,7 @@ export const ImageCropperModal = ({
 
                 <div className="w-full flex flex-col gap-2 pt-2">
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-[#8D97AA] shrink-0">Thu phóng:</span>
+                        <span className="text-xs font-semibold text-[#8D97AA] shrink-0">{t("common.zoom", { defaultValue: "Thu phóng:" })}</span>
                         <input
                             type="range"
                             min={MIN_ZOOM}
@@ -161,23 +164,23 @@ export const ImageCropperModal = ({
                             value={zoom}
                             onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
                             className="flex-1 accent-[#1597FF] cursor-pointer"
-                            aria-label="Thu phóng ảnh"
+                            aria-label={t("common.zoom", { defaultValue: "Thu phóng ảnh" })}
                         />
                         <button
                             type="button"
                             onClick={() => handleZoomChange(Math.min(MAX_ZOOM, zoom + 0.1))}
                             className="text-[#8D97AA] hover:text-[#F2F5FA] p-1 cursor-pointer"
-                            aria-label="Phóng to"
+                            aria-label={t("common.zoomIn", { defaultValue: "Phóng to" })}
                         >
                             <FontAwesomeIcon icon={faSearchPlus} />
                         </button>
                     </div>
-                    <p className="text-[11px] text-center text-[#5F697C] italic mt-1">* Kéo thả ảnh để di chuyển.</p>
+                    <p className="text-[11px] text-center text-[#5F697C] italic mt-1">{t("common.dragToMove", { defaultValue: "* Kéo thả ảnh để di chuyển." })}</p>
                 </div>
 
                 <div className="w-full flex items-center justify-end gap-3 pt-2">
                     <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-[8px] bg-[#151A29] hover:bg-[#1A2032] text-[#8D97AA] hover:text-[#F2F5FA] font-bold text-xs transition-colors cursor-pointer">
-                        Hủy
+                        {t("common.cancel", { defaultValue: "Hủy" })}
                     </button>
                     <button
                         type="button"
@@ -185,7 +188,7 @@ export const ImageCropperModal = ({
                         className="px-5 py-2.5 rounded-[8px] bg-[#1597FF] hover:bg-[#35A8FF] text-white font-bold text-xs transition-colors shadow-md cursor-pointer flex items-center gap-2"
                     >
                         <FontAwesomeIcon icon={faCheck} />
-                        <span>Cắt & Lưu ảnh</span>
+                        <span>{t("common.cropAndSave", { defaultValue: "Cắt & Lưu ảnh" })}</span>
                     </button>
                 </div>
             </div>

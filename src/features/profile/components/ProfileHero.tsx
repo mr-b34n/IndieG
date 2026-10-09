@@ -115,11 +115,11 @@ export const ProfileHero = ({
                     />
                 ) : null}
                 
-                {/* Clean vignette overlay */}
+                {/* Clean bottom-up gradient overlay */}
                 <div 
                     className="absolute inset-0" 
                     style={{
-                        background: "linear-gradient(180deg, rgba(8,9,10,0.15) 0%, rgba(8,9,10,0.55) 50%, rgba(10,12,14,0.98) 100%), linear-gradient(90deg, rgba(8,9,10,0.75) 0%, transparent 65%)"
+                        background: "linear-gradient(to top, rgba(10,12,14,0.95) 0%, rgba(10,12,14,0.4) 40%, transparent 100%)"
                     }}
                 />
 
@@ -136,11 +136,10 @@ export const ProfileHero = ({
 
                     {isOwnProfile && (
                         <label
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-black/60 backdrop-blur-md text-[#F0F1F2] text-xs font-semibold hover:bg-black/80 transition-all cursor-pointer"
+                            className="w-8 h-8 flex items-center justify-center rounded-[8px] bg-black/60 backdrop-blur-md text-[#F0F1F2] hover:bg-black/80 transition-all cursor-pointer"
                             title={t("profile.uploadCover")}
                         >
                             <FontAwesomeIcon icon={faImage} className="text-[#1688E8] text-xs" />
-                            <span>{t("profile.uploadCover")}</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -153,10 +152,10 @@ export const ProfileHero = ({
 
                 {/* Avatar Overlay & Gamer Identity Text */}
                 <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                    <div className="flex items-end gap-4">
+                    <div className="flex items-end gap-4 relative z-10">
                         {/* Avatar Box with Initial Letter Fallback */}
                         <div className="relative shrink-0 group">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[#181F2C] ring-2 ring-[#0A0C0E] relative shadow-md flex items-center justify-center">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[#181F2C] relative shadow-md flex items-center justify-center border-none ring-0">
                                 {avatarUrl ? (
                                     <img
                                         src={avatarUrl}
@@ -175,9 +174,11 @@ export const ProfileHero = ({
 
                             {/* Avatar upload overlay */}
                             {isOwnProfile && (
-                                <label className="absolute inset-0 rounded-full bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[#F0F1F2] text-[10px] font-bold cursor-pointer gap-1">
-                                    <FontAwesomeIcon icon={faCamera} className="text-sm" />
-                                    <span>{t("profile.changeAvatar")}</span>
+                                <label 
+                                    className="absolute inset-0 rounded-full bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#F0F1F2] cursor-pointer"
+                                    title={t("profile.changeAvatar")}
+                                >
+                                    <FontAwesomeIcon icon={faCamera} className="text-xl" />
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -187,12 +188,12 @@ export const ProfileHero = ({
                                 </label>
                             )}
 
-                            {/* Status Indicator Dot / Badge */}
                             <div className="absolute -bottom-1 -right-1 z-20" ref={statusMenuRef}>
                                 <button
                                     type="button"
                                     onClick={() => isOwnProfile && setIsEditingStatus((v) => !v)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#14171D] text-[#F0F1F2] shadow-sm ${isOwnProfile ? "cursor-pointer hover:bg-[#1D212A]" : "cursor-default"}`}
+                                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[rgba(255,255,255,0.03)] text-[#F0F1F2] border-none ring-0 outline-none focus:outline-none focus:ring-0 ${isOwnProfile ? "cursor-pointer hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200" : "cursor-default"}`}
+                                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
                                     <span>{cfg.label}</span>
@@ -200,14 +201,14 @@ export const ProfileHero = ({
                                 </button>
 
                                 {isEditingStatus && isOwnProfile && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#14171D] rounded-[8px] p-1.5 shadow-2xl z-30 flex flex-col gap-0.5 animate-fade-in">
+                                    <div className="absolute bottom-full left-0 mb-2 w-40 bg-[#14171D] border-none rounded-[8px] p-1.5 z-30 flex flex-col gap-0.5 animate-fade-in" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
                                         {STATUS_OPTIONS.map((s) => (
                                              <button
                                                 key={s.val}
                                                 type="button"
                                                 onClick={() => { onIdentityChange({ status: s.val }); setIsEditingStatus(false); onSaveIdentity?.(); }}
-                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors text-left cursor-pointer ${
-                                                    identity.status === s.val ? "bg-[#1F2430] text-[#F0F1F2]" : "text-[#9A9DA3] hover:bg-[#1A1E28] hover:text-[#F0F1F2]"
+                                                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-all duration-200 text-left cursor-pointer border-none ring-0 outline-none focus:outline-none ${
+                                                    identity.status === s.val ? "bg-[rgba(255,255,255,0.08)] text-[#F0F1F2]" : "text-[#9A9DA3] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F0F1F2]"
                                                 }`}
                                             >
                                                 <span className={`w-2 h-2 rounded-full shrink-0 ${s.dotColor}`} />
@@ -221,7 +222,7 @@ export const ProfileHero = ({
                         </div>
 
                         {/* Text Identity Block */}
-                        <div className="flex flex-col gap-1 pb-1">
+                        <div className="flex flex-col gap-1 pb-1 drop-shadow-md">
                             {isEditing ? (
                                 <div className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-2">
@@ -230,7 +231,7 @@ export const ProfileHero = ({
                                             value={identity.name}
                                             onChange={(e) => onIdentityChange({ name: e.target.value })}
                                             className="px-3 py-1.5 rounded-[8px] bg-[#14171D] border border-[#222834] text-[#F0F1F2] font-bold text-base w-48 sm:w-60 focus:outline-none focus:border-[#1688E8] transition-colors"
-                                            placeholder="Tên hiển thị"
+                                            placeholder={t("profile.displayNameLabel", { defaultValue: "Tên hiển thị" })}
                                         />
                                         <input
                                             type="text"
@@ -280,23 +281,10 @@ export const ProfileHero = ({
                     </div>
 
                     {/* Actions Bar */}
-                    <div className="flex items-center gap-2 shrink-0 self-end flex-wrap">
+                    <div className="flex items-center gap-2 shrink-0 self-end flex-wrap relative z-10">
                         {isOwnProfile ? (
                             <>
-                                {!isEditing ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (onStartEditMode) onStartEditMode();
-                                            else if (onToggleCustomizeMode) onToggleCustomizeMode();
-                                        }}
-                                        className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                        title="Chỉnh sửa thông tin và tùy chỉnh giao diện hồ sơ"
-                                    >
-                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] text-xs" />
-                                        <span>Chỉnh sửa hồ sơ</span>
-                                    </button>
-                                ) : (
+                                {isEditing && (
                                     <>
                                         <button
                                             type="button"
@@ -304,11 +292,11 @@ export const ProfileHero = ({
                                                 if (onDiscardEdit) onDiscardEdit();
                                                 else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                             }}
-                                            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A] hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
-                                            title="Hủy bỏ thay đổi và hoàn tác"
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] bg-[#1D212A]/90 backdrop-blur hover:bg-[#252A36] text-[#9A9DA3] hover:text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs border border-[#222834]"
+                                            title={t("profile.cancel", { defaultValue: "Hủy" })}
                                         >
                                             <FontAwesomeIcon icon={faXmark} className="text-xs" />
-                                            <span>Hủy</span>
+                                            <span>{t("profile.cancel", { defaultValue: "Hủy" })}</span>
                                         </button>
                                         <button
                                             type="button"
@@ -317,10 +305,10 @@ export const ProfileHero = ({
                                                 else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                             }}
                                             className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
-                                            title="Lưu tất cả thay đổi hồ sơ"
+                                            title={t("profile.saveChanges", { defaultValue: "Lưu thay đổi" })}
                                         >
                                             <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                                            <span>Lưu thay đổi</span>
+                                            <span>{t("profile.saveChanges", { defaultValue: "Lưu thay đổi" })}</span>
                                         </button>
                                     </>
                                 )}
@@ -338,27 +326,27 @@ export const ProfileHero = ({
                             <div className="relative flex items-center gap-2" ref={friendMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => handleProtectedAction("gửi tin nhắn", () => {})}
-                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                                    onClick={() => handleProtectedAction(t("profile.message", { defaultValue: "gửi tin nhắn" }), () => {})}
+                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#F0F1F2] text-xs font-semibold transition-all cursor-pointer shadow-xs border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faMessage} className="text-[#1688E8] text-xs" />
-                                    <span>Nhắn tin</span>
+                                    <span>{t("profile.message", { defaultValue: "Nhắn tin" })}</span>
                                 </button>
 
                                 {isFriendActionLoading ? (
                                     <button
                                         type="button"
                                         disabled
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D] text-[#9A9DA3] text-xs font-semibold"
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#14171D]/90 backdrop-blur text-[#9A9DA3] text-xs font-semibold border border-[#222834]"
                                     >
                                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
-                                        <span>Đang xử lý...</span>
+                                        <span>{t("common.loading", { defaultValue: "Đang xử lý..." })}</span>
                                     </button>
                                 ) : isFriend ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("quản lý bạn bè", () => setShowFriendMenu((v) => !v))}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A]/20 text-[#2EE09E] text-xs font-bold hover:bg-[#24C58A]/30 transition-all cursor-pointer"
+                                        onClick={() => handleProtectedAction(t("profile.friendsWidgetTitle", { defaultValue: "quản lý bạn bè" }), () => setShowFriendMenu((v) => !v))}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A]/20 backdrop-blur text-[#2EE09E] text-xs font-bold hover:bg-[#24C58A]/30 transition-all cursor-pointer border border-[#24C58A]/30"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
                                         <span>{t("profile.friendAdded")}</span>
@@ -367,7 +355,7 @@ export const ProfileHero = ({
                                 ) : isPendingIncoming ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("chấp nhận kết bạn", () => onAcceptRequest?.())}
+                                        onClick={() => handleProtectedAction(t("profile.accept", { defaultValue: "chấp nhận kết bạn" }), () => onAcceptRequest?.())}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#24C58A] hover:bg-[#1fa976] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                                     >
                                         <FontAwesomeIcon icon={faUserCheck} />
@@ -376,17 +364,17 @@ export const ProfileHero = ({
                                 ) : isPendingOutgoing ? (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("hủy lời mời", () => onCancelRequest?.())}
-                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer"
-                                        title="Nhấn để hủy lời mời"
+                                        onClick={() => handleProtectedAction(t("profile.cancelFriendRequest", { defaultValue: "hủy lời mời" }), () => onCancelRequest?.())}
+                                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#E5A93D]/20 backdrop-blur hover:bg-[#E5A93D]/30 text-[#E5A93D] text-xs font-semibold transition-all cursor-pointer border border-[#E5A93D]/30"
+                                        title={t("profile.cancelFriendRequest", { defaultValue: "Nhấn để hủy lời mời" })}
                                     >
                                         <FontAwesomeIcon icon={faClock} />
-                                        <span>Đã gửi lời mời</span>
+                                        <span>{t("profile.friendRequestSent", { defaultValue: "Đã gửi lời mời" })}</span>
                                     </button>
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={() => handleProtectedAction("kết bạn", onAddFriend)}
+                                        onClick={() => handleProtectedAction(t("profile.addFriend", { defaultValue: "kết bạn" }), onAddFriend)}
                                         className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
                                     >
                                         <FontAwesomeIcon icon={faUserPlus} />
@@ -396,8 +384,8 @@ export const ProfileHero = ({
 
                                 <button
                                     type="button"
-                                    onClick={() => handleProtectedAction("mở tùy chọn", () => setShowFriendMenu((v) => !v))}
-                                    className="w-8 h-8 rounded-[8px] bg-[#14171D] hover:bg-[#1D212A] text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-xs transition-all cursor-pointer"
+                                    onClick={() => handleProtectedAction(t("common.settings", { defaultValue: "mở tùy chọn" }), () => setShowFriendMenu((v) => !v))}
+                                    className="w-8 h-8 rounded-[8px] bg-[#14171D]/90 backdrop-blur hover:bg-[#1D212A] text-[#9A9DA3] hover:text-[#F0F1F2] flex items-center justify-center text-xs transition-all cursor-pointer border border-[#222834]"
                                 >
                                     <FontAwesomeIcon icon={faEllipsisV} />
                                 </button>
@@ -435,8 +423,8 @@ export const ProfileHero = ({
                 <div className="w-full bg-rose-950/40 border-y border-rose-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-rose-200">
                     <FontAwesomeIcon icon={faBan} className="text-rose-400 text-sm shrink-0" />
                     <div className="min-w-0 flex-1">
-                        <span className="font-bold text-rose-300">Tài khoản này đã bị khóa: </span>
-                        <span className="text-rose-200/90">{identity.banReason || "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG."}</span>
+                        <span className="font-bold text-rose-300">{t("profile.bannedAccountTitle", { defaultValue: "Tài khoản này đã bị khóa: " })}</span>
+                        <span className="text-rose-200/90">{identity.banReason || t("profile.defaultBanReason", { defaultValue: "Vi phạm điều khoản dịch vụ và chính sách an toàn của cộng đồng IndieG." })}</span>
                     </div>
                 </div>
             )}
@@ -444,8 +432,8 @@ export const ProfileHero = ({
                 <div className="w-full bg-amber-950/30 border-y border-amber-500/30 px-4 sm:px-6 py-2.5 flex items-center gap-2.5 text-xs text-amber-200">
                     <FontAwesomeIcon icon={faClock} className="text-amber-400 text-sm shrink-0" />
                     <div className="min-w-0 flex-1">
-                        <span className="font-bold text-amber-300">Hồ sơ đã lưu trữ (Archived): </span>
-                        <span className="text-amber-200/90">Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn.</span>
+                        <span className="font-bold text-amber-300">{t("profile.archivedProfileTitle", { defaultValue: "Hồ sơ đã lưu trữ (Archived): " })}</span>
+                        <span className="text-amber-200/90">{t("profile.archivedProfileDesc", { defaultValue: "Tài khoản này đang ở trạng thái lưu trữ theo yêu cầu hoặc do ngừng hoạt động dài hạn." })}</span>
                     </div>
                 </div>
             )}
@@ -453,31 +441,28 @@ export const ProfileHero = ({
             {/* ── Quiet & Mature Level, XP & Typography Stats Bar ─────────────────────────────── */}
             <div className="w-full bg-[#0E1116] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
                 
-                {/* Level & XP Progress */}
-                <div className="flex items-center gap-3 min-w-[220px] max-w-xs flex-1">
-                    <div className="flex items-baseline gap-1 font-bold text-xs shrink-0">
-                        <span className="text-[10px] text-[#8A8F98] uppercase tracking-wider font-semibold">LEVEL</span>
-                        <span className="text-sm text-[#F0F1F2] font-extrabold">{level}</span>
+                {/* Compact Level + XP Pill */}
+                <div 
+                    className="flex items-center gap-3 px-3 py-1.5 bg-[#14171D] rounded-full border border-[#1A1F2A]"
+                    title={`${currentXp.toLocaleString()} / ${maxXp.toLocaleString()} XP`}
+                >
+                    <div className="flex items-baseline gap-1 font-bold shrink-0">
+                        <span className="text-[10px] text-[#8A8F98] uppercase font-semibold">LVL</span>
+                        <span className="text-sm text-[#1688E8] font-extrabold">{level}</span>
                     </div>
 
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        <div className="flex items-center justify-between text-[10px] font-semibold">
-                            <span className="text-[#9A9DA3]">XP</span>
-                            <span className="text-[#8A8F98] font-mono">{currentXp.toLocaleString()} / {maxXp.toLocaleString()}</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-[#181C24] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                                style={{ width: `${xpPercent}%` }}
-                            />
-                        </div>
+                    <div className="w-24 h-1.5 bg-[#0A0C0E] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
+                            style={{ width: `${xpPercent}%` }}
+                        />
                     </div>
                 </div>
 
                 {/* Gamer Metrics: Typography with generous spacing */}
                 <div className="flex items-center gap-5 sm:gap-8 flex-wrap">
-                    <div className="flex flex-col">
-                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{reputationPercent}%</span>
+                    <div className="flex flex-col" title="Community Reputation Score">
+                        <span className="font-extrabold text-[#F0F1F2] text-sm leading-tight">{reputationPercent}</span>
                         <span className="text-[10px] font-semibold uppercase text-[#8A8F98] tracking-wider">Reputation</span>
                     </div>
 

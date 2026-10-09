@@ -15,7 +15,10 @@ import {
     faGear,
     faSliders,
     faGavel,
+    faGamepad,
+    faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 
 interface CommunityHubSidebarProps {
     activeNav: string;
@@ -26,6 +29,8 @@ interface CommunityHubSidebarProps {
     userRole?: "owner" | "admin" | "moderator" | "member";
     pendingCount?: number;
     reportsCount?: number;
+    gameSlug?: string;
+    gameName?: string;
 }
 
 export const CommunityHubSidebar = ({
@@ -37,8 +42,11 @@ export const CommunityHubSidebar = ({
     userRole = "owner",
     pendingCount,
     reportsCount,
+    gameSlug,
+    gameName,
 }: CommunityHubSidebarProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const hasManagePermission = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
     // 1. Primary community feed & content navigation
@@ -212,6 +220,8 @@ export const CommunityHubSidebar = ({
                         </nav>
                     </div>
                 )}
+
+
             </div>
         </aside>
     );

@@ -10,6 +10,10 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useTranslation } from '@/shared/hooks/useTranslate'
 import { UnverifiedBanner } from '@/features/auth';
 import { CreatePostModal } from '@/features/feed/components/CreatePostBox';
+import { useGlobalShortcuts } from '@/shared/hooks/useGlobalShortcuts';
+import { ShortcutsCheatsheetModal } from '@/shared/components/shortcuts/ShortcutsCheatsheetModal';
+import { GoToIndicator } from '@/shared/components/shortcuts/GoToIndicator';
+import { useRegisterOverlay } from '@/shared/utils/overlayManager';
 
 const scrollPositions = new Map<string, number>()
 
@@ -89,11 +93,29 @@ function MainLayout() {
         pathname.startsWith('/game') ||
         (pathname.startsWith('/community') && pathname !== '/community')
 
+    useGlobalShortcuts();
+
+    useRegisterOverlay({
+        id: "mobile-left-sidebar",
+        isOpen: !hideSidebars && isLeftOpen,
+        onClose: closeLeft,
+        priority: 80,
+    });
+
+    useRegisterOverlay({
+        id: "mobile-right-sidebar",
+        isOpen: !hideSidebars && isRightOpen,
+        onClose: closeRight,
+        priority: 80,
+    });
+
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
             <Header />
             <UnverifiedBanner />
             <CreatePostModal />
+            <ShortcutsCheatsheetModal />
+            <GoToIndicator />
 
             {/* Mobile Left Sidebar */}
             {!hideSidebars && isLeftOpen && (
@@ -104,7 +126,7 @@ function MainLayout() {
                     />
                     <aside className="relative w-72 max-w-[85vw] h-full bg-surface border-r border-border p-4 overflow-y-auto z-10 shadow-2xl animate-slide-right">
                         <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
-                            <p className="font-extrabold text-primary text-lg">Navigation</p>
+                            <p className="font-extrabold text-primary text-lg">{t('common.navigation', { defaultValue: 'Navigation' })}</p>
                             <button onClick={closeLeft} className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-text-muted hover:text-text cursor-pointer">
                                 <FontAwesomeIcon icon={faXmark} />
                             </button>

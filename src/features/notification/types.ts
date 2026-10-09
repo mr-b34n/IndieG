@@ -30,4 +30,7 @@ export interface NotificationState {
     deleteNotification: (id: string) => void;
     clearAll: () => void;
     setNotifications: (notifications: NotificationItem[]) => void;
+    isOpen?: boolean;
+    setIsOpen?: (open: boolean) => void;
+    toggleOpen?: () => void;
 }

@@ -36,68 +36,86 @@ const ACCOUNT_TYPES = [
     {
         key: "admin",
         acc: TEST_ACCOUNTS.admin,
-        typeLabel: "Quản trị viên (Admin)",
-        badge: "Admin",
+        typeLabelVi: "Quản trị viên (Admin)",
+        typeLabelEn: "Administrator (Admin)",
+        badgeVi: "Admin",
+        badgeEn: "Admin",
         badgeColor: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
         icon: faUserShield,
         iconColor: "text-rose-400",
         iconBg: "bg-rose-500/10",
-        desc: "Toàn quyền hệ thống, kiểm duyệt và quản lý toàn bộ tính năng",
+        descVi: "Toàn quyền hệ thống, kiểm duyệt và quản lý toàn bộ tính năng",
+        descEn: "Full system access, content moderation & administrative tools",
     },
     {
         key: "verifiedUser",
         acc: TEST_ACCOUNTS.verifiedUser,
-        typeLabel: "Game thủ VIP (Founder)",
-        badge: "Founder",
+        typeLabelVi: "Game thủ VIP (Founder)",
+        typeLabelEn: "VIP Gamer (Founder)",
+        badgeVi: "Founder",
+        badgeEn: "Founder",
         badgeColor: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
         icon: faUserCheck,
         iconColor: "text-emerald-400",
         iconBg: "bg-emerald-500/10",
-        desc: "Tài khoản VIP Founder, đã xác thực email, game library phong phú",
+        descVi: "Tài khoản VIP Founder, đã xác thực email, game library phong phú",
+        descEn: "VIP Founder account, verified email, rich game library",
     },
     {
         key: "eldenLord",
         acc: TEST_ACCOUNTS.eldenLord,
-        typeLabel: "Hardcore RPG Gamer",
-        badge: "RPG Veteran",
+        typeLabelVi: "Hardcore RPG Gamer",
+        typeLabelEn: "Hardcore RPG Gamer",
+        badgeVi: "RPG Veteran",
+        badgeEn: "RPG Veteran",
         badgeColor: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30",
         icon: faDragon,
         iconColor: "text-cyan-400",
         iconBg: "bg-cyan-500/10",
-        desc: "Game thủ Souls-like, nhiều thảo luận & hoạt động cộng đồng",
+        descVi: "Game thủ Souls-like, nhiều thảo luận & hoạt động cộng đồng",
+        descEn: "Souls-like enthusiast with active discussions & community posts",
     },
     {
         key: "streamer",
         acc: TEST_ACCOUNTS.streamer,
-        typeLabel: "Streamer & Creator",
-        badge: "Streamer",
+        typeLabelVi: "Streamer & Creator",
+        typeLabelEn: "Streamer & Creator",
+        badgeVi: "Streamer",
+        badgeEn: "Streamer",
         badgeColor: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
         icon: faVideo,
         iconColor: "text-purple-400",
         iconBg: "bg-purple-500/10",
-        desc: "Nhà sáng tạo nội dung, streamer được yêu thích trên nền tảng",
+        descVi: "Nhà sáng tạo nội dung, streamer được yêu thích trên nền tảng",
+        descEn: "Content creator and popular streamer on the platform",
     },
     {
         key: "shadowHunter",
         acc: TEST_ACCOUNTS.shadowHunter,
-        typeLabel: "Tuyển thủ FPS Pro",
-        badge: "FPS Pro",
+        typeLabelVi: "Tuyển thủ FPS Pro",
+        typeLabelEn: "FPS Pro Player",
+        badgeVi: "FPS Pro",
+        badgeEn: "FPS Pro",
         badgeColor: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
         icon: faCrosshairs,
         iconColor: "text-blue-400",
         iconBg: "bg-blue-500/10",
-        desc: "Đội trưởng CS2 Premier, tuyển thủ thi đấu bắn súng chiến thuật",
+        descVi: "Đội trưởng CS2 Premier, tuyển thủ thi đấu bắn súng chiến thuật",
+        descEn: "CS2 Premier captain, competitive tactical shooter player",
     },
     {
         key: "unverifiedUser",
         acc: TEST_ACCOUNTS.unverifiedUser,
-        typeLabel: "Tân thủ (Chưa verify)",
-        badge: "Chưa verify",
+        typeLabelVi: "Tân thủ (Chưa verify)",
+        typeLabelEn: "Newbie (Unverified)",
+        badgeVi: "Chưa verify",
+        badgeEn: "Unverified",
         badgeColor: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
         icon: faUserXmark,
         iconColor: "text-amber-400",
         iconBg: "bg-amber-500/10",
-        desc: "Người chơi mới chưa xác thực email (dùng test cổng bảo vệ email)",
+        descVi: "Người chơi mới chưa xác thực email (dùng test cổng bảo vệ email)",
+        descEn: "New player without verified email (tests email verification gates)",
     },
 ];
 
@@ -105,6 +123,7 @@ const AuthPage = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const language = useThemeStore((state) => state.language);
+    const isVi = language === "vi";
     const toggleLanguage = useThemeStore((state) => state.toggleLanguage);
     const loginStoreAction = useAuthStore((state) => state.login);
 
@@ -206,7 +225,7 @@ const AuthPage = () => {
         });
         setSelectedAccountKey(item.key);
         setServerError(null);
-        setSuccessMessage(`Đã chọn tài khoản: ${item.typeLabel} (${acc.username})`);
+        setSuccessMessage(isVi ? `Đã chọn tài khoản: ${item.typeLabelVi} (${acc.username})` : `Selected account: ${item.typeLabelEn} (${acc.username})`);
         setIsAccountMenuOpen(false);
 
         if (acc.password) {
@@ -586,10 +605,10 @@ const AuthPage = () => {
                             }`}
                             aria-expanded={isAccountMenuOpen}
                             aria-haspopup="true"
-                            title="Chọn loại tài khoản để đăng nhập"
+                            title={isVi ? "Chọn loại tài khoản để đăng nhập" : "Choose account type to log in"}
                         >
                             <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                            <span>{selectedAccount ? selectedAccount.badge : "Tài khoản"}</span>
+                            <span>{selectedAccount ? (isVi ? selectedAccount.badgeVi : selectedAccount.badgeEn) : (isVi ? "Tài khoản" : "Account")}</span>
                             <FontAwesomeIcon
                                 icon={faChevronDown}
                                 className={`text-[9px] transition-transform duration-200 ${
@@ -604,10 +623,12 @@ const AuthPage = () => {
                                 <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
                                     <div className="flex items-center gap-1.5">
                                         <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
-                                        <span className="text-xs font-bold text-text">Chọn loại tài khoản đăng nhập</span>
+                                        <span className="text-xs font-bold text-text">
+                                            {isVi ? "Chọn loại tài khoản đăng nhập" : "Select login account type"}
+                                        </span>
                                     </div>
                                     <span className="text-[10px] text-text-faint font-medium">
-                                        {ACCOUNT_TYPES.length} tài khoản
+                                        {ACCOUNT_TYPES.length} {isVi ? "tài khoản" : "accounts"}
                                     </span>
                                 </div>
 
@@ -631,17 +652,17 @@ const AuthPage = () => {
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
                                                             <span className="text-xs font-bold text-text truncate">
-                                                                {item.typeLabel}
+                                                                {isVi ? item.typeLabelVi : item.typeLabelEn}
                                                             </span>
                                                             <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
-                                                                {item.badge}
+                                                                {isVi ? item.badgeVi : item.badgeEn}
                                                             </span>
                                                         </div>
                                                         <p className="text-[10px] text-text-faint truncate font-mono mt-0.5">
                                                             {item.acc.email}
                                                         </p>
                                                         <p className="text-[10px] text-text-muted/80 truncate mt-0.5">
-                                                            {item.desc}
+                                                            {isVi ? item.descVi : item.descEn}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -650,11 +671,11 @@ const AuthPage = () => {
                                                     <button
                                                         type="button"
                                                         onClick={(e) => handleInstantLogin(e, item.acc)}
-                                                        title="Đăng nhập ngay (1-click)"
+                                                        title={isVi ? "Đăng nhập ngay (1-click)" : "Quick login (1-click)"}
                                                         className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary hover:bg-primary-hover text-white transition-all shadow-sm flex items-center gap-1 cursor-pointer"
                                                     >
                                                         <FontAwesomeIcon icon={faBolt} className="text-[9px]" />
-                                                        <span className="hidden sm:inline">Vào ngay</span>
+                                                        <span className="hidden sm:inline">{isVi ? "Vào ngay" : "1-Click"}</span>
                                                     </button>
                                                     {isSelected && (
                                                         <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px]">
@@ -668,7 +689,7 @@ const AuthPage = () => {
                                 </div>
 
                                 <div className="px-2 py-1.5 mt-1 border-t border-border/30 flex items-center justify-between text-[10px] text-text-faint">
-                                    <span>💡 Bấm hàng để chọn & điền form, hoặc "Vào ngay" để đăng nhập</span>
+                                    <span>{isVi ? "💡 Bấm hàng để chọn & điền form, hoặc \"Vào ngay\" để đăng nhập" : "💡 Click a row to auto-fill, or \"1-Click\" to log in immediately"}</span>
                                 </div>
                             </div>
                         )}
@@ -781,10 +802,10 @@ const AuthPage = () => {
                                             <span className="text-[11px] text-text-muted truncate">
                                                 {selectedAccount ? (
                                                     <>
-                                                        Loại tài khoản: <strong className="text-text font-bold">{selectedAccount.typeLabel}</strong>
+                                                        {isVi ? "Loại tài khoản: " : "Account type: "}<strong className="text-text font-bold">{isVi ? selectedAccount.typeLabelVi : selectedAccount.typeLabelEn}</strong>
                                                     </>
                                                 ) : (
-                                                    "Tài khoản mẫu để test:"
+                                                    isVi ? "Tài khoản mẫu để test:" : "Demo test accounts:"
                                                 )}
                                             </span>
                                         </div>
@@ -793,7 +814,7 @@ const AuthPage = () => {
                                             onClick={() => setIsAccountMenuOpen((prev) => !prev)}
                                             className="text-primary hover:text-primary-hover font-semibold text-xs flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
                                         >
-                                            <span>{selectedAccount ? "Đổi loại" : "Chọn tài khoản"}</span>
+                                            <span>{selectedAccount ? (isVi ? "Đổi loại" : "Change") : (isVi ? "Chọn tài khoản" : "Select account")}</span>
                                             <FontAwesomeIcon icon={faChevronDown} className="text-[9px]" />
                                         </button>
                                     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faComment, faThumbtack, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
@@ -6,7 +6,10 @@ import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
+import { useRegisterOverlay } from "@/shared/utils/overlayManager";
+import { FormattingToolbar } from "@/features/feed/components/CreatePostBox";
+import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
 
 export interface EditPostModalProps {
     initialTitle: string;
@@ -47,6 +50,29 @@ export const EditPostModal = ({
     const [allowComments, setAllowComments] = useState<boolean>(initialAllowComments ?? true);
     const [pinned, setPinned] = useState<boolean>(initialPinned ?? false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isPreview, setIsPreview] = useState(false);
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const handleFormat = (prefix: string, suffix: string = prefix, placeholder: string = "") => {
+        if (isPreview) {
+            setIsPreview(false);
+        }
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const current = content;
+        const selected = current.substring(start, end);
+        const replacement = selected ? `${prefix}${selected}${suffix}` : `${prefix}${placeholder}${suffix}`;
+        const nextContent = current.substring(0, start) + replacement + current.substring(end);
+        setContent(nextContent);
+        setTimeout(() => {
+            textarea.focus();
+            const nextPos = selected ? start + replacement.length : start + prefix.length;
+            textarea.setSelectionRange(nextPos, nextPos + (selected ? 0 : placeholder.length));
+        }, 10);
+    };
 
     const titleLen = title.trim().length;
     const contentLen = content.trim().length;
@@ -81,9 +107,22 @@ export const EditPostModal = ({
         onClose();
     };
 
-    useKeyboardShortcut(["Escape"], () => {
-        handleClose();
+    useRegisterOverlay({
+        id: "edit-post-modal",
+        isOpen: true,
+        onClose: handleClose,
+        priority: 100,
     });
+
+    useHotkeys(
+        ["Mod", "Enter"],
+        () => {
+            if (!isSaving && (content.trim().length >= 6 || attachments.length > 0)) {
+                handleSave();
+            }
+        },
+        { ignoreInput: false }
+    );
 
     return createPortal(
         <div
@@ -135,13 +174,31 @@ export const EditPostModal = ({
                         <label htmlFor="edit-post-content" className="text-sm font-semibold text-text">
                             {t('feed.whatOnMind')}
                         </label>
-                        <textarea
-                            id="edit-post-content"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            placeholder={t('feed.whatOnMind')}
-                            className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-32"
+                        <FormattingToolbar
+                            onFormat={handleFormat}
+                            isPreview={isPreview}
+                            onTogglePreview={setIsPreview}
                         />
+                        {isPreview ? (
+                            <div className="w-full bg-surface-hover/30 border border-border rounded-xl p-3 text-sm text-text min-h-32 max-h-56 overflow-y-auto">
+                                {content.trim() ? (
+                                    <MarkdownContent content={content} />
+                                ) : (
+                                    <p className="text-xs text-text-faint italic py-4 text-center">
+                                        {t('feed.previewEmpty', { defaultValue: 'Chưa có nội dung để xem trước' })}
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <textarea
+                                id="edit-post-content"
+                                ref={textareaRef}
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder={t('feed.whatOnMind')}
+                                className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-32"
+                            />
+                        )}
                         {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
                             <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
                                 <FontAwesomeIcon icon={faTriangleExclamation} />

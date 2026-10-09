@@ -1,25 +1,21 @@
 import { create } from "zustand";
 import { type CommunitiesState, type CommunityData } from "../types";
 import { INITIAL_COMMUNITIES } from "../constants";
-import { communitiesApi, mapCommunityDtoToCommunityData, type CommunityDto, type CreateCommunityDto, type GetCommunitiesParams } from "@/shared/api";
+import {
+    communitiesApi,
+    mapCommunityDtoToCommunityData,
+    extractCommunityList,
+    isGenericTestCommunity,
+    type CommunityDto,
+    type CreateCommunityDto,
+    type GetCommunitiesParams,
+} from "@/shared/api";
 
 export * from "../types";
 
-function extractCommunityList(res: unknown): CommunityDto[] {
-    if (!res) return [];
-    if (Array.isArray(res)) return res as CommunityDto[];
-    if (typeof res === "object") {
-        const obj = res as Record<string, unknown>;
-        if (Array.isArray(obj.items)) return obj.items as CommunityDto[];
-        if (Array.isArray(obj.data)) return obj.data as CommunityDto[];
-        if (Array.isArray(obj.communities)) return obj.communities as CommunityDto[];
-    }
-    return [];
-}
-
 export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
-    communities: INITIAL_COMMUNITIES,
-    joinedCommunityIds: INITIAL_COMMUNITIES.filter((c) => c.joined).map((c) => String(c.id)),
+    communities: INITIAL_COMMUNITIES.filter((c) => !isGenericTestCommunity(c)),
+    joinedCommunityIds: INITIAL_COMMUNITIES.filter((c) => c.joined && !isGenericTestCommunity(c)).map((c) => String(c.id)),
     isLoading: false,
     error: null,
 
@@ -75,7 +71,9 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
             const existingMap = new Map(state.communities.map((c) => [String(c.id), c]));
 
             list.forEach((item) => {
+                if (isGenericTestCommunity(item)) return;
                 const base = mapCommunityDtoToCommunityData(item);
+                if (isGenericTestCommunity(base)) return;
                 const prev = existingMap.get(String(base.id));
                 const isJoined =
                     isJoinedList ||

@@ -36,7 +36,7 @@ export interface AuthState {
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
     openVerifyModal: (customMessage?: string) => void;
     closeVerifyModal: () => void;
-    requireVerifiedEmail: (actionName?: string, onSuccess?: () => void) => boolean;
+    requireVerifiedEmail: (actionName?: string | { vi: string; en: string }, onSuccess?: () => void) => boolean;
     toggleVerifyEmailStatus: () => void;
 }
 

@@ -58,6 +58,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     clearAll: () => set({ notifications: [] }),
 
     setNotifications: (newNotifs) => set({ notifications: newNotifs }),
+
+    isOpen: false,
+    setIsOpen: (open) => set({ isOpen: open }),
+    toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 }));
 
 function getTitleForType(type: string): string {

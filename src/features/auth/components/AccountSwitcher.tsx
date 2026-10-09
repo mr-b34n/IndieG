@@ -14,6 +14,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "../store/useAuthStore";
+import { useTranslation } from "@/shared/hooks/useTranslate";
 import { TEST_ACCOUNTS, type MockAccountCredential } from "../constants";
 
 interface AccountSwitcherProps {
@@ -23,6 +24,8 @@ interface AccountSwitcherProps {
 
 export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ onFill }) => {
     const { user, login } = useAuthStore();
+    const { language } = useTranslation();
+    const isVi = language === "vi";
     const navigate = useNavigate();
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -80,7 +83,7 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ onFill }) => {
             icon: faUserXmark,
             color: "text-amber-400 bg-amber-500/10 border-amber-500/25 hover:border-amber-500/50",
             badgeColor: "text-amber-400 bg-amber-500/20",
-            roleTag: "Chưa verify",
+            roleTag: isVi ? "Chưa verify" : "Unverified",
         },
     ];
 
@@ -106,11 +109,11 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ onFill }) => {
             <div className="flex items-center justify-between gap-2 border-b border-border/15 pb-2">
                 <span className="font-bold text-xs uppercase tracking-wider text-text-muted flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faArrowRightToBracket} className="text-primary text-xs" />
-                    <span>Tài Khoản Mẫu Để Đăng Nhập (Test Accounts)</span>
+                    <span>{isVi ? "Tài Khoản Mẫu Để Đăng Nhập (Test Accounts)" : "Demo Test Accounts (1-Click Login)"}</span>
                 </span>
                 {user && (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-hover/60 border border-border/30 text-text-muted">
-                        Đang đăng nhập: <strong className="text-primary font-bold">{user.username}</strong>
+                        {isVi ? "Đang đăng nhập: " : "Signed in: "}<strong className="text-primary font-bold">{user.username}</strong>
                     </span>
                 )}
             </div>
@@ -152,20 +155,20 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ onFill }) => {
                                 <button
                                     type="button"
                                     onClick={() => handleFillForm(acc)}
-                                    title="Điền email và mật khẩu vào form đăng nhập"
+                                    title={isVi ? "Điền email và mật khẩu vào form đăng nhập" : "Auto-fill email and password into login form"}
                                     className="flex-1 py-1 px-2 rounded-lg bg-surface-hover/40 hover:bg-surface-hover/80 text-[10px] font-semibold text-text-muted hover:text-text transition-colors flex items-center justify-center gap-1 cursor-pointer"
                                 >
                                     <FontAwesomeIcon icon={isFilled ? faCheck : faPenToSquare} className="text-[9px]" />
-                                    <span>{isFilled ? "Đã điền!" : "Điền form"}</span>
+                                    <span>{isFilled ? (isVi ? "Đã điền!" : "Filled!") : (isVi ? "Điền form" : "Auto-fill")}</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleOneClickLogin(acc)}
-                                    title="Đăng nhập ngay lập tức với tài khoản này"
+                                    title={isVi ? "Đăng nhập ngay lập tức với tài khoản này" : "Instant 1-click login with this account"}
                                     className="flex-1 py-1 px-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[10px] font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm shadow-primary/20"
                                 >
                                     <FontAwesomeIcon icon={faArrowRightToBracket} className="text-[9px]" />
-                                    <span>Vào ngay</span>
+                                    <span>{isVi ? "Vào ngay" : "1-Click"}</span>
                                 </button>
                             </div>
                         </div>
@@ -174,7 +177,7 @@ export const AccountSwitcher: React.FC<AccountSwitcherProps> = ({ onFill }) => {
             </div>
 
             <p className="text-[10px] text-text-faint text-center pt-0.5">
-                💡 Bạn có thể bấm <strong className="text-text-muted">Điền form</strong> để kiểm tra form đăng nhập hoặc bấm <strong className="text-primary">Vào ngay</strong> để đăng nhập 1-click tức thì.
+                💡 {isVi ? "Bạn có thể bấm " : "You can click "}<strong className="text-text-muted">{isVi ? "Điền form" : "Auto-fill"}</strong>{isVi ? " để kiểm tra form đăng nhập hoặc bấm " : " to test login form or click "}<strong className="text-primary">{isVi ? "Vào ngay" : "1-Click"}</strong>{isVi ? " để đăng nhập 1-click tức thì." : " to log in immediately."}
             </p>
         </div>
     );

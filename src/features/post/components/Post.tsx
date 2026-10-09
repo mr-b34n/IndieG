@@ -20,7 +20,7 @@ import {
     faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons";
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
 import { formatFileSize } from "../helpers/postAttachmentLimits";
@@ -34,10 +34,11 @@ import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { type PostFileAttachment, type PostData } from "../types";
-import { POST_BADGE_MAP } from "../constants";
 import { getGameBySlug } from "@/features/game";
 import { usePostVoteInteraction, useBookmarkInteraction } from "../api/interaction-api";
 import { usePostsStore } from "../store/usePostsStore";
+import { useFeedNavigationStore } from "../store/useFeedNavigationStore";
+import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
 
 export type { PostData, PostFileAttachment };
 
@@ -55,8 +56,8 @@ export interface PostProps {
 
 /* =========================================================================
    1. PostHeader Component
-   [Avatar] Username   Badge
-            Community · Time       (...)
+   [Avatar] Name   [Rank] · Community
+            @username · Time       (...)
    ========================================================================= */
 export interface PostHeaderProps {
     authorName: string;
@@ -96,9 +97,6 @@ export const PostHeader = ({
     authorUsername,
     authorAvatar,
     rank,
-    badge,
-    authorBadge,
-    gameBadge,
     postCommunity,
     gameTag,
     timeAgo,
@@ -136,19 +134,11 @@ export const PostHeader = ({
                             {(authorName || "G").replace(/^@/, "").charAt(0) || "G"}
                         </div>
                     )}
-                    {rank && (
-                        <span
-                            title={getRankLabel(rank, language)}
-                            className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-bg text-[8px] ${rank.classes}`}
-                        >
-                            <FontAwesomeIcon icon={rank.icon} />
-                        </span>
-                    )}
                 </div>
 
                 {/* Author Information */}
                 <div className="flex flex-col min-w-0 leading-tight">
-                    {/* Line 1: Username & Badge (14–15px / 600, badge 11–12px, max 2–3) */}
+                    {/* Line 1: Name, Rank & Community */}
                     <div className="flex flex-row items-center gap-1.5 flex-wrap">
                         <span
                             onClick={onAuthorClick}
@@ -159,48 +149,21 @@ export const PostHeader = ({
                             {authorName}
                         </span>
 
-                        {authorUsername && (
-                            <span
-                                onClick={onAuthorClick}
-                                className="text-[12px] sm:text-[13px] text-text-muted font-normal hover:underline cursor-pointer"
-                            >
-                                @{authorUsername.replace(/^@/, "")}
-                            </span>
-                        )}
-
-                        {/* Badges: 11-12px, maximum 2-3 */}
-                        {authorBadge && (
-                            <span className="px-1.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/25">
-                                {authorBadge}
-                            </span>
-                        )}
-
                         {rank && (
-                            <span className={`px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${rank.classes}`}>
-                                {getRankLabel(rank, language)}
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider shrink-0 ${rank.classes}`}>
+                                <FontAwesomeIcon icon={rank.icon} className="text-[10px]" />
+                                <span>{getRankLabel(rank, language)}</span>
                             </span>
                         )}
 
-                        {badge && (
-                            <span className={`flex flex-row items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${badge.classes}`}>
-                                <FontAwesomeIcon icon={badge.icon} />
-                                {badge.label}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Line 2: Game Badge -> Community · Time (12–13px / muted, 12px / muted) */}
-                    <div className="flex flex-row items-center gap-1.5 text-xs sm:text-[13px] text-text-muted mt-1 flex-wrap">
-                        {gameBadge && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase tracking-wide bg-primary/15 text-primary border border-primary/25 shrink-0 select-none">
-                                {gameBadge}
-                            </span>
+                        {(postCommunity || gameTag) && (
+                            <span className="text-text-muted text-xs select-none">·</span>
                         )}
 
                         {postCommunity ? (
                             <span
                                 onClick={onCommunityClick}
-                                className="text-text-muted hover:text-primary transition-colors cursor-pointer font-normal truncate flex items-center gap-1.5"
+                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate flex items-center gap-1.5"
                             >
                                 {postCommunity.logo && (
                                     <img
@@ -214,12 +177,25 @@ export const PostHeader = ({
                         ) : gameTag ? (
                             <span
                                 onClick={onCommunityClick}
-                                className="text-text-muted hover:text-primary transition-colors cursor-pointer font-normal"
+                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate"
                             >
                                 {gameTag}
                             </span>
                         ) : null}
-                        {(postCommunity || gameTag) && <span>·</span>}
+                    </div>
+
+                    {/* Line 2: @username · Time */}
+                    <div className="flex flex-row items-center gap-1.5 text-xs sm:text-[13px] text-text-muted mt-0.5 flex-wrap">
+                        {authorUsername && (
+                            <span
+                                onClick={onAuthorClick}
+                                className="hover:underline cursor-pointer truncate"
+                            >
+                                @{authorUsername.replace(/^@/, "")}
+                            </span>
+                        )}
+
+                        {authorUsername && <span className="select-none">·</span>}
                         <span className="text-xs text-text-muted shrink-0">{formatTimeAgo(timeAgo, t)}</span>
                     </div>
                 </div>
@@ -331,6 +307,7 @@ export interface PostContentProps {
     isDetailView?: boolean;
     isExpanded: boolean;
     onExpand: (e: React.MouseEvent) => void;
+    onCollapse?: (e: React.MouseEvent) => void;
 }
 
 export const PostContent = ({
@@ -338,23 +315,71 @@ export const PostContent = ({
     isDetailView = false,
     isExpanded,
     onExpand,
+    onCollapse,
 }: PostContentProps) => {
+    const { t } = useTranslation();
     if (!content) return null;
 
-    const isLong = content.length > 220;
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    const lines = useMemo(() => {
+        return content.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    }, [content]);
+
+    // Triggers if content has multiple lines, exceeds typical card length, or actually overflows DOM
+    const isLong = isOverflowing || content.length > 180 || lines.length > 2;
+
+    useEffect(() => {
+        if (!contentRef.current) return;
+        const el = contentRef.current;
+        if (el.scrollHeight > el.clientHeight + 2) {
+            setIsOverflowing(true);
+        }
+    }, [content]);
 
     return (
-        <div className="text-[14px] sm:text-[15px] leading-[1.5] text-text/90 font-normal break-words whitespace-pre-line mb-3">
+        <div className="text-[14px] sm:text-[15px] leading-[1.6] text-text/90 font-normal break-words mb-3">
             {isDetailView || isExpanded ? (
-                <span>{content}</span>
+                <div>
+                    <MarkdownContent content={content} />
+                    {!isDetailView && isLong && onCollapse && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCollapse(e);
+                            }}
+                            className="block font-semibold text-text-muted hover:text-text hover:underline cursor-pointer mt-1.5 text-xs sm:text-sm select-none"
+                        >
+                            {t('common.showLess', { defaultValue: 'Thu gọn' })}
+                        </button>
+                    )}
+                </div>
             ) : (
-                <div className="relative">
-                    <div className="line-clamp-3">{content}</div>
+                <div
+                    className={`relative ${isLong ? "cursor-pointer group/content" : ""}`}
+                    onClick={(e) => {
+                        if (isLong) {
+                            e.stopPropagation();
+                            onExpand(e);
+                        }
+                    }}
+                >
+                    <div
+                        ref={contentRef}
+                        className="max-h-[4.8em] overflow-hidden line-clamp-3"
+                    >
+                        <MarkdownContent content={content} isClamped />
+                    </div>
                     {isLong && (
                         <button
                             type="button"
-                            onClick={onExpand}
-                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onExpand(e);
+                            }}
+                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm select-none"
                         >
                             ...more
                         </button>
@@ -387,7 +412,7 @@ const ImageGallery = ({
             <img
                 src={images[0]}
                 alt=""
-                className="w-full max-h-[520px] object-cover rounded-[10px] cursor-pointer hover:opacity-95 transition-opacity"
+                className="w-full max-h-[520px] object-cover rounded-[8px] cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={(e) => {
                     e.stopPropagation();
                     onImageClick(0);
@@ -398,7 +423,7 @@ const ImageGallery = ({
 
     if (count === 2) {
         return (
-            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
                 <img
                     src={images[0]}
                     alt=""
@@ -423,7 +448,7 @@ const ImageGallery = ({
 
     if (count === 3) {
         return (
-            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
                 <img
                     src={images[0]}
                     alt=""
@@ -458,7 +483,7 @@ const ImageGallery = ({
     }
 
     return (
-        <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[10px] overflow-hidden">
+        <div className="grid grid-cols-2 gap-2 aspect-4/3 sm:aspect-video rounded-[8px] overflow-hidden">
             <div className="flex flex-col gap-2 h-full min-h-0">
                 <img
                     src={images[0]}
@@ -519,7 +544,7 @@ const FileAttachments = ({ files }: { files: PostFileAttachment[] }) => {
                     href={file.url}
                     download={file.name}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex flex-row items-center gap-2.5 px-3 py-2 rounded-[10px] bg-surface-hover/60 hover:bg-surface-hover transition-colors"
+                    className="flex flex-row items-center gap-2.5 px-3 py-2 rounded-[8px] bg-surface-hover/60 hover:bg-surface-hover transition-colors"
                 >
                     <FontAwesomeIcon icon={faFile} className="text-primary text-sm shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -568,7 +593,7 @@ export const PostMedia = ({
             {hasWarning && !isRevealed && (
                 <div
                     onClick={onRevealWarning}
-                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-lg rounded-[10px] cursor-pointer hover:bg-black/70 transition-colors p-4 text-center"
+                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-lg rounded-[8px] cursor-pointer hover:bg-black/70 transition-colors p-4 text-center"
                 >
                     {isNsfw ? (
                         <div className="px-3.5 py-2 bg-black/90 border border-rose-500/50 rounded-lg text-white text-xs font-bold flex items-center gap-2 shadow-2xl animate-fade-in">
@@ -686,8 +711,8 @@ export const PostActions = ({
                             ? "text-primary bg-primary/10 scale-105"
                             : "text-text-muted hover:text-text hover:bg-surface-hover/60"
                     }`}
-                    title={isLiked ? "Bỏ upvote" : "Upvote"}
-                    aria-label="Upvote"
+                    title={isLiked ? t('post.unupvote', { defaultValue: "Bỏ upvote" }) : t('post.upvote', { defaultValue: "Upvote" })}
+                    aria-label={t('post.upvote', { defaultValue: "Upvote" })}
                 >
                     <FontAwesomeIcon icon={faCaretUp} className="text-base sm:text-lg" />
                 </button>
@@ -711,8 +736,8 @@ export const PostActions = ({
                             ? "text-rose-500 bg-rose-500/10 scale-105"
                             : "text-text-muted hover:text-text hover:bg-surface-hover/60"
                     }`}
-                    title={isDownvoted ? "Bỏ downvote" : "Downvote"}
-                    aria-label="Downvote"
+                    title={isDownvoted ? t('post.undownvote', { defaultValue: "Bỏ downvote" }) : t('post.downvote', { defaultValue: "Downvote" })}
+                    aria-label={t('post.downvote', { defaultValue: "Downvote" })}
                 >
                     <FontAwesomeIcon icon={faCaretDown} className="text-base sm:text-lg" />
                 </button>
@@ -731,7 +756,7 @@ export const PostActions = ({
                 <button
                     onClick={onCommentClick}
                     className="h-8 sm:h-9 px-2.5 rounded-full hover:bg-surface-hover/60 flex items-center gap-1.5 font-semibold text-text-muted hover:text-text transition-colors cursor-pointer text-xs sm:text-[13px]"
-                    title="Bình luận"
+                    title={t('post.comment', { defaultValue: "Bình luận" })}
                 >
                     <FontAwesomeIcon icon={faComment} className="text-sm sm:text-base text-text-muted" />
                     <span>{commentsCount}</span>
@@ -978,7 +1003,7 @@ export const Post = ({
     const postUrl = typeof window !== "undefined" ? `${window.location.origin}/post/${post.id}` : "";
 
     const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
-    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : "Thành viên");
+    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : t('community.roleMember', { defaultValue: "Thành viên" }));
     const authorUsername = authorObj?.username || (typeof post.author === "object" ? (post.author as { handle?: string })?.handle : undefined);
     const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl || post.authorAvatar) : post.authorAvatar;
 
@@ -1055,124 +1080,181 @@ export const Post = ({
         onEdit?.(post.id, data);
     };
 
-    const badge = post.tab ? POST_BADGE_MAP[post.tab] : null;
     const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
     const rank = getRankConfigIfPresent(rawRank);
 
+    const hasImages = post.images && post.images.length > 0;
+
+    const isFocused = useFeedNavigationStore(
+        (state) => state.focusedPostId !== null && String(state.focusedPostId) === String(post.id)
+    );
+    const setFocusedPostId = useFeedNavigationStore((state) => state.setFocusedPostId);
+    const registerPostActions = useFeedNavigationStore((state) => state.registerPostActions);
+
+    const handleTogglePin = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (!isLoggedIn) return;
+        if (!requireVerifiedEmail("ghim bài viết")) return;
+
+        const isMe = authorName === getCurrentAuthor() || (authorUsername && authorUsername === getCurrentAuthor());
+        const isAdmin = Boolean(
+            user?.role === "admin" ||
+            user?.id === "usr_admin" ||
+            user?.username === "IndieAdmin" ||
+            user?.email === "admin@indieg.com"
+        );
+
+        if (!isMe && !isAdmin) return;
+
+        const nextPinned = !post.pinned;
+        usePostsStore.getState().updatePost(post.id, { pinned: nextPinned });
+        if (onEdit) {
+            onEdit(post.id, { pinned: nextPinned });
+        }
+    };
+
+    useEffect(() => {
+        if (!isFocused && !isDetailView) return;
+        return registerPostActions(post.id, {
+            upvote: () => handleLike({ stopPropagation: () => {} } as React.MouseEvent),
+            downvote: () => handleDownvote({ stopPropagation: () => {} } as React.MouseEvent),
+            bookmark: () => handleToggleBookmark({ stopPropagation: () => {} } as React.MouseEvent),
+            pin: () => handleTogglePin(),
+        });
+    }, [isFocused, isDetailView, post.id, handleLike, handleDownvote, handleToggleBookmark, post.pinned, authorName, authorUsername]);
+
     return (
         <article
-            onClick={handleNavigate}
+            id={`post-article-${post.id}`}
+            onClick={(e) => {
+                setFocusedPostId(post.id);
+                handleNavigate();
+            }}
             className={`
-                w-full transition-colors duration-150
-                ${(showActionMenu || showShareMenu) ? "!overflow-visible relative z-[100]" : "relative"}
+                w-full border-none transition-all duration-150
+                ${(showActionMenu || showShareMenu) ? "!overflow-visible z-[100]" : "z-0"}
+                ${isFocused && !isDetailView ? "ring-2 ring-primary/60 shadow-lg rounded-[14px]" : ""}
                 ${isDetailView 
-                    ? "py-4 pb-5" 
-                    : "cursor-pointer group px-3.5 sm:px-4 py-4 rounded-xl hover:bg-surface-hover/60 dark:hover:bg-[#16181B]"
+                    ? "py-4 pb-5 mb-0 relative" 
+                    : "cursor-pointer group px-3.5 sm:px-4 py-4 relative"
                 }
             `}
         >
-            {/* 1. Header (Avatar 40x40, Username, Badges, Community · Time, More 32x32) */}
-            <PostHeader
-                authorName={authorName}
-                authorUsername={authorUsername}
-                authorAvatar={authorAvatar}
-                rank={rank}
-                badge={badge}
-                authorBadge={post.authorBadge}
-                gameBadge={post.gameBadge || (post.gameTag && post.gameTag.length <= 10 ? post.gameTag : undefined)}
-                postCommunity={postCommunity}
-                gameTag={post.gameTag}
-                timeAgo={post.timeAgo}
-                onAuthorClick={handleAuthorClick}
-                onCommunityClick={(e) => {
-                    e?.stopPropagation();
-                    if (postCommunity) {
-                        navigate({ to: `/community/${postCommunity.id}` });
-                    } else if (post.gameTag) {
-                        const gameInfo = getGameBySlug(post.gameTag);
-                        navigate({ to: `/game/${gameInfo.slug}` });
-                    }
-                }}
-                isOwner={isOwner}
-                showActionMenu={showActionMenu}
-                setShowActionMenu={setShowActionMenu}
-                setShowShareMenu={setShowShareMenu}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-                handleReport={(e) => {
-                    e.stopPropagation();
-                    setShowActionMenu(false);
-                    setShowReportModal(true);
-                }}
-                t={t}
-                language={language}
-            />
+            {/* Permanent Background for Text-Only */}
+            {!isDetailView && !hasImages && (
+                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.03)] z-0" />
+            )}
+            
+            {/* Hover Background Layer */}
+            {!isDetailView && (
+                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.04)] opacity-0 scale-96 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.25)] motion-reduce:transition-opacity motion-reduce:group-hover:scale-96 z-0" />
+            )}
 
-            {/* 2. Title (18–20px / 700 / max 2 lines) */}
-            <PostTitle
-                title={post.title}
-                isDetailView={isDetailView}
-                isSpoiler={post.isSpoiler}
-                isNsfw={post.isNsfw}
-            />
+            <div className="relative z-10 w-full flex flex-col">
+                {/* 1. Header (Avatar 40x40, Name, Rank, Community, @username, Time, More 32x32) */}
+                <PostHeader
+                    authorName={authorName}
+                    authorUsername={authorUsername}
+                    authorAvatar={authorAvatar}
+                    rank={rank}
+                    postCommunity={postCommunity}
+                    gameTag={post.gameTag}
+                    timeAgo={post.timeAgo}
+                    onAuthorClick={handleAuthorClick}
+                    onCommunityClick={(e) => {
+                        e?.stopPropagation();
+                        if (postCommunity) {
+                            navigate({ to: `/community/${postCommunity.id}` });
+                        } else if (post.gameTag) {
+                            const gameInfo = getGameBySlug(post.gameTag);
+                            navigate({ to: `/game/${gameInfo.slug}` });
+                        }
+                    }}
+                    isOwner={isOwner}
+                    showActionMenu={showActionMenu}
+                    setShowActionMenu={setShowActionMenu}
+                    setShowShareMenu={setShowShareMenu}
+                    handleEdit={handleEdit}
+                    handleDelete={handleDelete}
+                    handleReport={(e) => {
+                        e.stopPropagation();
+                        setShowActionMenu(false);
+                        setShowReportModal(true);
+                    }}
+                    t={t}
+                    language={language}
+                />
 
-            {/* 3. Content (14–15px / 1.5 leading / max 3–5 lines / ...more) */}
-            <PostContent
-                content={post.content}
-                isDetailView={isDetailView}
-                isExpanded={isContentExpanded}
-                onExpand={(e) => {
-                    e.stopPropagation();
-                    setIsContentExpanded(true);
-                }}
-            />
+                {/* 2. Title (18–20px / 700 / max 2 lines) */}
+                <PostTitle
+                    title={post.title}
+                    isDetailView={isDetailView}
+                    isSpoiler={post.isSpoiler}
+                    isNsfw={post.isNsfw}
+                />
 
-            {/* 4. Media (1 ảnh full width, 2 ảnh 50/50, 3+ gallery, radius 8–10px) */}
-            <PostMedia
-                images={post.images}
-                files={post.files}
-                isSpoiler={post.isSpoiler}
-                isNsfw={post.isNsfw}
-                isRevealed={isRevealed}
-                onRevealWarning={(e) => {
-                    e.stopPropagation();
-                    setIsRevealed(true);
-                }}
-                onImageClick={setLightboxIndex}
-                t={t}
-            />
+                {/* 3. Content (14–15px / 1.5 leading / max 3–5 lines / ...more) */}
+                <PostContent
+                    content={post.content}
+                    isDetailView={isDetailView}
+                    isExpanded={isContentExpanded}
+                    onExpand={(e) => {
+                        e.stopPropagation();
+                        setIsContentExpanded(true);
+                    }}
+                    onCollapse={(e) => {
+                        e.stopPropagation();
+                        setIsContentExpanded(false);
+                    }}
+                />
 
-            {/* 5. Tags (#CS2 #Clutch #Premier / 12px / accent color / max 3–5 tags) */}
-            <PostTags
-                tags={post.tags}
-                onTagClick={(tag) => {
-                    navigate({ to: `/search?q=${encodeURIComponent(tag)}` });
-                }}
-            />
+                {/* 4. Media (1 ảnh full width, 2 ảnh 50/50, 3+ gallery, radius 8–10px) */}
+                <PostMedia
+                    images={post.images}
+                    files={post.files}
+                    isSpoiler={post.isSpoiler}
+                    isNsfw={post.isNsfw}
+                    isRevealed={isRevealed}
+                    onRevealWarning={(e) => {
+                        e.stopPropagation();
+                        setIsRevealed(true);
+                    }}
+                    onImageClick={setLightboxIndex}
+                    t={t}
+                />
 
-            {/* 6. Actions ([↑] (score) [↓]   💬 24   ↗   🔖) */}
-            <PostActions
-                score={score}
-                isLiked={isLiked}
-                isDownvoted={isDownvoted}
-                onLike={handleLike}
-                onDownvote={handleDownvote}
-                commentsCount={post.comments}
-                allowComments={post.allowComments}
-                onCommentClick={(e) => {
-                    e.stopPropagation();
-                    if (!isDetailView) handleNavigate();
-                }}
-                showShareMenu={showShareMenu}
-                setShowShareMenu={setShowShareMenu}
-                handleCopyLink={handleCopyLink}
-                handleShareX={handleShareX}
-                handleShareFacebook={handleShareFacebook}
-                linkCopied={linkCopied}
-                bookmarked={bookmarked}
-                onToggleBookmark={handleToggleBookmark}
-                t={t}
-            />
+                {/* 5. Tags (#CS2 #Clutch #Premier / 12px / accent color / max 3–5 tags) */}
+                <PostTags
+                    tags={post.tags}
+                    onTagClick={(tag) => {
+                        navigate({ to: `/search?q=${encodeURIComponent(tag)}` });
+                    }}
+                />
+
+                {/* 6. Actions ([↑] (score) [↓]   💬 24   ↗   🔖) */}
+                <PostActions
+                    score={score}
+                    isLiked={isLiked}
+                    isDownvoted={isDownvoted}
+                    onLike={handleLike}
+                    onDownvote={handleDownvote}
+                    commentsCount={post.comments}
+                    allowComments={post.allowComments}
+                    onCommentClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDetailView) handleNavigate();
+                    }}
+                    showShareMenu={showShareMenu}
+                    setShowShareMenu={setShowShareMenu}
+                    handleCopyLink={handleCopyLink}
+                    handleShareX={handleShareX}
+                    handleShareFacebook={handleShareFacebook}
+                    linkCopied={linkCopied}
+                    bookmarked={bookmarked}
+                    onToggleBookmark={handleToggleBookmark}
+                    t={t}
+                />
+            </div>
 
             {lightboxIndex !== null && post.images && (
                 <Lightbox

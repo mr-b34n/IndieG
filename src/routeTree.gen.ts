@@ -20,6 +20,7 @@ import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authe
 import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
 import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutCommunityCommunityIdRouteImport } from './routes/_layout/community/$communityId'
+import { Route as LayoutGameIndexRouteImport } from './routes/_layout/game/index'
 import { Route as LayoutGameGameSlugRouteImport } from './routes/_layout/game/$gameSlug'
 import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$postId'
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
@@ -82,6 +83,11 @@ const LayoutCommunityCommunityIdRoute =
     path: '/community/$communityId',
     getParentRoute: () => LayoutRoute,
   } as any)
+const LayoutGameIndexRoute = LayoutGameIndexRouteImport.update({
+  id: '/game/',
+  path: '/game/',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutGameGameSlugRoute = LayoutGameGameSlugRouteImport.update({
   id: '/game/$gameSlug',
   path: '/game/$gameSlug',
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/bookmark/': typeof LayoutBookmarkIndexRoute
   '/community/': typeof LayoutCommunityIndexRoute
+  '/game/': typeof LayoutGameIndexRoute
   '/profile/': typeof LayoutProfileIndexRoute
   '/settings/': typeof LayoutSettingsIndexRoute
   '/squad/': typeof LayoutSquadIndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/developer': typeof AuthenticatedDeveloperIndexRoute
   '/bookmark': typeof LayoutBookmarkIndexRoute
   '/community': typeof LayoutCommunityIndexRoute
+  '/game': typeof LayoutGameIndexRoute
   '/profile': typeof LayoutProfileIndexRoute
   '/settings': typeof LayoutSettingsIndexRoute
   '/squad': typeof LayoutSquadIndexRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
   '/_layout/bookmark/': typeof LayoutBookmarkIndexRoute
   '/_layout/community/': typeof LayoutCommunityIndexRoute
+  '/_layout/game/': typeof LayoutGameIndexRoute
   '/_layout/profile/': typeof LayoutProfileIndexRoute
   '/_layout/settings/': typeof LayoutSettingsIndexRoute
   '/_layout/squad/': typeof LayoutSquadIndexRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/developer/'
     | '/bookmark/'
     | '/community/'
+    | '/game/'
     | '/profile/'
     | '/settings/'
     | '/squad/'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/bookmark'
     | '/community'
+    | '/game'
     | '/profile'
     | '/settings'
     | '/squad'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/developer/'
     | '/_layout/bookmark/'
     | '/_layout/community/'
+    | '/_layout/game/'
     | '/_layout/profile/'
     | '/_layout/settings/'
     | '/_layout/squad/'
@@ -308,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutCommunityCommunityIdRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/game/': {
+      id: '/_layout/game/'
+      path: '/game'
+      fullPath: '/game/'
+      preLoaderRoute: typeof LayoutGameIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/game/$gameSlug': {
       id: '/_layout/game/$gameSlug'
       path: '/game/$gameSlug'
@@ -376,6 +395,7 @@ interface LayoutRouteChildren {
   LayoutProfileUserIdRoute: typeof LayoutProfileUserIdRoute
   LayoutBookmarkIndexRoute: typeof LayoutBookmarkIndexRoute
   LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
+  LayoutGameIndexRoute: typeof LayoutGameIndexRoute
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
   LayoutSettingsIndexRoute: typeof LayoutSettingsIndexRoute
   LayoutSquadIndexRoute: typeof LayoutSquadIndexRoute
@@ -392,6 +412,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutProfileUserIdRoute: LayoutProfileUserIdRoute,
   LayoutBookmarkIndexRoute: LayoutBookmarkIndexRoute,
   LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
+  LayoutGameIndexRoute: LayoutGameIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
   LayoutSettingsIndexRoute: LayoutSettingsIndexRoute,
   LayoutSquadIndexRoute: LayoutSquadIndexRoute,

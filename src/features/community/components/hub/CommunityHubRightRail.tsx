@@ -3,7 +3,15 @@ import {
     faArrowRight,
     faCircle,
     faArrowUpRightFromSquare,
+    faGamepad,
+    faStar,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+    faDiscord,
+    faSteam,
+    faFacebook,
+} from "@fortawesome/free-brands-svg-icons";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
 
@@ -40,6 +48,18 @@ interface CommunityHubRightRailProps {
     pendingCount?: number;
     reportsCount?: number;
     modsCount?: number;
+    gameSlug?: string;
+    gameName?: string;
+    gameData?: {
+        name: string;
+        slug: string;
+        logoUrl?: string;
+        bannerUrl?: string;
+        developer?: string;
+        rating?: number;
+        price?: string;
+        activePlayers?: number;
+    };
 }
 
 export const CommunityHubRightRail = ({
@@ -54,9 +74,13 @@ export const CommunityHubRightRail = ({
     userRole,
     pendingCount,
     reportsCount,
-    modsCount
+    modsCount,
+    gameSlug,
+    gameName,
+    gameData,
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const isAdminOrMod = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 
@@ -215,29 +239,61 @@ export const CommunityHubRightRail = ({
             {/* 3. COMMUNITY LINKS */}
             <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
-                    COMMUNITY LINKS
+                    {isVi ? "LIÊN KẾT CỘNG ĐỒNG" : "COMMUNITY LINKS"}
                 </span>
 
-                <div className="flex flex-col gap-1.5 pt-0.5">
-                    {communityLinks.map((link) => (
-                        <a
-                            key={link.label}
-                            href={link.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center justify-between p-2 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover/80 border border-border/40 transition-colors group cursor-pointer"
+                <div className="grid grid-cols-4 gap-2 pt-0.5">
+                    {/* Gamepad (IndieG Game Page) */}
+                    {gameSlug ? (
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                            title={isVi ? "Trang Game trên IndieG" : "IndieG Game Page"}
+                            className="h-9 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center transition-all cursor-pointer shadow-xs group"
                         >
-                            <span className="text-xs font-semibold text-text group-hover:text-primary transition-colors">
-                                {link.label}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-mono text-text-faint">
-                                    {link.tag}
-                                </span>
-                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[9px] text-text-faint group-hover:text-primary" />
-                            </div>
-                        </a>
-                    ))}
+                            <FontAwesomeIcon icon={faGamepad} className="text-sm group-hover:scale-110 transition-transform" />
+                        </button>
+                    ) : (
+                        <div
+                            title={isVi ? "Chưa có trang Game" : "No Game Page linked"}
+                            className="h-9 rounded-[6px] bg-surface-inner/40 border border-border/30 text-text-faint flex items-center justify-center opacity-40 cursor-not-allowed"
+                        >
+                            <FontAwesomeIcon icon={faGamepad} className="text-sm" />
+                        </div>
+                    )}
+
+                    {/* Discord */}
+                    <a
+                        href="https://discord.gg/indieg"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Discord Server"
+                        className="h-9 rounded-[6px] bg-[#5865F2]/10 hover:bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faDiscord} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
+
+                    {/* Steam */}
+                    <a
+                        href="https://steamcommunity.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Steam Community"
+                        className="h-9 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover border border-border/50 hover:border-text/50 text-text flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faSteam} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
+
+                    {/* Facebook */}
+                    <a
+                        href="https://facebook.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Facebook Group"
+                        className="h-9 rounded-[6px] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#1877F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                    >
+                        <FontAwesomeIcon icon={faFacebook} className="text-sm group-hover:scale-110 transition-transform" />
+                    </a>
                 </div>
             </div>
 

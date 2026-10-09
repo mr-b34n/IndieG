@@ -79,15 +79,6 @@ export const CommunityManageOverview = ({
             action: () => onNavigate("manage-reports"),
             actionText: t('hub.communitymanageoverview_137'),
         });
-    } else {
-        attentionItems.push({
-            id: "att-flagged-post",
-            severity: "medium" as const,
-            label: t('hub.communitymanageoverview_138'),
-            desc: t('hub.communitymanageoverview_139'),
-            action: () => onNavigate("manage-reports"),
-            actionText: t('hub.communitymanageoverview_140'),
-        });
     }
 
     if (pendingCount > 0) {
@@ -135,46 +126,8 @@ export const CommunityManageOverview = ({
 
     return (
         <div className="w-full flex flex-col gap-6 text-text select-none animate-fade-in pb-10">
-            {/* 1. ADMIN HEADER: Identity & Clear Navigation */}
+            {/* 1. ADMIN HEADER: Clear Navigation */}
             <div className="flex flex-col gap-3 pb-3 border-b border-border/50">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[6px] bg-primary/10 border border-primary/30 text-primary flex items-center justify-center font-bold text-sm shrink-0">
-                            <FontAwesomeIcon icon={faShieldHalved} />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-lg sm:text-xl font-black uppercase tracking-tight text-text truncate">
-                                    {communityName}
-                                </h1>
-                                <span className="px-1.5 py-0.5 rounded-[4px] bg-primary/15 border border-primary/30 text-primary text-[10px] font-mono font-bold uppercase tracking-wider">
-                                    ADMIN
-                                </span>
-                            </div>
-                            <p className="text-xs text-text-muted">
-                                {t('hub.communitymanageoverview_151')}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-                        <button
-                            type="button"
-                            onClick={() => onNavigate("home")}
-                            className="px-3 py-1.5 rounded-[6px] bg-surface-inner hover:bg-surface-hover border border-border text-xs font-semibold text-text transition-colors cursor-pointer"
-                        >
-                            <span>{t('hub.communitymanageoverview_152')}</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onNavigate("home")}
-                            className="px-3 py-1.5 rounded-[6px] bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-                        >
-                            <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                            <span>{t('hub.communitymanageoverview_153')}</span>
-                        </button>
-                    </div>
-                </div>
 
                 {/* Clear Admin Navigation Tabs */}
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-2">
@@ -206,7 +159,7 @@ export const CommunityManageOverview = ({
             {/* 2. COMPACT OVERVIEW STRIP (Not massive cards, dense & readable) */}
             <div className="p-3.5 rounded-[8px] bg-surface-inner/60 border border-border/60">
                 <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-faint pb-2 mb-2 border-b border-border/40">
-                    COMMUNITY OVERVIEW
+                    {isVi ? "TỔNG QUAN CỘNG ĐỒNG" : "COMMUNITY OVERVIEW"}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono">
                     <div className="flex flex-col">
@@ -258,59 +211,54 @@ export const CommunityManageOverview = ({
             </div>
 
             {/* 3. NEEDS ATTENTION (MOST IMPORTANT ACTION-ORIENTED SECTION) */}
-            <div className="flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={faTriangleExclamation} />
-                        <span>NEEDS ATTENTION</span>
-                    </span>
-                    <span className="text-[10px] font-mono text-text-faint">
-                        {attentionItems.length} {t('hub.communitymanageoverview_159')}
-                    </span>
-                </div>
+            {attentionItems.length > 0 && (
+                <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                            <FontAwesomeIcon icon={faTriangleExclamation} />
+                            <span>{isVi ? "CẦN XỬ LÝ" : "NEEDS ATTENTION"}</span>
+                        </span>
+                        <span className="text-[10px] font-mono text-text-faint">
+                            {attentionItems.length} {t('hub.communitymanageoverview_159')}
+                        </span>
+                    </div>
 
-                <div className="flex flex-col gap-2">
-                    {attentionItems.map((item) => (
-                        <div
-                            key={item.id}
-                            onClick={item.action}
-                            className="p-3 rounded-[6px] bg-surface-inner/80 hover:bg-surface-hover/80 border border-border/70 hover:border-border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                        >
-                            <div className="flex items-start gap-3 min-w-0">
-                                <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${item.severity === "high" ? "bg-rose-500 animate-pulse" : "bg-amber-400"}`} />
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
-                                        {item.label}
-                                    </span>
-                                    <span className="text-[11px] text-text-muted mt-0.5">
-                                        {item.desc}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                className="px-3 py-1 rounded-[4px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text flex items-center gap-1.5 self-end sm:self-auto shrink-0 transition-colors"
+                    <div className="flex flex-col gap-2">
+                        {attentionItems.map((item) => (
+                            <div
+                                key={item.id}
+                                onClick={item.action}
+                                className="p-3 rounded-[6px] bg-surface-inner/80 hover:bg-surface-hover/80 border border-border/70 hover:border-border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                             >
-                                <span>{item.actionText}</span>
-                                <FontAwesomeIcon icon={faArrowRight} className="text-[9px] text-text-faint group-hover:translate-x-0.5 transition-transform" />
-                            </button>
-                        </div>
-                    ))}
+                                <div className="flex items-start gap-3 min-w-0">
+                                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${item.severity === "high" ? "bg-rose-500 animate-pulse" : "bg-amber-400"}`} />
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-xs font-bold text-text group-hover:text-primary transition-colors">
+                                            {item.label}
+                                        </span>
+                                        <span className="text-[11px] text-text-muted mt-0.5">
+                                            {item.desc}
+                                        </span>
+                                    </div>
+                                </div>
 
-                    {attentionItems.length === 0 && (
-                        <div className="p-4 rounded-[6px] bg-surface-inner/40 border border-border/40 text-xs text-text-muted flex items-center gap-2">
-                            <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-400 text-sm" />
-                            <span>{t('hub.communitymanageoverview_160')}</span>
-                        </div>
-                    )}
+                                <button
+                                    type="button"
+                                    className="px-3 py-1 rounded-[4px] bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-text flex items-center gap-1.5 self-end sm:self-auto shrink-0 transition-colors"
+                                >
+                                    <span>{item.actionText}</span>
+                                    <FontAwesomeIcon icon={faArrowRight} className="text-[9px] text-text-faint group-hover:translate-x-0.5 transition-transform" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* 4. QUICK ACTIONS */}
             <div className="flex flex-col gap-2.5">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                    QUICK ACTIONS
+                    {isVi ? "THAO TÁC NHANH" : "QUICK ACTIONS"}
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <button
@@ -391,7 +339,7 @@ export const CommunityManageOverview = ({
             <div className="flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-faint">
-                        RECENT ACTIVITY
+                        {isVi ? "HOẠT ĐỘNG GẦN ĐÂY" : "RECENT ACTIVITY"}
                     </span>
                     <button
                         type="button"

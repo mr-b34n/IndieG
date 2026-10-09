@@ -324,30 +324,7 @@ export const CommunityManageModeration = ({
                 </div>
             )}
 
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-divider-primary/40">
-                <div>
-                    <h2 className="text-base sm:text-lg font-mono font-bold tracking-wider text-text uppercase">
-                        COMMUNITY MODERATION
-                    </h2>
-                    <p className="text-xs text-text-muted mt-0.5">
-                        {isVi
-                            ? `Kiểm duyệt nội dung, xử lý báo cáo và phê duyệt thành viên cho ${communityName}.`
-                            : `Content moderation, report resolutions, and join permissions for ${communityName}.`}
-                    </p>
-                </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={onNavigateRules}
-                        className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover border border-divider-primary text-xs font-semibold text-text flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                        <FontAwesomeIcon icon={faShieldHalved} className="text-[11px] text-primary" />
-                        <span>{t('hub.communitymanagemoderation_93')}</span>
-                    </button>
-                </div>
-            </div>
 
             {/* Subtabs Bar */}
             <div className="flex items-center gap-4 text-xs font-bold border-b border-divider-primary/40 pb-2">
@@ -360,7 +337,7 @@ export const CommunityManageModeration = ({
                             : "border-transparent text-text-muted hover:text-text"
                     }`}
                 >
-                    <span className="uppercase tracking-wider">Queue</span>
+                    <span className="uppercase tracking-wider">{isVi ? "Hàng đợi" : "Queue"}</span>
                     {(pendingRequestsCount > 0 || (reports && reports.filter(r => r.status === 'pending').length > 0)) && (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] ${subTab === "queue" ? "bg-primary/20 text-primary" : "bg-rose-500/10 text-rose-500"}`}>
                             {pendingRequestsCount + (reports ? reports.filter(r => r.status === 'pending').length : 0)}
@@ -377,7 +354,7 @@ export const CommunityManageModeration = ({
                             : "border-transparent text-text-muted hover:text-text"
                     }`}
                 >
-                    <span className="uppercase tracking-wider">Join Requests</span>
+                    <span className="uppercase tracking-wider">{isVi ? "Yêu cầu gia nhập" : "Join Requests"}</span>
                     {pendingRequestsCount > 0 && (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] ${subTab === "requests" ? "bg-primary/20 text-primary" : "bg-surface-inner text-text-faint"}`}>
                             {pendingRequestsCount}
@@ -394,7 +371,7 @@ export const CommunityManageModeration = ({
                             : "border-transparent text-text-muted hover:text-text"
                     }`}
                 >
-                    <span className="uppercase tracking-wider">Moderator Team</span>
+                    <span className="uppercase tracking-wider">{isVi ? "Đội ngũ điều hành" : "Moderator Team"}</span>
                 </button>
 
                 <button
@@ -406,7 +383,7 @@ export const CommunityManageModeration = ({
                             : "border-transparent text-text-muted hover:text-text"
                     }`}
                 >
-                    <span className="uppercase tracking-wider">Audit Log</span>
+                    <span className="uppercase tracking-wider">{isVi ? "Nhật ký kiểm duyệt" : "Audit Log"}</span>
                 </button>
             </div>
 
@@ -414,38 +391,55 @@ export const CommunityManageModeration = ({
             {subTab === "queue" && (
                 <div className="flex flex-col gap-6 animate-fade-in">
                     <div className="flex flex-col gap-1">
-                        <h2 className="text-sm font-bold text-text uppercase tracking-wider">Moderation Queue</h2>
+                        <h2 className="text-sm font-bold text-text uppercase tracking-wider">
+                            {isVi ? "HÀNG ĐỢI KIỂM DUYỆT" : "MODERATION QUEUE"}
+                        </h2>
                         <p className="text-xs text-text-muted">
-                            {pendingRequestsCount + (reports ? reports.filter(r => r.status === 'pending').length : 0)} items need attention
+                            {isVi
+                                ? `${pendingRequestsCount + (reports ? reports.filter(r => r.status === 'pending').length : 0)} mục cần chú ý`
+                                : `${pendingRequestsCount + (reports ? reports.filter(r => r.status === 'pending').length : 0)} items need attention`}
                         </p>
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <h3 className="text-xs font-bold text-text-faint uppercase tracking-wider mb-1">Pending Reports</h3>
+                        <h3 className="text-xs font-bold text-text-faint uppercase tracking-wider mb-1">
+                            {isVi ? "Báo cáo chờ xử lý" : "Pending Reports"}
+                        </h3>
                         {reports && reports.filter(r => r.status === 'pending').length > 0 ? (
                             reports.filter(r => r.status === 'pending').slice(0, 3).map((report) => (
                                 <div key={report.id} className="p-3 bg-surface border border-divider-primary/30 rounded-lg flex flex-col gap-2">
                                     <div className="flex justify-between items-center text-[10px] font-mono text-text-faint">
-                                        <span className="uppercase text-amber-500 font-bold">{report.targetType} reported</span>
+                                        <span className="uppercase text-amber-500 font-bold">
+                                            {report.targetType} {isVi ? "bị báo cáo" : "reported"}
+                                        </span>
                                         <span>{report.createdAt}</span>
                                     </div>
                                     <p className="text-xs text-text line-clamp-2">"{report.targetExcerpt}"</p>
-                                    <button onClick={() => setSubTabOverride("reports")} className="text-xs font-bold text-primary self-start hover:underline mt-1">Review Report →</button>
+                                    <button onClick={() => setSubTabOverride("reports")} className="text-xs font-bold text-primary self-start hover:underline mt-1">
+                                        {isVi ? "Xem báo cáo →" : "Review Report →"}
+                                    </button>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-xs text-text-muted">No pending reports.</p>
+                            <p className="text-xs text-text-muted">{isVi ? "Không có báo cáo nào." : "No pending reports."}</p>
                         )}
                     </div>
 
                     <div className="flex flex-col gap-3 mt-2">
-                        <h3 className="text-xs font-bold text-text-faint uppercase tracking-wider mb-1">Join Requests</h3>
+                        <h3 className="text-xs font-bold text-text-faint uppercase tracking-wider mb-1">
+                            {isVi ? "Yêu cầu gia nhập" : "Join Requests"}
+                        </h3>
                         {pendingRequestsCount > 0 ? (
                             <p className="text-xs text-text-muted">
-                                There are {pendingRequestsCount} users waiting to join. <button onClick={() => setSubTabOverride("requests")} className="text-primary font-bold hover:underline">Review Requests →</button>
+                                {isVi
+                                    ? `Có ${pendingRequestsCount} người dùng đang chờ duyệt. `
+                                    : `There are ${pendingRequestsCount} users waiting to join. `}
+                                <button onClick={() => setSubTabOverride("requests")} className="text-primary font-bold hover:underline">
+                                    {isVi ? "Xem yêu cầu →" : "Review Requests →"}
+                                </button>
                             </p>
                         ) : (
-                            <p className="text-xs text-text-muted">No pending join requests.</p>
+                            <p className="text-xs text-text-muted">{isVi ? "Không có yêu cầu nào." : "No pending join requests."}</p>
                         )}
                     </div>
                 </div>

@@ -6,7 +6,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 
-import { getCurrentAuthor, Post, usePostsStore, type PostData } from "@/features/post";
+import { getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type PostData } from "@/features/post";
 import { useBookmarksStore } from "../store/useBookmarkStore";
 import { Pagination } from "@/shared/components/ui/Pagination";
 import { useBookmarksQuery, useDeleteBookmarkMutation } from "@/shared/api/useQueries";
@@ -95,18 +95,18 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
                 if (found) return found;
                 return {
                     id,
-                    title: "Bài viết đã lưu",
-                    content: "Nội dung bài viết đang được đồng bộ...",
-                    author: "Người dùng",
+                    title: t("bookmark.fallbackTitle", { defaultValue: "Bài viết đã lưu" }),
+                    content: t("bookmark.fallbackContent", { defaultValue: "Nội dung bài viết đang được đồng bộ..." }),
+                    author: t("bookmark.fallbackAuthor", { defaultValue: "Người dùng" }),
                     authorAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(id)}`,
                     likes: 0,
                     comments: 0,
-                    timeAgo: "Đã lưu",
+                    timeAgo: t("bookmark.fallbackTime", { defaultValue: "Đã lưu" }),
                     privacy: "public" as const,
                 } as PostData;
             })
             .filter(Boolean);
-    }, [bookmarksData, bookmarkedIds, posts]);
+    }, [bookmarksData, bookmarkedIds, posts, t]);
 
     const totalPages = Math.ceil(bookmarkedPosts.length / ITEMS_PER_PAGE);
     const paginatedPosts = bookmarkedPosts.slice(
@@ -114,19 +114,26 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
         currentPage * ITEMS_PER_PAGE
     );
 
+    const registerPostIds = useFeedNavigationStore((state) => state.registerPostIds);
+    useEffect(() => {
+        if (paginatedPosts.length > 0) {
+            registerPostIds(paginatedPosts.map((p) => p.id));
+        }
+    }, [paginatedPosts, registerPostIds]);
+
     if (!isLoggedIn) {
         return (
             <div className="w-full flex flex-col items-center justify-center gap-3 p-12 bg-surface/90 border border-border rounded-2xl text-center">
                 <FontAwesomeIcon icon={faBookmark} className="text-3xl text-text-faint mb-1" />
                 <p className="font-bold text-text text-base">{t("bookmark.emptyTitle")}</p>
                 <p className="text-text-muted text-xs max-w-md">
-                    Vui lòng đăng nhập để xem danh sách bài viết bạn đã đánh dấu và đồng bộ trên mọi thiết bị.
+                    {t("bookmark.loginRequiredDesc", { defaultValue: "Vui lòng đăng nhập để xem danh sách bài viết bạn đã đánh dấu và đồng bộ trên mọi thiết bị." })}
                 </p>
                 <button
                     onClick={() => navigate({ to: "/auth" })}
                     className="mt-2 px-5 py-2 rounded-xl bg-[#1688E8] hover:bg-[#1478D0] text-white font-bold text-xs transition-colors cursor-pointer"
                 >
-                    Đăng nhập ngay
+                    {t("authenticate.loginNow", { defaultValue: "Đăng nhập ngay" })}
                 </button>
             </div>
         );
@@ -136,7 +143,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
         return (
             <div className="w-full flex flex-col items-center justify-center gap-3 p-12 bg-surface/90 border border-border rounded-2xl text-center">
                 <FontAwesomeIcon icon={faSpinner} className="animate-spin text-2xl text-[#1688E8]" />
-                <p className="text-text-muted text-xs">Đang tải danh sách dấu trang...</p>
+                <p className="text-text-muted text-xs">{t("bookmark.loading", { defaultValue: "Đang tải danh sách dấu trang..." })}</p>
             </div>
         );
     }
@@ -153,7 +160,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
                         <p className="text-xs text-text-muted mt-1">{t("bookmark.subtitle")}</p>
                     </div>
                     <span className="text-xs font-semibold px-3 py-1 rounded-full bg-surface-raised border border-border text-text-muted">
-                        {bookmarkedPosts.length} đã lưu
+                        {bookmarkedPosts.length} {t("bookmark.savedLabel", { defaultValue: "đã lưu" })}
                     </span>
                 </div>
             )}

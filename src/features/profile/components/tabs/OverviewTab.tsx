@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faGamepad, faSpinner,
+    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faUser, faBolt, faGamepad, faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import type { CommunityDto } from "@/shared/api/types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
+import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import { BioEditor, BioRenderer, isBioEmpty, parseBio } from "../../bio";
 
 interface OverviewTabProps {
@@ -124,8 +125,8 @@ export const OverviewTab = ({
                 <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs relative overflow-visible z-10 transition-all ${cardCustomStyle("playerIdentity")}`}>
                     <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60 mb-3">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm">🎯</span>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#8A8F98]">Player Identity</h3>
+                            <FontAwesomeIcon icon={faUser} className="text-[#1688E8] text-xs" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Player Identity</h3>
                         </div>
                         <div className="flex items-center gap-2">
                             {renderToggleBtn("playerIdentity")}
@@ -164,27 +165,24 @@ export const OverviewTab = ({
                 </div>
             )}
 
-            {/* ── SECTION 2: GAME MASTERY (Visual Cards with Game Artwork) ────────── */}
-            {showGameMastery && (
-                <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("gameMastery")}`}>
+            
+            {/* ── PRIMARY CONTENT: GAMING IDENTITY ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                {showGameMastery && (
+    <div className={showCommunityReputation ? "lg:col-span-7" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("gameMastery")}`}>
                     <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                         <div className="flex items-center gap-2">
-                            <FontAwesomeIcon icon={faCrown} className="text-[#E5A93D] text-xs" />
+                            <FontAwesomeIcon icon={faGamepad} className="text-[#1688E8] text-xs" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">
                                 {tr("profile.gameMastery.title", { defaultValue: "Game Mastery" })}
                             </h3>
                         </div>
                         <div className="flex items-center gap-2">
                             {renderToggleBtn("gameMastery")}
-                            {activeGamesList.length > 0 && (
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#1688E8] bg-[#1688E8]/10 px-2 py-0.5 rounded-[4px]">
-                                    {tr("profile.gameMastery.featuredGame", { defaultValue: "Featured Game" })}
-                                </span>
-                            )}
                         </div>
                     </div>
 
-                    {/* Loading State */}
                     {isLoadingGames ? (
                         <div className="py-8 px-4 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/60 flex flex-col items-center justify-center gap-2 text-[#8A8F98]">
                             <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[#1688E8] text-base" />
@@ -192,197 +190,150 @@ export const OverviewTab = ({
                                 {tr("profile.gameMastery.loading", { defaultValue: "Đang tải dữ liệu Game Mastery từ hệ thống..." })}
                             </span>
                         </div>
-                    ) : activeGamesList.length === 0 ? (
-                        /* Informative Notice Banner when no data/response exists */
-                        <div className="py-7 px-5 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/80 text-center flex flex-col items-center justify-center gap-2.5">
-                            <div className="w-10 h-10 rounded-full bg-[#1688E8]/10 text-[#1688E8] flex items-center justify-center text-base">
-                                <FontAwesomeIcon icon={faGamepad} />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <h4 className="text-xs font-bold text-[#F0F1F2] uppercase tracking-wider">
-                                    {tr("profile.gameMastery.emptyTitle", { defaultValue: "Chưa có dữ liệu Game Mastery" })}
-                                </h4>
-                                <p className="text-xs text-[#8A8F98] max-w-md leading-relaxed">
-                                    {isOwnProfile
-                                        ? tr("profile.gameMastery.emptyDescOwn", { defaultValue: "Chưa nhận được phản hồi dữ liệu game. Bạn có thể thêm các tựa game và chỉ số vào thư viện." })
-                                        : tr("profile.gameMastery.emptyDescOther", { defaultValue: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery." })}
-                                </p>
-                            </div>
-                            {isOwnProfile && onNavigateToGames && (
-                                <button
-                                    type="button"
-                                    onClick={onNavigateToGames}
-                                    className="mt-1 px-3.5 py-1.5 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
-                                >
-                                    <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
-                                    <span>{tr("profile.gameMastery.addGameBtn", { defaultValue: "Thêm game vào thư viện" })}</span>
-                                </button>
-                            )}
-                        </div>
                     ) : (
-                        /* Featured Game Card */
-                        featuredGame && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-[#13161C] rounded-[12px] p-4 sm:p-5 border border-[#1A1F2A]/60 relative overflow-hidden transition-all">
-                                
-                                {/* Artwork & Title Column */}
-                                <div className="lg:col-span-5 flex items-center gap-4 relative z-10">
-                                    <img
-                                        src={featuredGame.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=240&auto=format&fit=crop&q=80"}
-                                        alt={featuredGame.name || "Game"}
-                                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-[10px] object-cover shrink-0 shadow-md border border-[#222834]/60"
-                                    />
-                                    <div className="flex flex-col gap-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <h4 className="font-extrabold text-[#F0F1F2] text-base sm:text-lg truncate leading-tight">
-                                                {featuredGame.name || "Featured Game"}
+                        (() => {
+                            const playedGames = activeGamesList.filter(g => (g.hours || 0) > 0);
+                            
+                            if (playedGames.length === 0) {
+                                return (
+                                    <div className="py-7 px-5 rounded-[12px] bg-[#13161C] border border-[#1A1F2A]/80 text-center flex flex-col items-center justify-center gap-2.5">
+
+                                        <div className="flex flex-col gap-1">
+                                            <h4 className="text-xs font-bold text-[#F0F1F2] uppercase tracking-wider">
+                                                {tr("profile.gameMastery.emptyTitle", { defaultValue: "Chưa có dữ liệu Game Mastery" })}
                                             </h4>
-                                            <span className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold text-[#1688E8] bg-[#1688E8]/15 border border-[#1688E8]/30">
-                                                {tr("profile.gameMastery.primaryBadge", { defaultValue: "PRIMARY" })}
-                                            </span>
+                                            <p className="text-xs text-[#8A8F98] max-w-md leading-relaxed">
+                                                {isOwnProfile
+                                                    ? tr("profile.gameMastery.emptyDescOwn", { defaultValue: "Chưa nhận được phản hồi dữ liệu game. Bạn có thể thêm các tựa game và chỉ số vào thư viện." })
+                                                    : tr("profile.gameMastery.emptyDescOther", { defaultValue: "Người dùng này chưa cập nhật dữ liệu game trong thư viện Game Mastery." })}
+                                            </p>
                                         </div>
-                                        <span className="text-xs font-bold text-[#F0F1F2]">
-                                            {tr("profile.gameMastery.hoursPlayed", { hours: featuredGame.hours || 0, defaultValue: "{hours} Hours Played" })}
-                                        </span>
-                                        <span className="text-xs font-medium text-[#8A8F98]">
-                                            {featuredGame.rank || "Competitive"} · {featuredGame.ratingScore || "Top Tier"}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Stats & Progress Column */}
-                                <div className="lg:col-span-7 flex flex-col gap-3 relative z-10">
-                                    <div className="flex flex-wrap items-center justify-between text-xs font-semibold text-[#F0F1F2] gap-2">
-                                        <span className="text-[#8A8F98] text-[11px]">
-                                            {tr("profile.gameMastery.achievementProgress", {
-                                                achievements: featuredGame.achievements || 0,
-                                                total: featuredGame.totalAchievements || 100,
-                                                defaultValue: "Achievement Progress ({achievements}/{total})"
-                                            })}
-                                        </span>
-                                        <span className="text-[#24C58A] font-bold px-2 py-0.5 rounded-[4px] bg-[#24C58A]/15 text-[10px] tracking-wide">
-                                            {featuredGame.keyStat || "MASTERED"}
-                                        </span>
-                                    </div>
-
-                                    {/* Progress Accent Bar */}
-                                    <div className="h-1.5 w-full bg-[#1A1E26] rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-[#1688E8] rounded-full transition-all duration-300"
-                                            style={{ 
-                                                width: `${Math.round(((featuredGame.achievements || 0) / Math.max(1, (featuredGame.totalAchievements || 1))) * 100)}%`
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Skill Stars */}
-                                    {featuredGame.skills && featuredGame.skills.length > 0 && (
-                                        <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
-                                            {featuredGame.skills.map((s) => (
-                                                <div key={s.name} className="flex items-center gap-1.5">
-                                                    <span className="font-medium text-[#8A8F98] text-[11px]">{s.name}</span>
-                                                    <div className="flex items-center gap-0.5 text-[#E5A93D] text-[10px]">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <FontAwesomeIcon
-                                                                key={star}
-                                                                icon={star <= s.stars ? faStarSolid : faStarRegular}
-                                                                className={star <= s.stars ? "text-[#E5A93D]" : "text-[#666A71]/40"}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    )}
-
-                    {/* Secondary Game Selector Tiles */}
-                    {!isLoadingGames && activeGamesList.length > 1 && (
-                        <div className="flex flex-col gap-2 pt-1">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                                {activeGamesList.map((game) => {
-                                    const isSelected = String(game.id) === selectedGameSlug || game.name === featuredGame?.name;
-                                    return (
-                                        <button
-                                            key={game.name}
-                                            type="button"
-                                            onClick={() => setSelectedGameSlug(String(game.id))}
-                                            className={`relative flex items-center gap-3 p-2.5 rounded-[8px] text-left transition-all cursor-pointer ${
-                                                isSelected
-                                                    ? "bg-[#192230] border border-[#1688E8]/50 shadow-xs"
-                                                    : "bg-[#13161C] hover:bg-[#1B1F28] border border-transparent"
-                                            }`}
-                                        >
-                                            <img 
-                                                src={game.logo || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=120&auto=format&fit=crop&q=80"} 
-                                                alt={game.name || "Game"} 
-                                                className="w-10 h-10 rounded-[6px] object-cover shrink-0" 
-                                            />
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <h5 className="font-bold text-xs text-[#F0F1F2] truncate">
-                                                    {game.name}
-                                                </h5>
-                                                <span className="text-[10px] text-[#8A8F98]">
-                                                    {tr("profile.library.hoursPlayed", { hours: game.hours, defaultValue: "{hours} giờ chơi" })}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* ── SECTION 3: RECENT ACTIVITY (Medium Weight Feed) ────────────────── */}
-            {showRecentActivity && (
-                <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-3 transition-all ${cardCustomStyle("recentActivity")}`}>
-                    <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm">⚡</span>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {renderToggleBtn("recentActivity")}
-                            <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
-                        </div>
-                    </div>
-
-                    {activities.length === 0 ? (
-                        <div className="py-3 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
-                            <span>{tr("profile.empty.activityText", { defaultValue: "Chưa có hoạt động gần đây." })}</span>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                            {activities.map((act) => (
-                                <div key={act.id} className="flex items-start gap-3 p-2.5 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all border border-[#1A1F2A]/40">
-                                    <span className="text-sm shrink-0 mt-0.5">{act.icon || "🎮"}</span>
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h5 className="font-bold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
-                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
-                                        </div>
-                                        {act.subtitle && (
-                                            <p className="text-[11px] text-[#8A8F98] leading-normal mt-0.5">{act.subtitle}</p>
+                                        {isCustomizeMode && onNavigateToGames && (
+                                            <button
+                                                type="button"
+                                                onClick={onNavigateToGames}
+                                                className="mt-1 px-3.5 py-1.5 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                                            >
+                                                <FontAwesomeIcon icon={faPlus} className="text-[10px]" />
+                                                <span>{tr("profile.gameMastery.addGameBtn", { defaultValue: "Thêm game vào thư viện" })}</span>
+                                            </button>
                                         )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                );
+                            }
+
+                            const primaryGame = playedGames.find((g) => String(g?.id) === selectedGameSlug || g?.isFeatured) || playedGames[0];
+                            const gridGames = playedGames.slice(0, 6);
+
+                            return (
+                                <>
+                                    {/* Primary Game Horizontal Banner */}
+                                    {primaryGame && (
+                                        <div className="relative w-full h-24 sm:h-28 rounded-[10px] overflow-hidden group flex items-center border border-[#1A1F2A]/80">
+                                            {/* Blurred Backdrop */}
+                                            <div className="absolute inset-0 z-0">
+                                                <img 
+                                                    src={primaryGame.coverUrl || primaryGame.logo || DEFAULT_GAME_LOGO} 
+                                                    alt="backdrop" 
+                                                    className="w-full h-full object-cover blur-sm scale-110 opacity-30" 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-[#0A0C0E] via-[#0A0C0E]/90 to-transparent" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="relative z-10 flex items-center justify-between w-full p-4">
+                                                <div className="flex items-center gap-4">
+                                                    <img 
+                                                        src={primaryGame.logo || DEFAULT_GAME_LOGO} 
+                                                        alt={primaryGame.name} 
+                                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-[8px] object-cover shadow-lg border border-[#222834]/80"
+                                                    />
+                                                    <div className="flex flex-col gap-1">
+                                                        <h4 className="font-extrabold text-[#F0F1F2] text-base sm:text-lg">
+                                                            {primaryGame.name}
+                                                        </h4>
+                                                        <span className="text-xs font-semibold text-[#8A8F98]">
+                                                            {primaryGame.hours} Hours Played
+                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-1" title="Achievement Progress">
+                                                            <div className="h-1.5 w-24 bg-[#1A1E26] rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-[#1688E8] rounded-full"
+                                                                    style={{ width: `${Math.round(((primaryGame.achievements || 0) / Math.max(1, (primaryGame.totalAchievements || 1))) * 100)}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-[10px] text-[#8A8F98] font-mono">
+                                                                {Math.round(((primaryGame.achievements || 0) / Math.max(1, (primaryGame.totalAchievements || 1))) * 100)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="hidden sm:flex flex-col items-end gap-2">
+                                                    <span className="px-2.5 py-1 rounded-[6px] text-[10px] font-bold text-[#1688E8] bg-[#1688E8]/10 border border-[#1688E8]/20 flex items-center gap-1.5">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#1688E8] animate-pulse" />
+                                                        NOW PLAYING
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Game Grid */}
+                                    {gridGames.length > 0 && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-2">
+                                            {gridGames.map(game => {
+                                                const achievementPct = Math.round(((game.achievements || 0) / Math.max(1, (game.totalAchievements || 1))) * 100);
+                                                return (
+                                                    <div 
+                                                        key={game.id || game.name} 
+                                                        className="group relative flex flex-col bg-[#13161C] rounded-[8px] overflow-hidden border border-[#1A1F2A]/60 hover:border-[#1688E8]/50 transition-all cursor-pointer"
+                                                        title={`${game.name} - Rank: ${game.rank || 'Unranked'} - ${achievementPct}% Achievements`}
+                                                        onClick={() => setSelectedGameSlug(String(game.id))}
+                                                    >
+                                                        <div className="w-full aspect-[2/3] overflow-hidden bg-[#0A0C0E]">
+                                                            <img 
+                                                                src={game.coverUrl || game.logo || DEFAULT_GAME_LOGO} 
+                                                                alt={game.name} 
+                                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                            />
+                                                        </div>
+                                                        <div className="p-2 flex flex-col gap-0.5">
+                                                            <span className="text-[11px] font-bold text-[#F0F1F2] truncate">{game.name}</span>
+                                                            <span className="text-[10px] text-[#8A8F98]">{game.hours}h played</span>
+                                                        </div>
+                                                        {/* Thin achievement progress bar at bottom */}
+                                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#1A1E26]">
+                                                            <div 
+                                                                className="h-full bg-[#1688E8]" 
+                                                                style={{ width: `${achievementPct}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    
+                                    {activeGamesList.length > 6 && (
+                                        <button
+                                            type="button"
+                                            onClick={onNavigateToGames}
+                                            className="mt-2 text-xs font-semibold text-[#8A8F98] hover:text-[#F0F1F2] flex items-center justify-center gap-1.5 transition-colors"
+                                        >
+                                            {tr("profile.viewAllInLibrary", { defaultValue: "View all in Library →" })}
+                                        </button>
+                                    )}
+                                </>
+                            );
+                        })()
                     )}
                 </div>
-            )}
-
-            {/* ── SECTION 4: COMMUNITY REPUTATION + BATTLESTATION LOADOUT (Split Grid) ─ */}
-            {(showCommunityReputation || showConnectedAccounts) && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-                    
-                    {/* COMMUNITY REPUTATION */}
-                    {showCommunityReputation && (
-                        <div className={`${showConnectedAccounts ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
+    </div>
+)}
+                {showCommunityReputation && (
+    <div className={showGameMastery ? "lg:col-span-5" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
                             <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faUsers} className="text-[#1688E8] text-xs" />
@@ -408,23 +359,81 @@ export const OverviewTab = ({
                                     {displayCommunityList.map((rep) => (
                                         <div
                                             key={rep.id}
-                                            className="flex items-center gap-2.5 p-2.5 rounded-[8px] bg-[#13161C] border border-[#1A1F2A]/40 hover:bg-[#1B1F28] transition-all"
+                                            className="flex items-center gap-3 p-2.5 rounded-[8px] bg-[#13161C] border border-[#1A1F2A]/40 hover:bg-[#1B1F28] transition-all"
                                         >
-                                            <span className="text-xl shrink-0 flex items-center justify-center">{rep.icon}</span>
-                                            <div className="flex flex-col min-w-0">
+                                            <div className="w-10 h-10 shrink-0 flex items-center justify-center bg-[#1A1F2A] rounded-[8px] overflow-hidden border border-[#222834]">
+                                                {typeof rep.icon === 'string' && rep.icon.startsWith('http') ? (
+                                                    <img src={rep.icon} alt={rep.name} className="w-full h-full object-cover" />
+                                                ) : typeof rep.icon === 'object' && rep.icon !== null ? (
+                                                    rep.icon
+                                                ) : (
+                                                    <span className="text-lg">{rep.icon || "🎮"}</span>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col min-w-0 flex-1">
                                                 <span className="text-xs font-bold text-[#F0F1F2] truncate">{rep.name}</span>
-                                                <span className="text-[10px] font-bold text-[#24C58A] truncate">{rep.tier}</span>
+                                                <span className="text-[10px] font-bold text-[#F0F1F2] bg-[#1A1F2A] border border-[#222834] px-1.5 py-0.5 rounded-[4px] w-fit truncate mt-1">
+                                                    {rep.tier}
+                                                </span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                    )}
+    </div>
+)}
+            </div>
 
-                    {/* BATTLESTATION LOADOUT */}
-                    {showConnectedAccounts && (
-                        <div className={`${showCommunityReputation ? "lg:col-span-6" : "lg:col-span-12"} bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
+            {/* ── SECONDARY CONTENT: SOCIAL ACTIVITY AND GAMING SETUP ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                {showRecentActivity && (activities.length > 0 || isOwnProfile) && (
+    <div className={showConnectedAccounts ? "lg:col-span-7" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-3 transition-all ${cardCustomStyle("recentActivity")}`}>
+                    <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
+                        <div className="flex items-center gap-2">
+                            <FontAwesomeIcon icon={faBolt} className="text-[#1688E8] text-xs" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">Recent Activity</h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {renderToggleBtn("recentActivity")}
+                            <span className="text-[10px] font-medium text-[#8A8F98]">Live Feed</span>
+                        </div>
+                    </div>
+
+                    {activities.length === 0 ? (
+                        <div className="py-4 px-4 rounded-[8px] bg-[#13161C] flex flex-col items-center gap-2 border border-[#1A1F2A]/40 text-center">
+                            <span className="text-[#8A8F98] text-xs">No recent activity.</span>
+                            {isOwnProfile && (
+                                <button type="button" className="text-[11px] font-bold text-[#1688E8] hover:text-[#1478D0]">
+                                    Link your Steam account to see your activity
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            {activities.map((act) => (
+                                <div key={act.id} className="flex items-start gap-3 p-2.5 rounded-[8px] bg-[#13161C] hover:bg-[#1B1F28] transition-all border border-[#1A1F2A]/40">
+                                    <span className="text-sm shrink-0 mt-0.5">{act.icon || "🎮"}</span>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h5 className="font-bold text-[#F0F1F2] text-xs leading-snug">{act.title}</h5>
+                                            <span className="text-[10px] text-[#8A8F98] shrink-0">{act.timeAgo}</span>
+                                        </div>
+                                        {act.subtitle && (
+                                            <p className="text-[11px] text-[#8A8F98] leading-normal mt-0.5">{act.subtitle}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+    </div>
+)}
+                {showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile) && (
+    <div className={(showRecentActivity && (activities.length > 0 || isOwnProfile)) ? "lg:col-span-5" : "lg:col-span-12"}>
+        <div className={`w-full bg-[#0A0C0E] rounded-[14px] p-5 sm:p-6 shadow-xs flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
                             <div className="flex items-center justify-between pb-2 border-b border-[#181C24]/60">
                                 <div className="flex items-center gap-2">
                                     <FontAwesomeIcon icon={faDesktop} className="text-[#1688E8] text-xs" />
@@ -437,9 +446,9 @@ export const OverviewTab = ({
 
                             {/* Public View: Gaming Hardware Loadout vs Edit Mode: Form */}
                             {isCustomizeMode ? (
-                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px] max-h-[300px] overflow-y-auto">
+                                <div className="flex flex-col gap-3 p-3 bg-[#13161C] rounded-[10px]">
                                     <span className="text-[10px] font-mono font-bold text-[#1688E8] uppercase tracking-wider">
-                                        Cập nhật thông tin thiết bị góc máy
+                                        {tr("profile.battlestationUpdate", { defaultValue: "Cập nhật thông tin thiết bị góc máy" })}
                                     </span>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                         {GEAR_CATEGORIES.map((cat) => (
@@ -452,7 +461,7 @@ export const OverviewTab = ({
                                                     type="text"
                                                     value={gearData[cat.value] || ""}
                                                     onChange={(e) => onGearChange?.(cat.value, e.target.value)}
-                                                    placeholder={`Nhập ${cat.value}...`}
+                                                    placeholder={tr("profile.battlestationPlaceholder", { item: cat.value, defaultValue: `Nhập ${cat.value}...` })}
                                                     className="w-full bg-[#0D0F14] border border-[#222834] rounded-[6px] px-2.5 py-1.5 text-xs text-[#F0F1F2] focus:outline-none focus:border-[#1688E8] transition-colors"
                                                 />
                                             </div>
@@ -462,13 +471,8 @@ export const OverviewTab = ({
                             ) : (
                                 <>
                                     {filledGear.length === 0 ? (
-                                        <div className="py-5 px-4 rounded-[10px] border border-dashed border-[#222834] bg-[#13161C] text-center flex flex-col items-center justify-center gap-1">
-                                            <span className="text-xs font-bold text-[#1688E8] uppercase tracking-wider font-mono">
-                                                + BATTLESTATION LOADOUT
-                                            </span>
-                                            <span className="text-xs text-[#8A8F98]">
-                                                {tr("profile.empty.gear", { defaultValue: "Chưa cập nhật thông tin thiết bị góc máy." })}
-                                            </span>
+                                        <div className="py-4 px-4 rounded-[8px] bg-[#13161C] text-[#8A8F98] text-xs text-center border border-[#1A1F2A]/40">
+                                            <span>{tr("profile.battlestationEmpty", { defaultValue: "Chưa có thông tin thiết bị." })}</span>
                                         </div>
                                     ) : (
                                         /* Public Gaming Loadout Presentation */
@@ -491,11 +495,9 @@ export const OverviewTab = ({
                                 </>
                             )}
                         </div>
-                    )}
-
-                </div>
-            )}
-
+    </div>
+)}
+            </div>
         </div>
     );
 };

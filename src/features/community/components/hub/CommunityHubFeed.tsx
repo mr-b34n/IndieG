@@ -1,3 +1,6 @@
+import { useState, useRef, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { Post, type PostData, usePostsStore, getCurrentAuthor, type UserRank } from "@/features/post";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
@@ -113,38 +116,71 @@ export const CommunityHubFeed = ({
     const deletePost = usePostsStore((state) => state.deletePost);
     const updatePost = usePostsStore((state) => state.updatePost);
 
+    const [isSortOpen, setIsSortOpen] = useState(false);
+    const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node)) {
+                setIsSortOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const sortOptions = [
+        { id: "hot" as const, label: isVi ? "Nổi bật nhất (Hot)" : "Hot" },
+        { id: "new" as const, label: isVi ? "Mới nhất (Newest)" : "Newest" },
+    ];
+    const currentSort = sortOptions.find((o) => o.id === sortMode) || sortOptions[0];
+
     return (
         <div className="w-full flex flex-col gap-3">
-            {/* Feed Header: Compact Sort Selector (Newest & Hot only) */}
+            {/* Feed Header: FB-style Sort Dropdown */}
             <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/50 select-none">
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono uppercase text-text-faint tracking-wider font-bold">
-                        {t('hub.communityhubfeed_19')}
-                    </span>
-                    <div className="inline-flex items-center bg-surface-inner border border-border/60 rounded-[6px] p-0.5">
-                        <button
-                            type="button"
-                            onClick={() => onSortChange("hot")}
-                            className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                sortMode === "hot"
-                                    ? "bg-surface-hover text-primary font-bold shadow-2xs"
-                                    : "text-text-muted hover:text-text"
+                <div className="relative inline-block text-left" ref={sortDropdownRef}>
+                    <button
+                        type="button"
+                        onClick={() => setIsSortOpen((prev) => !prev)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors cursor-pointer whitespace-nowrap py-0.5"
+                    >
+                        <span>{currentSort.label}</span>
+                        <FontAwesomeIcon
+                            icon={faChevronDown}
+                            className={`text-[10px] transition-transform duration-200 ${
+                                isSortOpen ? "rotate-180" : ""
                             }`}
-                        >
-                            <span>{t('hub.communityhubfeed_20')}</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onSortChange("new")}
-                            className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                                sortMode === "new"
-                                    ? "bg-surface-hover text-primary font-bold shadow-2xs"
-                                    : "text-text-muted hover:text-text"
-                            }`}
-                        >
-                            <span>{t('hub.communityhubfeed_21')}</span>
-                        </button>
-                    </div>
+                        />
+                    </button>
+
+                    {isSortOpen && (
+                        <div className="absolute left-0 top-full mt-1.5 w-44 bg-surface border border-border rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 animate-fade-in">
+                            {sortOptions.map((opt) => {
+                                const isSelected = sortMode === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onSortChange(opt.id);
+                                            setIsSortOpen(false);
+                                        }}
+                                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-[4px] text-left text-xs transition-colors cursor-pointer ${
+                                            isSelected
+                                                ? "bg-primary/10 text-primary font-bold"
+                                                : "hover:bg-surface-hover text-text"
+                                        }`}
+                                    >
+                                        <span>{opt.label}</span>
+                                        {isSelected && (
+                                            <FontAwesomeIcon icon={faCheck} className="text-primary text-[10px] shrink-0" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 

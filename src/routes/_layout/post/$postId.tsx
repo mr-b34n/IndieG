@@ -3,10 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useTheme } from '@/shared/hooks/useTheme';
 import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut.ts';
-import { CommentSection, getCurrentAuthor, Post, usePostsStore, type PostData } from '@/features/post';
+import { CommentSection, getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type PostData } from '@/features/post';
 import { usePostDetailQuery, useUpdatePostMutation, useDeletePostMutation } from '@/shared/api/useQueries';
 import { mapPostDtoToPostData } from '@/shared/api';
 import { useEffect, useMemo } from 'react';
+import { useRegisterOverlay } from '@/shared/utils/overlayManager';
+import { useTranslation } from '@/shared/hooks/useTranslate';
 
 export const Route = createFileRoute('/_layout/post/$postId')({
     component: PostDetail,
@@ -14,6 +16,7 @@ export const Route = createFileRoute('/_layout/post/$postId')({
 
 function PostDetail() {
     useTheme("Home");
+    const { t } = useTranslation();
 
     const { postId } = Route.useParams();
     const navigate = useNavigate();
@@ -58,8 +61,21 @@ function PostDetail() {
         }
     };
 
-    useKeyboardShortcut(["Escape"], () => {
-        handleGoBack();
+    useEffect(() => {
+        useFeedNavigationStore.getState().setFocusedPostId(postId);
+        return () => {
+            const current = useFeedNavigationStore.getState().focusedPostId;
+            if (String(current) === String(postId)) {
+                useFeedNavigationStore.getState().setFocusedPostId(null);
+            }
+        };
+    }, [postId]);
+
+    useRegisterOverlay({
+        id: `post-detail-${postId}`,
+        isOpen: true,
+        onClose: handleGoBack,
+        priority: 5,
     });
 
     const handleEditPost = async (id: string | number, data: Partial<PostData>) => {
@@ -105,7 +121,7 @@ function PostDetail() {
         return (
             <div className="flex flex-col items-center justify-center w-full min-h-[60vh] text-text">
                 <FontAwesomeIcon icon={faSpinner} spin className="text-3xl text-primary mb-3" />
-                <p className="text-text-muted text-sm">Đang tải bài viết...</p>
+                <p className="text-text-muted text-sm">{t('post.loading', { defaultValue: 'Đang tải bài viết...' })}</p>
             </div>
         );
     }
@@ -113,9 +129,9 @@ function PostDetail() {
     if (!post) {
         return (
             <div className="flex flex-col items-center justify-center w-full min-h-[60vh] bg-bg text-text">
-                <p className="text-lg font-semibold mb-2">Không tìm thấy bài viết</p>
+                <p className="text-lg font-semibold mb-2">{t('post.notFound', { defaultValue: 'Không tìm thấy bài viết' })}</p>
                 <button onClick={handleGoBack} className="text-primary hover:underline text-sm font-medium">
-                    Quay lại trang chủ
+                    {t('post.backToHome', { defaultValue: 'Quay lại trang chủ' })}
                 </button>
             </div>
         );
@@ -137,7 +153,7 @@ function PostDetail() {
                                 ">
                         <FontAwesomeIcon icon={faArrowLeft} />
                     </button>
-                    <span className="text-sm font-bold text-text-muted tracking-wide uppercase">Bài viết</span>
+                    <span className="text-sm font-bold text-text-muted tracking-wide uppercase">{t('post.post', { defaultValue: 'Bài viết' })}</span>
                 </div>
 
                 <div className="w-full">
