@@ -27,7 +27,7 @@ export const ExplorePage = () => {
     // Filter media tiles based on content tab
     const filteredViralTiles = (() => {
         if (activeType === "media") {
-            return VIRAL_TILES.filter((tile) => tile.contentType === "VIDEO" || tile.contentType === "SCREENSHOT");
+            return VIRAL_TILES.filter((tile) => tile.contentType === "SCREENSHOT");
         }
         if (activeType === "viral") {
             return VIRAL_TILES;
@@ -64,8 +64,8 @@ export const ExplorePage = () => {
                         <FontAwesomeIcon icon={faCompass} />
                     </div>
                     <div className="flex flex-col gap-1 max-w-sm">
-                        <p className="font-extrabold text-text text-sm">Chưa có nội dung khám phá</p>
-                        <p className="text-text-muted text-xs leading-relaxed">Nội dung mới và các sự kiện sẽ được cập nhật tại đây.</p>
+                        <p className="font-extrabold text-text text-sm">{t('explore.noContentTitle', { defaultValue: 'Chưa có nội dung khám phá' })}</p>
+                        <p className="text-text-muted text-xs leading-relaxed">{t('explore.noContentDesc', { defaultValue: 'Nội dung mới và các sự kiện sẽ được cập nhật tại đây.' })}</p>
                     </div>
                 </div>
             ) : (
@@ -92,7 +92,7 @@ export const ExplorePage = () => {
                     {activeType === "news" && (
                         <div className="flex flex-col gap-8">
                             <EditorialNewsSection items={VIETNAMESE_NEWS_ITEMS} />
-                            <FeaturedHeroMagazine stories={FEATURED_STORIES.slice(0, 2)} />
+                            <FeaturedHeroMagazine stories={FEATURED_STORIES} />
                         </div>
                     )}
 
