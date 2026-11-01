@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ProfileTab } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -33,7 +33,7 @@ export const ProfileTabBar = ({
         { id: "games", label: "Library" },
         { id: "posts", label: t("profile.tabs.posts") || "Posts" },
         { id: "communities", label: t("profile.tabs.communities") || "Communities" },
-        { id: "friends", label: t("profile.friendsWidgetTitle") || "Friends", count: friendsCount },
+        { id: "friends", label: t("profile.friendsWidgetTitle") || "Friends" },
         ...(showBookmarks ? [{ id: "bookmarks" as ProfileTab, label: t("common.bookmark") || "Bookmarks" }] : []),
         { id: "guestbook", label: t("profile.guestbookTitle") || "Guestbook" },
     ];
@@ -51,12 +51,12 @@ export const ProfileTabBar = ({
     };
 
     return (
-        <div className="sticky top-0 z-40 py-3 mb-2 transition-all border-none">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto px-4 sm:px-0">
+        <div className="mt-5 sm:mt-6 mb-2.5 sm:mb-3 transition-all border-none">
+            <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto px-1 sm:px-0">
                 
                 {/* Segmented Pill Tabs */}
                 <div 
-                    className="flex items-center gap-1 bg-[#0A0C0E] border border-[#181C24]/60 p-1 rounded-[10px] overflow-x-auto scrollbar-none"
+                    className="w-fit max-w-full min-w-0 flex items-center gap-1 bg-surface p-1 rounded-[10px] overflow-x-auto scrollbar-none"
                 >
                     {tabs.map((tab) => {
                         const isActive = activeTab === tab.id;
@@ -70,16 +70,16 @@ export const ProfileTabBar = ({
                                 title={isLocked ? "Vui lòng lưu hoặc hủy chỉnh sửa ở tab Tổng quan trước khi đổi tab" : undefined}
                                 className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold whitespace-nowrap transition-all rounded-[8px] cursor-pointer border-none ${
                                     isActive
-                                        ? "bg-[#1A1F2A] text-[#F0F1F2]" : isLocked
-                                        ? "text-[#666A71] opacity-35 hover:opacity-50"
-                                        : "text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28]"
+                                        ? "bg-primary text-white" : isLocked
+                                        ? "text-text-muted opacity-35 hover:opacity-50"
+                                        : "text-text-muted hover:text-text hover:bg-surface-hover"
                                 }`}
                                 
                             >
                                 <span>{tab.label}</span>
                                 {tab.count !== undefined && !isLocked && (
                                     <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none transition-colors border-none ${
-                                        isActive ? "bg-[#1688E8] text-white" : "bg-transparent text-[#8A8F98]"
+                                        isActive ? "bg-white/20 text-white" : "bg-surface-hover text-text-muted"
                                     }`}>
                                         {tab.count}
                                     </span>
@@ -90,20 +90,20 @@ export const ProfileTabBar = ({
                 </div>
 
                 {/* Utility Cluster */}
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <div className="flex items-center gap-1.5 shrink-0">
 
                     {/* Share */}
                     <div className="relative">
                         <button 
                             type="button"
                             onClick={handleShare}
-                            className="w-8 h-8 rounded-full bg-transparent border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all duration-200 cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-all duration-200 cursor-pointer"
                             title="Share Profile"
                         >
                             <FontAwesomeIcon icon={faShareNodes} className="text-xs" />
                         </button>
                         {toastMsg && (
-                            <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-[rgba(255,255,255,0.1)] backdrop-blur-md text-white text-[10px] font-bold rounded shadow-lg whitespace-nowrap animate-fade-in border-none">
+                            <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-surface text-text text-[10px] font-bold rounded shadow-lg whitespace-nowrap animate-fade-in z-50">
                                 {toastMsg}
                             </div>
                         )}
@@ -114,13 +114,13 @@ export const ProfileTabBar = ({
                         <button 
                             type="button"
                             onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-                            className="w-8 h-8 rounded-full bg-transparent border-none flex items-center justify-center text-[#8A8F98] hover:text-[#F0F1F2] hover:bg-[#1A1E28] transition-all duration-200 cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-hover transition-all duration-200 cursor-pointer"
                         >
                             <FontAwesomeIcon icon={faEllipsisV} className="text-xs" />
                         </button>
                         
                         {showOverflowMenu && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1f27] border-none rounded-[8px] p-1 z-50 animate-scale-up flex flex-col gap-0.5" style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-surface rounded-[8px] p-1 z-50 animate-dropdown flex flex-col gap-0.5 shadow-xl">
                                 {isOwnProfile && !isCustomizeMode && (
                                     <button 
                                         type="button"
@@ -129,9 +129,9 @@ export const ProfileTabBar = ({
                                             if (onStartEditMode) onStartEditMode();
                                             else if (onToggleCustomizeMode) onToggleCustomizeMode();
                                         }}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-all duration-200 cursor-pointer border-none outline-none focus:outline-none"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-text hover:bg-surface-hover rounded-[6px] transition-all duration-200 cursor-pointer border-none outline-none focus:outline-none"
                                     >
-                                        <FontAwesomeIcon icon={faPen} className="text-[#1688E8] w-4" />
+                                        <FontAwesomeIcon icon={faPen} className="text-primary w-4" />
                                         <span>Edit Profile</span>
                                     </button>
                                 )}
@@ -141,16 +141,16 @@ export const ProfileTabBar = ({
                                         setShowOverflowMenu(false);
                                         handleShare();
                                     }}
-                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#F0F1F2] hover:bg-[#1A1E28] rounded-[6px] transition-all duration-200 cursor-pointer border-none"
+                                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-text hover:bg-surface-hover rounded-[6px] transition-all duration-200 cursor-pointer border-none"
                                 >
-                                    <FontAwesomeIcon icon={faLink} className="text-[#8A8F98] w-4" />
+                                    <FontAwesomeIcon icon={faLink} className="text-text-muted w-4" />
                                     <span>Copy Profile Link</span>
                                 </button>
                                 {!isOwnProfile && (
                                     <button 
                                         type="button"
                                         onClick={() => setShowOverflowMenu(false)}
-                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-[#FF6B6B] hover:bg-[rgba(255,107,107,0.1)] rounded-[6px] transition-all duration-200 cursor-pointer border-none"
+                                        className="flex items-center gap-2.5 px-3 py-2 w-full text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 rounded-[6px] transition-all duration-200 cursor-pointer border-none"
                                     >
                                         <FontAwesomeIcon icon={faFlag} className="w-4" />
                                         <span>Report User</span>
