@@ -40,7 +40,7 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/auth.lazy').then((d) => d.Route))
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -50,12 +50,16 @@ const LayoutExploreRoute = LayoutExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/explore.lazy').then((d) => d.Route),
+)
 const LayoutSearchRoute = LayoutSearchRouteImport.update({
   id: '/search',
   path: '/search',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/search.lazy').then((d) => d.Route),
+)
 const LayoutVerifyEmailRoute = LayoutVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -71,7 +75,9 @@ const LayoutBookmarkIndexRoute = LayoutBookmarkIndexRouteImport.update({
   id: '/bookmark/',
   path: '/bookmark/',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/bookmark/index.lazy').then((d) => d.Route),
+)
 const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
   id: '/community/',
   path: '/community/',
@@ -82,7 +88,9 @@ const LayoutCommunityCommunityIdRoute =
     id: '/community/$communityId',
     path: '/community/$communityId',
     getParentRoute: () => LayoutRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_layout/community/$communityId.lazy').then((d) => d.Route),
+  )
 const LayoutGameIndexRoute = LayoutGameIndexRouteImport.update({
   id: '/game/',
   path: '/game/',
@@ -92,12 +100,16 @@ const LayoutGameGameSlugRoute = LayoutGameGameSlugRouteImport.update({
   id: '/game/$gameSlug',
   path: '/game/$gameSlug',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/game/$gameSlug.lazy').then((d) => d.Route),
+)
 const LayoutPostPostIdRoute = LayoutPostPostIdRouteImport.update({
   id: '/post/$postId',
   path: '/post/$postId',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/post/$postId.lazy').then((d) => d.Route),
+)
 const LayoutProfileIndexRoute = LayoutProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
@@ -107,17 +119,23 @@ const LayoutProfileUserIdRoute = LayoutProfileUserIdRouteImport.update({
   id: '/profile/$userId',
   path: '/profile/$userId',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/profile/$userId.lazy').then((d) => d.Route),
+)
 const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/settings/index.lazy').then((d) => d.Route),
+)
 const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
   id: '/squad/',
   path: '/squad/',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/squad/index.lazy').then((d) => d.Route),
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute

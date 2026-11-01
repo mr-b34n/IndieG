@@ -110,7 +110,7 @@
 }
 
 @theme {
-    /* Brand: Electric Blue (#1688E8) - IndieG Primary */
+    /* Brand: Electric Blue (#1688E8) - Ludon Primary */
     --color-brand-50: #eef7ff;
     --color-brand-100: #d8ecff;
     --color-brand-200: #b9dfff;
@@ -275,11 +275,13 @@ body {
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* IndieG Signature XP & Action Gradient */
+/* Ludon Signature XP & Action Gradient */
+.bg-ludon-gradient,
 .bg-indieg-gradient {
     background: linear-gradient(90deg, #1597ff, #35a8ff);
 }
 
+.text-ludon-gradient,
 .text-indieg-gradient {
     background: linear-gradient(90deg, #1597ff, #35a8ff);
     -webkit-background-clip: text;
