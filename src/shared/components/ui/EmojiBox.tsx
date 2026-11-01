@@ -39,8 +39,7 @@ const EmojiBox: React.FC<ReactionPickerProps> = ({ isOpen, onClose, onSelect }) 
                         bg-surface border border-border rounded-full 
                         shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]
                         min-w-max flex items-center gap-1.5 px-2
-                        animate-in fade-in zoom-in-75 slide-in-from-bottom-2 
-                        duration-200 ease-out origin-bottom-left"
+                        animate-popover origin-bottom-left"
         >
             {REACTIONS.map((react) => (
                 <button

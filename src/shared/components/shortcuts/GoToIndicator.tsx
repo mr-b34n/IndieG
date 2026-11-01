@@ -6,9 +6,7 @@ import { faCompass } from "@fortawesome/free-solid-svg-icons";
 const DESTINATIONS = [
     { key: "F", vi: "Feed", en: "Feed" },
     { key: "C", vi: "Cộng đồng", en: "Community" },
-    { key: "S", vi: "Squad", en: "Squad" },
     { key: "G", vi: "Game", en: "Game" },
-    { key: "E", vi: "Khám phá", en: "Explore" },
     { key: "P", vi: "Hồ sơ", en: "Profile" },
     { key: "B", vi: "Dấu trang", en: "Bookmark" },
     { key: "N", vi: "Thông báo", en: "Notif" },
