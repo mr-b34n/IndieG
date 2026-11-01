@@ -19,6 +19,7 @@ import {
     friendshipsApi,
     searchApi,
     notificationsApi,
+    isApiEnabled,
 } from "./index";
 import type {
     CreateCommunityDto,
@@ -811,10 +812,12 @@ export function useDeleteVoteCommentMutation() {
 // -------------------------------------------------------------
 // 8. Hooks for Games (/games/*)
 // -------------------------------------------------------------
-export function useGamesQuery(params?: GetGamesParams) {
+export function useGamesQuery(params?: GetGamesParams, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: QUERY_KEYS.games(params as Record<string, unknown>),
         queryFn: () => gamesApi.getAll(params),
+        enabled: options?.enabled !== undefined ? options.enabled : isApiEnabled(),
+        ...options,
     });
 }
 

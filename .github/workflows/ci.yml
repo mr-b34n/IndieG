@@ -1,0 +1,40 @@
+name: IndieG CI Quality Gate
+
+on:
+  push:
+    branches: [main, backup/all-work]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify TypeScript types
+        run: pnpm tsc --noEmit
+
+      - name: Verify ESLint code quality
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Verify Production Build
+        run: pnpm build

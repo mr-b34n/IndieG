@@ -117,4 +117,8 @@ export interface GameData {
     guides?: GameGuide[];
     reviews?: GameReview[];
     patchNotes?: GamePatchNote[];
+    ratingScore?: number;
+    totalReviewsCount?: number;
+    sentiment?: string;
+    sentimentVi?: string;
 }

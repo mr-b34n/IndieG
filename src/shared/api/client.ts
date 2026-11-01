@@ -3,6 +3,19 @@
  * Configured via VITE_API_BASE_URL (e.g. http://localhost:3636)
  */
 
+export const isLocalhost = (host?: string | null): boolean => {
+    if (!host) return false;
+    const cleanHost = host.split(":")[0].toLowerCase();
+    return (
+        cleanHost === "localhost" ||
+        cleanHost === "127.0.0.1" ||
+        cleanHost === "0.0.0.0" ||
+        cleanHost.startsWith("192.168.") ||
+        cleanHost.startsWith("10.") ||
+        cleanHost.endsWith(".local")
+    );
+};
+
 export const getApiBaseUrl = (): string => {
     if (typeof window !== "undefined") {
         const customUrl = localStorage.getItem("indieg_custom_api_url");
@@ -17,16 +30,56 @@ export const getApiBaseUrl = (): string => {
     if (envUrl) {
         const trimmedEnv = envUrl.replace(/\/+$/, "");
         if (trimmedEnv && trimmedEnv !== "/" && trimmedEnv !== "//") {
-            return trimmedEnv;
+            // If running on a remote production domain, do not use localhost envUrl
+            if (typeof window !== "undefined" && !isLocalhost(window.location.hostname)) {
+                const isEnvLocal =
+                    trimmedEnv.includes("://localhost") ||
+                    trimmedEnv.includes("://127.0.0.1") ||
+                    trimmedEnv.includes("://0.0.0.0");
+                if (!isEnvLocal) {
+                    return trimmedEnv;
+                }
+            } else {
+                return trimmedEnv;
+            }
         }
     }
+
+    // When running in a browser on a remote/production domain without a remote API URL configured:
+    if (typeof window !== "undefined" && !isLocalhost(window.location.hostname)) {
+        return "";
+    }
+
     return "http://localhost:3636";
 };
 
 /**
  * Flag điều khiển kết nối giữa Frontend và Backend API.
+ * Trả về false nếu web đang chạy trên production (như indie-g.vercel.app)
+ * mà chưa được cấu hình URL Backend remote qua VITE_API_BASE_URL.
  */
-export const isApiEnabled = (): boolean => true;
+export const isApiEnabled = (): boolean => {
+    if (typeof window === "undefined") return true;
+
+    // Trong môi trường local development, luôn bật API
+    if (isLocalhost(window.location.hostname)) return true;
+
+    // Khi chạy trên domain từ xa (Vercel, Production):
+    const baseUrl = getApiBaseUrl();
+    if (!baseUrl) return false;
+
+    const isLocal =
+        baseUrl.includes("://localhost") ||
+        baseUrl.includes("://127.0.0.1") ||
+        baseUrl.includes("://0.0.0.0");
+
+    if (isLocal) {
+        // Chỉ cho phép nếu người dùng chủ động set indieg_custom_api_url trong localStorage để test
+        return Boolean(localStorage.getItem("indieg_custom_api_url"));
+    }
+
+    return true;
+};
 
 export const API_BASE_URL = getApiBaseUrl();
 
@@ -153,6 +206,10 @@ let refreshPromise: Promise<string | null> | null = null;
  * Call POST /auth/refresh to retrieve a fresh access token
  */
 export async function performTokenRefresh(explicitRefreshToken?: string | null): Promise<string | null> {
+    if (!isApiEnabled()) {
+        return null;
+    }
+
     if (refreshPromise) {
         return refreshPromise;
     }
@@ -280,6 +337,10 @@ export async function apiRequest<T = unknown>(
     endpoint: string,
     options: ApiRequestOptions = {}
 ): Promise<T> {
+    if (!isApiEnabled()) {
+        throw new ApiError("Backend API is not configured or disabled in production.", 503);
+    }
+
     const { params, body, headers: customHeaders, _retry, skipAuthRefresh, token: explicitToken, ...customOptions } = options;
 
     // Retrieve tokens from localStorage (supports both standard and app keys)
