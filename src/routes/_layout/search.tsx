@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { SearchResultsPage } from '@/features/search';
 import { z } from 'zod';
 
 const searchSchema = z.object({
@@ -12,5 +11,4 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/_layout/search')({
     validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
-    component: SearchResultsPage,
 });

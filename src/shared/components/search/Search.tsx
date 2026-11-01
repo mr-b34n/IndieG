@@ -25,10 +25,15 @@ import { type SearchResults } from "@/features/search/types";
 
 const RECENT_SEARCHES_KEY = "gamerhub_recent_searches";
 
-export const Search = () => {
+export interface SearchProps {
+    autoFocus?: boolean;
+    onCloseMobile?: () => void;
+}
+
+export const Search = ({ autoFocus = false, onCloseMobile }: SearchProps = {}) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [focused, setFocused] = useState(false);
+    const [focused, setFocused] = useState(autoFocus);
     const [value, setValue] = useState("");
     const [recentSearches, setRecentSearches] = useState<string[]>(() => {
         try {
@@ -37,10 +42,16 @@ export const Search = () => {
         } catch {
             // ignore
         }
-        return ["CS2 update patch", "Raft co-op tips", "RDR2 mods"];
+        return [];
     });
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (autoFocus && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [autoFocus]);
 
     useKeyboardShortcut(["/"], () => {
         if (inputRef.current) {
@@ -94,7 +105,7 @@ export const Search = () => {
         }
     };
 
-    const debouncedValue = useDebounce(value, 300);
+    const debouncedValue = useDebounce(value, 500);
 
     // Immediate client search fallback
     const clientResults = useMemo(() => {
@@ -150,6 +161,7 @@ export const Search = () => {
         saveRecentSearch(query);
         setFocused(false);
         inputRef.current?.blur();
+        onCloseMobile?.();
 
         navigate({
             to: "/search",
@@ -165,7 +177,7 @@ export const Search = () => {
     };
 
     return (
-        <div ref={containerRef} className="relative w-full max-w-full">
+        <div ref={containerRef} className="relative w-full h-full flex items-center">
             {/* Search Input Bar */}
             <div
                 className={`
@@ -175,7 +187,7 @@ export const Search = () => {
                 transition-all duration-150 cursor-text
                 ${
                     focused
-                        ? "bg-surface text-text border-primary/70 shadow-xs"
+                        ? "bg-surface-inner text-text border-primary/70 shadow-xs"
                         : "text-text-muted"
                 }
             `}
@@ -215,7 +227,8 @@ export const Search = () => {
                 {value && (
                     <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             setValue("");
                             inputRef.current?.focus();
                         }}
@@ -231,207 +244,208 @@ export const Search = () => {
                 <div
                     onMouseDown={(e) => e.preventDefault()}
                     className="
-                        absolute top-full left-0 mt-2 w-full z-40
-                        bg-surface border border-border
-                        rounded-2xl overflow-hidden
-                        shadow-2xl max-h-[75vh] overflow-y-auto animate-scale-up
+                        fixed sm:absolute top-[63px] sm:top-full mt-1.5 sm:mt-2 left-2 right-2 sm:left-0 sm:right-auto sm:w-full z-50
+                        pointer-events-auto
                     "
                 >
-                    {/* Scenario A: Live search results when typing */}
-                    {value.trim() ? (
-                        <div className="flex flex-col py-2">
-                            {isSearching ? (
-                                <div className="flex items-center justify-center p-6 text-primary gap-2 font-bold text-xs">
-                                    <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                                    <span>{t("search.searching", { defaultValue: "Đang tìm kiếm..." })}</span>
-                                </div>
-                            ) : searchResults.totalCount === 0 ? (
-                                <div className="p-6 text-center text-xs text-text-faint">
-                                    {t("search.noResultsFor", { value, defaultValue: `Không tìm thấy kết quả phù hợp cho "${value}"` })}
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Communities preview */}
-                                    {(searchResults.communities || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-border pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUsers} className="text-primary" />
-                                                <span>{t("search.communitiesTitle", { defaultValue: "Cộng đồng" })} ({(searchResults.communities || []).length})</span>
-                                            </p>
-                                            {searchResults.communities.slice(0, 3).map((comm) => (
-                                                <button
-                                                    key={comm.id}
-                                                    onClick={() => {
-                                                        saveRecentSearch(comm.name);
-                                                        setFocused(false);
-                                                        navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } });
-                                                    }}
-                                                    className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
-                                                >
-                                                    <img
-                                                        src={comm.logo}
-                                                        alt={comm.name}
-                                                        referrerPolicy="no-referrer"
-                                                        className="w-8 h-8 rounded-xl object-cover shrink-0"
-                                                    />
-                                                    <div className="flex flex-col min-w-0">
-                                                        <span className="text-xs font-bold text-text truncate">
-                                                            {comm.name}
-                                                        </span>
-                                                        <span className="text-[10px] text-[#979BA2]">
-                                                            {t("search.members", { count: formatCompactNumber(comm.members), defaultValue: `${formatCompactNumber(comm.members)} thành viên` })} • {comm.category}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Users preview */}
-                                    {(searchResults.users || []).length > 0 && (
-                                        <div className="flex flex-col border-b border-[#1A1C1F] pb-2 mb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faUser} className="text-[#1688E8]" />
-                                                <span>{t("search.usersTitle", { defaultValue: "Người dùng" })} ({(searchResults.users || []).length})</span>
-                                            </p>
-                                            {searchResults.users.slice(0, 3).map((u) => {
-                                                const profileParam = u.username ? u.username.replace(/^@/, '') : (u.id || "me");
-                                                return (
+                    {/* Dropdown Body Box */}
+                    <div className="w-full bg-surface border border-border rounded-2xl shadow-2xl max-h-[75vh] overflow-y-auto animate-dropdown">
+                        {/* Scenario A: Live search results when typing */}
+                        {value.trim() ? (
+                            <div className="flex flex-col py-2">
+                                {isSearching ? (
+                                    <div className="flex items-center justify-center p-6 text-primary gap-2 font-bold text-xs">
+                                        <span className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                        <span>{t("search.searching", { defaultValue: "Đang tìm kiếm..." })}</span>
+                                    </div>
+                                ) : searchResults.totalCount === 0 ? (
+                                    <div className="p-6 text-center text-xs text-text-faint">
+                                        {t("search.noResultsFor", { value, defaultValue: `Không tìm thấy kết quả phù hợp cho "${value}"` })}
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Communities preview */}
+                                        {(searchResults.communities || []).length > 0 && (
+                                            <div className="flex flex-col border-b border-border/40 pb-2 mb-2">
+                                                <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                                    <FontAwesomeIcon icon={faUsers} className="text-primary" />
+                                                    <span>{t("search.communitiesTitle", { defaultValue: "Cộng đồng" })} ({(searchResults.communities || []).length})</span>
+                                                </p>
+                                                {searchResults.communities.slice(0, 3).map((comm) => (
                                                     <button
-                                                        key={u.id}
+                                                        key={comm.id}
                                                         onClick={() => {
-                                                            saveRecentSearch(u.name);
+                                                            saveRecentSearch(comm.name);
                                                             setFocused(false);
-                                                            navigate({ to: "/profile/$userId", params: { userId: profileParam } });
+                                                            navigate({ to: "/community/$communityId", params: { communityId: String(comm.id) } });
                                                         }}
-                                                        className="flex items-center gap-3 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
+                                                        className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
                                                     >
                                                         <img
-                                                            src={u.avatar}
-                                                            alt={u.name}
+                                                            src={comm.logo}
+                                                            alt={comm.name}
                                                             referrerPolicy="no-referrer"
-                                                            className="w-7 h-7 rounded-full object-cover shrink-0"
+                                                            className="w-8 h-8 rounded-xl object-cover shrink-0"
                                                         />
                                                         <div className="flex flex-col min-w-0">
-                                                            <span className="text-xs font-bold text-[#ECEDEF] truncate">
-                                                                {u.name}
+                                                            <span className="text-xs font-bold text-text truncate">
+                                                                {comm.name}
                                                             </span>
-                                                            <span className="text-[10px] text-[#979BA2] truncate">
-                                                                {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
+                                                            <span className="text-[10px] text-text-muted">
+                                                                {t("search.members", { count: formatCompactNumber(comm.members), defaultValue: `${formatCompactNumber(comm.members)} thành viên` })} • {comm.category}
                                                             </span>
                                                         </div>
                                                     </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
 
-                                    {/* Posts preview */}
-                                    {(searchResults.posts || []).length > 0 && (
-                                        <div className="flex flex-col pb-2">
-                                            <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faFileLines} className="text-[#1688E8]" />
-                                                <span>{t("search.discussionsAndPosts", { defaultValue: "Thảo luận & Bài viết" })} ({(searchResults.posts || []).length})</span>
-                                            </p>
-                                            {searchResults.posts.slice(0, 3).map((post) => {
-                                                const defaultAuthor = t("common.anonymous", { defaultValue: "Vô danh" });
-                                                const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || defaultAuthor) : (post.author || defaultAuthor);
-                                                return (
-                                                    <button
-                                                        key={post.id}
-                                                        onClick={() => {
-                                                            saveRecentSearch(post.title || post.content.slice(0, 20));
-                                                            setFocused(false);
-                                                            navigate({ to: "/post/$postId", params: { postId: String(post.id) } });
-                                                        }}
-                                                        className="flex flex-col gap-0.5 px-4 py-2 hover:bg-[#17191C] text-left transition-colors cursor-pointer"
-                                                    >
-                                                        <span className="text-xs font-bold text-[#ECEDEF] line-clamp-1">
-                                                            {post.title || post.content}
-                                                        </span>
-                                                        <span className="text-[10px] text-[#979BA2]">
-                                                            {post.communityName
-                                                                ? t("search.postedByIn", { author: authorName, community: post.communityName, defaultValue: `Đăng bởi ${authorName} trong ${post.communityName}` })
-                                                                : t("search.postedBy", { author: authorName, defaultValue: `Đăng bởi ${authorName}` })}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                        {/* Users preview */}
+                                        {(searchResults.users || []).length > 0 && (
+                                            <div className="flex flex-col border-b border-border/40 pb-2 mb-2">
+                                                <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                                    <FontAwesomeIcon icon={faUser} className="text-primary" />
+                                                    <span>{t("search.usersTitle", { defaultValue: "Người dùng" })} ({(searchResults.users || []).length})</span>
+                                                </p>
+                                                {searchResults.users.slice(0, 3).map((u) => {
+                                                    const profileParam = u.username ? u.username.replace(/^@/, '') : (u.id || "me");
+                                                    return (
+                                                        <button
+                                                            key={u.id}
+                                                            onClick={() => {
+                                                                saveRecentSearch(u.name);
+                                                                setFocused(false);
+                                                                navigate({ to: "/profile/$userId", params: { userId: profileParam } });
+                                                            }}
+                                                            className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
+                                                        >
+                                                            <img
+                                                                src={u.avatar}
+                                                                alt={u.name}
+                                                                referrerPolicy="no-referrer"
+                                                                className="w-7 h-7 rounded-full object-cover shrink-0"
+                                                            />
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="text-xs font-bold text-text truncate">
+                                                                    {u.name}
+                                                                </span>
+                                                                <span className="text-[10px] text-text-muted truncate">
+                                                                    {u.username} {u.game ? `• 🎮 ${u.game}` : ""}
+                                                                </span>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
 
-                                    {/* Submit All Link */}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleExecuteSearch()}
-                                        className="flex items-center justify-between px-4 py-3 bg-[#1688E8]/10 hover:bg-[#1688E8]/20 text-[#1688E8] font-bold text-xs transition-colors cursor-pointer border-t border-[#1A1C1F]"
-                                    >
-                                        <span>{t("search.viewAllResultsFor", { count: searchResults.totalCount, value, defaultValue: `Xem tất cả ${searchResults.totalCount} kết quả cho "${value}"` })}</span>
-                                        <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        /* Scenario B: Recent Searches when focused but value is empty */
-                        <div className="flex flex-col py-2">
-                            <div className="flex items-center justify-between px-4 pt-2 pb-1.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#656A72] flex items-center gap-1.5">
-                                    <FontAwesomeIcon icon={faHistory} className="text-xs" />
-                                    <span>{t("search.recentHistory", { defaultValue: "Lịch sử tìm kiếm" })}</span>
-                                </span>
-                                {recentSearches.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={clearRecentSearches}
-                                        className="text-[10px] font-semibold text-[#656A72] hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <FontAwesomeIcon icon={faTrash} className="text-[9px]" />
-                                        <span>{t("search.clearAll", { defaultValue: "Xóa tất cả" })}</span>
-                                    </button>
-                                )}
-                            </div>
+                                        {/* Posts preview */}
+                                        {(searchResults.posts || []).length > 0 && (
+                                            <div className="flex flex-col pb-2">
+                                                <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                                    <FontAwesomeIcon icon={faFileLines} className="text-primary" />
+                                                    <span>{t("search.discussionsAndPosts", { defaultValue: "Thảo luận & Bài viết" })} ({(searchResults.posts || []).length})</span>
+                                                </p>
+                                                {searchResults.posts.slice(0, 3).map((post) => {
+                                                    const defaultAuthor = t("common.anonymous", { defaultValue: "Vô danh" });
+                                                    const authorName = typeof post.author === "object" && post.author !== null ? (post.author.name || post.author.username || defaultAuthor) : (post.author || defaultAuthor);
+                                                    return (
+                                                        <button
+                                                            key={post.id}
+                                                            onClick={() => {
+                                                                saveRecentSearch(post.title || post.content.slice(0, 20));
+                                                                setFocused(false);
+                                                                navigate({ to: "/post/$postId", params: { postId: String(post.id) } });
+                                                            }}
+                                                            className="flex flex-col gap-0.5 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
+                                                        >
+                                                            <span className="text-xs font-bold text-text line-clamp-1">
+                                                                {post.title || post.content}
+                                                            </span>
+                                                            <span className="text-[10px] text-text-muted">
+                                                                {post.communityName
+                                                                    ? t("search.postedByIn", { author: authorName, community: post.communityName, defaultValue: `Đăng bởi ${authorName} trong ${post.communityName}` })
+                                                                    : t("search.postedBy", { author: authorName, defaultValue: `Đăng bởi ${authorName}` })}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
 
-                            <div className="flex flex-col">
-                                {recentSearches.length > 0 ? (
-                                    recentSearches.map((item) => (
-                                        <div
-                                            key={item}
-                                            className="group/item flex items-center justify-between px-4 py-2 text-xs hover:bg-[#17191C] transition-colors"
+                                        {/* Submit All Link */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleExecuteSearch()}
+                                            className="flex items-center justify-between px-4 py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-colors cursor-pointer border-t border-border/40"
                                         >
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setValue(item);
-                                                    handleExecuteSearch(item);
-                                                }}
-                                                className="flex items-center gap-2.5 flex-1 text-left min-w-0 cursor-pointer"
-                                            >
-                                                <FontAwesomeIcon
-                                                    icon={faMagnifyingGlass}
-                                                    className="text-xs text-[#656A72] shrink-0"
-                                                />
-                                                <span className="truncate text-[#979BA2] group-hover/item:text-[#ECEDEF] font-medium">
-                                                    {item}
-                                                </span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeRecentSearch(item)}
-                                                className="opacity-0 group-hover/item:opacity-100 p-1 text-[#656A72] hover:text-rose-500 transition-opacity text-xs cursor-pointer ml-2"
-                                            >
-                                                <FontAwesomeIcon icon={faXmark} />
-                                            </button>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="px-4 py-3 text-xs text-[#656A72] italic">
-                                        {t("search.noHistory", { defaultValue: "Chưa có lịch sử tìm kiếm." })}
-                                    </div>
+                                            <span>{t("search.viewAllResultsFor", { count: searchResults.totalCount, value, defaultValue: `Xem tất cả ${searchResults.totalCount} kết quả cho "${value}"` })}</span>
+                                            <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+                                        </button>
+                                    </>
                                 )}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            /* Scenario B: Recent Searches when focused but value is empty */
+                            <div className="flex flex-col py-2">
+                                <div className="flex items-center justify-between px-4 pt-2 pb-1.5">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-faint flex items-center gap-1.5">
+                                        <FontAwesomeIcon icon={faHistory} className="text-xs" />
+                                        <span>{t("search.recentHistory", { defaultValue: "Lịch sử tìm kiếm" })}</span>
+                                    </span>
+                                    {recentSearches.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={clearRecentSearches}
+                                            className="text-[10px] font-semibold text-text-faint hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} className="text-[9px]" />
+                                            <span>{t("search.clearAll", { defaultValue: "Xóa tất cả" })}</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col">
+                                    {recentSearches.length > 0 ? (
+                                        recentSearches.map((item) => (
+                                            <div
+                                                key={item}
+                                                className="group/item flex items-center justify-between px-4 py-2 text-xs hover:bg-surface-hover transition-colors"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setValue(item);
+                                                        handleExecuteSearch(item);
+                                                    }}
+                                                    className="flex items-center gap-2.5 flex-1 text-left min-w-0 cursor-pointer"
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={faMagnifyingGlass}
+                                                        className="text-xs text-text-faint shrink-0"
+                                                    />
+                                                    <span className="truncate text-text-muted group-hover/item:text-text font-medium">
+                                                        {item}
+                                                    </span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeRecentSearch(item)}
+                                                    className="opacity-0 group-hover/item:opacity-100 p-1 text-text-faint hover:text-rose-500 transition-opacity text-xs cursor-pointer ml-2"
+                                                >
+                                                    <FontAwesomeIcon icon={faXmark} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="px-4 py-3 text-xs text-text-faint italic">
+                                            {t("search.noHistory", { defaultValue: "Chưa có lịch sử tìm kiếm." })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
