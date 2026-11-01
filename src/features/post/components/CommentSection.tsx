@@ -171,7 +171,7 @@ const renderCommentContent = (text: string) => {
             {parts.map((part, i) => {
                 if (part.startsWith("@")) {
                     return (
-                        <span key={i} className="text-[#1688E8] font-semibold hover:underline cursor-pointer mr-1">
+                        <span key={i} className="text-primary font-semibold hover:underline cursor-pointer mr-1">
                             {part}
                         </span>
                     );
@@ -187,8 +187,16 @@ const sortComments = (list: CommentData[], sort: "top" | "newest" = "top"): Comm
         .sort((a, b) => {
             if (a.pinned !== b.pinned) return Number(!!b.pinned) - Number(!!a.pinned);
             if (sort === "top") {
-                return (b.likes || 0) - (a.likes || 0);
+                const diff = (b.likes || 0) - (a.likes || 0);
+                if (diff !== 0) return diff;
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeA && timeB) return timeB - timeA;
+                return b.id.toString().localeCompare(a.id.toString(), undefined, { numeric: true });
             } else {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeA && timeB) return timeB - timeA;
                 return b.id.toString().localeCompare(a.id.toString(), undefined, { numeric: true });
             }
         })
@@ -450,7 +458,7 @@ const CommentItem = ({
                                                 setShowMenu(false);
                                             }}
                                         />
-                                        <div className="menu-dropdown absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-xl shadow-[0_10px_30px_-5px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.45)] z-50 overflow-hidden animate-fade-in py-1">
+                                        <div className="menu-dropdown absolute right-0 top-full mt-1 w-44 bg-surface border border-border rounded-xl shadow-[0_10px_30px_-5px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.45)] z-50 overflow-hidden animate-dropdown py-1">
                                             <button
                                                 type="button"
                                                 onClick={handleCopy}
@@ -934,9 +942,8 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const mainTextareaRef = useRef<HTMLTextAreaElement>(null);
     const mainImage = useCommentImageAttachment();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
     const openVerifyModal = useAuthStore((state) => state.openVerifyModal);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
     const navigate = useNavigate();
 
     // TanStack Query for Comments with limit = 6 (between 5 and 7)
@@ -968,6 +975,43 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     }, [baseComments, userComments]);
 
     const setComments = setUserComments;
+
+    const displayedOrderRef = useRef<Array<string | number>>([]);
+    const lastSortByRef = useRef(sortBy);
+    const lastPostIdRef = useRef(postId);
+
+    const displayedComments = useMemo(() => {
+        const isReset = lastSortByRef.current !== sortBy || lastPostIdRef.current !== postId;
+        if (isReset) {
+            lastSortByRef.current = sortBy;
+            lastPostIdRef.current = postId;
+            const fullSorted = sortComments(comments, sortBy);
+            displayedOrderRef.current = fullSorted.map((c) => c.id);
+            return fullSorted;
+        }
+
+        const currentMap = new Map(comments.map((c) => [String(c.id), c]));
+        const preserved: CommentData[] = [];
+
+        for (const id of displayedOrderRef.current) {
+            const item = currentMap.get(String(id));
+            if (item) {
+                preserved.push(item);
+                currentMap.delete(String(id));
+            }
+        }
+
+        // Remaining comments are newly fetched via pagination or newly added
+        const newComments = Array.from(currentMap.values());
+
+        // Append newly loaded comments to the end of the existing list
+        const combined = [...preserved, ...newComments];
+        const pinnedList = combined.filter((c) => c.pinned);
+        const unpinnedList = combined.filter((c) => !c.pinned);
+        const finalResult = [...pinnedList, ...unpinnedList];
+        displayedOrderRef.current = finalResult.map((c) => c.id);
+        return finalResult;
+    }, [comments, sortBy, postId]);
 
 
 
@@ -1060,6 +1104,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             });
             if (createdRes && (createdRes.id || (createdRes as unknown as { _id?: string })._id)) {
                 const realId = createdRes.id || (createdRes as unknown as { _id?: string })._id!;
+                displayedOrderRef.current = displayedOrderRef.current.map((id) => (String(id) === String(tempId) ? realId : id));
                 setComments((prev) =>
                     prev.map((c) => (c.id === tempId ? { ...c, id: realId, createdAt: createdRes.createdAt } : c))
                 );
@@ -1410,7 +1455,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     </div>
                 ) : (
                     <>
-                        {sortComments(comments, sortBy).map((cmt) => (
+                        {displayedComments.map((cmt) => (
                             <CommentItem
                                 key={cmt.id}
                                 comment={cmt}

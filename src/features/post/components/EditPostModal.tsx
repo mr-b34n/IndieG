@@ -1,15 +1,14 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faComment, faThumbtack, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faComment, faThumbtack, faTriangleExclamation, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { useRegisterOverlay } from "@/shared/utils/overlayManager";
-import { FormattingToolbar } from "@/features/feed/components/CreatePostBox";
-import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
+import { RichTextEditor } from "@/shared/components/ui/RichTextEditor";
 
 export interface EditPostModalProps {
     initialTitle: string;
@@ -18,6 +17,8 @@ export interface EditPostModalProps {
     initialPrivacy?: "public" | "friends" | "private";
     initialAllowComments?: boolean;
     initialPinned?: boolean;
+    initialSpoiler?: boolean;
+    initialNsfw?: boolean;
     onClose: () => void;
     onSave: (data: {
         title: string;
@@ -27,6 +28,8 @@ export interface EditPostModalProps {
         privacy?: "public" | "friends" | "private";
         allowComments?: boolean;
         pinned?: boolean;
+        isSpoiler?: boolean;
+        isNsfw?: boolean;
     }) => void;
 }
 
@@ -37,6 +40,8 @@ export const EditPostModal = ({
     initialPrivacy,
     initialAllowComments,
     initialPinned,
+    initialSpoiler,
+    initialNsfw,
     onClose,
     onSave,
 }: EditPostModalProps) => {
@@ -49,30 +54,9 @@ export const EditPostModal = ({
     const [privacy] = useState<"public" | "friends" | "private">(initialPrivacy ?? "public");
     const [allowComments, setAllowComments] = useState<boolean>(initialAllowComments ?? true);
     const [pinned, setPinned] = useState<boolean>(initialPinned ?? false);
+    const [isSpoiler, setIsSpoiler] = useState<boolean>(initialSpoiler ?? false);
+    const [isNsfw, setIsNsfw] = useState<boolean>(initialNsfw ?? false);
     const [isSaving, setIsSaving] = useState(false);
-    const [isPreview, setIsPreview] = useState(false);
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    const handleFormat = (prefix: string, suffix: string = prefix, placeholder: string = "") => {
-        if (isPreview) {
-            setIsPreview(false);
-        }
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const current = content;
-        const selected = current.substring(start, end);
-        const replacement = selected ? `${prefix}${selected}${suffix}` : `${prefix}${placeholder}${suffix}`;
-        const nextContent = current.substring(0, start) + replacement + current.substring(end);
-        setContent(nextContent);
-        setTimeout(() => {
-            textarea.focus();
-            const nextPos = selected ? start + replacement.length : start + prefix.length;
-            textarea.setSelectionRange(nextPos, nextPos + (selected ? 0 : placeholder.length));
-        }, 10);
-    };
 
     const titleLen = title.trim().length;
     const contentLen = content.trim().length;
@@ -95,6 +79,8 @@ export const EditPostModal = ({
                 privacy,
                 allowComments,
                 pinned,
+                isSpoiler,
+                isNsfw,
             });
             onClose();
         } finally {
@@ -158,6 +144,8 @@ export const EditPostModal = ({
                             id="edit-post-title"
                             type="text"
                             value={title}
+                            spellCheck={false}
+                            autoCorrect="off"
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={t('feed.postTitle')}
                             className="w-full h-10 px-4 bg-surface-hover border border-border rounded-xl text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
@@ -174,31 +162,12 @@ export const EditPostModal = ({
                         <label htmlFor="edit-post-content" className="text-sm font-semibold text-text">
                             {t('feed.whatOnMind')}
                         </label>
-                        <FormattingToolbar
-                            onFormat={handleFormat}
-                            isPreview={isPreview}
-                            onTogglePreview={setIsPreview}
+                        <RichTextEditor
+                            value={content}
+                            onChange={setContent}
+                            placeholder={t('feed.whatOnMind')}
+                            minHeight="140px"
                         />
-                        {isPreview ? (
-                            <div className="w-full bg-surface-hover/30 border border-border rounded-xl p-3 text-sm text-text min-h-32 max-h-56 overflow-y-auto">
-                                {content.trim() ? (
-                                    <MarkdownContent content={content} />
-                                ) : (
-                                    <p className="text-xs text-text-faint italic py-4 text-center">
-                                        {t('feed.previewEmpty', { defaultValue: 'Chưa có nội dung để xem trước' })}
-                                    </p>
-                                )}
-                            </div>
-                        ) : (
-                            <textarea
-                                id="edit-post-content"
-                                ref={textareaRef}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder={t('feed.whatOnMind')}
-                                className="w-full bg-surface-hover border border-border rounded-xl p-3 text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 resize-none h-32"
-                            />
-                        )}
                         {content.trim().length > 0 && content.trim().length < 6 && attachments.length === 0 && (
                             <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5 mt-0.5">
                                 <FontAwesomeIcon icon={faTriangleExclamation} />
@@ -219,13 +188,14 @@ export const EditPostModal = ({
                     />
 
                     <div className="flex flex-col gap-2.5 pt-2 border-t border-border/80">
-                        <label className="text-sm font-semibold text-text">{t('post.postSettings')}</label>
+                        <label className="text-sm font-semibold text-text">{t('post.postSettings', { defaultValue: 'Cài đặt bài viết' })}</label>
 
                         <div className="flex flex-col gap-3 bg-surface-hover/40 p-3.5 rounded-xl border border-border/60">
+                            {/* 1. Cho phép bình luận */}
                             <div className="flex items-center justify-between py-0.5">
                                 <div className="flex items-center gap-2 text-xs font-semibold text-text">
                                     <FontAwesomeIcon icon={faComment} className="w-3.5 text-text-muted" />
-                                    <span>{t('feed.allowComments')}</span>
+                                    <span>{t('feed.allowComments', { defaultValue: 'Cho phép bình luận' })}</span>
                                 </div>
                                 <button
                                     type="button"
@@ -244,10 +214,57 @@ export const EditPostModal = ({
                                 </button>
                             </div>
 
+                            {/* 2. Cảnh báo Spoiler */}
+                            <div className="flex items-center justify-between py-0.5">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-text">
+                                    <FontAwesomeIcon icon={faEyeSlash} className="w-3.5 text-amber-400" />
+                                    <span>{t('feed.warningSpoiler', { defaultValue: 'Cảnh báo Spoiler' })}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={isSpoiler}
+                                    onClick={() => setIsSpoiler(!isSpoiler)}
+                                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
+                                        isSpoiler ? "bg-amber-500" : "bg-border text-text-faint"
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                            isSpoiler ? "translate-x-4" : "translate-x-1"
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* 3. Cảnh báo 18+ (NSFW) */}
+                            <div className="flex items-center justify-between py-0.5">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-text">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} className="w-3.5 text-rose-400" />
+                                    <span>{t('feed.warningNsfw', { defaultValue: 'Cảnh báo 18+ (NSFW)' })}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={isNsfw}
+                                    onClick={() => setIsNsfw(!isNsfw)}
+                                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
+                                        isNsfw ? "bg-rose-500" : "bg-border text-text-faint"
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                            isNsfw ? "translate-x-4" : "translate-x-1"
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* 4. Ghim bài viết */}
                             <div className="flex items-center justify-between py-0.5">
                                 <div className="flex items-center gap-2 text-xs font-semibold text-text">
                                     <FontAwesomeIcon icon={faThumbtack} className="w-3.5 text-text-muted" />
-                                    <span>{t('feed.pinned')}</span>
+                                    <span>{t('feed.pinned', { defaultValue: 'Ghim bài viết' })}</span>
                                 </div>
                                 <button
                                     type="button"

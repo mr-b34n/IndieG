@@ -17,10 +17,13 @@ import {
     faFile,
     faDownload,
     faLock,
+    faCommentSlash,
+    faThumbtack,
+    faTriangleExclamation,
     faArrowUpRightFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { faTwitter, faFacebook } from "@fortawesome/free-brands-svg-icons";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
 import { formatFileSize } from "../helpers/postAttachmentLimits";
@@ -28,17 +31,17 @@ import { Lightbox } from "@/shared/components/ui/Lightbox";
 import { ReportModal } from "@/features/report";
 import { useBookmarksStore } from "@/features/bookmark";
 import { EditPostModal } from "./EditPostModal";
+import { postsApi } from "@/shared/api";
 import { getRankLabel, getRankConfigIfPresent, type UserRankConfig } from "../helpers/userRanks";
 import { useCommunitiesStore } from "@/features/community";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
 import { type PostFileAttachment, type PostData } from "../types";
-import { getGameBySlug } from "@/features/game";
 import { usePostVoteInteraction, useBookmarkInteraction } from "../api/interaction-api";
 import { usePostsStore } from "../store/usePostsStore";
 import { useFeedNavigationStore } from "../store/useFeedNavigationStore";
-import { MarkdownContent } from "@/shared/components/ui/MarkdownContent";
+import { MarkdownContent, parseInlineMarkdown } from "@/shared/components/ui/MarkdownContent";
 
 export type { PostData, PostFileAttachment };
 
@@ -52,6 +55,7 @@ export interface PostProps {
     ) => void;
     onUnfollowAuthor?: (author: string) => void;
     isDetailView?: boolean;
+    hideCommunity?: boolean;
 }
 
 /* =========================================================================
@@ -72,10 +76,11 @@ export interface PostHeaderProps {
     authorBadge?: string;
     gameBadge?: string;
     postCommunity?: {
-        id: string;
+        id: string | number;
         name: string;
         logo?: string;
         avatar?: string;
+        backdrop?: string;
     } | null;
     gameTag?: string;
     timeAgo: string;
@@ -88,6 +93,14 @@ export interface PostHeaderProps {
     handleEdit: (e: React.MouseEvent) => void;
     handleDelete: (e: React.MouseEvent) => void;
     handleReport: (e: React.MouseEvent) => void;
+    allowComments?: boolean;
+    onToggleAllowComments?: (e: React.MouseEvent) => void;
+    isSpoiler?: boolean;
+    onToggleSpoiler?: (e: React.MouseEvent) => void;
+    isNsfw?: boolean;
+    onToggleNsfw?: (e: React.MouseEvent) => void;
+    pinned?: boolean;
+    onTogglePin?: (e: React.MouseEvent) => void;
     t: (key: string, options?: Record<string, unknown>) => string;
     language: string;
 }
@@ -98,7 +111,7 @@ export const PostHeader = ({
     authorAvatar,
     rank,
     postCommunity,
-    gameTag,
+    gameTag: _gameTag,
     timeAgo,
     onAuthorClick,
     onCommunityClick,
@@ -109,6 +122,14 @@ export const PostHeader = ({
     handleEdit,
     handleDelete,
     handleReport,
+    allowComments = true,
+    onToggleAllowComments,
+    isSpoiler = false,
+    onToggleSpoiler,
+    isNsfw = false,
+    onToggleNsfw,
+    pinned = false,
+    onTogglePin,
     t,
     language,
 }: PostHeaderProps) => {
@@ -156,32 +177,32 @@ export const PostHeader = ({
                             </span>
                         )}
 
-                        {(postCommunity || gameTag) && (
-                            <span className="text-text-muted text-xs select-none">·</span>
+                        {postCommunity && (
+                            <>
+                                <span className="text-text-muted text-xs select-none">·</span>
+                                <span
+                                    onClick={onCommunityClick}
+                                    title={postCommunity.name}
+                                    className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate flex items-center gap-1.5 max-w-[200px]"
+                                >
+                                    {postCommunity.logo ? (
+                                        <img
+                                            src={postCommunity.logo}
+                                            alt={postCommunity.name}
+                                            className="w-3.5 h-3.5 rounded-[4px] object-cover shrink-0 ring-1 ring-white/10"
+                                            onError={(e) => {
+                                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="w-3.5 h-3.5 rounded-[4px] bg-primary/20 text-primary flex items-center justify-center font-bold text-[9px] shrink-0">
+                                            {postCommunity.name?.charAt(0)?.toUpperCase() || "C"}
+                                        </span>
+                                    )}
+                                    <span className="truncate">{postCommunity.name}</span>
+                                </span>
+                            </>
                         )}
-
-                        {postCommunity ? (
-                            <span
-                                onClick={onCommunityClick}
-                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate flex items-center gap-1.5"
-                            >
-                                {postCommunity.logo && (
-                                    <img
-                                        src={postCommunity.logo}
-                                        alt=""
-                                        className="w-3.5 h-3.5 rounded-[4px] object-cover shrink-0"
-                                    />
-                                )}
-                                <span className="truncate">{postCommunity.name}</span>
-                            </span>
-                        ) : gameTag ? (
-                            <span
-                                onClick={onCommunityClick}
-                                className="text-xs sm:text-[13px] text-text-muted hover:text-primary transition-colors cursor-pointer font-medium truncate"
-                            >
-                                {gameTag}
-                            </span>
-                        ) : null}
                     </div>
 
                     {/* Line 2: @username · Time */}
@@ -225,32 +246,137 @@ export const PostHeader = ({
                             }}
                         />
                         <div
-                            className="absolute right-0 top-full mt-1 w-44 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in py-1"
+                            className="absolute right-0 top-full mt-1 w-52 sm:w-56 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden animate-dropdown py-1 text-xs"
                         >
                             {isOwner ? (
                                 <>
                                     <button
                                         onClick={handleEdit}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer"
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer font-medium"
                                     >
-                                        <FontAwesomeIcon icon={faPen} className="w-3.5" />
-                                        {t('post.edit')}
+                                        <FontAwesomeIcon icon={faPen} className="w-3.5 text-text-faint" />
+                                        <span>{t('post.edit')}</span>
                                     </button>
+
+                                    <div className="h-px bg-border/50 my-1" />
+
+                                    {/* Quick Setting: Allow Comments */}
+                                    {onToggleAllowComments && (
+                                        <button
+                                            onClick={onToggleAllowComments}
+                                            className="w-full flex items-center justify-between px-3.5 py-2 text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <FontAwesomeIcon
+                                                    icon={allowComments ? faCommentSlash : faComment}
+                                                    className={`w-3.5 ${allowComments ? "text-text-faint" : "text-primary"}`}
+                                                />
+                                                <span className="truncate">
+                                                    {allowComments
+                                                        ? t('post.disableComments', { defaultValue: 'Tắt tính năng bình luận' })
+                                                        : t('post.enableComments', { defaultValue: 'Bật tính năng bình luận' })}
+                                                </span>
+                                            </div>
+                                            {!allowComments && (
+                                                <span className="text-[10px] bg-rose-500/15 text-rose-400 font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                                    {t('post.disabled', { defaultValue: 'Đã tắt' })}
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Quick Setting: Spoiler */}
+                                    {onToggleSpoiler && (
+                                        <button
+                                            onClick={onToggleSpoiler}
+                                            className="w-full flex items-center justify-between px-3.5 py-2 text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <FontAwesomeIcon
+                                                    icon={faEyeSlash}
+                                                    className={`w-3.5 ${isSpoiler ? "text-amber-400" : "text-text-faint"}`}
+                                                />
+                                                <span className="truncate">
+                                                    {isSpoiler
+                                                        ? t('post.unmarkSpoiler', { defaultValue: 'Bỏ cảnh báo Spoiler' })
+                                                        : t('post.markSpoiler', { defaultValue: 'Đánh dấu Spoiler' })}
+                                                </span>
+                                            </div>
+                                            {isSpoiler && (
+                                                <span className="text-[10px] bg-amber-500/15 text-amber-400 font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                                    Spoiler
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Quick Setting: NSFW */}
+                                    {onToggleNsfw && (
+                                        <button
+                                            onClick={onToggleNsfw}
+                                            className="w-full flex items-center justify-between px-3.5 py-2 text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <FontAwesomeIcon
+                                                    icon={faTriangleExclamation}
+                                                    className={`w-3.5 ${isNsfw ? "text-rose-400" : "text-text-faint"}`}
+                                                />
+                                                <span className="truncate">
+                                                    {isNsfw
+                                                        ? t('post.unmarkNsfw', { defaultValue: 'Bỏ cảnh báo 18+ (NSFW)' })
+                                                        : t('post.markNsfw', { defaultValue: 'Đánh dấu 18+ (NSFW)' })}
+                                                </span>
+                                            </div>
+                                            {isNsfw && (
+                                                <span className="text-[10px] bg-rose-500/15 text-rose-400 font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                                    18+
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    {/* Quick Setting: Pin */}
+                                    {onTogglePin && (
+                                        <button
+                                            onClick={onTogglePin}
+                                            className="w-full flex items-center justify-between px-3.5 py-2 text-text-muted hover:bg-surface-hover hover:text-text transition-colors text-left cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <FontAwesomeIcon
+                                                    icon={faThumbtack}
+                                                    className={`w-3.5 ${pinned ? "text-primary" : "text-text-faint"}`}
+                                                />
+                                                <span className="truncate">
+                                                    {pinned
+                                                        ? t('post.unpin', { defaultValue: 'Bỏ ghim bài viết' })
+                                                        : t('post.pin', { defaultValue: 'Ghim bài viết' })}
+                                                </span>
+                                            </div>
+                                            {pinned && (
+                                                <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                                    {t('post.pinned', { defaultValue: 'Đã ghim' })}
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
+
+                                    <div className="h-px bg-border/50 my-1" />
+
                                     <button
                                         onClick={handleDelete}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium border-t border-border/40 cursor-pointer"
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-rose-500 hover:bg-surface-hover transition-colors text-left font-medium cursor-pointer"
                                     >
                                         <FontAwesomeIcon icon={faTrash} className="w-3.5" />
-                                        {t('post.delete')}
+                                        <span>{t('post.delete')}</span>
                                     </button>
                                 </>
                             ) : (
                                 <button
                                     onClick={handleReport}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-muted hover:text-rose-500 hover:bg-surface-hover transition-colors text-left cursor-pointer"
+                                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-text-muted hover:text-rose-500 hover:bg-surface-hover transition-colors text-left cursor-pointer font-medium"
                                 >
                                     <FontAwesomeIcon icon={faFlag} className="w-3.5" />
-                                    {t('post.report')}
+                                    <span>{t('post.report')}</span>
                                 </button>
                             )}
                         </div>
@@ -310,6 +436,21 @@ export interface PostContentProps {
     onCollapse?: (e: React.MouseEvent) => void;
 }
 
+function getFacebookSnippet(text: string, maxLen = 220): string {
+    const cleanLines = text
+        .split(/\r?\n/)
+        .map((l) => l.replace(/^#{1,6}\s+/, "").replace(/^>\s?/, "").replace(/^```\w*/, "").replace(/^[-*]\s+/, ""))
+        .filter((l) => l.trim().length > 0);
+
+    const firstTwo = cleanLines.slice(0, 2).join(" ");
+    if (firstTwo.length <= maxLen && cleanLines.length <= 2) {
+        return firstTwo;
+    }
+    const sliced = firstTwo.slice(0, maxLen);
+    const lastSpace = sliced.lastIndexOf(" ");
+    return (lastSpace > 140 ? sliced.slice(0, lastSpace) : sliced).trim();
+}
+
 export const PostContent = ({
     content,
     isDetailView = false,
@@ -320,26 +461,20 @@ export const PostContent = ({
     const { t } = useTranslation();
     if (!content) return null;
 
-    const [isOverflowing, setIsOverflowing] = useState(false);
-    const contentRef = useRef<HTMLDivElement>(null);
-
-    const lines = useMemo(() => {
-        return content.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    const isLong = useMemo(() => {
+        const cleanLines = content
+            .split(/\r?\n/)
+            .filter((l) => l.trim().length > 0);
+        return content.length > 220 || cleanLines.length > 2;
     }, [content]);
 
-    // Triggers if content has multiple lines, exceeds typical card length, or actually overflows DOM
-    const isLong = isOverflowing || content.length > 180 || lines.length > 2;
-
-    useEffect(() => {
-        if (!contentRef.current) return;
-        const el = contentRef.current;
-        if (el.scrollHeight > el.clientHeight + 2) {
-            setIsOverflowing(true);
-        }
-    }, [content]);
+    const snippet = useMemo(() => {
+        if (!isLong) return content;
+        return getFacebookSnippet(content, 220);
+    }, [content, isLong]);
 
     return (
-        <div className="text-[14px] sm:text-[15px] leading-[1.6] text-text/90 font-normal break-words mb-3">
+        <div className="text-[14px] sm:text-[15px] leading-[1.45] text-text/90 font-normal break-words mb-3">
             {isDetailView || isExpanded ? (
                 <div>
                     <MarkdownContent content={content} />
@@ -350,7 +485,7 @@ export const PostContent = ({
                                 e.stopPropagation();
                                 onCollapse(e);
                             }}
-                            className="block font-semibold text-text-muted hover:text-text hover:underline cursor-pointer mt-1.5 text-xs sm:text-sm select-none"
+                            className="block font-bold text-text-muted hover:text-text hover:underline cursor-pointer mt-2 text-xs sm:text-sm select-none"
                         >
                             {t('common.showLess', { defaultValue: 'Thu gọn' })}
                         </button>
@@ -358,7 +493,7 @@ export const PostContent = ({
                 </div>
             ) : (
                 <div
-                    className={`relative ${isLong ? "cursor-pointer group/content" : ""}`}
+                    className={isLong ? "cursor-pointer select-text" : ""}
                     onClick={(e) => {
                         if (isLong) {
                             e.stopPropagation();
@@ -366,12 +501,7 @@ export const PostContent = ({
                         }
                     }}
                 >
-                    <div
-                        ref={contentRef}
-                        className="max-h-[4.8em] overflow-hidden line-clamp-3"
-                    >
-                        <MarkdownContent content={content} isClamped />
-                    </div>
+                    <span>{parseInlineMarkdown(snippet)}</span>
                     {isLong && (
                         <button
                             type="button"
@@ -379,9 +509,9 @@ export const PostContent = ({
                                 e.stopPropagation();
                                 onExpand(e);
                             }}
-                            className="block font-semibold text-text hover:underline cursor-pointer mt-1 text-xs sm:text-sm select-none"
+                            className="font-bold text-text hover:text-primary hover:underline cursor-pointer ml-1 inline text-[13px] sm:text-[14px] select-none"
                         >
-                            ...more
+                            ... {t('common.seeMore', { defaultValue: 'Xem thêm' })}
                         </button>
                     )}
                 </div>
@@ -787,7 +917,7 @@ export const PostActions = ({
                             }}
                         />
                         <div
-                            className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in py-1"
+                            className="absolute left-0 bottom-full mb-1 w-44 bg-surface border border-border/80 rounded-xl shadow-xl z-50 overflow-hidden animate-popover origin-bottom-left py-1"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <button
@@ -838,15 +968,15 @@ export const PostActions = ({
    ========================================================================= */
 export const Post = ({
     post,
-    isOwner = false,
+    isOwner: explicitIsOwner,
     onDelete,
     onEdit,
     isDetailView = false,
+    hideCommunity = false,
 }: PostProps) => {
     const { t, language } = useTranslation();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
 
     const bookmarked = useBookmarksStore((state) => state.isBookmarked(post.id));
     const toggleBookmark = useBookmarksStore((state) => state.toggleBookmark);
@@ -860,7 +990,10 @@ export const Post = ({
     const [isContentExpanded, setIsContentExpanded] = useState(isDetailView);
 
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
-    const postCommunity = post.communityId ? getCommunityById(post.communityId) : null;
+    const postCommunity = post.community
+        || (post.communityId ? getCommunityById(post.communityId) : null)
+        || (post.communityName ? { id: post.communityId || "", name: post.communityName } : null)
+        || (post.gameTag ? { id: post.communityId || "", name: post.gameTag } : null);
 
     const [localVoteOverride, setLocalVoteOverride] = useState<{
         postId: string | number;
@@ -890,6 +1023,15 @@ export const Post = ({
     const bookmarkMutation = useBookmarkInteraction(post.id);
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
+    const isFocused = useFeedNavigationStore(
+        (state) => state.focusedPostId !== null && String(state.focusedPostId) === String(post.id)
+    );
+    const setFocusedPostId = useFeedNavigationStore((state) => state.setFocusedPostId);
+    const registerPostActions = useFeedNavigationStore((state) => state.registerPostActions);
+
+    const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
+    const rank = getRankConfigIfPresent(rawRank);
 
     const handleLike = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -1003,28 +1145,44 @@ export const Post = ({
     const postUrl = typeof window !== "undefined" ? `${window.location.origin}/post/${post.id}` : "";
 
     const authorObj = typeof post.author === "object" && post.author !== null ? post.author : null;
-    const authorName = authorObj?.name || authorObj?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : t('community.roleMember', { defaultValue: "Thành viên" }));
+    const authorName = authorObj?.name || (authorObj as { displayName?: string })?.displayName || authorObj?.username || (typeof post.author === "string" ? post.author : t('community.roleMember', { defaultValue: "Thành viên" }));
     const authorUsername = authorObj?.username || (typeof post.author === "object" ? (post.author as { handle?: string })?.handle : undefined);
     const authorAvatar = authorObj ? (authorObj.avatar || authorObj.avatarUrl || post.authorAvatar) : post.authorAvatar;
+    const myAuthorName = getCurrentAuthor();
+
+    const userDisplayName = (user as { displayName?: string })?.displayName || user?.name;
+    const isMe = Boolean(
+        user && (
+            (authorObj?.id && String(authorObj.id) === String(user.id)) ||
+            (authorUsername && user.username && authorUsername.replace(/^@/, "").toLowerCase() === user.username.replace(/^@/, "").toLowerCase()) ||
+            (authorName && userDisplayName && authorName.toLowerCase() === userDisplayName.toLowerCase()) ||
+            (authorName && user.username && authorName.toLowerCase() === user.username.toLowerCase()) ||
+            (authorName && authorName === myAuthorName) ||
+            (authorUsername && authorUsername === myAuthorName)
+        )
+    );
+    const isOwner = explicitIsOwner !== undefined ? explicitIsOwner : isMe;
 
     const handleNavigate = () => {
         if (isDetailView) return;
+        if (typeof window !== "undefined") {
+            const container = document.querySelector('[data-scroll-container]') as HTMLElement | null;
+            if (container && container.scrollTop > 0) {
+                sessionStorage.setItem(`scroll_pos_${window.location.pathname}`, String(container.scrollTop));
+            }
+            sessionStorage.setItem('returning_from_post_id', post.id.toString());
+        }
         navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
     };
 
     const handleAuthorClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const authorObj = typeof post.author === "object" ? post.author : null;
-        const authorUsername = authorObj?.username;
-        const authorId = authorObj?.id;
-        const isMe = authorName === getCurrentAuthor() || (authorUsername && authorUsername === getCurrentAuthor());
-
         let targetUserId = "me";
         if (!isMe) {
             if (authorUsername) {
                 targetUserId = authorUsername.startsWith("@") ? authorUsername : `@${authorUsername}`;
-            } else if (authorId) {
-                targetUserId = authorId;
+            } else if (authorObj?.id) {
+                targetUserId = authorObj.id;
             } else {
                 targetUserId = authorName.startsWith("@") ? authorName : `@${authorName}`;
             }
@@ -1061,11 +1219,17 @@ export const Post = ({
         setShowShareMenu(false);
     };
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!requireVerifiedEmail("xóa bài viết")) return;
+        usePostsStore.getState().deletePost(post.id);
         onDelete?.(post.id);
         setShowActionMenu(false);
+        try {
+            await postsApi.deletePost(post.id);
+        } catch {
+            // Local deletion completed
+        }
     };
 
     const handleEdit = (e: React.MouseEvent) => {
@@ -1075,41 +1239,115 @@ export const Post = ({
         setShowEditModal(true);
     };
 
-    const handleSaveEdit = (data: Partial<PostData>) => {
+    const handleSaveEdit = async (data: Partial<PostData>) => {
         if (!requireVerifiedEmail("chỉnh sửa bài viết")) return;
-        onEdit?.(post.id, data);
+
+        const currentTags = post.tags || [];
+        let updatedTags = data.tags !== undefined ? data.tags : [...currentTags];
+        if (data.isSpoiler !== undefined) {
+            updatedTags = data.isSpoiler
+                ? [...updatedTags.filter((t) => t.toLowerCase() !== "spoiler"), "spoiler"]
+                : updatedTags.filter((t) => t.toLowerCase() !== "spoiler");
+        }
+        if (data.isNsfw !== undefined) {
+            updatedTags = data.isNsfw
+                ? [...updatedTags.filter((t) => t.toLowerCase() !== "nsfw"), "nsfw"]
+                : updatedTags.filter((t) => t.toLowerCase() !== "nsfw");
+        }
+
+        const updates: Partial<PostData> = {
+            ...data,
+            tags: updatedTags,
+        };
+
+        usePostsStore.getState().updatePost(post.id, updates);
+        onEdit?.(post.id, updates);
+        try {
+            await postsApi.updatePost(post.id, {
+                title: data.title,
+                content: data.content,
+                images: data.images,
+                tags: updatedTags,
+                gameTag: data.gameTag,
+                ...(data.pinned !== undefined && user?.role === "admin" ? { pinned: data.pinned } : {}),
+                allowComments: data.allowComments,
+            });
+        } catch {
+            // Local state is already updated
+        }
     };
 
-    const rawRank = post.authorRank || (typeof post.author === "object" && post.author !== null ? post.author.rank : undefined);
-    const rank = getRankConfigIfPresent(rawRank);
+    const handleToggleAllowComments = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!requireVerifiedEmail("cài đặt bình luận")) return;
+        const nextAllowComments = post.allowComments === false;
+        setShowActionMenu(false);
+        const updates: Partial<PostData> = { allowComments: nextAllowComments };
+        usePostsStore.getState().updatePost(post.id, updates);
+        onEdit?.(post.id, updates);
+        try {
+            await postsApi.updatePost(post.id, {
+                allowComments: nextAllowComments,
+            });
+        } catch {
+            // Local state is already updated
+        }
+    };
 
-    const hasImages = post.images && post.images.length > 0;
+    const handleToggleSpoiler = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!requireVerifiedEmail("cài đặt cảnh báo spoiler")) return;
+        const nextSpoiler = !post.isSpoiler;
+        setShowActionMenu(false);
+        const currentTags = post.tags || [];
+        const newTags = nextSpoiler
+            ? [...currentTags.filter((t) => t.toLowerCase() !== "spoiler"), "spoiler"]
+            : currentTags.filter((t) => t.toLowerCase() !== "spoiler");
 
-    const isFocused = useFeedNavigationStore(
-        (state) => state.focusedPostId !== null && String(state.focusedPostId) === String(post.id)
-    );
-    const setFocusedPostId = useFeedNavigationStore((state) => state.setFocusedPostId);
-    const registerPostActions = useFeedNavigationStore((state) => state.registerPostActions);
+        const updates: Partial<PostData> = { isSpoiler: nextSpoiler, tags: newTags };
+        usePostsStore.getState().updatePost(post.id, updates);
+        onEdit?.(post.id, updates);
+        try {
+            await postsApi.updatePost(post.id, { tags: newTags });
+        } catch {
+            // Local state is already updated
+        }
+    };
 
-    const handleTogglePin = (e?: React.MouseEvent) => {
+    const handleToggleNsfw = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!requireVerifiedEmail("cài đặt cảnh báo 18+ (NSFW)")) return;
+        const nextNsfw = !post.isNsfw;
+        setShowActionMenu(false);
+        const currentTags = post.tags || [];
+        const newTags = nextNsfw
+            ? [...currentTags.filter((t) => t.toLowerCase() !== "nsfw"), "nsfw"]
+            : currentTags.filter((t) => t.toLowerCase() !== "nsfw");
+
+        const updates: Partial<PostData> = { isNsfw: nextNsfw, tags: newTags };
+        usePostsStore.getState().updatePost(post.id, updates);
+        onEdit?.(post.id, updates);
+        try {
+            await postsApi.updatePost(post.id, { tags: newTags });
+        } catch {
+            // Local state is already updated
+        }
+    };
+
+    const handleTogglePin = async (e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         if (!isLoggedIn) return;
         if (!requireVerifiedEmail("ghim bài viết")) return;
 
-        const isMe = authorName === getCurrentAuthor() || (authorUsername && authorUsername === getCurrentAuthor());
-        const isAdmin = Boolean(
-            user?.role === "admin" ||
-            user?.id === "usr_admin" ||
-            user?.username === "IndieAdmin" ||
-            user?.email === "admin@indieg.com"
-        );
-
-        if (!isMe && !isAdmin) return;
-
+        setShowActionMenu(false);
         const nextPinned = !post.pinned;
-        usePostsStore.getState().updatePost(post.id, { pinned: nextPinned });
-        if (onEdit) {
-            onEdit(post.id, { pinned: nextPinned });
+        const updates: Partial<PostData> = { pinned: nextPinned };
+        usePostsStore.getState().updatePost(post.id, updates);
+        onEdit?.(post.id, updates);
+        try {
+            await postsApi.updatePost(post.id, { pinned: nextPinned });
+        } catch {
+            // Local state is already updated
         }
     };
 
@@ -1126,7 +1364,7 @@ export const Post = ({
     return (
         <article
             id={`post-article-${post.id}`}
-            onClick={(e) => {
+            onClick={() => {
                 setFocusedPostId(post.id);
                 handleNavigate();
             }}
@@ -1140,14 +1378,9 @@ export const Post = ({
                 }
             `}
         >
-            {/* Permanent Background for Text-Only */}
-            {!isDetailView && !hasImages && (
-                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.03)] z-0" />
-            )}
-            
-            {/* Hover Background Layer */}
+            {/* Hover Background Layer (scales up smoothly on hover like YouTube cards) */}
             {!isDetailView && (
-                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-[rgba(255,255,255,0.04)] opacity-0 scale-96 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.25)] motion-reduce:transition-opacity motion-reduce:group-hover:scale-96 z-0" />
+                <div className="absolute inset-0 pointer-events-none rounded-[12px] sm:rounded-[16px] bg-black/[0.06] dark:bg-white/[0.08] opacity-0 scale-95 transition-all duration-200 ease-out group-hover:opacity-100 group-hover:scale-100 motion-reduce:transition-opacity motion-reduce:group-hover:scale-95 z-0" />
             )}
 
             <div className="relative z-10 w-full flex flex-col">
@@ -1157,17 +1390,15 @@ export const Post = ({
                     authorUsername={authorUsername}
                     authorAvatar={authorAvatar}
                     rank={rank}
-                    postCommunity={postCommunity}
+                    postCommunity={hideCommunity ? undefined : postCommunity}
                     gameTag={post.gameTag}
-                    timeAgo={post.timeAgo}
+                    timeAgo={post.timeAgo || ""}
                     onAuthorClick={handleAuthorClick}
                     onCommunityClick={(e) => {
                         e?.stopPropagation();
-                        if (postCommunity) {
-                            navigate({ to: `/community/${postCommunity.id}` });
-                        } else if (post.gameTag) {
-                            const gameInfo = getGameBySlug(post.gameTag);
-                            navigate({ to: `/game/${gameInfo.slug}` });
+                        const targetId = postCommunity?.id || post.communityId;
+                        if (targetId) {
+                            navigate({ to: `/community/${targetId}` });
                         }
                     }}
                     isOwner={isOwner}
@@ -1181,6 +1412,14 @@ export const Post = ({
                         setShowActionMenu(false);
                         setShowReportModal(true);
                     }}
+                    allowComments={post.allowComments !== false}
+                    onToggleAllowComments={handleToggleAllowComments}
+                    isSpoiler={post.isSpoiler}
+                    onToggleSpoiler={handleToggleSpoiler}
+                    isNsfw={post.isNsfw}
+                    onToggleNsfw={handleToggleNsfw}
+                    pinned={post.pinned}
+                    onTogglePin={handleTogglePin}
                     t={t}
                     language={language}
                 />
@@ -1238,7 +1477,7 @@ export const Post = ({
                     isDownvoted={isDownvoted}
                     onLike={handleLike}
                     onDownvote={handleDownvote}
-                    commentsCount={post.comments}
+                    commentsCount={post.comments ?? 0}
                     allowComments={post.allowComments}
                     onCommentClick={(e) => {
                         e.stopPropagation();
@@ -1278,8 +1517,10 @@ export const Post = ({
                     initialContent={post.content}
                     initialAttachments={post}
                     initialPrivacy={post.privacy}
-                    initialAllowComments={post.allowComments ?? true}
+                    initialAllowComments={post.allowComments !== false}
                     initialPinned={post.pinned ?? false}
+                    initialSpoiler={post.isSpoiler ?? false}
+                    initialNsfw={post.isNsfw ?? false}
                     onClose={() => setShowEditModal(false)}
                     onSave={handleSaveEdit}
                 />
