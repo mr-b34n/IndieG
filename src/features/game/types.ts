@@ -1,9 +1,13 @@
+export type GameTabType = "overview" | "guides" | "reviews" | "updates" | "discussions";
+
 export interface GameGuide {
     id: string;
     title: string;
     titleVi?: string;
     author: string;
     authorAvatar: string;
+    authorUsername?: string;
+    authorId?: string;
     rank?: string;
     category: "tactics" | "builds" | "secrets" | "general";
     content: string;
@@ -17,8 +21,10 @@ export interface GameReview {
     id: string;
     author: string;
     authorAvatar: string;
-    rating: number; // 1 to 5
-    hoursPlayed: string;
+    authorUsername?: string;
+    authorId?: string;
+    rating: number; // 1 to 10
+    hoursPlayed?: string;
     content: string;
     contentVi?: string;
     date: string;
@@ -27,64 +33,88 @@ export interface GameReview {
 }
 
 export interface GameSystemReqs {
-    minimum: {
-        os: string;
-        cpu: string;
-        gpu: string;
-        ram: string;
-        storage: string;
+    minimum?: {
+        os?: string;
+        cpu?: string;
+        gpu?: string;
+        ram?: string;
+        storage?: string;
     };
-    recommended: {
-        os: string;
-        cpu: string;
-        gpu: string;
-        ram: string;
-        storage: string;
+    recommended?: {
+        os?: string;
+        cpu?: string;
+        gpu?: string;
+        ram?: string;
+        storage?: string;
     };
 }
 
 export interface GamePatchNote {
     id: string;
     version: string;
-    title: string;
+    title?: string;
     titleVi?: string;
     date: string;
-    summary: string;
+    summary?: string;
     summaryVi?: string;
     type: "major" | "patch" | "hotfix" | "event";
-    postId?: number; // Optional link to community post id
+    postId?: number;
+}
+
+export interface GameScreenshotItem {
+    id: number | string;
+    thumbnail: string;
+    full: string;
+}
+
+export interface GameCategoryItem {
+    id: number | string;
+    description: string;
 }
 
 export interface GameData {
-    slug: string; // The primary slug e.g. "counter-strike-2"
-    appid?: number; // Steam / Backend AppID
-    id?: string; // Optional backwards compatibility (usually same as slug or community id)
-    aliases?: string[]; // E.g. ["cs2", "counter_strike_2"]
-    name: string; // E.g. "Counter Strike 2"
-    tag: string; // Matching post.gameTag e.g. "Counter Strike 2" or "Raft"
-    communityId?: string; // Link to /community/$communityId if exists e.g. "cs2", "rdr2", "raft"
-    steamUrl?: string; // Direct link to Steam Store page
-    developer: string;
-    publisher: string;
-    releaseDate: string;
-    platforms: string[];
-    genre: string[];
-    ratingScore: number; // e.g. 4.8
-    totalReviewsCount: number; // e.g. 142050
-    sentiment: "Overwhelmingly Positive" | "Very Positive" | "Positive" | "Mixed";
-    sentimentVi?: string;
-    activePlayers: number; // e.g. 842150
-    logoUrl: string;
+    slug: string;
+    appid?: number;
+    id?: string;
+    aliases?: string[];
+    name: string;
+    tag?: string;
+    type?: string;
+    communityId?: string;
+    steamUrl?: string;
+    steamAvailable?: boolean;
+    developer?: string;
+    developers?: string[];
+    publisher?: string;
+    publishers?: string[];
+    releaseDate?: string;
+    releaseDateComingSoon?: boolean;
+    platforms?: string[];
+    genre?: string[];
+    genres?: string[];
+    categories?: GameCategoryItem[];
+    isFree?: boolean;
+    recommendationsCount?: number;
+    metacriticScore?: number;
+    metacriticUrl?: string;
+    achievementsCount?: number;
+    headerImage?: string;
+    capsuleImage?: string;
+    backgroundImage?: string;
+    background?: string;
+    backgroundRaw?: string;
+    logoUrl?: string;
     bannerUrl?: string;
-    description: string;
+    capsuleUrl?: string;
+    shortDescription?: string;
+    description?: string;
     descriptionVi?: string;
-    features: string[];
-    featuresVi?: string[];
+    aboutTheGame?: string;
+    features?: string[];
     screenshots: string[];
+    screenshotItems?: GameScreenshotItem[];
     systemReqs?: GameSystemReqs;
-    guides: GameGuide[];
-    reviews: GameReview[];
+    guides?: GameGuide[];
+    reviews?: GameReview[];
     patchNotes?: GamePatchNote[];
 }
-
-

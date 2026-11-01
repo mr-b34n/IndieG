@@ -3,6 +3,31 @@ import { type GameData, type GameGuide, type GameReview } from "../types";
 import { INITIAL_GAMES, getGameBySlug as fallbackGetGameBySlug } from "../constants";
 
 const STORAGE_KEY = "indieg_games_data";
+const FOLLOWED_KEY = "indieg_followed_games";
+
+const loadFollowedSlugs = (): string[] => {
+    if (typeof window === "undefined") return [];
+    try {
+        const saved = localStorage.getItem(FOLLOWED_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch {
+        // Fallback
+    }
+    return [];
+};
+
+const saveFollowedSlugs = (slugs: string[]) => {
+    if (typeof window !== "undefined") {
+        try {
+            localStorage.setItem(FOLLOWED_KEY, JSON.stringify(slugs));
+        } catch {
+            // Ignore
+        }
+    }
+};
 
 const loadInitialGames = (): GameData[] => {
     if (typeof window === "undefined") return INITIAL_GAMES;
@@ -53,7 +78,7 @@ interface GameStoreState {
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
     games: loadInitialGames(),
-    followedSlugs: [],
+    followedSlugs: loadFollowedSlugs(),
     quickAccessSlugs: [],
     customGuides: {},
     customReviews: {},
@@ -107,11 +132,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         const cleanSlug = slug.toLowerCase();
         set((state) => {
             const exists = state.followedSlugs.includes(cleanSlug);
-            return {
-                followedSlugs: exists
-                    ? state.followedSlugs.filter((s) => s !== cleanSlug)
-                    : [...state.followedSlugs, cleanSlug],
-            };
+            const updated = exists
+                ? state.followedSlugs.filter((s) => s !== cleanSlug)
+                : [...state.followedSlugs, cleanSlug];
+            saveFollowedSlugs(updated);
+            return { followedSlugs: updated };
         });
     },
 
