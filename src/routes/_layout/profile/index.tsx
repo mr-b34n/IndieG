@@ -1,15 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
-import { UserProfile } from '@/features/profile';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_layout/profile/')({
-    component: ProfileIndexRoute,
+    beforeLoad: () => {
+        throw redirect({ to: '/profile/$userId', params: { userId: 'me' } });
+    },
+    component: () => null,
 });
-
-function ProfileIndexRoute() {
-    const navigate = useNavigate();
-    useEffect(() => {
-        navigate({ to: '/profile/$userId', params: { userId: 'me' }, replace: true });
-    }, [navigate]);
-    return <UserProfile userId="me" />;
-}

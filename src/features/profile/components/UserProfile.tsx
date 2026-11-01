@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { useAuthStore } from "@/features/auth";
+import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
 import { getRankLabel, getRankConfigIfPresent } from "@/features/post/helpers/userRanks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faSpinner, faExclamationTriangle, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faSpinner, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { ProfileHero } from "./ProfileHero";
@@ -50,7 +51,7 @@ import {
     useCommunitiesQuery,
 } from "@/shared/api/useQueries";
 import type { UpdateProfileDto, CommunityDto } from "@/shared/api/types";
-import { extractPostList, extractCommunityList, mapPostDtoToPostData } from "@/shared/api";
+import { extractPostList, extractCommunityList, extractUserProfile, mapPostDtoToPostData } from "@/shared/api";
 import type { PostData } from "@/features/post";
 import { uploadImageToR2 } from "@/shared/services/upload-service";
 import { extractFriendEntry, extractFriendRequest } from "../utils";
@@ -78,8 +79,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const updateUser = useAuthStore((state) => state.updateUser);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const setCustomAvatar = useAuthStore((state) => state.setCustomAvatar);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
     const currentAuthor = getCurrentAuthor();
 
     const isOwnProfile =
@@ -90,21 +90,49 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     // TanStack Query hooks for profile data
     const cleanUsername = userId?.replace(/^@/, "");
-    const { data: myProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(isOwnProfile && isLoggedIn);
-    const { data: otherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
+    const { data: rawMyProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(
+        isOwnProfile && isLoggedIn,
+        user?.id || user?.username
+    );
+    const { data: rawOtherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
+    const myProfileData = useMemo(() => extractUserProfile(rawMyProfileData), [rawMyProfileData]);
+    const otherUserProfileData = useMemo(() => extractUserProfile(rawOtherUserProfileData), [rawOtherUserProfileData]);
     const updateProfileMutation = useUpdateProfileMutation();
 
     useEffect(() => {
-        if (isOwnProfile && myProfileData) {
-            updateUser({
-                id: myProfileData.id,
-                name: myProfileData.name || myProfileData.username,
-                username: myProfileData.username,
-                avatarUrl: myProfileData.avatarUrl || undefined,
-                avatar_url: myProfileData.avatarUrl || undefined,
-                isVerified: myProfileData.isVerified === true || (myProfileData as { isEmailVerified?: boolean }).isEmailVerified === true,
-            });
-        }
+        if (!isOwnProfile || !myProfileData) return;
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) return;
+
+        const isMatchingUser =
+            !currentUser.id || !myProfileData.id ||
+            currentUser.id === myProfileData.id ||
+            (currentUser.username && myProfileData.username && currentUser.username === myProfileData.username);
+
+        if (!isMatchingUser) return;
+
+        const nextName = myProfileData.name || myProfileData.username;
+        const nextUsername = myProfileData.username;
+        const nextAvatar = myProfileData.avatarUrl || undefined;
+        const nextVerified = myProfileData.isVerified === true || (myProfileData as { isEmailVerified?: boolean }).isEmailVerified === true;
+
+        const needsUpdate =
+            (myProfileData.id && currentUser.id !== myProfileData.id) ||
+            (nextName && currentUser.name !== nextName) ||
+            (nextUsername && currentUser.username !== nextUsername) ||
+            (nextAvatar && (currentUser.avatarUrl !== nextAvatar || currentUser.avatar_url !== nextAvatar)) ||
+            (currentUser.isVerified !== nextVerified);
+
+        if (!needsUpdate) return;
+
+        updateUser({
+            id: myProfileData.id,
+            name: nextName,
+            username: nextUsername,
+            avatarUrl: nextAvatar,
+            avatar_url: nextAvatar,
+            isVerified: nextVerified,
+        });
     }, [isOwnProfile, myProfileData, updateUser]);
 
     const queryClient = useQueryClient();
@@ -191,8 +219,25 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const showBookmarks = isOwnProfile && isLoggedIn;
 
-    const remoteProfile = isOwnProfile ? myProfileData : otherUserProfileData;
+    const isMatchingMyProfile = Boolean(
+        myProfileData && user && (
+            !user.id || !myProfileData.id ||
+            user.id === myProfileData.id ||
+            (user.username && myProfileData.username && user.username === myProfileData.username)
+        )
+    );
+    const remoteProfile = isOwnProfile ? (isMatchingMyProfile ? myProfileData : null) : otherUserProfileData;
     const { identity, setIdentity } = useProfileIdentity({ userId, isOwnProfile, currentAuthor, remoteProfile });
+
+    const profilePageTitle = useMemo(() => {
+        if (identity.name && identity.name.trim()) return identity.name.trim();
+        if (identity.handle && identity.handle.trim()) return identity.handle.trim();
+        return isOwnProfile
+            ? t('common.viewProfile', { defaultValue: 'Trang cá nhân' })
+            : t('common.profile', { defaultValue: 'Hồ sơ người dùng' });
+    }, [identity.name, identity.handle, isOwnProfile, t]);
+
+    useDocumentTitle(profilePageTitle);
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
     const [warnCustomizeToast, setWarnCustomizeToast] = useState(false);
@@ -208,7 +253,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     // Computer specs / gear data loaded exclusively from API (remoteProfile)
     const remoteGear = useMemo(() => {
-        const raw = (remoteProfile as Record<string, unknown>)?.specs || (remoteProfile as Record<string, unknown>)?.gear || (remoteProfile as Record<string, unknown>)?.hardware;
+        const unwrapped = extractUserProfile(remoteProfile) || remoteProfile;
+        const raw = (unwrapped as Record<string, unknown>)?.specs || (unwrapped as Record<string, unknown>)?.gear || (unwrapped as Record<string, unknown>)?.hardware;
         return (raw && typeof raw === "object") ? (raw as Record<string, string>) : {};
     }, [remoteProfile]);
 
@@ -275,11 +321,21 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 payload.name = trimmedName;
             }
 
-            const cleanUsername = identity.username?.trim().replace(/^@/, "");
-            const originalUsername = (snapshotIdentity?.username || remoteProfile?.username || "").trim().replace(/^@/, "");
+            const rawUsername = identity.username?.trim() || "";
+            const cleanUsername = rawUsername.replace(/^@+/, "");
+            const originalUsername = (snapshotIdentity?.username || remoteProfile?.username || "").trim().replace(/^@+/, "");
+            const restoredDisplayUsername = cleanUsername ? `@${cleanUsername}` : (originalUsername ? `@${originalUsername}` : (rawUsername ? `@${rawUsername.replace(/^@+/, "")}` : ""));
 
             if (cleanUsername && cleanUsername !== originalUsername) {
                 payload.username = cleanUsername;
+            }
+
+            // Ensure local identity always has '@' restored even if user omitted or deleted it during editing
+            if (restoredDisplayUsername && identity.username !== restoredDisplayUsername) {
+                setIdentity((prev: ProfileIdentity) => ({
+                    ...prev,
+                    username: restoredDisplayUsername,
+                }));
             }
 
             if (identity.avatarUrl && identity.avatarUrl !== snapshotIdentity?.avatarUrl) {
@@ -288,15 +344,26 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             if (identity.coverUrl && identity.coverUrl !== snapshotIdentity?.coverUrl) {
                 payload.coverUrl = identity.coverUrl;
             }
+            if (customGear && JSON.stringify(customGear) !== JSON.stringify(remoteGear)) {
+                payload.gear = customGear;
+            }
 
             if (Object.keys(payload).length > 0) {
                 updateProfileMutation.mutate(
                     payload,
                     {
                         onSuccess: (updatedProfile) => {
+                            const finalCleanUsername = updatedProfile?.username || (payload.username ? cleanUsername : undefined);
+                            const finalDisplayUsername = finalCleanUsername ? `@${finalCleanUsername.replace(/^@+/, "")}` : restoredDisplayUsername;
+                            if (finalDisplayUsername) {
+                                setIdentity((prev: ProfileIdentity) => ({
+                                    ...prev,
+                                    username: finalDisplayUsername,
+                                }));
+                            }
                             updateUser({
                                 name: updatedProfile?.name || (payload.name ? identity.name?.trim() : undefined),
-                                username: updatedProfile?.username || (payload.username ? identity.username?.trim().replace(/^@/, "") : undefined),
+                                username: finalCleanUsername,
                                 bio: updatedProfile?.bio ?? (payload.bio !== undefined ? identity.bio?.trim() : undefined),
                                 avatarUrl: updatedProfile?.avatarUrl,
                             });
@@ -370,10 +437,14 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     });
     useHotkeys(["7"], () => handleTabChange("guestbook"));
 
+    const isUuid = (val?: string): boolean =>
+        Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+
     // Target user ID for API calls
-    const profileUserId = isOwnProfile
-        ? myProfileData?.id || user?.id
-        : otherUserProfileData?.id || (otherUserProfileData as { userId?: string })?.userId || remoteProfile?.id || (remoteProfile as { userId?: string })?.userId;
+    const resolvedProfileUserId = isOwnProfile
+        ? (myProfileData?.id || user?.id)
+        : (otherUserProfileData?.id || remoteProfile?.id);
+    const profileUserId = isUuid(resolvedProfileUserId) ? resolvedProfileUserId : undefined;
 
     // Real API Queries for Posts & Communities
     const { data: remoteUserPostsData, isLoading: isPostsLoading } = usePostsQuery(
@@ -461,16 +532,28 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     }, [rawFriends, currentUserId]);
 
     const friendRequestsList = useMemo<FriendRequest[]>(() => {
-        if (!Array.isArray(rawIncomingRequests)) return [];
-        return rawIncomingRequests
-            .map((item) => extractFriendRequest(item))
+        const raw = Array.isArray(rawIncomingRequests)
+            ? rawIncomingRequests
+            : (rawIncomingRequests && typeof rawIncomingRequests === "object")
+            ? ((rawIncomingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).items ||
+               (rawIncomingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).data ||
+               (rawIncomingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).requests || [])
+            : [];
+        return raw
+            .map((item) => extractFriendRequest(item, "incoming"))
             .filter((r): r is FriendRequest => r !== null);
     }, [rawIncomingRequests]);
 
     const outgoingRequestsList = useMemo<FriendRequest[]>(() => {
-        if (!Array.isArray(rawOutgoingRequests)) return [];
-        return rawOutgoingRequests
-            .map((item) => extractFriendRequest(item))
+        const raw = Array.isArray(rawOutgoingRequests)
+            ? rawOutgoingRequests
+            : (rawOutgoingRequests && typeof rawOutgoingRequests === "object")
+            ? ((rawOutgoingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).items ||
+               (rawOutgoingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).data ||
+               (rawOutgoingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).requests || [])
+            : [];
+        return raw
+            .map((item) => extractFriendRequest(item, "outgoing"))
             .filter((r): r is FriendRequest => r !== null);
     }, [rawOutgoingRequests]);
 
@@ -481,7 +564,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             .filter((b): b is FriendEntry => b !== null);
     }, [rawBlockedUsers, currentUserId]);
 
-    const targetUserId = otherUserProfileData?.userId || otherUserProfileData?.id || remoteProfile?.userId || remoteProfile?.id || "";
+    const rawTargetUserId = isOwnProfile
+        ? (myProfileData?.id || user?.id)
+        : (otherUserProfileData?.id || remoteProfile?.id);
+    const targetUserId = (rawTargetUserId && isUuid(rawTargetUserId)) ? rawTargetUserId : "";
     const targetUserHandle = identity.handle?.replace(/^@/, "").toLowerCase() || "";
     const targetUserName = identity.name.toLowerCase();
 
@@ -499,8 +585,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const outgoingRequestEntry = useMemo(() => {
         if (isOwnProfile) return null;
         return outgoingRequestsList.find((r) => {
-            if (targetUserId && (r.userId === targetUserId || r.id === targetUserId)) return true;
+            if (targetUserId && (r.userId === targetUserId || r.addresseeId === targetUserId || r.id === targetUserId)) return true;
             if (r.handle && targetUserHandle && r.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (r.username && targetUserHandle && r.username.toLowerCase() === targetUserHandle) return true;
             if (r.name && r.name.toLowerCase() === targetUserName) return true;
             return false;
         }) || null;
@@ -509,8 +596,9 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const incomingRequestEntry = useMemo(() => {
         if (isOwnProfile) return null;
         return friendRequestsList.find((r) => {
-            if (targetUserId && (r.userId === targetUserId || r.id === targetUserId)) return true;
+            if (targetUserId && (r.userId === targetUserId || r.requesterId === targetUserId || r.id === targetUserId)) return true;
             if (r.handle && targetUserHandle && r.handle.replace(/^@/, "").toLowerCase() === targetUserHandle) return true;
+            if (r.username && targetUserHandle && r.username.toLowerCase() === targetUserHandle) return true;
             if (r.name && r.name.toLowerCase() === targetUserName) return true;
             return false;
         }) || null;
@@ -542,7 +630,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         unblockUserMutation.isPending;
 
     const handleAddFriend = async (friendTarget?: FriendEntry | string) => {
-        const targetId = typeof friendTarget === "object" ? (friendTarget.userId || friendTarget.id) : (targetUserId || (typeof friendTarget === "string" ? friendTarget : ""));
+        const rawTarget = typeof friendTarget === "object"
+            ? (friendTarget.userId || friendTarget.id)
+            : (targetUserId || (typeof friendTarget === "string" ? friendTarget : ""));
+        const targetId = isUuid(rawTarget) ? rawTarget : "";
         if (!targetId) return;
         setLocalPendingSent(true);
         try {
@@ -555,13 +646,14 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleUnfriend = async (friendTarget?: FriendEntry | string) => {
-        let friendshipId = typeof friendTarget === "object" ? (friendTarget.friendshipId || friendTarget.id) : undefined;
-        if (!friendshipId && currentFriendEntry) {
-            friendshipId = currentFriendEntry.friendshipId || currentFriendEntry.id;
+        let rawFriendshipId = typeof friendTarget === "object" ? (friendTarget.friendshipId || friendTarget.id) : undefined;
+        if (!rawFriendshipId && currentFriendEntry) {
+            rawFriendshipId = currentFriendEntry.friendshipId || currentFriendEntry.id;
         }
-        if (!friendshipId && typeof friendTarget === "string") {
-            friendshipId = friendTarget;
+        if (!rawFriendshipId && typeof friendTarget === "string") {
+            rawFriendshipId = friendTarget;
         }
+        const friendshipId = isUuid(rawFriendshipId) ? rawFriendshipId : "";
         if (!friendshipId) return;
         try {
             await unfriendMutation.mutateAsync(friendshipId);
@@ -573,7 +665,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleAcceptRequest = async (req?: FriendRequest) => {
         const reqId = req?.id || incomingRequestEntry?.id;
-        if (!reqId) return;
+        if (!reqId || !isUuid(reqId)) return;
         try {
             await acceptFriendRequestMutation.mutateAsync(reqId);
             triggerToast();
@@ -584,7 +676,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     const handleDeclineRequest = async (id?: string) => {
         const reqId = id || incomingRequestEntry?.id;
-        if (!reqId) return;
+        if (!reqId || !isUuid(reqId)) return;
         try {
             await cancelFriendRequestMutation.mutateAsync(reqId);
             triggerToast();
@@ -596,7 +688,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const handleCancelOutgoingRequest = async (id?: string) => {
         const reqId = id || outgoingRequestEntry?.id;
         setLocalPendingSent(false);
-        if (!reqId) return;
+        if (!reqId || !isUuid(reqId)) return;
         try {
             await cancelFriendRequestMutation.mutateAsync(reqId);
             triggerToast();
@@ -606,7 +698,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleBlockFriend = async (userTarget?: FriendEntry | string) => {
-        const blockId = typeof userTarget === "object" ? (userTarget.userId || userTarget.id) : (targetUserId || (typeof userTarget === "string" ? userTarget : ""));
+        const rawBlock = typeof userTarget === "object" ? (userTarget.userId || userTarget.id) : (targetUserId || (typeof userTarget === "string" ? userTarget : ""));
+        const blockId = isUuid(rawBlock) ? rawBlock : "";
         if (!blockId) return;
         try {
             await blockUserMutation.mutateAsync(blockId);
@@ -617,7 +710,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleUnblockUser = async (userTarget?: FriendEntry | string) => {
-        const unblockId = typeof userTarget === "object" ? (userTarget.friendshipId || userTarget.id) : (blockedEntry?.friendshipId || blockedEntry?.id || (typeof userTarget === "string" ? userTarget : ""));
+        const rawUnblock = typeof userTarget === "object" ? (userTarget.friendshipId || userTarget.id) : (blockedEntry?.friendshipId || blockedEntry?.id || (typeof userTarget === "string" ? userTarget : ""));
+        const unblockId = isUuid(rawUnblock) ? rawUnblock : "";
         if (!unblockId) return;
         try {
             await unblockUserMutation.mutateAsync(unblockId);
@@ -628,7 +722,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     // Guestbook backend queries & mutations
-    const targetProfileId = remoteProfile?.id || (isOwnProfile ? (myProfileData?.id || user?.id) : otherUserProfileData?.id) || "";
+    const rawTargetProfileId = isOwnProfile
+        ? (myProfileData?.id || user?.id)
+        : (otherUserProfileData?.id || remoteProfile?.id);
+    const targetProfileId = (rawTargetProfileId && isUuid(rawTargetProfileId)) ? rawTargetProfileId : "";
     const { data: rawGuestbookComments = [], isLoading: isGuestbookLoading } = useGuestbookCommentsQuery(targetProfileId, !!targetProfileId);
     const createGuestbookMutation = useCreateGuestbookCommentMutation();
     const deleteGuestbookMutation = useDeleteGuestbookCommentMutation();
@@ -706,7 +803,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     // Library games backend queries & mutations
-    const libraryGamesUserId = targetUserId || remoteProfile?.id || (isOwnProfile ? (myProfileData?.id || user?.id) : otherUserProfileData?.id) || cleanUsername || "";
+    const rawLibraryGamesUserId = isOwnProfile
+        ? (myProfileData?.id || user?.id)
+        : (otherUserProfileData?.id || remoteProfile?.id);
+    const libraryGamesUserId = (rawLibraryGamesUserId && isUuid(rawLibraryGamesUserId)) ? rawLibraryGamesUserId : "";
     const { data: rawLibraryGames = [], isLoading: isLibraryGamesLoading } = useLibraryGamesQuery(libraryGamesUserId, !!libraryGamesUserId);
     const createLibraryGameMutation = useCreateLibraryGameMutation();
     const deleteLibraryGameMutation = useDeleteLibraryGameMutation();
@@ -725,7 +825,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             rank: g.rank || "Player",
             mvpCount: g.mvpCount || "0",
             kdRatio: g.kdRatio || "1.0",
-            tagColor: g.tagColor || "bg-[#1688E8]",
+            tagColor: g.tagColor || "bg-primary",
             isFeatured: false,
         }));
     }, [rawLibraryGames, t]);
@@ -747,8 +847,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const handleDeleteLibraryGame = async (gameId: string | number) => {
+        const idStr = String(gameId);
+        if (!isUuid(idStr)) return;
         try {
-            await deleteLibraryGameMutation.mutateAsync(String(gameId));
+            await deleteLibraryGameMutation.mutateAsync(idStr);
             triggerToast(true, t("profile.removeGameSuccess", { defaultValue: "Đã xóa game khỏi thư viện." }));
         } catch (err: unknown) {
             const errorMsg = (err as { message?: string })?.message || t("profile.removeGameError", { defaultValue: "Không thể xóa game khỏi thư viện." });
@@ -785,25 +887,18 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     if (isError) {
         return (
-            <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-surface border border-rose-500/30 flex flex-col items-center text-center gap-4 shadow-xl animate-fade-in">
+            <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-surface flex flex-col items-center text-center gap-4 animate-fade-in">
                 <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-3xl">
                     <FontAwesomeIcon icon={faExclamationTriangle} />
                 </div>
                 <h3 className="text-xl font-extrabold text-text">{t("profile.notFoundTitle", { defaultValue: "Không tìm thấy hồ sơ người dùng" })}</h3>
                 <p className="text-sm text-text-muted">{t("profile.notFoundDesc", { defaultValue: "Hồ sơ người dùng này không tồn tại, đã bị xóa hoặc đường dẫn không chính xác." })}</p>
-                <button
-                    onClick={() => window.history.back()}
-                    className="mt-2 px-6 py-2.5 rounded-2xl bg-primary text-white text-xs font-bold hover:bg-primary-hover flex items-center gap-2 transition-all cursor-pointer"
-                >
-                    <FontAwesomeIcon icon={faArrowLeft} />
-                    <span>{t("common.back", { defaultValue: "Quay lại" })}</span>
-                </button>
             </div>
         );
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 pb-20 animate-fade-in">
+        <div className="w-full max-w-7xl mx-auto flex flex-col pb-20 animate-fade-in">
             {toastState && (
                 <div className={`fixed top-20 right-6 z-50 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-left font-semibold text-sm ${
                     toastState.isError ? 'bg-[#FF4D4D]' : 'bg-[#24C58A]'
@@ -843,6 +938,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 avatarUrl={avatarUrl}
                 isOwnProfile={isOwnProfile}
                 identity={identity}
+                originalUsername={snapshotIdentity?.username || remoteProfile?.username || user?.username}
                 onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
                 forumRankNode={forumRankNode}
                 isFriend={isFriend}
@@ -867,8 +963,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 onUnblock={() => handleUnblockUser()}
                 location={profileLocation}
                 joinedDate={identity.createdAt ? new Date(identity.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" }) : undefined}
-                reputationPercent={0}
                 followersCount={friendsList.length}
+                followingCount={friendsList.length}
                 postsCount={displayPosts.length}
                 communitiesCount={displayCommunities.length > 0 ? displayCommunities.length : COMMUNITY_REPUTATIONS.length}
                 t={t}
@@ -910,7 +1006,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             />
 
             {/* Tab Views */}
-            <div className="w-full transition-all duration-300 min-h-[480px]">
+            <div key={activeTab} className="w-full min-h-[480px] animate-fade-in">
                 {activeTab === "overview" && (
                     <OverviewTab
                         identity={identity}
@@ -966,7 +1062,13 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         blockedUsers={blockedUsersList}
                         isLoading={isFriendsLoading || isIncomingLoading || isOutgoingLoading || isBlockedLoading}
                         isOwnProfile={isOwnProfile}
-                        onToggleFriend={handleAddFriend}
+                        onToggleFriend={(friend) => {
+                            if (typeof friend === "object" && friend.isFriend) {
+                                handleUnfriend(friend);
+                            } else {
+                                handleAddFriend(friend);
+                            }
+                        }}
                         onBlockFriend={handleBlockFriend}
                         onAcceptRequest={handleAcceptRequest}
                         onDeclineRequest={handleDeclineRequest}

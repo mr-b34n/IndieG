@@ -185,7 +185,7 @@ export const BIO_PRESETS: BioPreset[] = [
                     align: "left",
                     spans: [
                         { text: "user: ", font: "mono", color: "muted" },
-                        { text: "root@indieg-core", font: "mono", bold: true, color: "highlight" },
+                        { text: "root@ludon-core", font: "mono", bold: true, color: "highlight" },
                     ],
                 },
                 {
