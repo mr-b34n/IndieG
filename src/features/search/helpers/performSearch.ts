@@ -2,7 +2,6 @@ import { INITIAL_GAMES } from "@/features/game/constants";
 import { type GameData } from "@/features/game/types";
 import { type CommunityData } from "@/features/community/types";
 import { type Post } from "@/features/post/types";
-import { MOCK_USERS } from "../mockUsers";
 import {
     type SearchUser,
     type SearchTabCategory,
@@ -18,7 +17,7 @@ export function performSearchAPI(
     size: number = 10,
     allPosts: Post[] = [],
     allCommunities: CommunityData[] = [],
-    allUsers: SearchUser[] = MOCK_USERS,
+    allUsers: SearchUser[] = [],
     customGames: GameData[] = []
 ): SearchResponse {
     const q = (query || "").trim().toLowerCase();
@@ -77,14 +76,20 @@ export function performSearchAPI(
                       (t) => typeof t === "string" && t.toLowerCase().includes(q)
                   )
                 : false;
-        const genreMatch = Array.isArray(game.genre)
-            ? game.genre.some((g) => typeof g === "string" && g.toLowerCase().includes(q))
-            : typeof game.genre === "string"
-            ? (game.genre as string).toLowerCase().includes(q)
-            : false;
-        const devMatch = typeof game.developer === "string" ? game.developer.toLowerCase().includes(q) : false;
-        const pubMatch = typeof game.publisher === "string" ? game.publisher.toLowerCase().includes(q) : false;
-        const descMatch = typeof game.description === "string" ? game.description.toLowerCase().includes(q) : false;
+        const genresListSafe = game.genres || (Array.isArray(game.genre) ? game.genre : []);
+        const genreMatch =
+            genresListSafe.some((g) => typeof g === "string" && g.toLowerCase().includes(q)) ||
+            (typeof game.genre === "string" && game.genre.toLowerCase().includes(q));
+        const devMatch =
+            (typeof game.developer === "string" && game.developer.toLowerCase().includes(q)) ||
+            (Array.isArray(game.developers) && game.developers.some((d) => typeof d === "string" && d.toLowerCase().includes(q)));
+        const pubMatch =
+            (typeof game.publisher === "string" && game.publisher.toLowerCase().includes(q)) ||
+            (Array.isArray(game.publishers) && game.publishers.some((p) => typeof p === "string" && p.toLowerCase().includes(q)));
+        const descMatch =
+            (typeof game.description === "string" && game.description.toLowerCase().includes(q)) ||
+            (typeof game.shortDescription === "string" && game.shortDescription.toLowerCase().includes(q)) ||
+            (typeof game.aboutTheGame === "string" && game.aboutTheGame.toLowerCase().includes(q));
         return nameMatch || tagMatch || genreMatch || devMatch || pubMatch || descMatch;
     });
 
@@ -190,7 +195,7 @@ export function performSearch(
     customGames: GameData[] = []
 ): SearchResults {
     void _allSquads;
-    const res = performSearchAPI(query, "all", 1, 50, allPosts, allCommunities, MOCK_USERS, customGames);
+    const res = performSearchAPI(query, "all", 1, 50, allPosts, allCommunities, [], customGames);
     return {
         games: res.data.games || [],
         communities: res.data.communities || [],
