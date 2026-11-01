@@ -32,9 +32,9 @@ export const GuestbookTab = ({
     t,
 }: GuestbookTabProps) => (
     <div className="flex flex-col gap-5 animate-fade-in">
-        <form onSubmit={onSubmit} className="bg-[#0A0C0E] rounded-[14px] p-5 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#F0F1F2]">
-                <FontAwesomeIcon icon={faPen} className="text-[#1688E8]" />
+        <form onSubmit={onSubmit} className="bg-surface rounded-[14px] p-5 flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text">
+                <FontAwesomeIcon icon={faPen} className="text-primary" />
                 <span>{t("profile.guestbookFormTitle", { name: displayName })}</span>
             </div>
             <textarea
@@ -42,7 +42,7 @@ export const GuestbookTab = ({
                 onChange={(e) => onChangeNewComment(e.target.value)}
                 rows={3}
                 placeholder={t("profile.guestbookPlaceholder")}
-                className="w-full px-4 py-3 rounded-[8px] bg-[#13161C] text-[#F0F1F2] placeholder-[#666A71] text-xs font-medium focus:outline-none focus:bg-[#181C24] resize-none"
+                className="w-full px-4 py-3 rounded-[8px] bg-surface-inner text-text placeholder-text-faint text-xs font-medium focus:outline-none resize-none"
             />
             {newCommentText.trim().length > 0 && newCommentText.trim().length < 6 && (
                 <p className="text-xs text-amber-500 font-medium flex items-center gap-1.5">
@@ -51,11 +51,11 @@ export const GuestbookTab = ({
                 </p>
             )}
             <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-[#8A8F98]">{t("profile.guestbookHint")}</span>
+                <span className="text-xs text-text-muted">{t("profile.guestbookHint")}</span>
                 <button
                     type="submit"
                     disabled={newCommentText.trim().length < 6 || isSubmitting}
-                    className="px-4 py-2 rounded-[6px] bg-[#1688E8] hover:bg-[#1478D0] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition-colors shadow-xs cursor-pointer flex items-center gap-2"
+                    className="px-4 py-2 rounded-[6px] bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs transition-colors cursor-pointer flex items-center gap-2"
                 >
                     <FontAwesomeIcon icon={isSubmitting ? faSpinner : faPaperPlane} className={isSubmitting ? "animate-spin" : ""} />
                     <span>{t("profile.postComment")}</span>
@@ -65,8 +65,8 @@ export const GuestbookTab = ({
 
         <div className="flex flex-col gap-4">
             {isLoading ? (
-                <div className="bg-[#0A0C0E] rounded-[12px] p-8 text-center text-[#9A9DA3] text-xs shadow-xs flex items-center justify-center gap-2">
-                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm text-[#1688E8]" />
+                <div className="bg-surface rounded-[12px] p-8 text-center text-text-muted text-xs flex items-center justify-center gap-2">
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm text-primary" />
                     <span>Đang tải lời nhắn...</span>
                 </div>
             ) : comments.length > 0 ? (
@@ -76,36 +76,36 @@ export const GuestbookTab = ({
                         <div key={c.id} className={`flex items-start gap-3 max-w-[92%] sm:max-w-[75%] ${fromRight ? "self-end flex-row-reverse" : "self-start"}`}>
                             <img src={c.avatar} alt={c.author} className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5" />
                             <div
-                                className={`flex flex-col gap-1.5 min-w-0 rounded-[12px] px-4 py-3 shadow-xs ${
+                                className={`flex flex-col gap-1.5 min-w-0 rounded-[12px] px-4 py-3 ${
                                     fromRight 
-                                        ? "bg-[#181C24] rounded-tr-xs" 
-                                        : "bg-[#0A0C0E] rounded-tl-xs"
+                                        ? "bg-surface-inner rounded-tr-xs" 
+                                        : "bg-surface rounded-tl-xs"
                                 }`}
                             >
                                 <div className={`flex items-center justify-between gap-3 ${fromRight ? "flex-row-reverse" : ""}`}>
                                     <div className={`flex items-center gap-2 ${fromRight ? "flex-row-reverse" : ""}`}>
-                                        <h5 className="font-bold text-[#F0F1F2] text-sm">{c.author}</h5>
-                                        <span className="text-[10px] text-[#8A8F98]">{c.date}</span>
+                                        <h5 className="font-bold text-text text-sm">{c.author}</h5>
+                                        <span className="text-[10px] text-text-muted">{c.date}</span>
                                     </div>
                                     {c.canDelete && onDeleteComment && (
                                         <button
                                             type="button"
                                             onClick={() => onDeleteComment(c.id)}
                                             title="Xóa lời nhắn"
-                                            className="text-[#666A71] hover:text-[#E05252] text-xs transition-colors p-1 cursor-pointer"
+                                            className="text-text-muted hover:text-rose-500 text-xs transition-colors p-1 cursor-pointer"
                                         >
                                             <FontAwesomeIcon icon={faTrash} />
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-xs text-[#9A9DA3] leading-relaxed font-medium">{c.content}</p>
+                                <p className="text-xs text-text-muted leading-relaxed font-medium">{c.content}</p>
                                 <button
                                     onClick={() => onToggleLike(c.id)}
                                     className={`self-start flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
-                                        c.isLiked ? "bg-[#E05252]/15 text-[#E05252]" : "bg-[#13161C] text-[#9A9DA3] hover:text-[#F0F1F2] hover:bg-[#202530]"
+                                        c.isLiked ? "bg-rose-500/15 text-rose-500" : "bg-surface-hover text-text-muted hover:text-text hover:bg-surface-active"
                                     } ${fromRight ? "self-end" : ""}`}
                                 >
-                                    <FontAwesomeIcon icon={faHeart} className={c.isLiked ? "animate-bounce text-[#E05252]" : ""} />
+                                    <FontAwesomeIcon icon={faHeart} className={c.isLiked ? "animate-bounce text-rose-500" : ""} />
                                     <span>{c.likes > 0 ? c.likes : t("profile.likeBtn")}</span>
                                 </button>
                             </div>
@@ -113,7 +113,7 @@ export const GuestbookTab = ({
                     );
                 })
             ) : (
-                <div className="bg-[#0A0C0E] rounded-[12px] p-8 text-center text-[#9A9DA3] text-xs shadow-xs">
+                <div className="bg-surface rounded-[12px] p-8 text-center text-text-muted text-xs">
                     {t("profile.noComments")}
                 </div>
             )}

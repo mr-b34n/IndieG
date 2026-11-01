@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faGamepad,
@@ -106,6 +107,18 @@ export const GamesTab = ({
 }: GamesTabProps) => {
     const { t: hookT } = useTranslation();
     const t = propT || hookT;
+    const navigate = useNavigate();
+
+    const handleNavigateToGame = (name?: string) => {
+        if (!name) return;
+        const slug = name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+        navigate({ to: "/game/$gameSlug", params: { gameSlug: slug } });
+    };
+
     const displayGames = games && games.length > 0 ? games : DEFAULT_GAMES;
 
     const featuredGame = displayGames.find((g) => g.isFeatured) || displayGames[0];
@@ -213,8 +226,12 @@ export const GamesTab = ({
                     </div>
 
                     <div className="shrink-0 self-start md:self-end">
-                        <button className="group flex items-center gap-2 px-6 py-3 rounded-[10px] bg-white text-black hover:bg-[#e0e0e0] font-bold transition-all duration-300 shadow-[0_5px_15px_rgba(255,255,255,0.15)] cursor-pointer active:scale-95">
-                            <span>View All Trophies</span>
+                        <button
+                            type="button"
+                            onClick={() => handleNavigateToGame(fGame.name)}
+                            className="group flex items-center gap-2 px-6 py-3 rounded-[10px] bg-white text-black hover:bg-[#e0e0e0] font-bold transition-all duration-300 shadow-[0_5px_15px_rgba(255,255,255,0.15)] cursor-pointer active:scale-95"
+                        >
+                            <span>View Game Hub</span>
                             <FontAwesomeIcon icon={faChevronRight} className="text-xs group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
@@ -226,6 +243,7 @@ export const GamesTab = ({
                 {otherGames.map((game) => (
                     <div
                         key={game.id}
+                        onClick={() => handleNavigateToGame(game.name)}
                         className="group flex flex-col gap-3 cursor-pointer relative"
                     >
                         <div className="relative aspect-[2/3] w-full rounded-[14px] overflow-hidden bg-[#161b22] transition-all duration-300 group-hover:shadow-[0_8px_25px_rgba(0,0,0,0.6)] group-hover:-translate-y-1">

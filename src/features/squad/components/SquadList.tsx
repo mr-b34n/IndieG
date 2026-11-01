@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faPlus,
@@ -6,6 +7,7 @@ import {
     faChevronDown,
     faFilter,
     faXmark,
+    faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
@@ -17,9 +19,9 @@ import { Pagination } from "@/shared/components/ui/Pagination";
 
 export const SquadList = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
 
     const {
         squads,
@@ -86,6 +88,35 @@ export const SquadList = () => {
 
     return (
         <div className="w-full flex flex-col gap-6 text-text animate-fade-in pb-12 select-none">
+            {/* COMING SOON REALTIME NOTICE */}
+            <div className="w-full bg-primary/10 border border-primary/25 rounded-lg p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                    <div className="w-9 h-9 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                        <FontAwesomeIcon icon={faShieldHalved} className="text-base" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-text">
+                                Tính năng Ghép Đội Realtime (Squad LFG) đang phát triển
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-mono font-bold uppercase">
+                                Coming Soon
+                            </span>
+                        </div>
+                        <p className="text-xs text-text-muted leading-relaxed">
+                            Hệ thống tìm kiếm tổ đội thời gian thực với kết nối Voice Chat đang trong giai đoạn hoàn thiện. Trong thời gian này, bạn có thể tham gia thảo luận và tìm bạn chơi tại các box Cộng đồng!
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: "/community" })}
+                    className="px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-xs whitespace-nowrap"
+                >
+                    Khám phá Cộng đồng
+                </button>
+            </div>
+
             {/* 1. FUNCTIONAL HERO (Clean, Editorial, Not a Marketing Banner) */}
             <div className="w-full bg-surface-inner/60 border border-divider-primary/60 rounded-[4px] p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative overflow-hidden">
                 <div className="flex flex-col gap-1.5 max-w-2xl z-10">

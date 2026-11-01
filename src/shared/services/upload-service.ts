@@ -38,6 +38,7 @@ export interface PresignedUrlResponse {
 export function getStoredToken(): string | null {
     if (typeof window === 'undefined') return null;
     return (
+        localStorage.getItem('ludon_access_token') ||
         localStorage.getItem('indieg_access_token') ||
         localStorage.getItem('access_token')
     );
@@ -72,14 +73,6 @@ export async function requestPresignedUrl(
     payload: PresignedUrlPayload,
     token?: string | null
 ): Promise<PresignedUrlResponse> {
-    if (!isApiEnabled()) {
-        const mockKey = `mock_${Date.now()}_upload`;
-        return {
-            presignedUrl: `https://mock-storage.indieg.local/${mockKey}`,
-            fileKey: mockKey,
-            raw: { fileKey: mockKey, url: `https://mock-storage.indieg.local/${mockKey}` },
-        };
-    }
 
     const activeToken = token || getStoredToken();
     const endpoint = buildBackendUrl('storage/presigned-url');
@@ -227,7 +220,7 @@ export function getPublicStorageUrl(fileKeyOrUrl: string, presignedUrl?: string)
         return `${apiBase.replace(/\/+$/, '')}/storage/${cleanKey}`;
     }
 
-    return `https://storage.indieg.com/${cleanKey}`;
+    return `https://storage.ludon.com/${cleanKey}`;
 }
 
 /**
@@ -318,19 +311,6 @@ export async function uploadImageToR2({
         throw new Error('Thiếu postId khi upload ảnh cho bài viết.');
     }
 
-    // Standalone mock mode: convert file to local URL without making network calls
-    if (!isApiEnabled()) {
-        const localUrl = URL.createObjectURL(file);
-        return {
-            avatarUrl: type === 'avatar' ? localUrl : undefined,
-            coverUrl: type === 'cover' ? localUrl : undefined,
-            imageUrl: type === 'post' ? localUrl : undefined,
-            url: localUrl,
-            fileKey: `mock_${Date.now()}_${file.name}`,
-            width: 800,
-            height: 600,
-        };
-    }
 
     // BƯỚC 1: Xin Presigned URL từ NestJS Backend
     const presigned = await requestPresignedUrl(

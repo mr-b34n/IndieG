@@ -70,14 +70,8 @@ export function useGlobalShortcuts() {
         c: () => {
             navigate({ to: "/community" });
         },
-        s: () => {
-            navigate({ to: "/squad" });
-        },
         g: () => {
             navigate({ to: "/game" });
-        },
-        e: () => {
-            navigate({ to: "/explore" });
         },
         p: () => {
             navigate({ to: "/profile/$userId", params: { userId: "me" } });

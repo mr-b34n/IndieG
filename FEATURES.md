@@ -1,5 +1,5 @@
-# 🎮 BẢNG TỔNG HỢP TOÀN BỘ TÍNH NĂNG DỰ ÁN INDIEG
-> **IndieG** - Nền tảng Mạng xã hội, Diễn đàn Thảo luận & Trung tâm Khám phá Game Đỉnh cao.  
+# 🎮 BẢNG TỔNG HỢP TOÀN BỘ TÍNH NĂNG DỰ ÁN LUDON
+> **Ludon** - Nền tảng Mạng xã hội, Diễn đàn Thảo luận & Trung tâm Khám phá Game Đỉnh cao.  
 > Tài liệu này liệt kê chi tiết toàn bộ các tính năng của dự án theo phân cấp từ **Tổng quan hệ thống (Cấp cao)** đến **Từng module tính năng (Cấp trung)** và **Chi tiết nghiệp vụ / Tương tác vi mô (Cấp nhỏ)**.
 
 ---
@@ -7,7 +7,7 @@
 ## 🗺️ CÂY TỔNG QUAN TÍNH NĂNG (FEATURE MAP)
 
 ```text
-IndieG Platform
+Ludon Platform
 ├── 1. KIẾN TRÚC NỀN TẢNG & TRẢI NGHIỆM HỆ THỐNG (SYSTEM & CORE PLATFORM)
 ├── 2. XÁC THỰC, BẢO MẬT & PHÂN QUYỀN (AUTHENTICATION & IDENTITY)
 ├── 3. BẢNG TIN & NGUỒN CẤP DỮ LIỆU (FEED & SOCIAL STREAM)
@@ -252,12 +252,12 @@ IndieG Platform
 * **Thanh Header & Nhận diện Đẳng cấp**:
   * Banner nghệ thuật điện ảnh, huy hiệu xác minh chính thức.
   * Nút trạng thái "Tham gia / Đã tham gia".
-  * **Nút CTA nổi bật "Trang Game IndieG"** (icon Gamepad): Điều hướng thẳng sang trang Game Detail của trò chơi tương ứng.
+  * **Nút CTA nổi bật "Trang Game Ludon"** (icon Gamepad): Điều hướng thẳng sang trang Game Detail của trò chơi tương ứng.
 * **Thanh Điều Hướng Breadcrumb Thông Minh**:
   * Hiển thị cấp bậc điều hướng: `Trang chủ > Cộng đồng > {Tên cộng đồng}`.
   * Tích hợp huy hiệu nhận diện game liên kết: `• [🎮 GAME: {Tên Game}]` (Click để chuyển nhanh sang Game Page).
 * **Thanh Tiện Ích Bên Phải (Right Rail)**:
-  * **Widget "INDIEG GAME HUB"**: Thẻ game nổi bật bên cột phải hiển thị ảnh bìa, điểm rating (VD: 4.9/5), nhà phát triển, số người đang chơi và nút "XEM TRANG GAME TRÊN INDIEG →".
+  * **Widget "LUDON GAME HUB"**: Thẻ game nổi bật bên cột phải hiển thị ảnh bìa, điểm rating (VD: 4.9/5), nhà phát triển, số người đang chơi và nút "XEM TRANG GAME TRÊN LUDON →".
   * **Top Contributors**: Bảng vinh danh những thành viên đóng góp nhiều bài viết và nhận nhiều upvote nhất tuần/tháng.
   * **Upcoming Events Timeline**: Dòng thời gian thông báo các giải đấu, buổi offline sắp diễn ra.
   * **Community Links**: Danh mục các liên kết chính thức của cộng đồng (Discord, Server Game, Website, Steam Group).
@@ -266,7 +266,7 @@ IndieG Platform
   * **Tab Thành Viên (Members)**: Phân loại theo ban quản trị (Admins, Mods), thành viên tích cực, ngày tham gia và cấp bậc.
   * **Tab Media (Thư viện Ảnh & Clip)**: Hiển thị bộ sưu tập ảnh screenshot gameplay chất lượng cao (Media Gallery Grid) trích xuất từ tất cả các bài viết trong cộng đồng. Hover để xem tác giả, lượt like và bình luận.
   * **Tab Sự Kiện (Events)**: Danh sách các giải đấu cộng đồng, minigame kèm thông tin ngày giờ, tổng giá trị giải thưởng và số lượng đội đăng ký.
-  * **Tab Giới Thiệu (About)**: Mô tả chi tiết sứ mệnh cộng đồng, danh sách Nội quy chính thức (Rules), và Card liên kết game IndieG chính thức (Official Game Page Card).
+  * **Tab Giới Thiệu (About)**: Mô tả chi tiết sứ mệnh cộng đồng, danh sách Nội quy chính thức (Rules), và Card liên kết game Ludon chính thức (Official Game Page Card).
 * **Cửa Sổ Trò Chuyện Trực Tiếp (Community Chat Drawer)**:
   * Khung Live Chat nằm ở góc phải màn hình.
   * Thành viên đang trực tuyến có thể gửi tin nhắn trao đổi nhanh mà không cần tạo bài viết.
@@ -332,7 +332,7 @@ IndieG Platform
   * Thống kê lượng người chơi đang trực tuyến trong thời gian thực (Active Players).
 * **Nút Lối Tắt & Liên Kết Hai Chiều (Bidirectional Linking)**:
   * Nút mở trực tiếp trang cửa hàng Steam (`steamUrl`).
-  * **Nút CTA "Tham gia Cộng đồng" (Join Community)**: Tự động nhận diện và chuyển hướng ngược về đúng trang Community Hub tương ứng trên IndieG (Ví dụ: từ `/game/cyberpunk-2077` $\rightarrow$ `/community/cyberpunk-2077-vn`).
+  * **Nút CTA "Tham gia Cộng đồng" (Join Community)**: Tự động nhận diện và chuyển hướng ngược về đúng trang Community Hub tương ứng trên Ludon (Ví dụ: từ `/game/cyberpunk-2077` $\rightarrow$ `/community/cyberpunk-2077-vn`).
 
 ### 8.2. Yêu Cầu Cấu Hình Hệ Thống (System Requirements)
 * Phân chia rõ ràng 2 bảng thông số kỹ thuật:
@@ -420,7 +420,7 @@ IndieG Platform
 * **Tab Tủ Game (Games / Library)**: Danh sách game đang sở hữu, tổng số giờ chơi, Tỷ lệ Thắng (Winrate), Chỉ số K/D, Số trận đạt MVP, danh sách kỹ năng sở trường.
 * **Tab Bài viết (Posts)**: Bộ sưu tập toàn bộ các bài đăng do người dùng sáng tạo trên nền tảng.
 * **Tab Cộng đồng (Communities)**: Danh sách cộng đồng đã tham gia kèm cấp bậc uy tín đạt được (Elite, Veteran, Regular, Member).
-* **Tab Thành tựu (Achievements)**: Toàn bộ cúp và giải thưởng đạt được trong game và qua các hoạt động đóng góp cho IndieG.
+* **Tab Thành tựu (Achievements)**: Toàn bộ cúp và giải thưởng đạt được trong game và qua các hoạt động đóng góp cho Ludon.
 * **Tab Bạn bè (Friends System)**:
   * Xem danh sách bạn bè, trạng thái online và game bạn bè đang chơi.
   * Quản lý danh sách lời mời kết bạn đang chờ (Pending Requests): Chấp nhận hoặc Từ chối.

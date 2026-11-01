@@ -17,8 +17,8 @@ import { useTranslation } from "@/shared/hooks/useTranslate";
 export interface DiscussionThread {
     id: string;
     title: string;
-    category: string;
-    categoryLabel: string;
+    category?: string;
+    categoryLabel?: string;
     authorName: string;
     authorHandle: string;
     authorAvatar: string;
@@ -126,7 +126,7 @@ export const CommunityHubDiscussions = ({
                 </div>
             </div>
 
-            {/* Discussions List (Post DNA: Avatar, Title, Author & Category, Likes, Comments, Time) */}
+            {/* Discussions List (Post DNA: Avatar, Title, Author, Likes, Comments, Time) */}
             {threads.length === 0 ? (
                 <div className="py-12 text-center text-xs text-text-muted font-mono">
                     {t('hub.communityhubdiscussions_13')}
@@ -161,8 +161,6 @@ export const CommunityHubDiscussions = ({
                                             <span className="font-sans font-semibold text-text">
                                                 {thread.authorHandle}
                                             </span>
-                                            <span>·</span>
-                                            <span className="text-text-faint">{thread.categoryLabel}</span>
                                         </div>
                                     </div>
                                 </div>

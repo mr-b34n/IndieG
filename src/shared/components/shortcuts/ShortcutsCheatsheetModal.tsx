@@ -1,9 +1,8 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faKeyboard,
     faXmark,
-    faMagnifyingGlass,
     faCompass,
     faGlobe,
     faNewspaper,
@@ -38,7 +37,6 @@ export const ShortcutsCheatsheetModal = () => {
 
     const isCheatsheetOpen = useShortcutsStore((state) => state.isCheatsheetOpen);
     const closeCheatsheet = useShortcutsStore((state) => state.closeCheatsheet);
-    const [searchQuery, setSearchQuery] = useState("");
 
     useRegisterOverlay({
         id: "shortcuts-cheatsheet-modal",
@@ -56,8 +54,8 @@ export const ShortcutsCheatsheetModal = () => {
             items: [
                 {
                     keys: [["\\"]],
-                    descriptionVi: "Mở bảng phím tắt này (Cheatsheet)",
-                    descriptionEn: "Open shortcuts cheatsheet",
+                    descriptionVi: "Mở / Đóng bảng phím tắt này",
+                    descriptionEn: "Toggle shortcuts cheatsheet",
                 },
                 {
                     keys: [["/"]],
@@ -71,23 +69,23 @@ export const ShortcutsCheatsheetModal = () => {
                 },
                 {
                     keys: [["Mod", "Enter"]],
-                    descriptionVi: "Gửi / Đăng bài (Bài viết, Bình luận, Reply, Chat)",
-                    descriptionEn: "Submit / Send (Post, Comment, Reply, Chat)",
+                    descriptionVi: "Gửi / Đăng bài (Post, Comment, Chat)",
+                    descriptionEn: "Submit / Send (Post, Comment, Chat)",
                 },
                 {
                     keys: [["Esc"]],
-                    descriptionVi: "Đóng modal, dropdown, lightbox theo thứ tự",
-                    descriptionEn: "Close modal, dropdown, lightbox by layer",
+                    descriptionVi: "Đóng modal, dropdown, menu",
+                    descriptionEn: "Close modal, dropdown, menu",
                 },
                 {
                     keys: [["T"]],
-                    descriptionVi: "Chuyển đổi giao diện Sáng / Tối (Dark / Light Theme)",
+                    descriptionVi: "Chuyển giao diện Sáng / Tối (Theme)",
                     descriptionEn: "Toggle Dark / Light Theme",
                 },
                 {
                     keys: [["L"]],
-                    descriptionVi: "Chuyển đổi ngôn ngữ Tiếng Việt ↔ English",
-                    descriptionEn: "Toggle Language (Vietnamese ↔ English)",
+                    descriptionVi: "Đổi ngôn ngữ (Tiếng Việt ↔ English)",
+                    descriptionEn: "Toggle Language (VI ↔ EN)",
                 },
             ],
         },
@@ -99,8 +97,8 @@ export const ShortcutsCheatsheetModal = () => {
             items: [
                 {
                     keys: [["G", "F"]],
-                    descriptionVi: "Trang chủ / Nguồn cấp bài viết (Feed)",
-                    descriptionEn: "Home / Feed page",
+                    descriptionVi: "Bảng tin Trang chủ (/)",
+                    descriptionEn: "Home Feed (/)",
                     isSequence: true,
                 },
                 {
@@ -110,21 +108,9 @@ export const ShortcutsCheatsheetModal = () => {
                     isSequence: true,
                 },
                 {
-                    keys: [["G", "S"]],
-                    descriptionVi: "Squad / Tìm đội chơi (/squad)",
-                    descriptionEn: "Squads / LFG",
-                    isSequence: true,
-                },
-                {
                     keys: [["G", "G"]],
                     descriptionVi: "Game Hub / Thư viện trò chơi",
                     descriptionEn: "Game Hub / Library",
-                    isSequence: true,
-                },
-                {
-                    keys: [["G", "E"]],
-                    descriptionVi: "Khám phá / Tạp chí (/explore)",
-                    descriptionEn: "Explore / Magazine",
                     isSequence: true,
                 },
                 {
@@ -147,8 +133,8 @@ export const ShortcutsCheatsheetModal = () => {
                 },
                 {
                     keys: [["G", "A"]],
-                    descriptionVi: "Cài đặt → Tài khoản (Settings → Account)",
-                    descriptionEn: "Settings → Account",
+                    descriptionVi: "Cài đặt → Tài khoản & Bảo mật",
+                    descriptionEn: "Settings → Account & Security",
                     isSequence: true,
                 },
             ],
@@ -156,12 +142,12 @@ export const ShortcutsCheatsheetModal = () => {
         {
             id: "feed",
             icon: faNewspaper,
-            titleVi: "Phím tắt trong Feed & Bài viết",
+            titleVi: "Feed & Bài viết",
             titleEn: "Feed & Post Navigation",
             items: [
                 {
                     keys: [["J"], ["K"]],
-                    descriptionVi: "Cuộn xuống / lên bài viết kế tiếp (Reddit style)",
+                    descriptionVi: "Cuộn xuống / lên bài viết kế tiếp",
                     descriptionEn: "Navigate next / previous post",
                 },
                 {
@@ -176,12 +162,12 @@ export const ShortcutsCheatsheetModal = () => {
                 },
                 {
                     keys: [["P"]],
-                    descriptionVi: "Ghim / Bỏ ghim bài viết (Tác giả / Admin)",
-                    descriptionEn: "Pin / Unpin post (Author / Admin)",
+                    descriptionVi: "Ghim / Bỏ ghim bài viết",
+                    descriptionEn: "Pin / Unpin post",
                 },
                 {
                     keys: [["B"]],
-                    descriptionVi: "Lưu / Bỏ lưu bài viết vào Dấu trang",
+                    descriptionVi: "Lưu / Bỏ lưu vào Dấu trang",
                     descriptionEn: "Bookmark / Unbookmark active post",
                 },
             ],
@@ -189,8 +175,8 @@ export const ShortcutsCheatsheetModal = () => {
         {
             id: "media",
             icon: faImages,
-            titleVi: "Trong Lightbox & Xem ảnh",
-            titleEn: "Lightbox & Media Viewer",
+            titleVi: "Xem ảnh & Media",
+            titleEn: "Media & Viewer",
             items: [
                 {
                     keys: [["ArrowLeft"], ["ArrowRight"]],
@@ -207,8 +193,8 @@ export const ShortcutsCheatsheetModal = () => {
         {
             id: "notifications-tabs",
             icon: faBell,
-            titleVi: "Thông báo & Chuyển Tab",
-            titleEn: "Notifications & Tab Switching",
+            titleVi: "Thông báo & Tabs",
+            titleEn: "Notifications & Tabs",
             items: [
                 {
                     keys: [["Shift", "M"]],
@@ -224,26 +210,6 @@ export const ShortcutsCheatsheetModal = () => {
         },
     ], []);
 
-    const filteredGroups = useMemo(() => {
-        const query = searchQuery.trim().toLowerCase();
-        if (!query) return groups;
-
-        return groups
-            .map((group) => {
-                const matchedItems = group.items.filter((item) => {
-                    const desc = isVi ? item.descriptionVi : item.descriptionEn;
-                    const altDesc = isVi ? item.descriptionEn : item.descriptionVi;
-                    const inDesc = desc.toLowerCase().includes(query) || altDesc.toLowerCase().includes(query);
-                    const inKeys = item.keys.some((combo) =>
-                        combo.some((k) => k.toLowerCase().includes(query))
-                    );
-                    return inDesc || inKeys;
-                });
-                return { ...group, items: matchedItems };
-            })
-            .filter((g) => g.items.length > 0);
-    }, [groups, searchQuery, isVi]);
-
     if (!isCheatsheetOpen) return null;
 
     const renderKeycap = (key: string) => {
@@ -251,7 +217,7 @@ export const ShortcutsCheatsheetModal = () => {
         return (
             <kbd
                 key={key}
-                className="inline-flex items-center justify-center min-w-[26px] h-7 px-2 text-[12px] font-mono font-bold bg-surface-hover/80 text-text border border-border/80 rounded-[6px] shadow-xs select-none"
+                className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 text-[11px] font-mono font-bold bg-surface-hover/90 text-text border border-border/80 rounded shadow-xs select-none"
             >
                 {label}
             </kbd>
@@ -261,16 +227,16 @@ export const ShortcutsCheatsheetModal = () => {
     const renderCombos = (item: ShortcutDef) => {
         if (item.isSequence) {
             return (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                     {renderKeycap(item.keys[0][0])}
-                    <span className="text-[11px] text-text-muted font-bold">{isVi ? "sau đó" : "then"}</span>
+                    <span className="text-[10px] text-text-faint font-semibold mx-0.5">{isVi ? "sau đó" : "then"}</span>
                     {renderKeycap(item.keys[0][1])}
                 </div>
             );
         }
 
         return (
-            <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-end">
+            <div className="flex flex-wrap items-center gap-1 shrink-0 justify-end">
                 {item.keys.map((combo, comboIdx) => (
                     <div key={comboIdx} className="flex items-center gap-1">
                         {comboIdx > 0 && <span className="text-text-faint text-[10px] mx-0.5">/</span>}
@@ -286,6 +252,35 @@ export const ShortcutsCheatsheetModal = () => {
         );
     };
 
+    // Split groups into 2 balanced columns
+    const col1Groups = groups.filter((g) => g.id === "global" || g.id === "feed");
+    const col2Groups = groups.filter((g) => g.id === "goto" || g.id === "media" || g.id === "notifications-tabs");
+
+    const renderGroup = (group: ShortcutGroup) => (
+        <div key={group.id} className="space-y-2">
+            <div className="flex items-center gap-2 pb-1.5 border-b border-border/50">
+                <FontAwesomeIcon icon={group.icon} className="text-primary text-xs" />
+                <h3 className="font-bold text-[11px] uppercase tracking-wider text-text-faint">
+                    {isVi ? group.titleVi : group.titleEn}
+                </h3>
+            </div>
+
+            <div className="divide-y divide-border/25">
+                {group.items.map((item, idx) => (
+                    <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-surface-inner/60 rounded-md transition-colors"
+                    >
+                        <span className="text-xs text-text-muted hover:text-text font-medium leading-tight">
+                            {isVi ? item.descriptionVi : item.descriptionEn}
+                        </span>
+                        {renderCombos(item)}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 select-none animate-fade-in">
             {/* Backdrop */}
@@ -295,9 +290,9 @@ export const ShortcutsCheatsheetModal = () => {
             />
 
             {/* Modal Box */}
-            <div className="relative w-full max-w-3xl max-h-[85vh] bg-surface border border-border/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 animate-scale-up">
-                {/* Header */}
-                <div className="px-5 py-4 border-b border-border bg-surface-inner flex items-center justify-between gap-4 shrink-0">
+            <div className="relative w-full max-w-4xl max-h-[85vh] bg-surface border border-border/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 animate-scale-up">
+                {/* Header (Clean, no search input) */}
+                <div className="px-6 py-4 border-b border-border bg-surface-inner flex items-center justify-between gap-4 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center text-base shrink-0">
                             <FontAwesomeIcon icon={faKeyboard} />
@@ -324,77 +319,32 @@ export const ShortcutsCheatsheetModal = () => {
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="px-5 py-3 border-b border-border/60 bg-surface/50 shrink-0">
-                    <div className="relative">
-                        <FontAwesomeIcon
-                            icon={faMagnifyingGlass}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-faint text-xs pointer-events-none"
-                        />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder={isVi ? "Tìm kiếm phím tắt..." : "Search shortcuts..."}
-                            className="w-full bg-surface-inner border border-border/70 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-text placeholder:text-text-faint focus:outline-none focus:border-primary transition-colors"
-                            autoFocus
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text text-xs cursor-pointer"
-                            >
-                                <FontAwesomeIcon icon={faXmark} />
-                            </button>
-                        )}
+                {/* Body: 2-Column Responsive Layout */}
+                <div className="p-6 overflow-y-auto flex-1 scrollbar-thin">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        {/* Column 1: Global + Feed */}
+                        <div className="space-y-6">
+                            {col1Groups.map(renderGroup)}
+                        </div>
+
+                        {/* Column 2: Go-to + Media + Tabs */}
+                        <div className="space-y-6">
+                            {col2Groups.map(renderGroup)}
+                        </div>
                     </div>
                 </div>
 
-                {/* Body / List */}
-                <div className="p-5 overflow-y-auto space-y-6 flex-1 text-sm scrollbar-thin">
-                    {filteredGroups.length === 0 ? (
-                        <div className="py-12 text-center text-text-muted text-xs">
-                            {isVi ? "Không tìm thấy phím tắt phù hợp" : "No shortcuts matched your search"}
-                        </div>
-                    ) : (
-                        filteredGroups.map((group) => (
-                            <div key={group.id} className="space-y-2.5">
-                                <div className="flex items-center gap-2 pb-1.5 border-b border-border/40">
-                                    <FontAwesomeIcon icon={group.icon} className="text-primary text-xs" />
-                                    <h3 className="font-bold text-xs uppercase tracking-wider text-text-faint">
-                                        {isVi ? group.titleVi : group.titleEn}
-                                    </h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-2">
-                                    {group.items.map((item, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-surface-inner/60 hover:bg-surface-inner border border-border/40 hover:border-border/80 transition-all"
-                                        >
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <span className="text-xs sm:text-[13px] text-text font-medium">
-                                                    {isVi ? item.descriptionVi : item.descriptionEn}
-                                                </span>
-                                            </div>
-                                            {renderCombos(item)}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {/* Footer Hint */}
-                <div className="px-5 py-3 border-t border-border bg-surface-inner flex items-center justify-between text-[11px] text-text-muted shrink-0">
-                    <span>
-                        {isVi
-                            ? "Mẹo: Nhấn Esc bất kỳ lúc nào để đóng bảng này"
-                            : "Tip: Press Esc anytime to close this cheatsheet"}
-                    </span>
-                    <span className="font-mono text-text-faint">IndieG Keyboard System</span>
+                {/* Footer */}
+                <div className="px-6 py-3 border-t border-border bg-surface-inner flex items-center justify-between text-[11px] text-text-muted shrink-0">
+                    <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>
+                            {isVi
+                                ? "Mẹo: Nhấn Esc hoặc \\ bất kỳ lúc nào để đóng bảng này"
+                                : "Tip: Press Esc or \\ anytime to close this cheatsheet"}
+                        </span>
+                    </div>
+                    <span className="font-mono text-text-faint text-[10px]">Ludon Shortcuts</span>
                 </div>
             </div>
         </div>

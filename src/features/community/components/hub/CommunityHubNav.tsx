@@ -12,7 +12,6 @@ export const CommunityHubNav = ({
 }: CommunityHubNavProps) => {
     const tabs = [
         { id: "home", labelVi: "Trang chủ", labelEn: "Home" },
-        { id: "discussions", labelVi: "Thảo luận", labelEn: "Discussions" },
         { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides" },
         { id: "media", labelVi: "Media", labelEn: "Media" },
         { id: "events", labelVi: "Sự kiện", labelEn: "Events" },

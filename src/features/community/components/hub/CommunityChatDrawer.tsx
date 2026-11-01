@@ -31,11 +31,8 @@ export const CommunityChatDrawer = ({
     isVi,
 }: CommunityChatDrawerProps) => {
     const { t } = useTranslation();
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        { id: "m1", user: "@ghoststrider", text: "Ai rảnh farm shark tooth cùng mình không?", time: "12:04" },
-        { id: "m2", user: "@tactical_xeno", text: "Guide base 3 tầng mới ra hay vãi!", time: "12:05" },
-        { id: "m3", user: "@ocean_lover", text: "Server đang online nha anh em!", time: "12:06" },
-    ]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+
     const [input, setInput] = useState("");
 
     const user = useAuthStore((state) => state.user);
@@ -92,17 +89,27 @@ export const CommunityChatDrawer = ({
 
             {/* Messages Scroll Area */}
             <div className="p-3 space-y-2 h-72 overflow-y-auto bg-surface text-xs">
-                {messages.map((m) => (
-                    <div key={m.id} className="flex flex-col gap-0.5">
-                        <div className="flex items-center justify-between text-[10px] text-text-muted font-mono">
-                            <span className="font-bold text-text">{m.user}</span>
-                            <span>{m.time}</span>
-                        </div>
-                        <div className="p-2 rounded-[4px] bg-surface-inner border border-divider-primary/60 text-text leading-relaxed">
-                            {m.text}
-                        </div>
+                {messages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center text-text-muted py-10 px-4">
+                        <FontAwesomeIcon icon={faMessage} className="text-xl text-text-faint/60 mb-2" />
+                        <p className="text-xs font-semibold text-text">{isVi ? "Chưa có tin nhắn nào" : "No messages yet"}</p>
+                        <p className="text-[10px] text-text-faint mt-1 leading-relaxed">
+                            {isVi ? "Hãy gửi tin nhắn đầu tiên để bắt đầu trò chuyện!" : "Send the first message to start the conversation!"}
+                        </p>
                     </div>
-                ))}
+                ) : (
+                    messages.map((m) => (
+                        <div key={m.id} className="flex flex-col gap-0.5">
+                            <div className="flex items-center justify-between text-[10px] text-text-muted font-mono">
+                                <span className="font-bold text-text">{m.user}</span>
+                                <span>{m.time}</span>
+                            </div>
+                            <div className="p-2 rounded-[4px] bg-surface-inner border border-divider-primary/60 text-text leading-relaxed">
+                                {m.text}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Input Form */}

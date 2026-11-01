@@ -1,11 +1,20 @@
 import { create } from "zustand";
 import { type PostsState } from "../types";
-import { ALL_POSTS } from "../mockPosts";
-
 export const usePostsStore = create<PostsState>((set, get) => ({
-    posts: ALL_POSTS,
+    posts: [],
 
-    addPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
+    addPost: (post) =>
+        set((state) => {
+            const exists = state.posts.some((p) => String(p.id) === String(post.id));
+            if (exists) {
+                return {
+                    posts: state.posts.map((p) =>
+                        String(p.id) === String(post.id) ? { ...p, ...post } : p
+                    ),
+                };
+            }
+            return { posts: [post, ...state.posts] };
+        }),
 
     updatePost: (id, updates) =>
         set((state) => ({
@@ -22,3 +31,9 @@ export const usePostsStore = create<PostsState>((set, get) => ({
     getPostById: (id) =>
         get().posts.find((p) => p.id.toString() === id.toString()),
 }));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        usePostsStore.setState({ posts: [] });
+    });
+}

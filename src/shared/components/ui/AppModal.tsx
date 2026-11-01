@@ -56,8 +56,8 @@ export const AppModal: React.FC<AppModalProps> = ({
             iconBg = "bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.35)] text-[#EF4444]";
             break;
         default:
-            accentBar = "bg-gradient-to-r from-[#20283A] via-[#3A4660] to-[#20283A]";
-            iconBg = "bg-[#121827] border border-[#20283A] text-[#F1F3F7]";
+            accentBar = "bg-primary";
+            iconBg = "bg-surface-inner border border-border text-text";
             break;
     }
 
@@ -67,26 +67,26 @@ export const AppModal: React.FC<AppModalProps> = ({
             onClick={onClose}
         >
             <div
-                className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0D111D] border border-[#20283A] rounded-[20px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-[#F1F3F7]`}
+                className={`relative w-full ${maxWidthClasses[maxWidth]} bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-text animate-modal`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Accent Line at Top */}
                 <div className={`h-[3px] w-full ${accentBar}`} />
 
                 {/* Standardized Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-[#20283A] bg-[#0D111D] shrink-0">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface shrink-0">
                     <div className="flex items-center gap-3 min-w-0">
                         {icon && (
-                            <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0 text-lg shadow-xs ${iconBg}`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg shadow-xs ${iconBg}`}>
                                 <FontAwesomeIcon icon={icon} />
                             </div>
                         )}
                         <div className="min-w-0">
-                            <h3 className="text-base font-black text-[#F1F3F7] uppercase tracking-tight truncate leading-tight">
+                            <h3 className="text-base font-black text-text uppercase tracking-tight truncate leading-tight">
                                 {title}
                             </h3>
                             {subtitle && (
-                                <p className="text-xs text-[#8B93A7] truncate font-medium mt-0.5">
+                                <p className="text-xs text-text-muted truncate font-medium mt-0.5">
                                     {subtitle}
                                 </p>
                             )}
@@ -96,7 +96,7 @@ export const AppModal: React.FC<AppModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-[#121827] text-[#8B93A7] hover:text-[#F1F3F7] hover:bg-[#1A2130] flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-3"
+                        className="w-8 h-8 rounded-full bg-surface-inner text-text-muted hover:text-text hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-3"
                     >
                         <FontAwesomeIcon icon={faXmark} className="text-sm" />
                     </button>
@@ -109,7 +109,7 @@ export const AppModal: React.FC<AppModalProps> = ({
 
                 {/* Optional Footer */}
                 {footer && (
-                    <div className="px-6 py-4 border-t border-[#20283A] bg-[#0A0E18] shrink-0 flex items-center justify-end gap-3">
+                    <div className="px-6 py-4 border-t border-border bg-surface-inner shrink-0 flex items-center justify-end gap-3">
                         {footer}
                     </div>
                 )}

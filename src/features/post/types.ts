@@ -19,6 +19,13 @@ export interface PostAuthorInfo {
     rank?: UserRank;
 }
 
+export interface PostCommunityInfo {
+    id: string | number;
+    name: string;
+    logo?: string;
+    backdrop?: string;
+}
+
 export interface PostData {
     id: string | number;
     author: string | PostAuthorInfo;
@@ -27,6 +34,7 @@ export interface PostData {
     gameTag?: string;
     communityId?: string | number | null;
     communityName?: string;
+    community?: PostCommunityInfo | null;
     timeAgo?: string;
     timestamp?: string | number;
     title: string;
@@ -69,6 +77,7 @@ export interface PostDraft {
     isNsfw?: boolean;
     communityId: string | number | null;
     updatedAt: string;
+    tags?: string[];
 }
 
 export interface PostsState {

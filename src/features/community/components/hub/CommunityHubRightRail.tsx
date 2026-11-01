@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faArrowRight,
@@ -5,12 +6,9 @@ import {
     faArrowUpRightFromSquare,
     faGamepad,
     faStar,
+    faChevronDown,
+    faChevronUp,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-    faDiscord,
-    faSteam,
-    faFacebook,
-} from "@fortawesome/free-brands-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
@@ -60,6 +58,7 @@ interface CommunityHubRightRailProps {
         price?: string;
         activePlayers?: number;
     };
+    rules?: Array<{ num?: string; title?: string; text?: string; description?: string } | string>;
 }
 
 export const CommunityHubRightRail = ({
@@ -78,6 +77,7 @@ export const CommunityHubRightRail = ({
     gameSlug,
     gameName,
     gameData,
+    rules,
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -164,17 +164,51 @@ export const CommunityHubRightRail = ({
     }
 
 
-    const defaultRules = [
-        { num: "01", text: t('hub.communityhubrightrail_36') },
-        { num: "02", text: t('hub.communityhubrightrail_37') },
-        { num: "03", text: t('hub.communityhubrightrail_38') },
+    const [isRulesExpanded, setIsRulesExpanded] = useState(false);
+    const [expandedRuleNums, setExpandedRuleNums] = useState<Set<string>>(new Set());
+
+    const toggleRuleDetail = (num: string) => {
+        setExpandedRuleNums((prev) => {
+            const next = new Set(prev);
+            if (next.has(num)) {
+                next.delete(num);
+            } else {
+                next.add(num);
+            }
+            return next;
+        });
+    };
+
+    const fallbackRules = [
+        { num: "01", title: isVi ? "Tôn trọng và lịch sự" : "Respect & Civility", text: isVi ? "Không xúc phạm, quấy rối, phân biệt đối xử hoặc sử dụng ngôn từ kích động thù địch." : "Treat everyone with respect. No harassment, hate speech, or toxic behavior." },
+        { num: "02", title: isVi ? "Đăng bài đúng chủ đề & danh mục" : "Post in Relevant Categories", text: isVi ? "Chọn đúng loại bài viết (Thảo luận, Hướng dẫn, Media...) và tránh spam lặp lại." : "Use appropriate categories and post types. Avoid repetitive spam." },
+        { num: "03", title: isVi ? "Không chia sẻ hack, cheat & mã độc" : "No Hacks, Cheats or Malware", text: isVi ? "Nghiêm cấm chia sẻ phần mềm gian lận, hack tool, cracked game kèm mã độc hại." : "Do not share cheats, piracy links, malware, or game exploits." },
+        { num: "04", title: isVi ? "Cảnh báo Spoiler & nội dung nhạy cảm" : "Spoiler & Content Warnings", text: isVi ? "Sử dụng tag Spoiler cho cốt truyện mới và tuân thủ quy định độ tuổi của cộng đồng." : "Mark spoilers properly and follow community content guidelines." },
+        { num: "05", title: isVi ? "Không quảng cáo & bán hàng trái phép" : "No Unauthorized Ads", text: isVi ? "Không spam quảng cáo thương mại, link tiếp thị liên kết hoặc mua bán trái phép." : "No commercial advertising, affiliate links, or unauthorized trading." },
+        { num: "06", title: isVi ? "Tuân thủ hướng dẫn của Quản trị viên" : "Follow Moderator Decisions", text: isVi ? "Tôn trọng các quyết định điều hành và hướng dẫn từ đội ngũ quản trị viên." : "Respect decisions and moderation guidelines from community staff." },
+        { num: "07", title: isVi ? "Bảo vệ thông tin cá nhân" : "Protect Privacy", text: isVi ? "Không chia sẻ thông tin cá nhân (doxxing), số điện thoại, tài khoản của người khác." : "Do not share personal private info, phone numbers, or dox other members." },
     ];
 
-    const communityLinks = [
-        { label: "Discord Server", href: "https://discord.gg/indieg", tag: "Chat & Voice" },
-        { label: "Steam Community", href: "https://steamcommunity.com", tag: "Group" },
-        { label: "Facebook Group", href: "https://facebook.com", tag: "Community" },
-    ];
+    const formattedRules = useMemo(() => {
+        if (rules && rules.length > 0) {
+            return rules.map((r, idx) => {
+                const num = String(idx + 1).padStart(2, "0");
+                if (typeof r === "string") {
+                    return { num, text: r, title: undefined };
+                }
+                return {
+                    num: r.num || num,
+                    title: r.title,
+                    text: r.text || r.description || "",
+                };
+            });
+        }
+        return fallbackRules;
+    }, [rules, isVi]);
+
+    const displayedRules = isRulesExpanded || formattedRules.length <= 5
+        ? formattedRules
+        : formattedRules.slice(0, 5);
 
     return (
         <aside className="w-full flex flex-col gap-5 text-text select-none py-1">
@@ -206,98 +240,81 @@ export const CommunityHubRightRail = ({
                 </div>
             </div>
 
-            {/* 2. RULES SECTION */}
+            {/* 2. RULES SECTION (Full display with >5 rules expand/collapse toggle) */}
             <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
                 <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
                         RULES
                     </span>
-                    <button
-                        type="button"
-                        onClick={() => onNavigateNav("rules")}
-                        className="text-[11px] font-mono font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                        <span>{t('hub.communityhubrightrail_39')}</span>
-                        <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
-                    </button>
+                    <span className="text-[10px] font-mono text-text-faint font-semibold">
+                        {formattedRules.length} {isVi ? "quy tắc" : "rules"}
+                    </span>
                 </div>
 
                 <div className="flex flex-col gap-2 pt-0.5">
-                    {defaultRules.map((rule) => (
-                        <div key={rule.num} className="flex items-start gap-2.5 text-xs">
-                            <span className="text-[10px] font-mono font-black text-text-faint shrink-0 pt-0.5">
-                                {rule.num}
-                            </span>
-                            <span className="text-text-muted leading-snug line-clamp-2">
-                                {rule.text}
-                            </span>
-                        </div>
-                    ))}
+                    {displayedRules.map((rule) => {
+                        const hasDetail = !!rule.text && (rule.title ? rule.text !== rule.title : true);
+                        const isDetailOpen = expandedRuleNums.has(rule.num);
+
+                        return (
+                            <div key={rule.num} className="flex flex-col gap-1 text-xs">
+                                <div
+                                    className={`flex items-start justify-between gap-2 p-1 -mx-1 rounded transition-colors ${
+                                        hasDetail ? "cursor-pointer hover:bg-surface-hover/50" : ""
+                                    }`}
+                                    onClick={hasDetail ? () => toggleRuleDetail(rule.num) : undefined}
+                                >
+                                    <div className="flex items-start gap-2 min-w-0">
+                                        <span className="text-[10px] font-mono font-black text-primary/80 shrink-0 pt-0.5">
+                                            {rule.num}
+                                        </span>
+                                        <span className="font-semibold text-text text-[11px] leading-tight">
+                                            {rule.title || rule.text}
+                                        </span>
+                                    </div>
+                                    {hasDetail && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleRuleDetail(rule.num);
+                                            }}
+                                            className="w-4 h-4 flex items-center justify-center text-text-faint hover:text-primary transition-colors cursor-pointer shrink-0 mt-0.5"
+                                            title={isDetailOpen ? (isVi ? "Thu gọn chi tiết" : "Collapse detail") : (isVi ? "Xem chi tiết" : "Expand detail")}
+                                        >
+                                            <FontAwesomeIcon icon={isDetailOpen ? faChevronUp : faChevronDown} className="text-[9px]" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {hasDetail && isDetailOpen && (
+                                    <div className="pl-5 pr-1 text-text-muted text-[11px] leading-snug animate-fade-in pb-1">
+                                        {rule.text}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
+
+                {formattedRules.length > 5 && (
+                    <button
+                        type="button"
+                        onClick={() => setIsRulesExpanded(!isRulesExpanded)}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 mt-1 rounded bg-surface-inner/60 hover:bg-surface-hover/80 border border-border/50 text-[11px] font-semibold text-text-muted hover:text-text transition-colors cursor-pointer"
+                    >
+                        <span>
+                            {isRulesExpanded
+                                ? (isVi ? "Thu gọn" : "Show less")
+                                : (isVi ? "Xem thêm" : "View more")}
+                        </span>
+                        <FontAwesomeIcon icon={isRulesExpanded ? faChevronUp : faChevronDown} className="text-[9px]" />
+                    </button>
+                )}
             </div>
 
-            {/* 3. COMMUNITY LINKS */}
-            <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-text-faint">
-                    {isVi ? "LIÊN KẾT CỘNG ĐỒNG" : "COMMUNITY LINKS"}
-                </span>
-
-                <div className="grid grid-cols-4 gap-2 pt-0.5">
-                    {/* Gamepad (IndieG Game Page) */}
-                    {gameSlug ? (
-                        <button
-                            type="button"
-                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
-                            title={isVi ? "Trang Game trên IndieG" : "IndieG Game Page"}
-                            className="h-9 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center transition-all cursor-pointer shadow-xs group"
-                        >
-                            <FontAwesomeIcon icon={faGamepad} className="text-sm group-hover:scale-110 transition-transform" />
-                        </button>
-                    ) : (
-                        <div
-                            title={isVi ? "Chưa có trang Game" : "No Game Page linked"}
-                            className="h-9 rounded-[6px] bg-surface-inner/40 border border-border/30 text-text-faint flex items-center justify-center opacity-40 cursor-not-allowed"
-                        >
-                            <FontAwesomeIcon icon={faGamepad} className="text-sm" />
-                        </div>
-                    )}
-
-                    {/* Discord */}
-                    <a
-                        href="https://discord.gg/indieg"
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Discord Server"
-                        className="h-9 rounded-[6px] bg-[#5865F2]/10 hover:bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
-                    >
-                        <FontAwesomeIcon icon={faDiscord} className="text-sm group-hover:scale-110 transition-transform" />
-                    </a>
-
-                    {/* Steam */}
-                    <a
-                        href="https://steamcommunity.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Steam Community"
-                        className="h-9 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover border border-border/50 hover:border-text/50 text-text flex items-center justify-center transition-all cursor-pointer shadow-xs group"
-                    >
-                        <FontAwesomeIcon icon={faSteam} className="text-sm group-hover:scale-110 transition-transform" />
-                    </a>
-
-                    {/* Facebook */}
-                    <a
-                        href="https://facebook.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Facebook Group"
-                        className="h-9 rounded-[6px] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#1877F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
-                    >
-                        <FontAwesomeIcon icon={faFacebook} className="text-sm group-hover:scale-110 transition-transform" />
-                    </a>
-                </div>
-            </div>
-
-            {/* 4. TOP CONTRIBUTORS */}
+            {/* 4. TOP CONTRIBUTORS (Tạm thời ẩn do tính năng chưa phát triển) */}
+            {/*
             {contributors && contributors.length > 0 && (
                 <div className="flex flex-col gap-2 pb-2">
                     <div className="flex items-center justify-between">
@@ -345,6 +362,7 @@ export const CommunityHubRightRail = ({
                     </div>
                 </div>
             )}
+            */}
         </aside>
     );
 };

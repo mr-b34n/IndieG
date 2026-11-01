@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,7 +12,13 @@ import {
     faGear,
     faPlus,
 } from "@fortawesome/free-solid-svg-icons";
-import { useCommunityMembersQuery, usePendingMembersQuery, useReportsQuery, usePostsQuery } from "@/shared/api/useQueries";
+import {
+    useCommunityMembersQuery,
+    usePendingMembersQuery,
+    useReportsQuery,
+    usePostsQuery,
+    useCommunityStatsQuery,
+} from "@/shared/api/useQueries";
 import { extractMemberList, extractReportList } from "@/shared/api";
 import { formatCompactNumber } from "../../constants";
 
@@ -36,20 +43,21 @@ export const CommunityManageOverview = ({
 }: CommunityManageOverviewProps) => {
     const { t } = useTranslation();
     // TanStack queries for operational management state
+    const { data: statsData } = useCommunityStatsQuery(communityId || "");
     const { data: membersData } = useCommunityMembersQuery(communityId || "");
     const { data: pendingData } = usePendingMembersQuery(communityId || "");
     const { data: reportsData } = useReportsQuery();
     const { data: postsData } = usePostsQuery({ communityId });
 
     const pendingList = extractMemberList(pendingData);
-    const pendingCount = pendingList.length;
+    const pendingCount = statsData?.pendingMembers ?? pendingList.length;
 
     const rawReportsList = extractReportList(reportsData);
     const reportsCount = rawReportsList.length;
 
     const rawMembersList = extractMemberList(membersData);
-    const calcMembersCount = totalMembers ?? (rawMembersList.length > 0 ? rawMembersList.length : 34500);
-    const calcOnlineCount = Math.max(1, Math.round(calcMembersCount * 0.064));
+    const calcMembersCount = statsData?.totalMembers ?? totalMembers ?? rawMembersList.length;
+    const calcOnlineCount = statsData?.onlineNow ?? (calcMembersCount > 0 ? Math.max(1, Math.round(calcMembersCount * 0.064)) : 0);
 
     const postsCount = postsData
         ? Array.isArray(postsData)
@@ -93,36 +101,42 @@ export const CommunityManageOverview = ({
     }
 
     // Operational Recent Activity (Meaningful community & admin events)
-    const recentActivity = [
-        {
-            id: "act-1",
-            text: t('hub.communitymanageoverview_143'),
-            time: "10m ago",
-            actionLabel: t('hub.communitymanageoverview_144'),
-            onAction: () => onNavigate("manage-reports"),
-        },
-        {
-            id: "act-2",
-            text: t('hub.communitymanageoverview_145'),
-            time: "35m ago",
-            actionLabel: t('hub.communitymanageoverview_146'),
-            onAction: () => onNavigate("manage-members"),
-        },
-        {
-            id: "act-3",
-            text: t('hub.communitymanageoverview_147'),
-            time: "1h ago",
-            actionLabel: t('hub.communitymanageoverview_148'),
-            onAction: () => onNavigate("discussions"),
-        },
-        {
-            id: "act-4",
-            text: t('hub.communitymanageoverview_149'),
-            time: "3h ago",
-            actionLabel: t('hub.communitymanageoverview_150'),
-            onAction: () => onNavigate("manage-moderation"),
-        },
-    ];
+    const recentActivity = useMemo(() => {
+        const items: Array<{
+            id: string;
+            text: string;
+            time: string;
+            actionLabel: string;
+            onAction: () => void;
+        }> = [];
+
+        rawReportsList.slice(0, 3).forEach((r) => {
+            items.push({
+                id: `rep-${r.id}`,
+                text: isVi
+                    ? `Báo cáo mới: ${r.reason || "Vi phạm quy tắc"}`
+                    : `New report: ${r.reason || "Rule violation"}`,
+                time: r.createdAt ? new Date(r.createdAt).toLocaleDateString(isVi ? "vi-VN" : "en-US") : "Gần đây",
+                actionLabel: isVi ? "Xem báo cáo" : "View report",
+                onAction: () => onNavigate("manage-reports"),
+            });
+        });
+
+        pendingList.slice(0, 2).forEach((p) => {
+            const name = p.user?.name || p.user?.username || (p.userId ? `User ${p.userId.slice(0, 6)}` : "Thành viên");
+            items.push({
+                id: `pend-${p.userId}`,
+                text: isVi
+                    ? `${name} đã gửi yêu cầu tham gia cộng đồng`
+                    : `${name} requested to join the community`,
+                time: p.joinedAt ? new Date(p.joinedAt).toLocaleDateString(isVi ? "vi-VN" : "en-US") : "Gần đây",
+                actionLabel: isVi ? "Xét duyệt" : "Review",
+                onAction: () => onNavigate("manage-moderation"),
+            });
+        });
+
+        return items;
+    }, [rawReportsList, pendingList, isVi, onNavigate]);
 
     return (
         <div className="w-full flex flex-col gap-6 text-text select-none animate-fade-in pb-10">
@@ -351,34 +365,41 @@ export const CommunityManageOverview = ({
                     </button>
                 </div>
 
-                <div className="divide-y divide-border/40 border border-border/60 bg-surface-inner/40 rounded-[6px] overflow-hidden">
-                    {recentActivity.map((item) => (
-                        <div
-                            key={item.id}
-                            className="px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-surface-hover/40 transition-colors text-xs"
-                        >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                <span className="text-text font-medium truncate">
-                                    {item.text}
-                                </span>
-                            </div>
+                {recentActivity.length === 0 ? (
+                    <div className="py-8 px-4 text-center text-text-muted text-xs bg-surface-inner/40 rounded-[6px] border border-border/60">
+                        <p className="font-semibold text-text">{isVi ? "Chưa có hoạt động quản trị gần đây" : "No recent moderation activity"}</p>
+                        <p className="text-[11px] text-text-faint mt-1">{isVi ? "Các báo cáo và yêu cầu gia nhập mới sẽ xuất hiện tại đây." : "New reports and join requests will appear here."}</p>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-border/40 border border-border/60 bg-surface-inner/40 rounded-[6px] overflow-hidden">
+                        {recentActivity.map((item) => (
+                            <div
+                                key={item.id}
+                                className="px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-surface-hover/40 transition-colors text-xs"
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                    <span className="text-text font-medium truncate">
+                                        {item.text}
+                                    </span>
+                                </div>
 
-                            <div className="flex items-center gap-3 shrink-0">
-                                <span className="text-text-faint font-mono text-[11px]">
-                                    {item.time}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={item.onAction}
-                                    className="px-2 py-0.5 rounded bg-surface hover:bg-surface-hover border border-border text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer transition-colors"
-                                >
-                                    {item.actionLabel}
-                                </button>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <span className="text-text-faint font-mono text-[11px]">
+                                        {item.time}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={item.onAction}
+                                        className="px-2 py-0.5 rounded bg-surface hover:bg-surface-hover border border-border text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer transition-colors"
+                                    >
+                                        {item.actionLabel}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

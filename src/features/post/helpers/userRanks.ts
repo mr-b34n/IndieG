@@ -140,6 +140,7 @@ const KNOWN_USER_RANKS: Record<string, UserRank> = {
     "NeoCyber": "pro",
     "GamerX99": "rookie",
     "PlayerOne": "immortal",
+    "LudonGamer": "legend",
     "IndieGamer": "legend",
     "You": "immortal",
 };

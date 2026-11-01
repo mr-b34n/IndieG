@@ -126,3 +126,9 @@ export const useFeedNavigationStore = create<FeedNavigationState>((set, get) => 
         actionsMap[String(focusedPostId)]?.pin();
     },
 }));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useFeedNavigationStore.setState({ focusedPostId: null, postIds: [], actionsMap: {} });
+    });
+}

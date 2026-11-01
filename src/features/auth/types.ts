@@ -19,7 +19,6 @@ export interface AuthState {
     accessToken: string | null;
     refreshToken: string | null;
     loading: boolean;
-    mockLogin: boolean;
     customAvatar: string | null;
     isVerifyModalOpen: boolean;
     verifyModalMessage: string | null;
@@ -29,8 +28,8 @@ export interface AuthState {
     login: (userData: AuthUser, accessToken?: string, refreshToken?: string) => void;
     logout: () => void;
     refreshTokens: () => Promise<boolean>;
-    toggleMockLogin: () => void;
     verifyEmail: (code: string) => Promise<{ success: boolean; error?: string }>;
+    resendVerification: (email?: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
     resetPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
