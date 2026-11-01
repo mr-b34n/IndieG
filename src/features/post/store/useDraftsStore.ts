@@ -1,38 +1,45 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { type DraftsState, type PostDraft } from "../types";
 
 export * from "../types";
 
-export const useDraftsStore = create<DraftsState>()(
-    persist(
-        (set) => ({
-            drafts: [],
+// Remove any legacy persisted drafts from previous versions
+try {
+    if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem("indieg-post-drafts-v1");
+    }
+} catch {
+    // Ignore storage errors in restricted environments
+}
 
-            saveDraft: (draftData) => {
-                const id = "latest-draft";
-                const now = new Date();
-                const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")} - ${now.getDate()}/${now.getMonth() + 1}`;
-                
-                const newDraft: PostDraft = {
-                    ...draftData,
-                    id,
-                    updatedAt: timeStr,
-                };
-                set({ drafts: [newDraft] });
-                return id;
-            },
+export const useDraftsStore = create<DraftsState>()((set) => ({
+    drafts: [],
 
-            deleteDraft: (id) => {
-                set((state) => ({
-                    drafts: state.drafts.filter((d) => d.id !== id),
-                }));
-            },
+    saveDraft: (draftData) => {
+        const id = "latest-draft";
+        const now = new Date();
+        const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")} - ${now.getDate()}/${now.getMonth() + 1}`;
+        
+        const newDraft: PostDraft = {
+            ...draftData,
+            id,
+            updatedAt: timeStr,
+        };
+        set({ drafts: [newDraft] });
+        return id;
+    },
 
-            clearDrafts: () => set({ drafts: [] }),
-        }),
-        {
-            name: "indieg-post-drafts-v1",
-        }
-    )
-);
+    deleteDraft: (id) => {
+        set((state) => ({
+            drafts: state.drafts.filter((d) => d.id !== id),
+        }));
+    },
+
+    clearDrafts: () => set({ drafts: [] }),
+}));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useDraftsStore.setState({ drafts: [] });
+    });
+}

@@ -18,7 +18,6 @@ import { getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type Pos
 
 import { useCommunitiesStore } from "@/features/community";
 import { CreatePostBox, type CreatePostPayload } from "./CreatePostBox";
-import { CommunitySwitcherRail } from "./CommunitySwitcherRail";
 import { type FeedSortOption } from "./FeedSortDropdown";
 import { type PostDataWithSettings } from "../types";
 import { usePostsQuery, useCreatePostMutation } from "@/shared/api/useQueries";
@@ -28,8 +27,7 @@ export const FeedList = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
 
     // 1. TanStack Query for Posts
     const { data: remotePostsData } = usePostsQuery();
@@ -47,16 +45,16 @@ export const FeedList = () => {
             const list = extractPostList(remotePostsData);
             if (Array.isArray(list) && list.length > 0) {
                 list.forEach((dto) => {
-                    const exists = posts.some((p) => String(p.id) === String(dto.id));
-                    if (!exists) {
+                    const currentPosts = usePostsStore.getState().posts;
+                    const existing = currentPosts.find((p) => String(p.id) === String(dto.id));
+                    if (!existing) {
                         const mapped = mapPostDtoToPostData(dto);
                         addPost({
                             ...mapped,
                             communityId: dto.communityId,
                         } as PostDataWithSettings);
                     } else if (typeof dto.currentUserVoteType === "number") {
-                        const existing = posts.find((p) => String(p.id) === String(dto.id));
-                        if (existing && existing.currentUserVoteType === undefined) {
+                        if (existing.currentUserVoteType === undefined) {
                             updatePost(dto.id, {
                                 currentUserVoteType: dto.currentUserVoteType,
                                 upvotes: dto.upvotes ?? dto.likes ?? existing.upvotes,
@@ -68,7 +66,7 @@ export const FeedList = () => {
                 });
             }
         }
-    }, [remotePostsData]);
+    }, [remotePostsData, addPost, updatePost]);
 
     const communities = useCommunitiesStore((state) => state.communities);
     const getCommunityById = useCommunitiesStore((state) => state.getCommunityById);
@@ -106,6 +104,14 @@ export const FeedList = () => {
                 id: Date.now(),
                 author: currentAuthor,
                 authorAvatar: user?.avatarUrl || user?.avatar_url || avatarGame,
+                community: community ? {
+                    id: community.id,
+                    name: community.name,
+                    logo: community.logo,
+                    backdrop: community.backdrop,
+                } : undefined,
+                communityId,
+                communityName: community?.name,
                 gameTag: community?.name ?? "General",
                 timeAgo: t('feed.justNow') || "Vừa xong",
                 title: title || content.slice(0, 80) + (content.length > 80 ? "..." : ""),
@@ -121,7 +127,6 @@ export const FeedList = () => {
                 privacy,
                 allowComments,
                 pinned,
-                communityId,
             };
 
             // Post via TanStack Mutation to backend if communityId is available
@@ -153,7 +158,9 @@ export const FeedList = () => {
     const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
             ...data,
-            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
+            ...(data.title !== undefined
+                ? { title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : "") }
+                : {}),
         });
     };
 
@@ -163,16 +170,22 @@ export const FeedList = () => {
 
     // Filter and sort posts
     const filteredPosts = useMemo(() => {
+        const seenIds = new Set<string>();
+
         return posts
             .filter((p) => {
+                const idStr = String(p.id);
+                if (seenIds.has(idStr)) return false;
+                seenIds.add(idStr);
+
                 const authorName = typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "");
                 if (hiddenAuthors.includes(authorName)) return false;
 
                 // My own posts always show
                 if (authorName === currentAuthor) return true;
 
-                const postCommId = p.communityId?.toString().toLowerCase();
-                const postGameTag = p.gameTag?.toLowerCase();
+                const postCommId = (p.community?.id || p.communityId)?.toString().toLowerCase();
+                const postCommName = (p.community?.name || p.communityName || p.gameTag)?.toLowerCase();
 
                 // If a specific community filter is selected
                 if (activeCommunityFilter) {
@@ -180,7 +193,7 @@ export const FeedList = () => {
                     const targetId = activeCommunityFilter.toLowerCase();
                     const targetName = targetComm?.name.toLowerCase();
 
-                    return postCommId === targetId || (postGameTag && targetName && postGameTag.includes(targetName));
+                    return postCommId === targetId || (postCommName && targetName && postCommName.includes(targetName));
                 }
 
                 // Otherwise (ALL tab), show all community posts
@@ -257,25 +270,14 @@ export const FeedList = () => {
                 </div>
             )}
 
-            {/* Creation and Filtering Area */}
-            <div className="flex flex-col gap-2 sm:gap-3 mb-2 sm:mb-4">
-                {isLoggedIn && (
+            {/* Creation Area */}
+            {isLoggedIn && (
+                <div className="flex flex-col mb-1 sm:mb-2">
                     <CreatePostBox
-                        key={activeCommunityFilter ? String(activeCommunityFilter) : "all"}
-                        defaultCommunityId={activeCommunityFilter}
                         onPostCreated={handleCreatePost}
                     />
-                )}
-
-                {/* Community Switcher Rail: ALL, Top Communities, +N More, and Sort Dropdown */}
-                <CommunitySwitcherRail
-                    joinedCommunities={joinedCommunities}
-                    activeCommunityId={activeCommunityFilter}
-                    onSelectCommunity={setActiveCommunityFilter}
-                    sortOrder={sortOrder}
-                    onSortChange={setSortOrder}
-                />
-            </div>
+                </div>
+            )}
 
             {/* Error State Display */}
             {hasError ? (
@@ -294,16 +296,20 @@ export const FeedList = () => {
             ) : displayedPosts.length > 0 ? (
                 /* Posts Feed */
                 <>
-                    {displayedPosts.map((post) => (
-                        <Post
-                            key={post.id}
-                            post={post}
-                            isOwner={post.author === currentAuthor}
-                            onDelete={deletePost}
-                            onEdit={handleEditPost}
-                            onUnfollowAuthor={handleUnfollowAuthor}
-                        />
-                    ))}
+                    <div className="flex flex-col">
+                        {displayedPosts.map((post, index) => (
+                            <div key={post.id} className="flex flex-col">
+                                {index > 0 && <div className="w-full h-px bg-divider-primary my-1" />}
+                                <Post
+                                    post={post}
+                                    isOwner={post.author === currentAuthor}
+                                    onDelete={deletePost}
+                                    onEdit={handleEditPost}
+                                    onUnfollowAuthor={handleUnfollowAuthor}
+                                />
+                            </div>
+                        ))}
+                    </div>
 
                     {/* Infinite Scroll Sentinel / Load More */}
                     <div ref={sentinelRef} className="w-full py-4 flex flex-col items-center justify-center gap-2">
