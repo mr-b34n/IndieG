@@ -200,7 +200,7 @@ export function parseInlineMarkdown(text: string, keyPrefix = "inline"): React.R
                 nodes.push(
                     <span
                         key={key}
-                        className="text-[#1688E8] font-semibold hover:underline cursor-pointer"
+                        className="text-primary font-semibold hover:underline cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {match.text}
@@ -388,7 +388,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
     const blocks = parseBlocks(content);
 
     return (
-        <div className={`markdown-content flex flex-col ${isClamped ? "gap-1" : "gap-2"} ${className}`}>
+        <div className={`markdown-content flex flex-col ${isClamped ? "gap-1" : "gap-1.5"} ${className}`}>
             {blocks.map((block, index) => {
                 const key = `block-${index}`;
 
@@ -479,7 +479,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
 
                     case "paragraph":
                         return (
-                            <p key={key} className="leading-relaxed">
+                            <p key={key} className="leading-[1.45]">
                                 {block.lines.map((line, lIdx) => (
                                     <React.Fragment key={lIdx}>
                                         {lIdx > 0 && <br />}

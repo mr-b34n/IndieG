@@ -1,10 +1,6 @@
 
-export const useTheme = (title: string, icon?: string) => {
+import { useDocumentTitle } from './useDocumentTitle';
 
-    document.title = title;
-
-    const iconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    if (iconLink && icon) {
-        iconLink.href = icon;
-    }
-}
+export const useTheme = (title: string) => {
+    useDocumentTitle(title === 'Home' ? null : title);
+};
