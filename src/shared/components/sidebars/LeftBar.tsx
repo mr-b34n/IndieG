@@ -15,7 +15,7 @@ import { useAuthStore } from "@/features/auth";
 import { useGameStore } from "@/features/game/store/useGameStore";
 import { type GameData } from "@/features/game/types";
 import { useCommunitiesQuery, useReportsQuery, useGamesQuery } from "@/shared/api/useQueries";
-import { extractReportList, type GameDto } from "@/shared/api";
+import { extractReportList, isApiEnabled, type GameDto } from "@/shared/api";
 import { mapGameDtoToGameData } from "@/shared/api/types";
 import { cn } from "@/shared/utils/cn";
 import { LegalModal } from "@/shared/components/legal/LegalModal";
@@ -52,7 +52,8 @@ export const LeftBar = () => {
 
     // Fetch live games from API only if the user actually has shortcuts to resolve
     const { data: rawGamesData } = useGamesQuery(
-        userGameSlugs.length > 0 ? { limit: 50 } : undefined
+        userGameSlugs.length > 0 ? { limit: 50 } : undefined,
+        { enabled: userGameSlugs.length > 0 && isApiEnabled() }
     );
 
     const serverGames = useMemo<GameData[]>(() => {
@@ -86,7 +87,7 @@ export const LeftBar = () => {
     // Fetch joined communities for the current authenticated user so LeftBar shortcuts show immediately
     const { data: rawJoinedData } = useCommunitiesQuery(
         { type: "joined", limit: 50 },
-        { enabled: isLoggedIn }
+        { enabled: isLoggedIn && isApiEnabled() }
     );
 
     useEffect(() => {

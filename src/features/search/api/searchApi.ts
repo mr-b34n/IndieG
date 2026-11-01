@@ -1,5 +1,6 @@
 import {
     searchApi,
+    isApiEnabled,
     mapCommunityDtoToCommunityData,
     mapPostDtoToPost,
     mapGameDtoToGameData,
@@ -79,7 +80,7 @@ export async function fetchSearchResults(
     }
 
     // Backend enforces min 2 characters. If 1 char, use fallback search to prevent 400 Bad Request
-    if (cleanQuery.length < 2) {
+    if (cleanQuery.length < 2 || !isApiEnabled()) {
         return performSearchAPI(
             cleanQuery,
             normalizedTab,

@@ -15,6 +15,7 @@ export { CreateGuideModal } from "./components/CreateGuideModal";
 export { CreateReviewModal } from "./components/CreateReviewModal";
 export { GuideDetailModal } from "./components/GuideDetailModal";
 export { GamesHubPage } from "./components/GamesHubPage";
+export { GameCard } from "./components/GameCard";
 
 
 

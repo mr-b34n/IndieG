@@ -9,17 +9,30 @@ import {
 	adminApiPlugin,
 } from "./vite/plugins/mock-api.ts";
 
+const isMockApiEnabled = process.env.VITE_MOCK_API === "true";
+
 export default defineConfig({
 	server: {
 		host: "0.0.0.0",
 		port: 3000,
 		strictPort: true,
 		allowedHosts: true,
+		proxy: {
+			"/api": {
+				target: process.env.VITE_BACKEND_TARGET || "http://localhost:3636",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/api/, ""),
+			},
+		},
 	},
 	plugins: [
-		searchApiPlugin(),
-		notificationApiPlugin(),
-		adminApiPlugin(),
+		...(isMockApiEnabled
+			? [
+					searchApiPlugin(),
+					notificationApiPlugin(),
+					adminApiPlugin(),
+				]
+			: []),
 		tanstackRouterGenerator({
 			routesDirectory: "./src/routes",
 			generatedRouteTree: "./src/routeTree.gen.ts",
