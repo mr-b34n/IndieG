@@ -35,3 +35,9 @@ export const useBookmarksStore = create<BookmarksState>((set, get) => ({
     setBookmarkedIds: (ids) =>
         set({ bookmarkedIds: ids }),
 }));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useBookmarksStore.setState({ bookmarkedIds: [] });
+    });
+}

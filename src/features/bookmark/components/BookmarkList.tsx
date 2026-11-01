@@ -20,8 +20,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
 
     const posts = usePostsStore((state) => state.posts);
     const updatePost = usePostsStore((state) => state.updatePost);
@@ -50,7 +49,9 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
     const handleEditPost = (id: string | number, data: Partial<PostData>) => {
         updatePost(id, {
             ...data,
-            title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : ""),
+            ...(data.title !== undefined
+                ? { title: data.title || (data.content ? data.content.slice(0, 80) + (data.content.length > 80 ? "..." : "") : "") }
+                : {}),
         });
     };
 
@@ -131,7 +132,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
                 </p>
                 <button
                     onClick={() => navigate({ to: "/auth" })}
-                    className="mt-2 px-5 py-2 rounded-xl bg-[#1688E8] hover:bg-[#1478D0] text-white font-bold text-xs transition-colors cursor-pointer"
+                    className="mt-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs transition-colors cursor-pointer"
                 >
                     {t("authenticate.loginNow", { defaultValue: "Đăng nhập ngay" })}
                 </button>
@@ -142,7 +143,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
     if (isBookmarksLoading) {
         return (
             <div className="w-full flex flex-col items-center justify-center gap-3 p-12 bg-surface/90 border border-border rounded-2xl text-center">
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-2xl text-[#1688E8]" />
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-2xl text-primary" />
                 <p className="text-text-muted text-xs">{t("bookmark.loading", { defaultValue: "Đang tải danh sách dấu trang..." })}</p>
             </div>
         );
@@ -154,7 +155,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
                 <div className="bg-surface/90 border border-border rounded-2xl p-5 flex items-center justify-between shadow-xs">
                     <div>
                         <h1 className="text-lg font-bold text-text flex items-center gap-2">
-                            <FontAwesomeIcon icon={faBookmarkSolid} className="text-[#1688E8]" />
+                            <FontAwesomeIcon icon={faBookmarkSolid} className="text-primary" />
                             {t("bookmark.title")}
                         </h1>
                         <p className="text-xs text-text-muted mt-1">{t("bookmark.subtitle")}</p>
@@ -167,19 +168,23 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
 
             {bookmarkedPosts.length > 0 ? (
                 <>
-                    {paginatedPosts.map((post) => (
-                        <Post
-                            key={post.id}
-                            post={post}
-                            isOwner={post.author === currentAuthor}
-                            onDelete={(id) => {
-                                deletePost(id);
-                                handleRemoveBookmark(id);
-                            }}
-                            onEdit={handleEditPost}
-                            onUnfollowAuthor={handleUnfollowAuthor}
-                        />
-                    ))}
+                    <div className="flex flex-col">
+                        {paginatedPosts.map((post, index) => (
+                            <div key={post.id} className="flex flex-col">
+                                {index > 0 && <div className="w-full h-px bg-divider-primary my-1" />}
+                                <Post
+                                    post={post}
+                                    isOwner={post.author === currentAuthor}
+                                    onDelete={(id) => {
+                                        deletePost(id);
+                                        handleRemoveBookmark(id);
+                                    }}
+                                    onEdit={handleEditPost}
+                                    onUnfollowAuthor={handleUnfollowAuthor}
+                                />
+                            </div>
+                        ))}
+                    </div>
 
                     {totalPages > 1 && (
                         <Pagination
