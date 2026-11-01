@@ -145,3 +145,14 @@ export const useSquadStore = create<SquadState>((set) => ({
         });
     },
 }));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useSquadStore.setState({
+            squads: INITIAL_SQUADS,
+            activeTab: "explore",
+            searchQuery: "",
+            filterGame: "all",
+        });
+    });
+}

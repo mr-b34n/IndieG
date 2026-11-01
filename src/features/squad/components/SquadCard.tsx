@@ -28,8 +28,7 @@ export const SquadCard = ({ squad }: SquadCardProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
+    const isLoggedIn = !!user;
 
     const joinSquad = useSquadStore((state) => state.joinSquad);
     const leaveSquad = useSquadStore((state) => state.leaveSquad);
