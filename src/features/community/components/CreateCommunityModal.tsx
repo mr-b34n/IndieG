@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faUsers, faLayerGroup, faImage, faPlus, faTag, faShieldHalved, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faUsers, faImage, faPlus, faTag, faShieldHalved, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityData } from "../types";
 import { getCurrentAuthor } from "@/features/post";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
-
-const CATEGORY_OPTIONS = ["FPS", "RPG", "MOBA", "Survival", "Open World", "Strategy", "Sports", "MMORPG", "Casual", "Fighting"];
 
 const DEFAULT_LOGOS = [
     "https://api.dicebear.com/7.x/identicon/svg?seed=GamingHub1&backgroundColor=6366f1",
@@ -37,7 +35,6 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
     const user = useAuthStore((state) => state.user);
 
     const [name, setName] = useState("");
-    const [category, setCategory] = useState("FPS");
     const [description, setDescription] = useState("");
     const [tagsInput, setTagsInput] = useState("");
     const [logo, setLogo] = useState(DEFAULT_LOGOS[0]);
@@ -90,9 +87,9 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                 name: name.trim(),
                 logo: resolvedLogo,
                 backdrop: resolvedBackdrop,
-                category,
-                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
-                tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
+                category: "Gaming",
+                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${name.trim()}.`,
+                tags: tags.length > 0 ? tags : [name.trim().toLowerCase()],
             });
         }
 
@@ -103,11 +100,11 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                 name: name.trim(),
                 logo: resolvedLogo,
                 backdrop: resolvedBackdrop,
-                category,
-                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${category}.`,
+                category: "Gaming",
+                description: description.trim() || `Cộng đồng ${name.trim()} - Nơi kết nối các game thủ yêu thích ${name.trim()}.`,
                 members: 1,
                 onlineNow: 1,
-                tags: tags.length > 0 ? tags : [name.trim().toLowerCase(), category.toLowerCase()],
+                tags: tags.length > 0 ? tags : [name.trim().toLowerCase()],
                 joined: true,
                 featured: false,
                 owner: authorUsername,
@@ -134,7 +131,7 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
-            <div className="relative w-full max-w-xl bg-surface border border-divider-primary rounded-[6px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-xl bg-surface border border-divider-primary rounded-[6px] shadow-2xl overflow-hidden flex flex-col animate-modal">
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3.5 border-b border-divider-primary">
                     <h3 className="text-sm font-black text-text uppercase tracking-wider flex items-center gap-2">
@@ -172,25 +169,6 @@ export const CreateCommunityModal: React.FC<CreateCommunityModalProps> = ({ onCl
                                 <span>{t('community.nameMinLenError', { min: 3, current: name.trim().length })}</span>
                             </p>
                         )}
-                    </div>
-
-                    {/* Category */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faLayerGroup} className="text-primary text-[10px]" />
-                            <span>{t('community.categoryLabel', { defaultValue: 'Thể loại Game' })}</span>
-                        </label>
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="h-9 px-3 rounded-[4px] border border-divider-primary bg-bg text-xs text-text font-semibold focus:outline-none focus:border-primary cursor-pointer transition-colors"
-                        >
-                            {CATEGORY_OPTIONS.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
-                                </option>
-                            ))}
-                        </select>
                     </div>
 
                     {/* Description */}

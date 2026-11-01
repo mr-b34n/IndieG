@@ -8,14 +8,12 @@ import {
     faLink,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuthStore } from "@/features/auth";
-import type { CategoryItem } from "./CommunityHubCategories";
 import type { PostType } from "./CommunityHubFeed";
 
 interface CreateThreadModalProps {
     isOpen: boolean;
     onClose: () => void;
-    categories: CategoryItem[];
-    onSubmit: (threadData: { title: string; category: string; content: string; type?: PostType }) => void;
+    onSubmit: (threadData: { title: string; category?: string; content: string; type?: PostType }) => void;
     communityName: string;
     isVi: boolean;
 }
@@ -23,7 +21,6 @@ interface CreateThreadModalProps {
 export const CreateThreadModal = ({
     isOpen,
     onClose,
-    categories,
     onSubmit,
     communityName,
     isVi,
@@ -31,7 +28,6 @@ export const CreateThreadModal = ({
     const { t } = useTranslation();
     const [title, setTitle] = useState("");
     const [type, setType] = useState<PostType>("discussion");
-    const [category, setCategory] = useState(categories[0]?.id || "general");
     const [content, setContent] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +40,7 @@ export const CreateThreadModal = ({
 
         setIsSubmitting(true);
         setTimeout(() => {
-            onSubmit({ title: title.trim(), category, content: content.trim(), type });
+            onSubmit({ title: title.trim(), category: "general", content: content.trim(), type });
             setTitle("");
             setContent("");
             setType("discussion");
@@ -63,8 +59,8 @@ export const CreateThreadModal = ({
     ] as const;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-            <div className="bg-surface border border-divider-primary w-full max-w-lg p-5 rounded-[4px] space-y-4 shadow-2xl relative animate-slide-up">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-surface border border-divider-primary w-full max-w-lg p-5 rounded-[4px] space-y-4 shadow-2xl relative animate-modal">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between border-b border-divider-primary pb-3">
                     <span className="font-extrabold text-sm text-text uppercase tracking-tight flex items-center gap-2">
@@ -120,24 +116,6 @@ export const CreateThreadModal = ({
                             placeholder={t('hub.createthreadmodal_257')}
                             className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:border-primary"
                         />
-                    </div>
-
-                    {/* Category */}
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-text block">
-                            {t('hub.createthreadmodal_258')}
-                        </label>
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="w-full bg-surface-inner border border-divider-primary rounded-[4px] px-3 py-2 text-xs font-bold text-text focus:outline-none focus:border-primary"
-                        >
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {isVi ? cat.titleVi : cat.titleEn}
-                                </option>
-                            ))}
-                        </select>
                     </div>
 
                     {/* Content */}

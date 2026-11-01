@@ -18,9 +18,7 @@ export const COMMUNITY_TABS: { key: CommunityTabKey; label: string; icon: typeof
     { key: "joined", label: "Đã tham gia", icon: faLayerGroup },
 ];
 
-import { MOCK_COMMUNITIES } from "@/mocks/communities.mock";
-
-export const INITIAL_COMMUNITIES: CommunityData[] = MOCK_COMMUNITIES;
+export const INITIAL_COMMUNITIES: CommunityData[] = [];
 
 export const formatCompactNumber = (num?: number | null | string): string => {
     if (num === null || num === undefined) {

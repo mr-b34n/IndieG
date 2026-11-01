@@ -1,0 +1,1028 @@
+import { useState, useMemo } from 'react';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faChevronRight,
+    faMagnifyingGlass,
+    faXmark,
+    faChevronDown,
+    faGamepad,
+    faThumbtack,
+} from '@fortawesome/free-solid-svg-icons';
+import { useCommunitiesStore } from '@/features/community';
+import { INITIAL_COMMUNITIES } from '@/features/community/constants';
+import { useGameStore } from '@/features/game';
+import { useThemeStore } from '@/shared/store/useThemeStore';
+import { useAuthStore } from '@/features/auth';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+    useCommunityDetailQuery,
+    usePostsQuery,
+    useCreatePostMutation,
+    useProfilesListQuery,
+    useCommunityMemberMeQuery,
+    useCommunityMembersQuery,
+    usePendingMembersQuery,
+    useReportsQuery,
+    QUERY_KEYS,
+} from '@/shared/api/useQueries';
+import {
+    mapCommunityDtoToCommunityData,
+    extractPostList,
+    extractMemberList,
+    extractReportList,
+    type PostDto,
+    type UserProfileDto,
+    type CommunityMemberDto,
+} from '@/shared/api';
+import { DEFAULT_BG, DEFAULT_GAME_LOGO, DEFAULT_AVATAR } from '@/shared/constants/images';
+import type { CommunityData } from '@/features/community/types';
+
+import { CommunityHubSidebar } from '@/features/community/components/hub/CommunityHubSidebar';
+import { CommunityHubHeader } from '@/features/community/components/hub/CommunityHubHeader';
+import {
+    CommunityHubFeed,
+    type CommunityFeedPost,
+    type PostType,
+} from '@/features/community/components/hub/CommunityHubFeed';
+import { CommunityHubMembers } from '@/features/community/components/hub/CommunityHubMembers';
+import { CommunityHubMediaView, type MediaItem } from '@/features/community/components/hub/CommunityHubMediaView';
+import { CommunityHubEventsView } from '@/features/community/components/hub/CommunityHubEventsView';
+import { CommunityHubAboutView } from '@/features/community/components/hub/CommunityHubAboutView';
+import {
+    CommunityHubRightRail,
+    type ContributorItem,
+    type UpcomingEventTimelineItem,
+} from '@/features/community/components/hub/CommunityHubRightRail';
+import { CreateThreadModal } from '@/features/community/components/hub/CreateThreadModal';
+import { CommunityHubPinned, type PinnedThreadItem } from '@/features/community/components/hub/CommunityHubPinned';
+import { CreatePostBox } from '@/features/feed/components/CreatePostBox';
+import { useCreatePostModalStore } from '@/features/feed/store/useCreatePostModalStore';
+import { usePostsStore } from '@/features/post';
+
+// Community Admin Management Views
+import { CommunityManageOverview } from '@/features/community/components/hub/CommunityManageOverview';
+import { CommunityManageModeration } from '@/features/community/components/hub/CommunityManageModeration';
+import { CommunityManageReports } from '@/features/community/components/hub/CommunityManageReports';
+import { CommunityManageMembers } from '@/features/community/components/hub/CommunityManageMembers';
+import { CommunityManageRules } from '@/features/community/components/hub/CommunityManageRules';
+import { CommunityManageSettings } from '@/features/community/components/hub/CommunityManageSettings';
+
+
+function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
+    const matchedTag = dto.tags?.map((t) => t.toLowerCase()).find((t) => ["guide", "question", "showcase", "poll", "event"].includes(t));
+    const rawType = (matchedTag || "discussion") as PostType;
+    const upvotes = dto.upvotes ?? dto.likes ?? 0;
+    const downvotes = dto.downvotes ?? 0;
+
+    const authorName = dto.user?.name || dto.user?.displayName || dto.user?.username || (dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên");
+    const authorHandle = dto.user?.username ? `@${dto.user.username}` : dto.user?.name ? `@${dto.user.name}` : (dto.authorId ? `@user_${dto.authorId.slice(0, 5)}` : "@member");
+    const authorAvatar = dto.user?.avatar || dto.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(dto.user?.username || dto.user?.name || dto.authorId || dto.id)}`;
+
+    return {
+        id: String(dto.id),
+        type: rawType,
+        title: dto.title || "Bài viết",
+        content: dto.content || "",
+        authorName,
+        authorHandle,
+        authorAvatar,
+        authorRank: "Member",
+        isPinned: !!dto.pinned,
+        createdAt: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
+        repliesCount: dto.commentsCount ?? 0,
+        viewsCount: 1,
+        likesCount: upvotes,
+        upvotes: upvotes,
+        downvotes: downvotes,
+        score: dto.score ?? (upvotes - downvotes),
+        repostsCount: 0,
+        isLiked: dto.currentUserVoteType === 1,
+        currentUserVoteType: typeof dto.currentUserVoteType === "number" ? dto.currentUserVoteType : 0,
+        images: dto.images && dto.images.length > 0 ? dto.images : undefined,
+        tags: dto.tags || [],
+        isSpoiler: (dto as unknown as { isSpoiler?: boolean }).isSpoiler || dto.tags?.includes("spoiler"),
+        isNsfw: (dto as unknown as { isNsfw?: boolean }).isNsfw || dto.tags?.includes("nsfw"),
+    };
+}
+
+export function CommunityDetailPage() {
+    let communityId = "raft";
+    try {
+        const params = useParams({ strict: false });
+        if (params && params.communityId) {
+            communityId = params.communityId;
+        }
+    } catch {
+        communityId = "raft";
+    }
+
+    const navigate = useNavigate();
+    const language = useThemeStore((state) => state.language);
+    const isVi = language === "vi";
+
+    const user = useAuthStore((state) => state.user);
+
+    // TanStack Query for Community Detail & Posts & Profiles
+    const { data: communityDto } = useCommunityDetailQuery(communityId);
+    const { data: remotePostsData } = usePostsQuery({ communityId });
+    const { data: profilesData } = useProfilesListQuery({ limit: 6 });
+    const createPostMutation = useCreatePostMutation();
+
+    const openCreatePost = useCreatePostModalStore((state) => state.openCreatePost);
+    const storePosts = usePostsStore((state) => state.posts);
+
+    const queryClient = useQueryClient();
+    const communities = useCommunitiesStore((state) => state.communities);
+    const joinedCommunityIds = useCommunitiesStore((state) => state.joinedCommunityIds);
+    const toggleJoin = useCommunitiesStore((state) => state.toggleJoin);
+
+    // Fetch active community
+    const community: CommunityData = useMemo(() => {
+        const target = (communityId || "").toLowerCase();
+        const found = communities.find(
+            (c) =>
+                c.id.toString().toLowerCase() === target ||
+                (c.slug && c.slug.toLowerCase() === target) ||
+                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
+                (target === "cs2" && c.id === "cs2-vietnam") ||
+                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
+                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
+                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
+                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
+                (target === "valorant" && c.id === "valorant-vietnam") ||
+                (target === "minecraft" && c.id === "minecraft-vietnam") ||
+                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
+                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
+                (target === "genshin" && c.id === "genshin-impact-vn") ||
+                (target === "apex" && c.id === "apex-legends-vn")
+        );
+        if (found) return found;
+        if (communityDto) {
+            return mapCommunityDtoToCommunityData(communityDto);
+        }
+        const initialFound = INITIAL_COMMUNITIES.find(
+            (c) =>
+                c.id.toString().toLowerCase() === target ||
+                (c.slug && c.slug.toLowerCase() === target) ||
+                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
+                (target === "cs2" && c.id === "cs2-vietnam") ||
+                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
+                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
+                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
+                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
+                (target === "valorant" && c.id === "valorant-vietnam") ||
+                (target === "minecraft" && c.id === "minecraft-vietnam") ||
+                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
+                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
+                (target === "genshin" && c.id === "genshin-impact-vn") ||
+                (target === "apex" && c.id === "apex-legends-vn")
+        );
+        if (initialFound) return initialFound;
+        return {
+            id: communityId,
+            name: communityId.charAt(0).toUpperCase() + communityId.slice(1),
+            slug: communityId,
+            category: "Gaming",
+            tags: ["gaming", communityId],
+            description: "Cộng đồng chính thức: trao đổi kinh nghiệm, mẹo chơi, thiết kế căn cứ và hoạt động nổi bật.",
+            bannerUrl: DEFAULT_BG,
+            avatarUrl: DEFAULT_AVATAR,
+            backdrop: DEFAULT_BG,
+            logo: DEFAULT_GAME_LOGO,
+            members: 1,
+            onlineNow: 1,
+            joined: true,
+            featured: false,
+            rules: [
+                "Tôn trọng các thành viên khác trong cộng đồng",
+                "Không đăng tải thông tin sai sự thật hoặc lừa đảo",
+                "Đặt tiêu đề bài viết rõ ràng, đúng chủ đề",
+                "Không quảng cáo thương mại hoặc spam liên kết",
+            ],
+        };
+    }, [communityId, communities, communityDto]);
+
+    useDocumentTitle(community?.name);
+
+    // Resolve associated Game on Ludon for this community
+    const getGameBySlug = useGameStore((state) => state.getGameBySlug);
+    const resolvedGameSlug = useMemo(() => {
+        if (community.gameSlug) return community.gameSlug;
+        if (typeof community.game === "object" && community.game?.slug) return community.game.slug;
+        const target = String(community.id || communityId || "").toLowerCase();
+        if (target.includes("cs2")) return "counter-strike-2";
+        if (target.includes("elden")) return "elden-ring";
+        if (target.includes("wukong")) return "black-myth-wukong";
+        if (target.includes("cyberpunk")) return "cyberpunk-2077";
+        if (target.includes("raft") || target.includes("indie")) return "raft";
+        if (target.includes("wilds") || target.includes("monster")) return "monster-hunter-wilds";
+        if (target.includes("valorant")) return "valorant";
+        if (target.includes("minecraft")) return "minecraft";
+        if (target.includes("genshin")) return "genshin-impact";
+        if (target.includes("red-dead") || target.includes("rdr2")) return "red-dead-redemption-2";
+        if (target.includes("apex")) return "apex-legends";
+        return undefined;
+    }, [community, communityId]);
+
+    const gameData = useMemo(() => {
+        if (!resolvedGameSlug) return undefined;
+        return getGameBySlug(resolvedGameSlug);
+    }, [resolvedGameSlug, getGameBySlug]);
+
+    // Active Navigation: home, discussions, guides, media, events, members, leaderboard, wiki, links, rules, about, manage-*
+    const searchParams = useSearch({ strict: false }) as { nav?: string } | undefined;
+    const searchNav = searchParams?.nav;
+    const [navOverride, setNavOverride] = useState<string | null>(null);
+    const [prevSearchNav, setPrevSearchNav] = useState(searchNav);
+
+    if (prevSearchNav !== searchNav) {
+        setPrevSearchNav(searchNav);
+        setNavOverride(null);
+    }
+
+    const activeNav = navOverride || searchNav || "home";
+    const setActiveNav = (nav: string) => {
+        setNavOverride(nav);
+    };
+    const [activeFilter, setActiveFilter] = useState("all");
+    const [sortMode, setSortMode] = useState<"hot" | "new" | "unanswered" | "top">("hot");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+    // Fetch current user membership in community (GET /communities/{id}/members/me)
+    const { data: meMembershipData } = useCommunityMemberMeQuery(String(community.id));
+
+    // Fetch real list of community members (GET /communities/{id}/members)
+    const { data: membersQueryData } = useCommunityMembersQuery(String(community.id));
+
+    // Parse meMembership
+    const meMembership = useMemo(() => {
+        if (!meMembershipData) return null;
+        const raw = meMembershipData as unknown as Record<string, unknown>;
+        const obj = (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? raw.data
+            : Array.isArray(raw.data) && raw.data[0]
+            ? raw.data[0]
+            : raw) as Record<string, unknown>;
+        return obj;
+    }, [meMembershipData]);
+
+    const isPlatformAdmin = Boolean(
+        user?.role === "admin" ||
+        user?.id === "usr_admin" ||
+        user?.username === "IndieAdmin" ||
+        user?.username === "LudonAdmin" ||
+        user?.email === "admin@ludon.com" ||
+        user?.email === "admin@indieg.com"
+    );
+
+    // Derived Community Role State based on /members/me response or platform admin status
+    const userRole = useMemo<"owner" | "moderator" | "member">(() => {
+        if (isPlatformAdmin) return "owner";
+        if (!meMembership) return "member";
+        const roleLower = String(meMembership.role || "").toLowerCase();
+        if (roleLower === "owner" || roleLower === "admin") return "owner";
+        if (roleLower === "moderator" || roleLower === "mod") return "moderator";
+        return "member";
+    }, [isPlatformAdmin, meMembership]);
+
+    const isStaff = isPlatformAdmin || userRole === "owner" || userRole === "moderator";
+
+    // Fetch pending members for staff (GET /communities/{id}/members/pending)
+    const { data: pendingMembersQueryData } = usePendingMembersQuery(String(community.id), undefined, { enabled: isStaff });
+
+    // Fetch reports for staff (GET /reports)
+    const { data: reportsQueryData } = useReportsQuery(undefined, { enabled: isStaff });
+
+    const pendingCount = useMemo(() => {
+        if (!isStaff) return 0;
+        return extractMemberList(pendingMembersQueryData).length;
+    }, [isStaff, pendingMembersQueryData]);
+
+    const reportsCount = useMemo(() => {
+        if (!isStaff) return 0;
+        return extractReportList(reportsQueryData).length;
+    }, [isStaff, reportsQueryData]);
+
+    // Derived Joined State based on /members/me response or local store
+    const isUserJoined = useMemo(() => {
+        const commIdStr = String(community.id || communityId);
+        if (joinedCommunityIds.includes(commIdStr) || joinedCommunityIds.includes(String(communityId))) {
+            return true;
+        }
+        if (community.joined) {
+            return true;
+        }
+        if (meMembership && (meMembership.role || meMembership.userId || meMembership.communityId || meMembership.status)) {
+            const status = String(meMembership.status || "active").toLowerCase();
+            return status === "active" || status === "pending";
+        }
+        return false;
+    }, [meMembership, community.joined, community.id, communityId, joinedCommunityIds]);
+
+    // Process real community members list (sorted: Admin/Moderator first, then Member)
+    const realMembersList = useMemo(() => {
+        const rawMembers: CommunityMemberDto[] = extractMemberList(membersQueryData);
+        if (!rawMembers.length) return [];
+
+        const rawProfiles = Array.isArray(profilesData)
+            ? (profilesData as UserProfileDto[])
+            : (profilesData as { items?: UserProfileDto[]; data?: UserProfileDto[] })?.items ||
+              (profilesData as { data?: UserProfileDto[] })?.data ||
+              [];
+        const profilesMap = new Map<string, UserProfileDto>();
+        rawProfiles.forEach((p) => {
+            if (p.id) profilesMap.set(p.id, p);
+        });
+
+        const mapped = rawMembers.map((m, idx) => {
+            const profile = profilesMap.get(m.userId);
+            const roleLower = String(m.role || "").toLowerCase();
+            let roleCategory: "admin" | "moderator" | "member" = "member";
+            let rolePriority = 3;
+
+            if (roleLower === "owner" || roleLower === "admin") {
+                roleCategory = "admin";
+                rolePriority = 1;
+            } else if (roleLower === "moderator" || roleLower === "mod") {
+                roleCategory = "moderator";
+                rolePriority = 2;
+            }
+
+            const name =
+                m.user?.displayName ||
+                m.user?.name ||
+                m.user?.username ||
+                profile?.displayName ||
+                profile?.username ||
+                (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : `Member #${idx + 1}`);
+
+            const handleRaw =
+                m.user?.username ||
+                m.user?.name ||
+                profile?.username ||
+                m.userId ||
+                `user_${idx}`;
+            const handle = String(handleRaw).startsWith("@") ? String(handleRaw) : `@${handleRaw}`;
+
+            const avatar =
+                m.user?.avatar ||
+                m.user?.avatarUrl ||
+                profile?.avatarUrl ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(String(handleRaw))}`;
+
+            return {
+                id: m.userId || `m-${idx}`,
+                name: String(name),
+                handle,
+                avatar,
+                role: roleCategory,
+                rolePriority,
+                points: typeof (m as unknown as Record<string, unknown>).points === "number" ? ((m as unknown as Record<string, unknown>).points as number) : 0,
+            };
+        });
+
+        return mapped.sort((a, b) => a.rolePriority - b.rolePriority);
+    }, [membersQueryData, profilesData]);
+
+    // Modals
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // Contributors (Member avatars in Right Rail) - Admin/Moderators first, then Members
+    const contributorsData: ContributorItem[] = useMemo(() => {
+        if (realMembersList.length > 0) {
+            return realMembersList.map((m) => ({
+                id: m.id,
+                name: m.name,
+                handle: m.handle,
+                avatar: m.avatar,
+                points: m.points,
+            }));
+        }
+        if (!profilesData) {
+            return [];
+        }
+        const rawList = Array.isArray(profilesData)
+            ? (profilesData as UserProfileDto[])
+            : (profilesData as { items?: UserProfileDto[]; data?: UserProfileDto[] })?.items ||
+              (profilesData as { data?: UserProfileDto[] })?.data ||
+              [];
+        return rawList.slice(0, 5).map((p, idx) => ({
+            id: p.id || `c-${idx}`,
+            name: p.displayName || p.username || "Thành viên",
+            handle: `@${p.username || "member"}`,
+            avatar: p.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username || idx}`,
+            points: typeof (p as unknown as Record<string, unknown>).points === "number" ? ((p as unknown as Record<string, unknown>).points as number) : 0,
+        }));
+    }, [realMembersList, profilesData]);
+
+    const displayMembersCount = realMembersList.length > 0 ? realMembersList.length : (community.members ?? 1);
+    const modsCount = useMemo(() => {
+        if (realMembersList.length > 0) {
+            return realMembersList.filter((m) => m.role === "admin" || m.role === "moderator").length || 1;
+        }
+        return 1;
+    }, [realMembersList]);
+
+    // Local user created posts
+    const [userCreatedPosts, setUserCreatedPosts] = useState<CommunityFeedPost[]>([]);
+
+    // API + Local posts
+    const allFeedPosts = useMemo<CommunityFeedPost[]>(() => {
+        const rawList = extractPostList(remotePostsData);
+        const mappedRemote = rawList.map(mapPostDtoToCommunityFeedPost);
+
+        const mappedStorePosts: CommunityFeedPost[] = storePosts
+            .filter((p) => String(p.communityId) === String(community.id) || String(p.communityId) === String(communityId))
+            .map((p) => ({
+                id: String(p.id),
+                type: "discussion",
+                title: p.title || "Bài viết",
+                content: p.content || "",
+                authorName: typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "Thành viên"),
+                authorHandle: typeof p.author === "string" ? `@${p.author}` : (p.author?.username ? `@${p.author.username}` : "@member"),
+                authorAvatar: p.authorAvatar || (typeof p.author !== "string" ? p.author?.avatarUrl || p.author?.avatar : "") || DEFAULT_AVATAR,
+                authorRank: "Member",
+                isPinned: !!p.pinned,
+                createdAt: p.timeAgo || "Vừa xong",
+                repliesCount: p.commentsCount ?? p.comments ?? 0,
+                viewsCount: 1,
+                likesCount: p.likes ?? p.upvotes ?? 0,
+                upvotes: p.upvotes ?? p.likes ?? 0,
+                downvotes: p.downvotes ?? 0,
+                score: p.score ?? (p.likes ?? 0),
+                repostsCount: 0,
+                isLiked: p.currentUserVoteType === 1,
+                currentUserVoteType: p.currentUserVoteType ?? 0,
+                images: p.images,
+                tags: p.tags || [],
+                isSpoiler: p.isSpoiler,
+                isNsfw: p.isNsfw,
+            }));
+
+        const merged = [...userCreatedPosts];
+        mappedStorePosts.forEach((st) => {
+            if (!merged.some((p) => p.id === st.id)) {
+                merged.push(st);
+            }
+        });
+        mappedRemote.forEach((rem) => {
+            if (!merged.some((p) => p.id === rem.id)) {
+                merged.push(rem);
+            }
+        });
+        return merged;
+    }, [remotePostsData, userCreatedPosts, storePosts, community.id, communityId]);
+
+    // Dedicated Pinned Posts Tab data
+    const pinnedFeedPosts = useMemo(() => {
+        return allFeedPosts.filter((p) => p.isPinned);
+    }, [allFeedPosts]);
+
+    const pinnedThreadsData: PinnedThreadItem[] = useMemo(() => {
+        return pinnedFeedPosts.map((p) => ({
+            id: p.id,
+            title: p.title,
+            authorHandle: p.authorHandle || p.authorName,
+            authorName: p.authorName,
+            repliesCount: p.repliesCount ?? 0,
+            likesCount: p.likesCount ?? 0,
+            upvotes: p.upvotes ?? p.likesCount ?? 0,
+            date: p.createdAt,
+        }));
+    }, [pinnedFeedPosts]);
+
+    // Upcoming Events extracted from real posts
+    const upcomingEventsData: UpcomingEventTimelineItem[] = useMemo(() => {
+        const eventPosts = allFeedPosts.filter((p) => p.type === "event");
+        return eventPosts.map((ep, idx) => ({
+            id: ep.id || `ev-${idx}`,
+            title: ep.title,
+            dateMonth: ep.createdAt || "UPCOMING",
+            time: "20:00 GMT+7",
+            attendees: ep.likesCount + 1,
+        }));
+    }, [allFeedPosts]);
+
+    // Media Items for Media Gallery extracted from real posts
+    const mediaGalleryData: MediaItem[] = useMemo(() => {
+        const list: MediaItem[] = [];
+        allFeedPosts.forEach((post) => {
+            if (post.images && post.images.length > 0) {
+                post.images.forEach((img, idx) => {
+                    list.push({
+                        id: `${post.id}-img-${idx}`,
+                        title: post.title || "Media item",
+                        imageUrl: img,
+                        authorName: post.authorName,
+                        authorHandle: post.authorHandle,
+                        likesCount: post.likesCount,
+                        repliesCount: post.repliesCount,
+                    });
+                });
+            }
+        });
+        return list;
+    }, [allFeedPosts]);
+
+    // Handle post filtering & sorting
+    const filteredFeedPosts = useMemo(() => {
+        let result = [...allFeedPosts];
+
+        // Nav-level filtering if navigating via sidebar
+        if (activeNav === "discussions") {
+            result = result.filter((p) => p.type === "discussion" || p.type === "question");
+        } else if (activeNav === "guides") {
+            result = result.filter((p) => p.type === "guide");
+        } else if (activeNav === "media") {
+            result = result.filter((p) => p.type === "showcase" || (p.images && p.images.length > 0));
+        } else if (activeNav === "events") {
+            result = result.filter((p) => p.type === "event");
+        }
+
+        // Sub-filter dropdown filtering (All, Discussion, Question, Guide, Showcase, Poll, Event)
+        if (activeFilter !== "all") {
+            result = result.filter((p) => p.type === activeFilter);
+        }
+
+        // Search Query
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(
+                (p) =>
+                    p.title.toLowerCase().includes(q) ||
+                    p.authorName.toLowerCase().includes(q) ||
+                    (p.content && p.content.toLowerCase().includes(q))
+            );
+        }
+
+        // Sorting
+        if (sortMode === "new") {
+            // Newest
+        } else if (sortMode === "top") {
+            result.sort((a, b) => b.likesCount - a.likesCount);
+        } else if (sortMode === "unanswered") {
+            result.sort((a, b) => a.repliesCount - b.repliesCount);
+        } else {
+            // Hot: combined engagement
+            result.sort((a, b) => (b.likesCount * 2 + b.repliesCount * 3) - (a.likesCount * 2 + a.repliesCount * 3));
+        }
+
+        return result;
+    }, [allFeedPosts, activeNav, activeFilter, searchQuery, sortMode]);
+
+    const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
+
+    // Handle Post Creation
+    const handleCreatePost = async ({
+        title,
+        content,
+        type = "discussion",
+    }: {
+        title: string;
+        category?: string;
+        content: string;
+        type?: PostType;
+    }) => {
+        if (!requireVerifiedEmail("đăng bài viết mới")) return;
+        const newPost: CommunityFeedPost = {
+            id: `post-${Date.now()}`,
+            type,
+            title,
+            content,
+            authorName: user?.username || "You",
+            authorHandle: user?.username ? `@${user.username}` : "@current_user",
+            authorAvatar: user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=currentuser",
+            authorRank: "Active Member",
+            createdAt: "Just now",
+            repliesCount: 0,
+            viewsCount: 1,
+            likesCount: 1,
+            repostsCount: 0,
+            isLiked: true,
+            tags: [type].filter(Boolean),
+        };
+        setUserCreatedPosts((prev) => [newPost, ...prev]);
+
+        try {
+            await createPostMutation.mutateAsync({
+                communityId,
+                title,
+                content,
+                tags: [type].filter(Boolean),
+            });
+        } catch {
+            // locally retained
+        }
+    };
+
+    const handleNavChange = (navId: string) => {
+        setActiveNav(navId);
+        setActiveFilter("all");
+        navigate({
+            to: "/community/$communityId",
+            params: { communityId },
+            search: { nav: navId === "home" ? undefined : navId },
+            replace: true,
+        });
+    };
+
+    const isManageView = activeNav.startsWith("manage-");
+    const getManageBreadcrumbTitle = (nav: string) => {
+        switch (nav) {
+            case "manage-overview":
+                return isVi ? "TỔNG QUAN" : "OVERVIEW";
+            case "manage-moderation":
+                return isVi ? "KIỂM DUYỆT" : "MODERATION";
+            case "manage-reports":
+                return isVi ? "BÁO CÁO" : "REPORTS";
+            case "manage-members":
+                return isVi ? "THÀNH VIÊN" : "MEMBERS";
+            case "manage-rules":
+                return isVi ? "QUY TẮC" : "RULES";
+            case "manage-settings":
+                return isVi ? "CÀI ĐẶT" : "SETTINGS";
+            default:
+                return "";
+        }
+    };
+
+    return (
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-5 font-sans text-text animate-fade-in pb-16">
+            {/* 1. TOP BREADCRUMB / SEARCH BAR / ROLE TOGGLE */}
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-divider-primary/40 pb-2.5 select-none">
+                <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider flex-wrap">
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/community" })}
+                        className="text-text-muted hover:text-text cursor-pointer transition-colors"
+                    >
+                        COMMUNITIES
+                    </button>
+                    <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isManageView) {
+                                    handleNavChange("home");
+                                } else {
+                                    setShowCommunitySwitcher(!showCommunitySwitcher);
+                                }
+                            }}
+                            className="text-primary hover:underline cursor-pointer flex items-center gap-1.5 uppercase font-bold"
+                        >
+                            <span>{community.name}</span>
+                            {!isManageView && <FontAwesomeIcon icon={faChevronDown} className="text-[8px]" />}
+                        </button>
+
+                        {showCommunitySwitcher && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setShowCommunitySwitcher(false)}
+                                />
+                                <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
+                                    {INITIAL_COMMUNITIES.map((c, idx) => (
+                                        <button
+                                            key={`${c.id}-${idx}`}
+                                            type="button"
+                                            onClick={() => {
+                                                navigate({
+                                                    to: "/community/$communityId",
+                                                    params: { communityId: String(c.id) },
+                                                });
+                                                setShowCommunitySwitcher(false);
+                                            }}
+                                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-xs font-semibold text-left transition-colors cursor-pointer ${
+                                                c.id === community.id
+                                                    ? "bg-primary/10 text-primary font-bold"
+                                                    : "text-text-muted hover:text-text hover:bg-surface-hover/60"
+                                            }`}
+                                        >
+                                            <img
+                                                src={c.logo}
+                                                alt={c.name}
+                                                className="w-4 h-4 rounded-[2px] object-cover"
+                                            />
+                                            <span className="truncate">{c.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Manage Sub-Breadcrumb */}
+                    {isManageView && (
+                        <>
+                            <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
+                            <button
+                                type="button"
+                                onClick={() => handleNavChange("manage-overview")}
+                                className="text-text-muted hover:text-text cursor-pointer transition-colors"
+                            >
+                                MANAGE
+                            </button>
+                            <FontAwesomeIcon icon={faChevronRight} className="text-[8px] text-text-faint" />
+                            <span className="text-primary uppercase font-bold">
+                                {getManageBreadcrumbTitle(activeNav)}
+                            </span>
+                        </>
+                    )}
+
+                    {/* Associated Game Page Link in Breadcrumb */}
+                    {resolvedGameSlug && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-text-faint">•</span>
+                            <button
+                                type="button"
+                                onClick={() => navigate({ to: `/game/${resolvedGameSlug}` })}
+                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 hover:border-primary text-[11px] font-mono font-semibold transition-colors cursor-pointer"
+                                title={isVi ? `Đến trang game ${gameData?.name || community.gameName || resolvedGameSlug}` : `Go to game page for ${gameData?.name || community.gameName || resolvedGameSlug}`}
+                            >
+                                <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
+                                <span className="uppercase">Game: {gameData?.name || community.gameName || resolvedGameSlug}</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right controls: Search Input */}
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                    {/* Search Input */}
+                    <div className="relative w-36 sm:w-56">
+                        <FontAwesomeIcon
+                            icon={faMagnifyingGlass}
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint text-xs"
+                        />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={`Search in ${community.name}...`}
+                            className="w-full h-7.5 pl-8 pr-7 bg-surface-inner hover:bg-surface-hover/60 focus:bg-surface border border-divider-primary/50 focus:border-primary rounded-[4px] text-xs font-medium text-text placeholder:text-text-faint focus:outline-none transition-colors"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-text cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. RESPONSIVE LAYOUT (Mobile: 1-col with horizontal nav; Pad: 2-col with left sidebar; Desktop: 3-col) */}
+            <div className="w-full flex flex-col md:flex-row items-start gap-4 lg:gap-6 min-w-0">
+                {/* LEFT COLUMN: Persistent Navigation Sidebar (Hidden on mobile < md, docked on Pad & Desktop) */}
+                <div
+                    className={`shrink-0 transition-[width] duration-200 self-start sticky top-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none hidden md:block ${
+                        isSidebarCollapsed ? "w-12" : "w-[200px] lg:w-[220px]"
+                    }`}
+                >
+                    <CommunityHubSidebar
+                        activeNav={activeNav}
+                        onNavChange={handleNavChange}
+                        isCollapsed={isSidebarCollapsed}
+                        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                        isVi={isVi}
+                        userRole={userRole}
+                        pendingCount={pendingCount}
+                        reportsCount={reportsCount}
+                        gameSlug={resolvedGameSlug}
+                        gameName={gameData?.name || community.gameName}
+                    />
+                </div>
+
+                {/* CENTER COLUMN: Main Content & Activity Feed */}
+                <main className="flex-1 w-full min-w-0 flex flex-col gap-4 sm:gap-6">
+                    {/* Compact Community Header (Hidden when inside manage tab) */}
+                    {!isManageView && (
+                        <CommunityHubHeader
+                            name={community.name}
+                            description={community.description}
+                            coverUrl={community.backdrop || community.bannerUrl || community.logo || DEFAULT_BG}
+                            iconUrl={community.logo || community.avatarUrl || community.backdrop || community.bannerUrl || DEFAULT_GAME_LOGO}
+                            membersCount={displayMembersCount}
+                            onlineCount={community.onlineNow ?? 1}
+                            isJoined={isUserJoined}
+                            onToggleJoin={() => {
+                                if (!requireVerifiedEmail("tham gia cộng đồng")) return;
+                                const targetId = community.id || communityDto?.id || communityId;
+                                toggleJoin(targetId);
+                                void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityMemberMe(String(targetId)) });
+                                void queryClient.invalidateQueries({ queryKey: ["communities", String(targetId), "members"] });
+                                void queryClient.invalidateQueries({ queryKey: ["communities"] });
+                            }}
+                            onStartDiscussion={() => {
+                                if (!requireVerifiedEmail("tạo bài viết")) return;
+                                openCreatePost(community.id);
+                            }}
+                            isVi={isVi}
+                            isLocked={community.isLocked}
+                            announcement={community.announcement}
+                            featured={community.featured}
+                            userRole={userRole}
+                            gameSlug={resolvedGameSlug}
+                            gameName={gameData?.name || community.gameName}
+                        />
+                    )}
+
+                    {/* MOBILE NAVIGATION PILLS (Visible on mobile < md only) */}
+                    <div className="md:hidden w-full overflow-x-auto scrollbar-none py-1 -mt-1">
+                        <div className="inline-flex items-center gap-1.5 px-0.5">
+                            {[
+                                { id: "home", label: isVi ? "Trang chủ" : "Home" },
+                                { id: "pinned", label: isVi ? "Đã ghim" : "Pinned" },
+                                { id: "discussions", label: isVi ? "Thảo luận" : "Discussions" },
+                                { id: "guides", label: isVi ? "Hướng dẫn" : "Guides" },
+                                { id: "media", label: "Media" },
+                                { id: "events", label: isVi ? "Sự kiện" : "Events" },
+                                { id: "members", label: isVi ? "Thành viên" : "Members" },
+                                { id: "about", label: isVi ? "Giới thiệu" : "About" },
+                                ...(userRole === "owner" || (userRole as string) === "admin" || userRole === "moderator"
+                                    ? [{ id: "manage-overview", label: isVi ? "Quản trị" : "Manage" }]
+                                    : []),
+                            ].map((item) => {
+                                const isActive = activeNav === item.id;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => handleNavChange(item.id)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                                            isActive
+                                                ? "bg-primary text-white shadow-xs"
+                                                : "bg-surface hover:bg-surface-hover text-text-muted hover:text-text border border-border/60"
+                                        }`}
+                                    >
+                                        {item.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* VIEW SWITCHER: Display content according to selected destination */}
+                    <div key={activeNav} className="w-full flex flex-col gap-3 animate-fade-in">
+                    {activeNav === "manage-overview" ? (
+                        <CommunityManageOverview
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            totalMembers={community.members}
+                            userRole={userRole}
+                            isVi={isVi}
+                            onNavigate={handleNavChange}
+                        />
+                    ) : activeNav === "manage-moderation" ? (
+                        <CommunityManageModeration
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            initialTab="reports"
+                            userRole={userRole}
+                            isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
+                        />
+                    ) : activeNav === "manage-reports" ? (
+                        <CommunityManageReports
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            userRole={userRole}
+                            isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
+                        />
+                    ) : activeNav === "manage-members" ? (
+                        <CommunityManageMembers
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            userRole={userRole}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "manage-rules" ? (
+                        <CommunityManageRules
+                            communityName={community.name}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "manage-settings" ? (
+                        <CommunityManageSettings
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            communityDescription={community.description}
+                            communitySlug={String(community.slug || community.id)}
+                            userRole={userRole}
+                            isVi={isVi}
+                            onNavigateRules={() => handleNavChange("manage-rules")}
+                        />
+                    ) : activeNav === "members" ? (
+                        <CommunityHubMembers
+                            communityId={String(community.id)}
+                            communityName={community.name}
+                            contributors={contributorsData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "media" ? (
+                        <CommunityHubMediaView
+                            communityName={community.name}
+                            mediaItems={mediaGalleryData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "events" ? (
+                        <CommunityHubEventsView
+                            communityName={community.name}
+                            events={upcomingEventsData}
+                            isVi={isVi}
+                        />
+                    ) : activeNav === "pinned" ? (
+                        <div className="w-full flex flex-col gap-4">
+                            {pinnedFeedPosts.length > 0 ? (
+                                <CommunityHubPinned
+                                    pinnedThreads={pinnedThreadsData}
+                                    onThreadClick={(postId) => navigate({ to: `/post/${postId}` as string })}
+                                    isVi={isVi}
+                                />
+                            ) : (
+                                <div className="py-14 text-center text-xs text-text-muted font-mono bg-surface-inner/30 rounded-[6px] border border-dashed border-divider-primary/50 flex flex-col items-center justify-center gap-2">
+                                    <FontAwesomeIcon icon={faThumbtack} className="text-2xl text-text-faint rotate-45 mb-1" />
+                                    <p className="font-semibold text-text">{isVi ? "Chưa có bài viết nào được ghim" : "No pinned posts yet"}</p>
+                                    <p className="text-[11px] text-text-faint">
+                                        {isVi ? "Các bài viết quan trọng sẽ xuất hiện tại đây khi được ghim." : "Important posts will appear here when pinned."}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : activeNav === "rules" || activeNav === "about" || activeNav === "wiki" || activeNav === "links" ? (
+                        <CommunityHubAboutView
+                            viewType={activeNav as "rules" | "about" | "wiki" | "links"}
+                            communityName={community.name}
+                            description={community.description}
+                            isVi={isVi}
+                            gameSlug={resolvedGameSlug}
+                            gameName={gameData?.name || community.gameName}
+                        />
+                    ) : (
+                        /* Default: Activity Feed (Home, Discussions, Guides) */
+                        <>
+                            {/* Feed Quick Post Box when joined */}
+                            {isUserJoined && (activeNav === "home" || activeNav === "discussions") && (
+                                <div className="w-full mb-1">
+                                    <CreatePostBox defaultCommunityId={community.id} hideCommunity />
+                                </div>
+                            )}
+                            <CommunityHubFeed
+                                posts={filteredFeedPosts}
+                                activeFilter={activeFilter}
+                                onFilterChange={(filter) => setActiveFilter(filter)}
+                                sortMode={sortMode}
+                                onSortChange={(mode) => setSortMode(mode)}
+                                onPostClick={(postId) => navigate({ to: `/post/${postId}` as string })}
+                                communityId={String(community.id)}
+                                communityName={community.name}
+                                isVi={isVi}
+                            />
+                        </>
+                    )}
+                    </div>
+                </main>
+
+                {/* RIGHT COLUMN: Lightweight Contextual Rail (Docked on desktop xl, hidden on pad md/lg to preserve wide feed) */}
+                <div className="w-full xl:w-[260px] shrink-0 hidden xl:block self-start sticky top-2 max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none">
+                    <CommunityHubRightRail
+                        communityName={community.name}
+                        description={community.description}
+                        membersCount={displayMembersCount}
+                        onlineCount={community.onlineNow ?? 1}
+                        contributors={contributorsData}
+                        nextEvent={upcomingEventsData[0]}
+                        onNavigateNav={handleNavChange}
+                        isVi={isVi}
+                        isManageView={isManageView}
+                        userRole={userRole}
+                        pendingCount={pendingCount}
+                        reportsCount={reportsCount}
+                        modsCount={modsCount}
+                        gameSlug={resolvedGameSlug}
+                        gameName={gameData?.name || community.gameName}
+                        gameData={gameData}
+                        rules={community.rules}
+                    />
+                </div>
+            </div>
+
+            {/* CREATE POST MODAL */}
+            <CreateThreadModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreatePost}
+                communityName={community.name}
+                isVi={isVi}
+            />
+        </div>
+    );
+}

@@ -141,7 +141,7 @@ export const CommunityHubMembers = ({
                 handle,
                 avatar,
                 role: roleLabel,
-                points: typeof m.points === "number" ? m.points : (idx + 1) * 100,
+                points: typeof m.points === "number" ? m.points : 0,
                 joinedDate,
                 isOnline: m.status === "active" || m.isOnline !== false,
             };

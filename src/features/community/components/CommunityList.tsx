@@ -1,39 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGamepad, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { Gamepad2, RotateCcw } from "lucide-react";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityTabKey } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { CreateCommunityModal } from "./CreateCommunityModal";
 import { useAuthStore } from "@/features/auth";
 import { Pagination } from "@/shared/components/ui/Pagination";
 import { CommunityNavigator } from "./CommunityNavigator";
 import { CommunityGameTile } from "./CommunityGameTile";
+import { CommunityListRow } from "./CommunityListRow";
+import { CommunityGridSkeleton, CommunityListSkeleton } from "./CommunitySkeleton";
 import { useCommunitiesQuery } from "@/shared/api/useQueries";
 import { isGenericTestCommunity } from "@/shared/api";
 
 export const CommunityList = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
-    const mockLogin = useAuthStore((state) => state.mockLogin);
-    const isLoggedIn = !!user || mockLogin;
-    const canCreateCommunity = user?.role === "admin";
+    const isLoggedIn = !!user;
 
     const [currentPage, setCurrentPage] = useState(1);
     const [activeTab, setActiveTab] = useState<CommunityTabKey>("discover");
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const ITEMS_PER_PAGE = 9;
+    const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+        try {
+            return (localStorage.getItem("indieg_community_view_mode") as "grid" | "list") || "grid";
+        } catch {
+            return "grid";
+        }
+    });
+
+    const ITEMS_PER_PAGE = 8;
 
     const communities = useCommunitiesStore((state) => state.communities);
     const storeLoading = useCommunitiesStore((state) => state.isLoading);
     const mergeCommunities = useCommunitiesStore((state) => state.mergeCommunities);
     const syncJoinedCommunities = useCommunitiesStore((state) => state.syncJoinedCommunities);
+    const joinedCommunityIds = useCommunitiesStore((state) => state.joinedCommunityIds);
 
-    // 1. Always fetch and keep joined communities updated in store
+    // 1. Keep joined communities updated in store
     const { data: rawJoinedData } = useCommunitiesQuery(
-        { type: "joined", page: 1, limit: ITEMS_PER_PAGE },
+        { type: "joined", limit: 50 },
         { enabled: isLoggedIn }
     );
 
@@ -58,42 +63,60 @@ export const CommunityList = () => {
 
     const isLoading = isQueryLoading || storeLoading;
 
-    const categories = useMemo(
-        () => Array.from(new Set(communities.filter((c) => !isGenericTestCommunity(c)).map((c) => c.category).filter(Boolean))),
-        [communities]
-    );
+    const handleViewModeChange = (mode: "grid" | "list") => {
+        setViewMode(mode);
+        try {
+            localStorage.setItem("indieg_community_view_mode", mode);
+        } catch {
+            // Ignore storage error
+        }
+    };
+
+    const isCommunityJoined = (c: { id: string | number; slug?: string; joined?: boolean }) => {
+        return Boolean(
+            c.joined ||
+            joinedCommunityIds.some(
+                (jid) =>
+                    String(jid).toLowerCase() === String(c.id).toLowerCase() ||
+                    (c.slug && String(jid).toLowerCase() === String(c.slug).toLowerCase())
+            )
+        );
+    };
+
+    const categories = useMemo(() => {
+        const catSet = new Set<string>();
+        communities.forEach((c) => {
+            if (isGenericTestCommunity(c)) return;
+            if (c.category && c.category.trim() && c.category.trim().toLowerCase() !== "indie") {
+                catSet.add(c.category.trim());
+            }
+        });
+        return Array.from(catSet);
+    }, [communities]);
 
     const joinedCount = useMemo(
-        () => communities.filter((c) => c.joined && !isGenericTestCommunity(c)).length,
-        [communities]
+        () => communities.filter((c) => isCommunityJoined(c) && !isGenericTestCommunity(c)).length,
+        [communities, joinedCommunityIds]
     );
 
     const filtered = useMemo(() => {
         let list = communities.filter((c) => !isGenericTestCommunity(c));
 
         if (activeTab === "joined") {
-            list = list.filter((c) => c.joined);
-        }
-        if (activeTab === "trending") {
-            list = list.sort((a, b) => (b.onlineNow || 0) - (a.onlineNow || 0));
+            list = list.filter((c) => isCommunityJoined(c));
         }
 
         if (activeCategory) {
-            list = list.filter((c) => c.category === activeCategory);
-        }
-
-        if (search.trim()) {
-            const q = search.trim().toLowerCase();
-            list = list.filter(
-                (c) =>
-                    c.name.toLowerCase().includes(q) ||
-                    c.tags?.some((t) => t.toLowerCase().includes(q)) ||
-                    c.category?.toLowerCase().includes(q)
-            );
+            const catLower = activeCategory.toLowerCase();
+            list = list.filter((c) => {
+                const matchCategory = c.category && c.category.toLowerCase() === catLower;
+                const matchTags = c.tags && c.tags.some((t) => t.toLowerCase() === catLower);
+                return Boolean(matchCategory || matchTags);
+            });
         }
 
         return list;
-    }, [communities, activeTab, activeCategory, search]);
+    }, [communities, activeTab, activeCategory, joinedCommunityIds]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
     const totalItems = filtered.length;
@@ -113,75 +136,87 @@ export const CommunityList = () => {
         setCurrentPage(1);
     };
 
-    const handleCreateCommunity = () => {
-        if (!canCreateCommunity) return;
-        if (!useAuthStore.getState().requireVerifiedEmail("tạo cộng đồng")) return;
-        setShowCreateModal(true);
-    };
-
     return (
-        <div className="w-full flex flex-col gap-6 pb-16 animate-fade-in select-none">
-            {showCreateModal && (
-                <CreateCommunityModal onClose={() => setShowCreateModal(false)} />
-            )}
-
-            {/* Community Navigator: Search Bar + Filter Dropdown Bar */}
+        <div className="w-full flex flex-col gap-4 pb-16 select-none">
+            {/* Community Navigator (No search bar, no corner title, 2 tabs, view toggle) */}
             <CommunityNavigator
-                search={search}
-                onSearchChange={setSearch}
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
                 categories={categories}
                 activeCategory={activeCategory}
                 onCategoryChange={handleCategoryChange}
                 joinedCount={joinedCount}
-                canCreateCommunity={canCreateCommunity}
-                onCreateCommunity={handleCreateCommunity}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
             />
 
-            {/* 3. Community Directory 3-Column Grid */}
+            {/* Directory Content: Grid / List / Skeletons / Empty State */}
             {isLoading && communities.length === 0 ? (
-                <div className="w-full flex flex-col items-center justify-center gap-3 py-20 px-4 bg-surface border border-divider-primary rounded-[6px] text-text-muted text-sm text-center">
-                    <FontAwesomeIcon icon={faSpinner} className="text-2xl text-primary animate-spin" />
-                    <p className="text-xs font-semibold text-text-muted">{t('community.loadingCommunities', { defaultValue: 'Đang tải danh sách cộng đồng...' })}</p>
+                <div className="w-full">
+                    {viewMode === "grid" ? (
+                        <CommunityGridSkeleton count={6} />
+                    ) : (
+                        <CommunityListSkeleton count={6} />
+                    )}
                 </div>
             ) : filtered.length > 0 ? (
-                <div className="flex flex-col gap-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                        {paginatedCommunities.map((community, idx) => (
-                            <CommunityGameTile key={`${community.id || community.slug || 'comm'}-${idx}`} community={community} />
-                        ))}
-                    </div>
+                <div className="flex flex-col gap-4">
+                    {viewMode === "grid" ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                            {paginatedCommunities.map((community, idx) => (
+                                <CommunityGameTile
+                                    key={`${community.id || community.slug || 'comm'}-${idx}`}
+                                    community={community}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-1.5">
+                            {paginatedCommunities.map((community, idx) => (
+                                <CommunityListRow
+                                    key={`${community.id || community.slug || 'comm'}-${idx}`}
+                                    community={community}
+                                />
+                            ))}
+                        </div>
+                    )}
 
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                        totalItems={totalItems}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                    />
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="pt-2">
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                                totalItems={totalItems}
+                                itemsPerPage={ITEMS_PER_PAGE}
+                            />
+                        </div>
+                    )}
                 </div>
             ) : (
-                <div className="w-full flex flex-col items-center justify-center gap-2.5 py-16 px-4 bg-surface border border-divider-primary rounded-[6px] text-text-muted text-sm text-center">
-                    <div className="w-12 h-12 rounded-[4px] bg-surface-hover flex items-center justify-center text-xl text-text-faint mb-1">
-                        <FontAwesomeIcon icon={faGamepad} />
+                /* Empty / No Results State (Border-free YouTube / Facebook style) */
+                <div className="w-full flex flex-col items-center justify-center gap-2 py-16 px-4 bg-surface-inner/40 rounded-2xl text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center text-text-faint mb-1">
+                        <Gamepad2 className="w-6 h-6 opacity-40" />
                     </div>
-                    <p className="font-black text-base text-text uppercase tracking-tight">
-                        {t('community.emptyTitle')}
+                    <p className="font-semibold text-sm text-white">
+                        {t('community.emptyTitle', { defaultValue: 'Không có cộng đồng nào phù hợp' })}
                     </p>
-                    <p className="text-text-faint max-w-md text-xs">
-                        {t('community.emptyDesc')}
+                    <p className="text-white/60 max-w-md text-xs">
+                        {t('community.emptyDesc', { defaultValue: 'Thử chọn tab hoặc thể loại khác.' })}
                     </p>
                     <button
                         type="button"
                         onClick={() => {
-                            setSearch("");
                             setActiveCategory(null);
                             setActiveTab("discover");
+                            setCurrentPage(1);
                         }}
-                        className="mt-2 px-3.5 py-1.5 rounded-[4px] bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-colors cursor-pointer border border-primary/20"
+                        className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white font-medium text-xs cursor-pointer transition-colors"
                     >
-                        {t('community.viewAll')}
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{t('community.viewAll', { defaultValue: 'Xem tất cả' })}</span>
                     </button>
                 </div>
             )}
