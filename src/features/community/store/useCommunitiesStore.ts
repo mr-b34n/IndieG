@@ -3,10 +3,10 @@ import { type CommunitiesState, type CommunityData } from "../types";
 import { INITIAL_COMMUNITIES } from "../constants";
 import {
     communitiesApi,
+    communityMembersApi,
     mapCommunityDtoToCommunityData,
     extractCommunityList,
     isGenericTestCommunity,
-    type CommunityDto,
     type CreateCommunityDto,
     type GetCommunitiesParams,
 } from "@/shared/api";
@@ -42,18 +42,17 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
                 });
             });
 
-            const mergedList = Array.from(existingMap.values()).map((c) => ({
-                ...c,
-                joined: joinedIds.has(String(c.id)) ? true : c.joined,
-            }));
-
-            const allJoinedIds = Array.from(
-                new Set([...state.joinedCommunityIds, ...Array.from(joinedIds)])
-            );
+            const mergedList = Array.from(existingMap.values()).map((c) => {
+                const isJoined = joinedIds.has(String(c.id)) || (c.slug ? joinedIds.has(String(c.slug).toLowerCase()) : false);
+                return {
+                    ...c,
+                    joined: isJoined,
+                };
+            });
 
             return {
                 communities: mergedList,
-                joinedCommunityIds: allJoinedIds,
+                joinedCommunityIds: Array.from(joinedIds),
             };
         });
     },
@@ -114,24 +113,40 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
     },
 
     toggleJoin: (id) => {
-        const strId = String(id);
-        const targetComm = get().communities.find((c) => String(c.id) === strId);
+        const strId = String(id).toLowerCase();
+        const targetComm = get().communities.find(
+            (c) => String(c.id).toLowerCase() === strId || (c.slug && c.slug.toLowerCase() === strId)
+        );
         const willBeJoined = targetComm ? !targetComm.joined : true;
+        const commId = targetComm ? String(targetComm.id) : String(id);
+        const commSlug = targetComm?.slug ? String(targetComm.slug).toLowerCase() : undefined;
 
         set((state) => {
-            const nextJoinedSet = new Set(state.joinedCommunityIds);
+            const nextJoinedSet = new Set(state.joinedCommunityIds.map((s) => String(s).toLowerCase()));
+            const targetIdLower = commId.toLowerCase();
             if (willBeJoined) {
                 nextJoinedSet.add(strId);
+                nextJoinedSet.add(targetIdLower);
+                if (commSlug) nextJoinedSet.add(commSlug);
             } else {
                 nextJoinedSet.delete(strId);
+                nextJoinedSet.delete(targetIdLower);
+                if (commSlug) nextJoinedSet.delete(commSlug);
             }
 
             const updatedCommunities = state.communities.map((c) => {
-                if (String(c.id) === strId) {
+                const isMatch =
+                    String(c.id).toLowerCase() === strId ||
+                    (c.slug && c.slug.toLowerCase() === strId) ||
+                    String(c.id).toLowerCase() === targetIdLower;
+                if (isMatch) {
+                    const currentMembers = c.members ?? c.membersCount ?? 1;
+                    const nextMembers = willBeJoined ? currentMembers + 1 : Math.max(0, currentMembers - 1);
                     return {
                         ...c,
                         joined: willBeJoined,
-                        members: willBeJoined ? c.members + 1 : Math.max(0, c.members - 1),
+                        members: nextMembers,
+                        membersCount: nextMembers,
                     };
                 }
                 return c;
@@ -144,16 +159,14 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
         });
 
         // Trigger backend join/leave API
-        if (typeof id === "string" && !id.startsWith("comm_")) {
-            if (willBeJoined) {
-                communitiesApi.join(id).catch(() => {
-                    // Handled gracefully in offline or dev preview
-                });
-            } else {
-                communitiesApi.leave(id).catch(() => {
-                    // Handled gracefully in offline or dev preview
-                });
-            }
+        const apiTargetId = targetComm?.id || id;
+        if (apiTargetId) {
+            const apiCall = willBeJoined
+                ? communityMembersApi.join(String(apiTargetId))
+                : communityMembersApi.leave(String(apiTargetId));
+            apiCall.catch(() => {
+                // Handled gracefully in offline or dev preview
+            });
         }
     },
 
@@ -214,3 +227,14 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
         }
     },
 }));
+
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useCommunitiesStore.setState({
+            communities: INITIAL_COMMUNITIES.filter((c) => !isGenericTestCommunity(c)),
+            joinedCommunityIds: INITIAL_COMMUNITIES.filter((c) => c.joined && !isGenericTestCommunity(c)).map((c) => String(c.id)),
+            isLoading: false,
+            error: null,
+        });
+    });
+}

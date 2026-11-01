@@ -17,7 +17,13 @@ import {
     faGavel,
     faGamepad,
     faArrowUpRightFromSquare,
+    faThumbtack,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+    faDiscord,
+    faSteam,
+    faFacebook,
+} from "@fortawesome/free-brands-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 
 interface CommunityHubSidebarProps {
@@ -52,7 +58,7 @@ export const CommunityHubSidebar = ({
     // 1. Primary community feed & content navigation
     const primaryNavItems = [
         { id: "home", labelVi: "Trang chủ", labelEn: "Home", icon: faHouse },
-        { id: "discussions", labelVi: "Thảo luận", labelEn: "Discussions", icon: faComments },
+        { id: "pinned", labelVi: "Đã ghim", labelEn: "Pinned", icon: faThumbtack },
         { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides", icon: faBook },
         { id: "media", labelVi: "Media", labelEn: "Media", icon: faImages },
         { id: "events", labelVi: "Sự kiện", labelEn: "Events", icon: faCalendarDays },
@@ -61,7 +67,6 @@ export const CommunityHubSidebar = ({
     // 2. Direct visible info & resources navigation (no generic more dropdown)
     const resourceNavItems = [
         { id: "members", labelVi: "Thành viên", labelEn: "Members", icon: faUsers },
-        { id: "rules", labelVi: "Quy tắc", labelEn: "Rules", icon: faShieldHalved },
         { id: "links", labelVi: "Liên kết", labelEn: "Links", icon: faLink },
     ];
 
@@ -222,6 +227,107 @@ export const CommunityHubSidebar = ({
                 )}
 
 
+                {/* 4. SECTION: COMMUNITY LINKS (Moved from Right Rail) */}
+                <div className="w-full flex flex-col gap-1.5 pt-2 border-t border-border/40">
+                    {!isCollapsed ? (
+                        <>
+                            <div className="px-2 py-0.5 text-text-faint">
+                                <span className="text-[10px] font-mono font-bold tracking-widest text-text-faint uppercase">
+                                    {isVi ? "LIÊN KẾT CỘNG ĐỒNG" : "COMMUNITY LINKS"}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1.5 px-1 pt-0.5">
+                                {gameSlug ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                                        title={isVi ? `Trang Game Ludon (${gameName || gameSlug})` : `Ludon Game Page (${gameName || gameSlug})`}
+                                        className="h-8 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                                    >
+                                        <FontAwesomeIcon icon={faGamepad} className="text-xs group-hover:scale-110 transition-transform" />
+                                    </button>
+                                ) : (
+                                    <div
+                                        title={isVi ? "Chưa có trang Game" : "No Game Page linked"}
+                                        className="h-8 rounded-[6px] bg-surface-inner/40 border border-border/30 text-text-faint flex items-center justify-center opacity-40 cursor-not-allowed"
+                                    >
+                                        <FontAwesomeIcon icon={faGamepad} className="text-xs" />
+                                    </div>
+                                )}
+
+                                <a
+                                    href="https://discord.gg/ludon"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Discord Server"
+                                    className="h-8 rounded-[6px] bg-[#5865F2]/10 hover:bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                                >
+                                    <FontAwesomeIcon icon={faDiscord} className="text-xs group-hover:scale-110 transition-transform" />
+                                </a>
+
+                                <a
+                                    href="https://steamcommunity.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Steam Community"
+                                    className="h-8 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover border border-border/50 hover:border-text/50 text-text flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                                >
+                                    <FontAwesomeIcon icon={faSteam} className="text-xs group-hover:scale-110 transition-transform" />
+                                </a>
+
+                                <a
+                                    href="https://facebook.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Facebook Group"
+                                    className="h-8 rounded-[6px] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#1877F2] flex items-center justify-center transition-all cursor-pointer shadow-xs group"
+                                >
+                                    <FontAwesomeIcon icon={faFacebook} className="text-xs group-hover:scale-110 transition-transform" />
+                                </a>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center gap-1.5 pt-1">
+                            {gameSlug && (
+                                <button
+                                    type="button"
+                                    onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                                    title={isVi ? "Trang Game Ludon" : "Ludon Game Page"}
+                                    className="w-8 h-8 rounded-[6px] bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <FontAwesomeIcon icon={faGamepad} className="text-xs" />
+                                </button>
+                            )}
+                            <a
+                                href="https://discord.gg/ludon"
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Discord Server"
+                                className="w-8 h-8 rounded-[6px] bg-[#5865F2]/10 hover:bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center transition-all cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faDiscord} className="text-xs" />
+                            </a>
+                            <a
+                                href="https://steamcommunity.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Steam Community"
+                                className="w-8 h-8 rounded-[6px] bg-surface-inner/60 hover:bg-surface-hover border border-border/50 text-text flex items-center justify-center transition-all cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faSteam} className="text-xs" />
+                            </a>
+                            <a
+                                href="https://facebook.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Facebook Group"
+                                className="w-8 h-8 rounded-[6px] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#1877F2] flex items-center justify-center transition-all cursor-pointer"
+                            >
+                                <FontAwesomeIcon icon={faFacebook} className="text-xs" />
+                            </a>
+                        </div>
+                    )}
+                </div>
             </div>
         </aside>
     );

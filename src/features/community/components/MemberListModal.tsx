@@ -15,43 +15,8 @@ interface MemberListModalProps {
     onUpdateMembers?: (updatedMembers: CommunityMember[]) => void;
 }
 
-const DEFAULT_MEMBERS: CommunityMember[] = [
-    {
-        username: "ghostrider",
-        displayName: "Ghost Rider",
-        avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=GhostRider",
-        role: "owner",
-        joinedAt: "12/05/2025",
-    },
-    {
-        username: "tactical_xeno",
-        displayName: "Xeno Tactical",
-        avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=XenoTactical",
-        role: "admin",
-        joinedAt: "18/06/2025",
-    },
-    {
-        username: "cyber_ninja",
-        displayName: "Cyber Ninja",
-        avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=CyberNinja",
-        role: "mod",
-        joinedAt: "02/08/2025",
-    },
-    {
-        username: "phoenix_down",
-        displayName: "Phoenix Down",
-        avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=PhoenixDown",
-        role: "member",
-        joinedAt: "10/01/2026",
-    },
-    {
-        username: "shadow_blade",
-        displayName: "Shadow Blade",
-        avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=ShadowBlade",
-        role: "member",
-        joinedAt: "14/02/2026",
-    },
-];
+const DEFAULT_MEMBERS: CommunityMember[] = [];
+
 
 export const MemberListModal: React.FC<MemberListModalProps> = ({
     community,
@@ -197,7 +162,7 @@ export const MemberListModal: React.FC<MemberListModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-lg bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="relative w-full max-w-lg bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-modal">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <div className="flex items-center gap-2">

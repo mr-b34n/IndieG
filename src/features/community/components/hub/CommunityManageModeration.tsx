@@ -22,6 +22,7 @@ import {
     useRejectJoinRequestMutation,
     useReportsQuery,
     useDeleteReportMutation,
+    useCommunityModerationLogsQuery,
 } from "@/shared/api/useQueries";
 import { extractMemberList, extractReportList } from "@/shared/api";
 import type { CommunityMemberDto, ReportDto } from "@/shared/api/types";
@@ -299,8 +300,19 @@ export const CommunityManageModeration = ({
         showToast(isVi ? `Đã thăng cấp ${newMod.name} làm Điều hành viên!` : `Promoted ${newMod.name} to Moderator.`);
     };
 
-    // 4. Moderation History Audit Log (Generated dynamically or empty)
-    const modHistory: ModHistoryItem[] = [];
+    // 4. Moderation History Audit Log (from /communities/:id/members/moderation-logs)
+    const { data: logsResponse } = useCommunityModerationLogsQuery(communityId || "");
+    const modHistory: ModHistoryItem[] = useMemo(() => {
+        if (!logsResponse?.data) return [];
+        return logsResponse.data.map((log) => ({
+            id: log.id,
+            actor: log.moderatorId ? `Mod (${log.moderatorId.slice(0, 6)})` : "Moderator",
+            action: log.action,
+            target: log.targetUserId ? `@${log.targetUserId.slice(0, 8)}` : (log.targetPostId ? `Post #${log.targetPostId}` : ""),
+            reason: log.reason,
+            timestamp: new Date(log.createdAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        }));
+    }, [logsResponse]);
 
     const pendingRequestsCount = joinRequests.filter((r) => r.status === "pending").length;
     const pendingReportsCount = reports.filter((r) => r.status === "pending").length;

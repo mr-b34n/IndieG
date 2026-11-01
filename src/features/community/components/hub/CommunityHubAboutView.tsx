@@ -63,35 +63,17 @@ export const CommunityHubAboutView = ({
         },
     ];
 
-    const wikiArticles = [
-        {
-            title: t('hub.communityhubaboutview_2'),
-            category: "Getting Started",
-            reads: "5.4k reads",
-            updated: "2 days ago",
-        },
-        {
-            title: t('hub.communityhubaboutview_3'),
-            category: "Databases",
-            reads: "12.8k reads",
-            updated: "1 week ago",
-        },
-        {
-            title: t('hub.communityhubaboutview_4'),
-            category: "Mechanics",
-            reads: "8.1k reads",
-            updated: "2 weeks ago",
-        },
-    ];
+    const wikiArticles: Array<{ title: string; reads?: string; updated?: string }> = [];
+
 
     const links = [
         ...(gameSlug
             ? [
                   {
-                      title: isVi ? "Trang Game trên IndieG" : "IndieG Game Page",
+                      title: isVi ? "Trang Game trên Ludon" : "Ludon Game Page",
                       desc: isVi
                           ? `Xem chi tiết cấu hình, cẩm nang, đánh giá của ${gameName || communityName}`
-                          : `View specs, guides and reviews on IndieG`,
+                          : `View specs, guides and reviews on Ludon`,
                       url: `/game/${gameSlug}`,
                       icon: faGamepad,
                       isInternal: true,
@@ -159,20 +141,28 @@ export const CommunityHubAboutView = ({
                     </div>
                 </div>
 
-                <div className="flex flex-col divide-y divide-divider-primary/40">
-                    {wikiArticles.map((article, idx) => (
-                        <div key={idx} className="py-3.5 px-2 hover:bg-surface-hover/30 rounded-[4px] flex items-center justify-between gap-3 cursor-pointer">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <FontAwesomeIcon icon={faFileLines} className="text-primary text-xs shrink-0" />
-                                <div className="flex flex-col min-w-0">
-                                    <span className="font-bold text-xs sm:text-sm text-text hover:text-primary transition-colors truncate">{article.title}</span>
-                                    <span className="text-[11px] font-mono text-text-muted">{article.category} · {article.reads}</span>
+                {wikiArticles.length === 0 ? (
+                    <div className="py-12 px-4 flex flex-col items-center justify-center text-center text-text-muted">
+                        <FontAwesomeIcon icon={faFileLines} className="text-2xl text-text-faint/60 mb-2" />
+                        <p className="text-xs font-semibold text-text">{isVi ? "Chưa có tài liệu wiki nào" : "No wiki articles yet"}</p>
+                        <p className="text-[11px] text-text-faint mt-1">{isVi ? "Tài liệu cộng đồng sẽ được cập nhật tại đây." : "Community documentation will be published here."}</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col divide-y divide-divider-primary/40">
+                        {wikiArticles.map((article, idx) => (
+                            <div key={idx} className="py-3.5 px-2 hover:bg-surface-hover/30 rounded-[4px] flex items-center justify-between gap-3 cursor-pointer">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <FontAwesomeIcon icon={faFileLines} className="text-primary text-xs shrink-0" />
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-xs sm:text-sm text-text hover:text-primary transition-colors truncate">{article.title}</span>
+                                        {article.reads && <span className="text-[11px] font-mono text-text-muted">{article.reads}</span>}
+                                    </div>
                                 </div>
+                                {article.updated && <span className="text-[10px] font-mono text-text-faint shrink-0">{article.updated}</span>}
                             </div>
-                            <span className="text-[10px] font-mono text-text-faint shrink-0">{article.updated}</span>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }

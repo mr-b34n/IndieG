@@ -1,7 +1,7 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faCheck, faPen, faTrash, faUsers, faLayerGroup, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faCheck, faPen, faTrash, faUsers, faShieldHalved } from "@fortawesome/free-solid-svg-icons";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityData } from "../types";
 import { useNavigate } from "@tanstack/react-router";
@@ -11,8 +11,6 @@ interface EditCommunityModalProps {
     onClose: () => void;
 }
 
-const CATEGORY_OPTIONS = ["FPS", "RPG", "MOBA", "Survival", "Open World", "Strategy", "Sports", "MMORPG", "Casual", "Fighting"];
-
 export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ community, onClose }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -20,7 +18,6 @@ export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ communit
     const deleteCommunity = useCommunitiesStore((state) => state.deleteCommunity);
 
     const [name, setName] = useState(community.name);
-    const [category, setCategory] = useState(community.category);
     const [description, setDescription] = useState(community.description);
     const [tagsInput, setTagsInput] = useState(community.tags.join(", "));
     const [rulesInput, setRulesInput] = useState(
@@ -41,7 +38,7 @@ export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ communit
 
         updateCommunity(community.id, {
             name: name.trim() || community.name,
-            category,
+            category: community.category || "Gaming",
             description: description.trim(),
             tags,
             rules,
@@ -58,7 +55,7 @@ export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ communit
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-modal">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <h3 className="text-lg font-extrabold text-text flex items-center gap-2">
@@ -88,25 +85,6 @@ export const EditCommunityModal: React.FC<EditCommunityModalProps> = ({ communit
                             className="h-11 px-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-semibold focus:outline-none focus:border-primary transition-all"
                             required
                         />
-                    </div>
-
-                    {/* Category */}
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-text-muted flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faLayerGroup} className="text-primary text-xs" />
-                            <span>{t('community.gameCategory', { defaultValue: 'Thể loại Game' })}</span>
-                        </label>
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="h-11 px-3.5 rounded-2xl border border-border bg-bg text-sm text-text font-semibold focus:outline-none focus:border-primary cursor-pointer transition-all"
-                        >
-                            {CATEGORY_OPTIONS.map((cat) => (
-                                <option key={cat} value={cat}>
-                                    {cat}
-                                </option>
-                            ))}
-                        </select>
                     </div>
 
                     {/* Description */}

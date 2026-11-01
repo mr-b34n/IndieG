@@ -46,7 +46,6 @@ export const CommunityManageSettings = ({
 
     // 2. DISCOVERY SECTION STATE
     const [tags, setTags] = useState("survival, building, ocean, multiplayer, co-op");
-    const [category, setCategory] = useState("Survival Sandbox");
     const [searchVisibility, setSearchVisibility] = useState<"visible" | "hidden">("visible");
 
     // 3. MEMBERSHIP & PRIVACY SECTION STATE (Prompt exact options & 1-sentence explanations)
@@ -269,30 +268,16 @@ export const CommunityManageSettings = ({
                     <span>DISCOVERY</span>
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-text-muted">
-                            {t('hub.communitymanagesettings_212')}
-                        </label>
-                        <input
-                            type="text"
-                            value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                            className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-text-muted">
-                            {t('hub.communitymanagesettings_213')}
-                        </label>
-                        <input
-                            type="text"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
-                        />
-                    </div>
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-text-muted">
+                        {t('hub.communitymanagesettings_212')}
+                    </label>
+                    <input
+                        type="text"
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                        className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
+                    />
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40 mt-1">

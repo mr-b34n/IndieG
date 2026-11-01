@@ -104,8 +104,11 @@ function mapFeedPostToPostData(
 
 export const CommunityHubFeed = ({
     posts,
+    activeFilter,
+    onFilterChange,
     sortMode,
     onSortChange,
+    onPostClick,
     communityId,
     communityName,
     isVi,
@@ -137,7 +140,7 @@ export const CommunityHubFeed = ({
 
     return (
         <div className="w-full flex flex-col gap-3">
-            {/* Feed Header: FB-style Sort Dropdown */}
+            {/* Feed Header: Sort Dropdown */}
             <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/50 select-none">
                 <div className="relative inline-block text-left" ref={sortDropdownRef}>
                     <button
@@ -193,8 +196,8 @@ export const CommunityHubFeed = ({
                     </p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-4">
-                    {posts.map((feedPost) => {
+                <div className="flex flex-col">
+                    {posts.map((feedPost, index) => {
                         const postData = mapFeedPostToPostData(feedPost, communityId, communityName);
                         const isOwner =
                             feedPost.authorName === currentAuthor ||
@@ -202,13 +205,16 @@ export const CommunityHubFeed = ({
                             feedPost.authorHandle === currentAuthor;
 
                         return (
-                            <Post
-                                key={feedPost.id}
-                                post={postData}
-                                isOwner={isOwner}
-                                onDelete={(postId) => deletePost(postId)}
-                                onEdit={(postId, data) => updatePost(postId, data)}
-                            />
+                            <div key={feedPost.id} className="flex flex-col">
+                                {index > 0 && <div className="w-full h-px bg-divider-primary my-1" />}
+                                <Post
+                                    post={postData}
+                                    isOwner={isOwner}
+                                    hideCommunity={true}
+                                    onDelete={(postId) => deletePost(postId)}
+                                    onEdit={(postId, data) => updatePost(postId, data)}
+                                />
+                            </div>
                         );
                     })}
                 </div>
