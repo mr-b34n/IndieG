@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { type AuthState, type AuthUser } from "../types";
 import { authApi, profilesApi, usersApi } from "@/shared/api";
+import { performTokenRefresh, isTokenExpired, getTokenExp } from "@/shared/api/client";
+import { queryClient } from "@/shared/lib/queryClient";
 import { useThemeStore } from "@/shared/store/useThemeStore";
 
 export * from "../types";
@@ -11,13 +13,56 @@ const REFRESH_TOKEN_KEY = "indieg_refresh_token";
 let hasSetupAuthListeners = false;
 let initAuthPromise: Promise<void> | null = null;
 let isInitialized = false;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearTokenRefreshTimer() {
+    if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+    }
+}
+
+function scheduleTokenRefresh(token?: string | null) {
+    clearTokenRefreshTimer();
+    if (!token || typeof window === "undefined") return;
+
+    const exp = getTokenExp(token);
+    let delayMs = 14 * 60 * 1000; // Default 14 mins if token does not contain JWT exp
+
+    if (exp) {
+        // Refresh 60 seconds before token expiration, with a minimum delay of 10 seconds
+        delayMs = Math.max(10_000, (exp * 1000 - Date.now()) - 60_000);
+    }
+
+    refreshTimer = setTimeout(async () => {
+        try {
+            await useAuthStore.getState().refreshTokens();
+        } catch {
+            // Silently caught, retry will happen on next request
+        }
+    }, delayMs);
+}
+
+function extractEmailFromJwt(token?: string | null): string | undefined {
+    if (!token) return undefined;
+    try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+            const payloadStr = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
+            const payload = JSON.parse(payloadStr) as { email?: string };
+            return typeof payload?.email === "string" && payload.email ? payload.email : undefined;
+        }
+    } catch {
+        // Ignore malformed JWT
+    }
+    return undefined;
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     accessToken: null,
     refreshToken: null,
     loading: true,
-    mockLogin: false,
     customAvatar: null,
 
     setCustomAvatar: (avatar) => {
@@ -26,7 +71,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     updateUser: (partial: Partial<AuthUser>) => {
         const currentUser = get().user;
-        if (currentUser) {
+        if (!currentUser) return;
+        const hasChange = Object.entries(partial).some(([key, val]) => {
+            if (val === undefined) return false;
+            return (currentUser as Record<string, unknown>)[key] !== val;
+        });
+        if (hasChange) {
             set({ user: { ...currentUser, ...partial } });
         }
     },
@@ -45,20 +95,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!hasSetupAuthListeners) {
             hasSetupAuthListeners = true;
             window.addEventListener("indieg:token-refreshed", (e: Event) => {
-                const customEv = e as CustomEvent<{ accessToken: string }>;
+                const customEv = e as CustomEvent<{ accessToken: string; refreshToken?: string }>;
                 if (customEv.detail?.accessToken) {
-                    set({ accessToken: customEv.detail.accessToken });
+                    set({
+                        accessToken: customEv.detail.accessToken,
+                        ...(customEv.detail.refreshToken ? { refreshToken: customEv.detail.refreshToken } : {}),
+                    });
+                    scheduleTokenRefresh(customEv.detail.accessToken);
                 }
             });
             window.addEventListener("indieg:session-expired", () => {
-                set({ user: null, accessToken: null, refreshToken: null, mockLogin: false, loading: false });
+                clearTokenRefreshTimer();
+                try {
+                    queryClient.clear();
+                } catch {
+                    // Ignore
+                }
+                set({ user: null, accessToken: null, refreshToken: null, customAvatar: null, loading: false });
+                window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
+            });
+
+            // Automatically check and refresh token when user switches back to this browser tab
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") {
+                    const currentToken = useAuthStore.getState().accessToken;
+                    if (currentToken && isTokenExpired(currentToken)) {
+                        void useAuthStore.getState().refreshTokens();
+                    }
+                }
             });
         }
 
         initAuthPromise = (async () => {
             try {
                 const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
-                const savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+                const savedRefreshToken =
+                    localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem("refresh_token");
 
                 // Clean up any legacy user data stored in localStorage
                 try {
@@ -68,47 +140,92 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     // Ignore storage error
                 }
 
-                if (savedToken) {
+                if (savedToken || savedRefreshToken) {
                     let userObj: AuthUser | null = null;
                     let activeToken: string | null = savedToken;
 
-                    // Fetch fresh profile from backend /profiles/me exactly once
-                    try {
-                        const profile = await profilesApi.getMyProfile();
-                        if (profile && profile.id) {
-                            userObj = {
-                                id: profile.id,
-                                email: (profile as { email?: string }).email || `${profile.username || "user"}@indieg.com`,
-                                username: profile.username || "Gamer",
-                                name: profile.name || profile.username || "Gamer",
-                                avatar_url: profile.avatarUrl || undefined,
-                                avatarUrl: profile.avatarUrl || undefined,
-                                role: (profile as { role?: "admin" | "moderator" | "user" }).role || "user",
-                                isVerified: profile.isVerified === true || profile.isEmailVerified === true,
-                                createdAt: profile.createdAt,
-                            };
+                    // If access token is already expired according to JWT exp, refresh before fetching profile
+                    if (activeToken && isTokenExpired(activeToken)) {
+                        const refreshed = await performTokenRefresh();
+                        if (refreshed) {
+                            activeToken = refreshed;
                         }
-                    } catch (err: unknown) {
-                        const status = (err as { status?: number })?.status;
-                        if (status === 401 && activeToken && !activeToken.startsWith("token_") && !activeToken.startsWith("mock_")) {
-                            // Stale or expired token - clear session
-                            localStorage.removeItem(ACCESS_TOKEN_KEY);
-                            localStorage.removeItem(REFRESH_TOKEN_KEY);
-                            localStorage.removeItem("access_token");
-                            userObj = null;
-                            activeToken = null;
+                    } else if (!activeToken && savedRefreshToken) {
+                        const refreshed = await performTokenRefresh();
+                        if (refreshed) {
+                            activeToken = refreshed;
                         }
                     }
 
-                    set({
-                        user: userObj,
-                        accessToken: activeToken,
-                        refreshToken: activeToken ? (savedRefreshToken || null) : null,
-                        mockLogin: false,
-                        loading: false,
-                    });
+                    // Fetch fresh profile from backend /profiles/me
+                    if (activeToken) {
+                        const tokenEmail = extractEmailFromJwt(activeToken);
+                        try {
+                            const profile = await profilesApi.getMyProfile();
+                            if (profile && profile.id) {
+                                userObj = {
+                                    id: profile.id,
+                                    email: (profile as { email?: string }).email || tokenEmail || `${profile.username || "user"}@ludon.com`,
+                                    username: profile.username || "Gamer",
+                                    name: profile.name || profile.username || "Gamer",
+                                    avatar_url: profile.avatarUrl || undefined,
+                                    avatarUrl: profile.avatarUrl || undefined,
+                                    role: (profile as { role?: "admin" | "moderator" | "user" }).role || "user",
+                                    isVerified: profile.isVerified === true || profile.isEmailVerified === true,
+                                    createdAt: profile.createdAt,
+                                };
+                            }
+                        } catch (err: unknown) {
+                            const status = (err as { status?: number })?.status;
+                            if (status === 401) {
+                                // Attempt token refresh in case token was invalidated on server
+                                const refreshed = await performTokenRefresh();
+                                if (refreshed) {
+                                    activeToken = refreshed;
+                                    const refreshedTokenEmail = extractEmailFromJwt(refreshed);
+                                    try {
+                                        const profile = await profilesApi.getMyProfile();
+                                        if (profile && profile.id) {
+                                            userObj = {
+                                                id: profile.id,
+                                                email: (profile as { email?: string }).email || refreshedTokenEmail || `${profile.username || "user"}@ludon.com`,
+                                                username: profile.username || "Gamer",
+                                                name: profile.name || profile.username || "Gamer",
+                                                avatar_url: profile.avatarUrl || undefined,
+                                                avatarUrl: profile.avatarUrl || undefined,
+                                                role: (profile as { role?: "admin" | "moderator" | "user" }).role || "user",
+                                                isVerified: profile.isVerified === true || profile.isEmailVerified === true,
+                                                createdAt: profile.createdAt,
+                                            };
+                                        }
+                                    } catch {
+                                        activeToken = null;
+                                        userObj = null;
+                                    }
+                                } else {
+                                    activeToken = null;
+                                    userObj = null;
+                                }
+                            }
+                        }
+                    }
+
+                    if (activeToken && userObj) {
+                        scheduleTokenRefresh(activeToken);
+                        const currentRefToken =
+                            localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem("refresh_token");
+                        set({
+                            user: userObj,
+                            accessToken: activeToken,
+                            refreshToken: currentRefToken || null,
+                            loading: false,
+                        });
+                    } else {
+                        clearTokenRefreshTimer();
+                        set({ user: null, accessToken: null, refreshToken: null, loading: false });
+                    }
                 } else {
-                    set({ user: null, accessToken: null, refreshToken: null, loading: false, mockLogin: false });
+                    set({ user: null, accessToken: null, refreshToken: null, loading: false });
                 }
             } catch {
                 set({ user: null, accessToken: null, refreshToken: null, loading: false });
@@ -125,14 +242,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const token = accessToken || "token_" + Math.random().toString(36).substring(2);
         const refToken = refreshToken || "ref_" + Math.random().toString(36).substring(2);
 
+        // Always wipe query cache so no data from a previously logged in account remains
+        try {
+            queryClient.clear();
+        } catch {
+            // Ignore
+        }
+
         if (typeof window !== "undefined") {
             localStorage.setItem(ACCESS_TOKEN_KEY, token);
             localStorage.setItem("access_token", token);
             if (refreshToken) {
                 localStorage.setItem(REFRESH_TOKEN_KEY, refToken);
+                localStorage.setItem("refresh_token", refToken);
             }
             // Ensure no user account information is stored in localStorage
             localStorage.removeItem("indieg_auth_user");
+            localStorage.removeItem("user_custom_avatar");
+            localStorage.removeItem("profile_hidden_sections_me");
+
+            // Dispatch global event for other stores to reset prior state
+            window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
         }
 
         isInitialized = true;
@@ -141,21 +271,62 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             user: userData,
             accessToken: token,
             refreshToken: refToken,
-            mockLogin: !accessToken,
+            customAvatar: null,
             loading: false,
         });
+
+        scheduleTokenRefresh(token);
     },
 
     logout: () => {
+        clearTokenRefreshTimer();
         void authApi.logout().catch(() => {});
 
+        // 1. Clear TanStack Query Cache completely to wipe all profile, posts, communities, bookmarks, friends caches
+        try {
+            queryClient.clear();
+        } catch {
+            // Ignore
+        }
+
+        // 2. Clear all user session tokens and persisted settings from storage
         if (typeof window !== "undefined") {
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
-            localStorage.removeItem("access_token");
-            localStorage.removeItem(REFRESH_TOKEN_KEY);
-            localStorage.removeItem("indieg_auth_user");
-            localStorage.removeItem("user_custom_avatar");
-            localStorage.removeItem("indieg_mock_login");
+            try {
+                localStorage.removeItem(ACCESS_TOKEN_KEY);
+                localStorage.removeItem("access_token");
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+                localStorage.removeItem("refresh_token");
+                localStorage.removeItem("indieg_auth_user");
+                localStorage.removeItem("user_custom_avatar");
+                localStorage.removeItem("ludon_access_token");
+                localStorage.removeItem("indieg_recent_communities");
+
+                // Remove all profile hidden sections and draft keys
+                const keysToRemove: string[] = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && (
+                        k.startsWith("profile_hidden_sections_") ||
+                        k.startsWith("indieg-") ||
+                        k.startsWith("draft_") ||
+                        k.startsWith("user_")
+                    )) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach((k) => localStorage.removeItem(k));
+            } catch {
+                // Ignore storage errors
+            }
+
+            try {
+                sessionStorage.removeItem("indieg_session_expired");
+            } catch {
+                // Ignore storage errors
+            }
+
+            // 3. Dispatch global event for other stores to clean up in-memory data
+            window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
         }
 
         isInitialized = false;
@@ -164,46 +335,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             user: null,
             accessToken: null,
             refreshToken: null,
-            mockLogin: false,
+            customAvatar: null,
+            isVerifyModalOpen: false,
+            verifyModalMessage: null,
             loading: false,
         });
     },
 
     refreshTokens: async () => {
         try {
-            const res = await authApi.refresh();
-            if (res && (res.accessToken || res.token)) {
-                const newToken = res.accessToken || res.token || "";
-                if (typeof window !== "undefined") {
-                    localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
-                    localStorage.setItem("access_token", newToken);
-                }
-                set({ accessToken: newToken });
+            const token = await performTokenRefresh();
+            if (token) {
+                const currentRefreshToken =
+                    typeof window !== "undefined"
+                        ? localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem("refresh_token")
+                        : null;
+                set({
+                    accessToken: token,
+                    ...(currentRefreshToken ? { refreshToken: currentRefreshToken } : {}),
+                });
+                scheduleTokenRefresh(token);
                 return true;
             }
         } catch {
             // Refresh failed
         }
         return false;
-    },
-
-    toggleMockLogin: () => {
-        const { mockLogin, user } = get();
-        if (!mockLogin || !user) {
-            const demoUser: AuthUser = {
-                id: "usr_gamer_demo_1",
-                email: "gamer@indieg.com",
-                username: "IndieGamer",
-                name: "IndieGamer",
-                avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
-                avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
-                isVerified: true,
-                role: "user",
-            };
-            get().login(demoUser);
-        } else {
-            get().logout();
-        }
     },
 
     isVerifyModalOpen: false,
@@ -285,6 +442,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             return { success: true };
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Xác thực email thất bại.";
+            return { success: false, error: message };
+        }
+    },
+
+    resendVerification: async (email?: string) => {
+        const targetEmail = email || get().user?.email;
+        if (!targetEmail) {
+            return { success: false, error: "Không tìm thấy địa chỉ email." };
+        }
+        try {
+            const res = await authApi.resendVerification({ email: targetEmail });
+            return { success: true, message: res?.message };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Không thể gửi email xác thực. Vui lòng thử lại.";
             return { success: false, error: message };
         }
     },
