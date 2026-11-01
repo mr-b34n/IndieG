@@ -57,7 +57,7 @@ export const SearchResultsPage = () => {
 
     // Data stores for client fallback context
     const { posts } = usePostsStore();
-    const { communities, toggleJoinCommunity } = useCommunitiesStore();
+    const { toggleJoinCommunity } = useCommunitiesStore();
     const { followedSlugs, toggleFollowGame } = useGameStore();
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
@@ -65,10 +65,10 @@ export const SearchResultsPage = () => {
     const [usersList, setUsersList] = useState<SearchUser[]>([]);
 
     // Keep client context in ref to avoid re-triggering search effect on background store changes
-    const clientContextRef = useRef({ posts, communities, users: usersList });
+    const clientContextRef = useRef({ posts, communities: [], users: usersList });
     useEffect(() => {
-        clientContextRef.current = { posts, communities, users: usersList };
-    }, [posts, communities, usersList]);
+        clientContextRef.current = { posts, communities: [], users: usersList };
+    }, [posts, usersList]);
 
     // Response state from API
     const [searchData, setSearchData] = useState<SearchResponse>({
