@@ -1,13 +1,3 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useTheme } from '@/shared/hooks/useTheme';
-import { BookmarkList } from '@/features/bookmark';
+import { createFileRoute } from '@tanstack/react-router';
 
-const Bookmark = () => {
-	useTheme("Bookmark");
-
-	return <BookmarkList showHeader />;
-}
-
-export const Route = createFileRoute('/_layout/bookmark/')(
-	{ component: Bookmark }
-)
+export const Route = createFileRoute('/_layout/bookmark/')({});
