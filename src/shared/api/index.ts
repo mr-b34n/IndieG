@@ -1,3 +1,5 @@
+import { apiRequest, performTokenRefresh, isTokenExpired, getTokenExp } from "./client";
+export { performTokenRefresh, isTokenExpired, getTokenExp };
 import {
     type AuthRegisterDto,
     type AuthLoginDto,
@@ -7,7 +9,9 @@ import {
     type AuthLoginResponse,
     type UserProfileDto,
     type UpdateProfileDto,
+    type CheckUsernameResponseDto,
     type UserSessionDto,
+    type UserSessionsResponseDto,
     type ChangePasswordDto,
     type CommunityDto,
     type CreateCommunityDto,
@@ -28,6 +32,7 @@ import {
     type VoteDto,
     type VoteType,
     type GameDto,
+    type UnifiedGameDetailDto,
     type CreateGameDto,
     type UpdateGameDto,
     type GetGamesParams,
@@ -71,39 +76,12 @@ import {
     type RootCommentsResponse,
     type GetReportsParams,
     type SearchParams,
+    type CommunityStatsDto,
+    type CommunityModerationLogDto,
+    type CommunityModerationLogsResponseDto,
+    type UserSettingsDto,
+    type UpdateUserSettingsDto,
 } from "./types";
-
-import {
-    MOCK_USERS,
-    MOCK_CURRENT_USER,
-    getMockUserById,
-    MOCK_COMMUNITY_DTOS,
-    MOCK_COMMUNITY_MEMBERS,
-    getMockCommunityById,
-    MOCK_GAMES,
-    MOCK_GAME_DTOS,
-    MOCK_GUIDES,
-    MOCK_REVIEWS,
-    MOCK_PATCH_NOTES,
-    MOCK_POST_DTOS,
-    getMockPostDtoById,
-    getMockCommentsByPostId,
-    getMockRepliesByCommentId,
-    addMockComment,
-    getMockGuestbookCommentsByProfileId,
-    addMockGuestbookComment,
-    MOCK_NOTIFICATIONS,
-    MOCK_BOOKMARKS,
-    getMockSessions,
-    revokeMockSession,
-    revokeAllMockSessions,
-    getMockReports,
-    getMockReportById,
-    getMockReportHistory,
-    addMockReport,
-    deleteMockReport,
-    resolveMockReport,
-} from "@/mocks";
 
 export * from "./client";
 export * from "./types";
@@ -270,91 +248,83 @@ export function extractReportList(res: unknown): ReportDto[] {
     return [];
 }
 
-/**
- * Standalone Mock Runner
- * Thực thi trực tiếp logic mock data độc lập, loại bỏ hoàn toàn network call tới Backend.
- */
-export async function callMock<T>(
-    mock: T | (() => T | Promise<T>)
-): Promise<T> {
-    return typeof mock === "function"
-        ? (mock as () => T | Promise<T>)()
-        : mock;
+/** Safely extract UserProfileDto from various API response shapes ({ success: true, user: ... }, { data: ... }, flat entity) */
+export function extractUserProfile(res: unknown): UserProfileDto | null {
+    if (!res || typeof res !== "object") return null;
+    const obj = res as Record<string, unknown>;
+    if (obj.user && typeof obj.user === "object" && obj.user !== null) {
+        return obj.user as UserProfileDto;
+    }
+    if (obj.data && typeof obj.data === "object" && obj.data !== null && !Array.isArray(obj.data)) {
+        return obj.data as UserProfileDto;
+    }
+    if ("id" in obj || "username" in obj) {
+        return obj as unknown as UserProfileDto;
+    }
+    return null;
 }
 
-/** Giữ alias tương thích ngược */
-export const callOrMock = async <T>(
-    mockDataOrFn: unknown,
-    mockFallback?: T | (() => T | Promise<T>)
-): Promise<T> => {
-    const target = mockFallback !== undefined ? mockFallback : (mockDataOrFn as T | (() => T | Promise<T>));
-    return callMock<T>(target);
-};
+/** Safely extract UserProfileDto array from various API response shapes */
+export function extractProfileList(res: unknown): UserProfileDto[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res as UserProfileDto[];
+    if (typeof res === "object" && res !== null) {
+        const obj = res as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as UserProfileDto[];
+        if (Array.isArray(obj.items)) return obj.items as UserProfileDto[];
+        if (Array.isArray(obj.profiles)) return obj.profiles as UserProfileDto[];
+        if (Array.isArray(obj.users)) return obj.users as UserProfileDto[];
+        if (obj.data && typeof obj.data === "object") {
+            const nested = obj.data as Record<string, unknown>;
+            if (Array.isArray(nested.data)) return nested.data as UserProfileDto[];
+            if (Array.isArray(nested.items)) return nested.items as UserProfileDto[];
+        }
+    }
+    return [];
+}
+
 
 // =========================================================================
 // 1. AUTH SERVICES (/auth/*)
 // =========================================================================
 export const authApi = {
     register: (data: AuthRegisterDto) =>
-        callMock<AuthLoginResponse>({
-            accessToken: "mock_token_registered",
-            user: { ...MOCK_CURRENT_USER, email: data.email, username: data.username },
-        }),
+        apiRequest<AuthLoginResponse>("/auth/register", { method: "POST", body: data }),
 
-    verifyEmail: (_data: { token: string }) =>
-        callMock<{ message?: string }>({ message: "Email verified successfully" }),
+    verifyEmail: (data: string | { token: string }) => {
+        const token = typeof data === "string" ? data : data.token;
+        return apiRequest<{ message?: string }>("/auth/verify-email", { method: "GET", params: { token } });
+    },
 
     login: (data: AuthLoginDto) =>
-        callMock<AuthLoginResponse>(() => {
-            const emailClean = (data.email || "").toLowerCase().trim();
-            const matchedUser = MOCK_USERS.find(
-                (u) =>
-                    u.email?.toLowerCase() === emailClean ||
-                    u.username.toLowerCase() === emailClean ||
-                    (emailClean.includes("admin") && (u.role === "admin" || u.id === "usr_admin")) ||
-                    (emailClean.includes("unverified") && u.id === "usr_unverified") ||
-                    (emailClean.includes("streamer") && u.id === "user-streamer") ||
-                    (emailClean.includes("elden") && u.id === "user-1") ||
-                    (emailClean.includes("shadow") && u.id === "user-2") ||
-                    (emailClean.includes("gamer") && u.id === "user-me")
-            );
-            const user = matchedUser || {
-                ...MOCK_CURRENT_USER,
-                id: `usr_${Date.now()}`,
-                email: data.email,
-                username: data.email.split("@")[0] || "IndiePlayer",
-                displayName: data.email.split("@")[0] || "IndiePlayer",
-                name: data.email.split("@")[0] || "IndiePlayer",
-            };
-            return {
-                accessToken: "mock_token_" + (user.id || "user"),
-                user,
-            };
-        }),
+        apiRequest<AuthLoginResponse>("/auth/login", { method: "POST", body: data }),
 
     logout: () =>
-        callMock<{ message?: string }>({ message: "Logged out" }),
+        apiRequest<{ message?: string }>("/auth/logout", { method: "POST" }),
 
     me: () =>
-        callMock<UserProfileDto>(MOCK_CURRENT_USER),
+        apiRequest<UserProfileDto>("/auth/me", { method: "GET" }),
 
-    googleLogin: (_data: AuthGoogleLoginDto) =>
-        callMock<AuthLoginResponse>({ accessToken: "mock_google_token", user: MOCK_CURRENT_USER }),
+    googleLogin: (data: AuthGoogleLoginDto) =>
+        apiRequest<AuthLoginResponse>("/auth/google", { method: "POST", body: data }),
 
-    changePassword: (_data: ChangePasswordDto) =>
-        callMock<{ message?: string }>({ message: "Password updated successfully" }),
+    changePassword: (data: ChangePasswordDto) =>
+        apiRequest<{ message?: string }>("/auth/change-password", { method: "POST", body: data }),
 
-    forgotPassword: (_data: AuthForgotPasswordDto) =>
-        callMock<{ message?: string }>({ message: "Reset link sent" }),
+    forgotPassword: (data: AuthForgotPasswordDto) =>
+        apiRequest<{ message?: string }>("/auth/forgot-password", { method: "POST", body: data }),
 
-    resetPassword: (_data: AuthResetPasswordDto) =>
-        callMock<{ message?: string }>({ message: "Password reset successfully" }),
+    resetPassword: (data: AuthResetPasswordDto) =>
+        apiRequest<{ message?: string }>("/auth/reset-password", { method: "POST", body: data }),
 
-    refreshToken: (_data: { refreshToken: string }) =>
-        callMock<{ accessToken: string }>({ accessToken: "mock_token_refreshed" }),
+    refresh: () =>
+        performTokenRefresh().then((token) => ({ accessToken: token || undefined, token: token || undefined })),
 
-    resendVerification: (_data: AuthResendVerificationDto) =>
-        callMock<{ message?: string }>({ message: "Verification email resent" }),
+    refreshToken: (data?: { refreshToken: string }) =>
+        performTokenRefresh(data?.refreshToken).then((token) => ({ accessToken: token || "" })),
+
+    resendVerification: (data: AuthResendVerificationDto) =>
+        apiRequest<{ message?: string }>("/auth/resend-verification", { method: "POST", body: data }),
 };
 
 // =========================================================================
@@ -362,77 +332,127 @@ export const authApi = {
 // =========================================================================
 export const usersApi = {
     getAll: () =>
-        callMock<UserProfileDto[]>(MOCK_USERS),
+        apiRequest<UserProfileDto[]>("/users", { method: "GET" }),
 
     getById: (id: string) =>
-        callMock<UserProfileDto>(() => getMockUserById(id)),
+        apiRequest<UserProfileDto>(`/users/${encodeURIComponent(id)}`, { method: "GET" }),
 
-    getSessions: () =>
-        callMock<UserSessionDto[]>(() => getMockSessions()),
-
-    revokeSession: (sessionId: string) =>
-        callMock<{ message?: string }>(() => {
-            revokeMockSession(sessionId);
-            return { message: "Session revoked" };
+    getSessions: (type?: "active" | "history") =>
+        apiRequest<UserSessionDto[] | UserSessionsResponseDto>("/users/sessions", {
+            method: "GET",
+            params: type ? { type } : undefined,
         }),
+
+    revokeSession: async (sessionId: string) => {
+        try {
+            return await apiRequest<{ message?: string }>(`/users/revoke-session/${encodeURIComponent(sessionId)}`, { method: "PATCH" });
+        } catch {
+            return await apiRequest<{ message?: string }>(`/users/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+        }
+    },
 
     revokeAllSessions: () =>
-        callMock<{ message?: string }>(() => {
-            revokeAllMockSessions();
-            return { message: "All sessions revoked" };
-        }),
+        apiRequest<{ message?: string }>("/users/sessions", { method: "DELETE" }),
+
+    changePassword: (data: ChangePasswordDto) =>
+        apiRequest<{ message?: string }>("/users/change-password", { method: "PATCH", body: data }),
 
     deleteAccount: () =>
-        callMock<{ message?: string }>({ message: "Account deleted" }),
+        apiRequest<{ message?: string }>("/users/me", { method: "DELETE" }),
+
+    getSettings: () =>
+        apiRequest<UserSettingsDto>("/users/me/settings", { method: "GET" }),
+
+    updateSettings: (data: UpdateUserSettingsDto) =>
+        apiRequest<UserSettingsDto>("/users/me/settings", { method: "PATCH", body: data }),
 };
 
 // =========================================================================
 // 3. PROFILE SERVICES (/profiles/*)
 // =========================================================================
 export const profilesApi = {
-    getMe: () =>
-        callMock<UserProfileDto>(() => {
-            if (typeof window !== "undefined") {
-                const token = localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token");
-                if (token && token.startsWith("mock_token_")) {
-                    const targetId = token.replace("mock_token_", "");
-                    const found = MOCK_USERS.find(
-                        (u) => u.id === targetId || u.userId === targetId || String(u.id) === targetId
-                    );
-                    if (found) return found;
-                }
-            }
-            return MOCK_CURRENT_USER;
-        }),
+    getMe: async (): Promise<UserProfileDto> => {
+        const raw = await apiRequest<unknown>("/profiles/me", { method: "GET" });
+        return extractUserProfile(raw) || (raw as UserProfileDto);
+    },
 
     getMyProfile: () => profilesApi.getMe(),
 
-    getByUsername: (username: string) =>
-        callMock<UserProfileDto>(() => {
-            const clean = username.toLowerCase().replace(/^@/, "");
-            return MOCK_USERS.find((u) => u.username.toLowerCase() === clean) || MOCK_CURRENT_USER;
-        }),
+    getByUsername: async (username: string): Promise<UserProfileDto> => {
+        const clean = username.trim().replace(/^@+/, "");
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
 
-    getById: (id: string) =>
-        callMock<UserProfileDto>(() => getMockUserById(id)),
+        if (isUuid) {
+            const raw = await apiRequest<unknown>(`/profiles/${encodeURIComponent(clean)}`, { method: "GET" });
+            const extracted = extractUserProfile(raw);
+            if (extracted) return extracted;
+            return raw as UserProfileDto;
+        }
 
-    search: (query: string, _page = 1, _limit = 10) =>
-        callMock<UserProfileDto[]>(() => {
-            const q = query.toLowerCase();
-            return MOCK_USERS.filter((u) => u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q));
-        }),
+        try {
+            const raw = await apiRequest<unknown>(
+                `/profiles/@${encodeURIComponent(clean)}`,
+                { method: "GET" }
+            );
+            if (raw && typeof raw === "object") {
+                const obj = raw as Record<string, unknown>;
+                if (Array.isArray(obj.data)) {
+                    const match = (obj.data as UserProfileDto[]).find(
+                        (p) => p.username?.toLowerCase() === clean.toLowerCase()
+                    ) || obj.data[0];
+                    if (match) return match as UserProfileDto;
+                }
+            }
+            const extracted = extractUserProfile(raw);
+            if (extracted) return extracted;
+        } catch {
+            // Ignore error
+        }
 
-    updateMe: (data: UpdateProfileDto) =>
-        callMock<UserProfileDto>({ ...MOCK_CURRENT_USER, ...data }),
+        throw new Error(`Profile not found for username: ${username}`);
+    },
+
+    getUserByUsername: (username: string) => profilesApi.getByUsername(username),
+
+    getById: async (id: string): Promise<UserProfileDto> => {
+        const raw = await apiRequest<unknown>(`/profiles/${encodeURIComponent(id)}`, { method: "GET" });
+        const extracted = extractUserProfile(raw);
+        if (extracted) return extracted;
+        return raw as UserProfileDto;
+    },
+
+    getAll: async (params?: { page?: number; limit?: number }): Promise<UserProfileDto[]> => {
+        const raw = await apiRequest<unknown>("/profiles", { method: "GET", params: sanitizePaginationParams(params) });
+        return extractProfileList(raw);
+    },
+
+    search: async (query: string, page = 1, limit = 10): Promise<UserProfileDto[]> => {
+        const raw = await apiRequest<unknown>("/profiles/search", { method: "GET", params: { q: query, page, limit } });
+        return extractProfileList(raw);
+    },
+
+    updateMe: async (data: UpdateProfileDto): Promise<UserProfileDto> => {
+        const raw = await apiRequest<unknown>("/profiles/me", { method: "PATCH", body: data });
+        return extractUserProfile(raw) || (raw as UserProfileDto);
+    },
+
+    updateMyProfile: (data: UpdateProfileDto) =>
+        profilesApi.updateMe(data),
 
     deleteMe: () =>
-        callMock<{ message?: string }>({ message: "Profile deleted" }),
+        apiRequest<{ message?: string }>("/profiles/me", { method: "DELETE" }),
 
-    deleteUser: (_id: string) =>
-        callMock<void>(undefined),
+    deleteUser: (id: string) =>
+        apiRequest<void>(`/profiles/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
     toggleArchived: () =>
-        callMock<{ message?: string; archived?: boolean }>({ message: "Status updated", archived: false }),
+        apiRequest<{ message?: string; archived?: boolean }>("/profiles/archived", { method: "PATCH" }),
+
+    checkUsername: (username: string) =>
+        apiRequest<CheckUsernameResponseDto>("/profiles/check-username", {
+            method: "GET",
+            params: { username },
+        }),
 };
 
 // =========================================================================
@@ -440,180 +460,212 @@ export const profilesApi = {
 // =========================================================================
 export const communitiesApi = {
     create: (data: CreateCommunityDto) =>
-        callMock<CommunityDto>(() => {
-            const slug = data.name.toLowerCase().replace(/\s+/g, "-");
-            const newCom: CommunityDto = {
-                id: slug,
-                slug,
-                name: data.name,
-                description: data.description || "",
-                logo: data.logo,
-                backdrop: data.backdrop,
-                category: data.category || "General",
-                rules: data.rules,
-                tags: data.tags || [],
-                membersCount: 1,
-                onlineNow: 1,
-                joined: true,
-                isJoined: true,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            };
-            return newCom;
-        }),
+        apiRequest<CommunityDto>("/communities", { method: "POST", body: data }),
 
     getAll: (params?: GetCommunitiesParams) =>
-        callMock<CommunityDto[] | { items: CommunityDto[]; total?: number }>(() => {
-            if (params?.type === "joined") {
-                return MOCK_COMMUNITY_DTOS.filter((c) => c.joined);
-            }
-            return MOCK_COMMUNITY_DTOS;
-        }),
+        apiRequest<CommunityDto[] | { items: CommunityDto[]; total?: number }>("/communities", {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }),
 
     getFeatured: () =>
-        callMock<CommunityDto[]>(MOCK_COMMUNITY_DTOS.filter((c) => c.featured)),
+        apiRequest<CommunityDto[]>("/communities/featured", { method: "GET" }),
 
     getPopular: () =>
-        callMock<CommunityDto[]>(MOCK_COMMUNITY_DTOS),
+        apiRequest<CommunityDto[]>("/communities/popular", { method: "GET" }),
 
     getRecent: () =>
-        callMock<CommunityDto[]>(MOCK_COMMUNITY_DTOS),
+        apiRequest<CommunityDto[]>("/communities/recent", { method: "GET" }),
 
     getMyCommunities: () =>
-        callMock<CommunityDto[]>(MOCK_COMMUNITY_DTOS.filter((c) => c.joined)),
+        apiRequest<CommunityDto[]>("/communities/my", { method: "GET" }),
 
     getById: (id: string) =>
-        callMock<CommunityDto>(() => {
-            const target = (id || "").toLowerCase();
-            const found = MOCK_COMMUNITY_DTOS.find((c) =>
-                c.id.toLowerCase() === target ||
-                (c.slug && c.slug.toLowerCase() === target) ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
-                (target === "cs2" && c.id === "cs2-vietnam") ||
-                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
-                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
-                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
-                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
-                (target === "valorant" && c.id === "valorant-vietnam") ||
-                (target === "minecraft" && c.id === "minecraft-vietnam") ||
-                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
-                ((target === "monster-hunter" || target === "mhwilds" || target === "monster-hunter-wilds") && c.id === "monster-hunter-wilds-vn") ||
-                ((target === "genshin" || target === "genshin-impact") && c.id === "genshin-impact-vn") ||
-                ((target === "apex" || target === "apex-legends") && c.id === "apex-legends-vn")
-            );
-            return found || MOCK_COMMUNITY_DTOS[0];
-        }),
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}`, { method: "GET" }),
 
     getBySlug: (slug: string) =>
-        callMock<CommunityDto>(() => {
-            const target = (slug || "").toLowerCase();
-            const found = MOCK_COMMUNITY_DTOS.find((c) =>
-                (c.slug && c.slug.toLowerCase() === target) ||
-                c.id.toLowerCase() === target ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target)
-            );
-            return found || MOCK_COMMUNITY_DTOS[0];
-        }),
+        apiRequest<CommunityDto>(`/communities/slug/${encodeURIComponent(slug)}`, { method: "GET" }),
 
     update: (id: string, data: UpdateCommunityDto) =>
-        callMock<CommunityDto>(() => {
-            const base = getMockCommunityById(id);
-            return { ...base, ...data } as CommunityDto;
-        }),
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    delete: (_id: string) =>
-        callMock<void>(undefined),
+    delete: (id: string) =>
+        apiRequest<void>(`/communities/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+    getStats: (id: string) =>
+        apiRequest<CommunityStatsDto>(`/communities/${encodeURIComponent(id)}/stats`, { method: "GET" }),
+
+    suspend: (id: string) =>
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}/suspend`, { method: "PATCH" }),
+
+    archive: (id: string) =>
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}/archive`, { method: "PATCH" }),
+
+    reactivate: (id: string) =>
+        apiRequest<CommunityDto>(`/communities/${encodeURIComponent(id)}/reactivate`, { method: "PATCH" }),
+
+    join: (id: string) => communityMembersApi.join(id),
+    leave: (id: string) => communityMembersApi.leave(id),
 };
 
 // =========================================================================
 // 5. COMMUNITY MEMBERS SERVICES (/communities/{id}/members/*)
 // =========================================================================
 export const communityMembersApi = {
-    getMembers: (communityId: string, _params?: GetCommunityMembersParams) =>
-        callMock<CommunityMembersResponseDto | CommunityMemberDto[]>(() => {
-            const list = MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === communityId);
-            return list.length > 0 ? list : MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === "cs2-vietnam");
-        }),
+    getMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
 
     searchMembers: (communityId: string, params: SearchCommunityMembersParams) =>
-        callMock<CommunityMemberDto[]>(() => {
-            const list = MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === communityId);
-            const baseList = list.length > 0 ? list : MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === "cs2-vietnam");
-            const q = (params?.query || "").toLowerCase();
-            if (!q) return baseList;
-            return baseList.filter((m) => m.user?.username?.toLowerCase().includes(q) || m.user?.name?.toLowerCase().includes(q));
-        }),
+        apiRequest<CommunityMemberDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members/search`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
 
-    getMyRole: (_communityId: string) =>
-        callMock<{ role: string; status: string }>(() => {
-            if (typeof window !== "undefined") {
-                const token = localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token");
-                if (token && (token.includes("admin") || token.includes("usr_admin"))) {
-                    return { role: "owner", status: "active" };
-                }
-            }
-            return { role: "moderator", status: "active" };
-        }),
+    // Alias for search
+    search: (communityId: string, params: SearchCommunityMembersParams) =>
+        communityMembersApi.searchMembers(communityId, params),
+
+    getPendingMembers: (communityId: string, params?: GetCommunityMembersParams) =>
+        apiRequest<CommunityMembersResponseDto | CommunityMemberDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members/pending`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
+
+    getModerationLogs: (communityId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<CommunityModerationLogsResponseDto>(
+                `/communities/${encodeURIComponent(communityId)}/members/moderation-logs`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
+
+    approveJoinRequest: (communityId: string, memberId?: string, _data?: unknown) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId || "")}/approve`,
+                { method: "PATCH" }
+            ),
+
+    rejectJoinRequest: (communityId: string, memberId?: string, _data?: unknown) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId || "")}/reject`,
+                { method: "PATCH" }
+            ),
+
+    approveMember: (communityId: string, memberId?: string, data?: unknown) =>
+        communityMembersApi.approveJoinRequest(communityId, memberId, data),
+
+    rejectMember: (communityId: string, memberId?: string, data?: unknown) =>
+        communityMembersApi.rejectJoinRequest(communityId, memberId, data),
+
+    me: (communityId: string) =>
+        apiRequest<{ role?: string; status?: string; userId?: string; communityId?: string }>(
+                `/communities/${encodeURIComponent(communityId)}/members/me`,
+                { method: "GET" }
+            ),
+
+    getMyRole: (communityId: string) =>
+        apiRequest<{ role: string; status: string }>(
+                `/communities/${encodeURIComponent(communityId)}/members/me`,
+                { method: "GET" }
+            ),
 
     getBannedMembers: (communityId: string) =>
-        callMock<CommunityMemberDto[]>(() => {
-            const list = MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === communityId && m.status === "banned");
-            return list.length > 0 ? list : MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === "cs2-vietnam" && m.status === "banned");
-        }),
+        apiRequest<CommunityMemberDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members/banned`,
+                { method: "GET" }
+            ),
 
     getMutedMembers: (communityId: string) =>
-        callMock<CommunityMemberDto[]>(() => {
-            const list = MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === communityId && m.status === "muted");
-            return list.length > 0 ? list : MOCK_COMMUNITY_MEMBERS.filter((m) => m.communityId === "cs2-vietnam" && m.status === "muted");
-        }),
+        apiRequest<CommunityMemberDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members/muted`,
+                { method: "GET" }
+            ),
 
     sendInvite: (communityId: string, data: CreateCommunityInviteDto) =>
-        callMock<CommunityInviteDto>({
-            id: `inv-${Date.now()}`,
-            communityId,
-            inviteeId: data.inviteeId,
-            status: "pending",
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<CommunityInviteDto>(
+                `/communities/${encodeURIComponent(communityId)}/members/invites`,
+                { method: "POST", body: data }
+            ),
 
-    getInvites: (_communityId: string) =>
-        callMock<CommunityInviteDto[]>([]),
+    getInvites: (communityId: string) =>
+        apiRequest<CommunityInviteDto[]>(
+                `/communities/${encodeURIComponent(communityId)}/members/invites`,
+                { method: "GET" }
+            ),
 
-    join: (_communityId: string) =>
-        callMock<{ message?: string; joined?: boolean }>({ message: "Joined successfully", joined: true }),
+    join: (communityId: string) =>
+        apiRequest<{ message?: string; joined?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members`,
+                { method: "POST" }
+            ),
 
-    leave: (_communityId: string) =>
-        callMock<{ message?: string; joined?: boolean }>({ message: "Left successfully", joined: false }),
+    leave: (communityId: string) =>
+        apiRequest<{ message?: string; joined?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members`,
+                { method: "PATCH" }
+            ),
 
     assignRole: (communityId: string, memberId: string, role: string) =>
-        callMock<CommunityMemberDto>({
-            communityId,
-            userId: memberId,
-            role: role as "member" | "moderator" | "owner",
-            status: "active",
-            joinedAt: new Date().toISOString(),
-        }),
+        apiRequest<CommunityMemberDto>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/role`,
+                { method: "PATCH", body: { role } }
+            ),
 
-    performAction: (_communityId: string, _data: CommunityMemberActionDto) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Action performed", success: true }),
+    // Alias for role change
+    changeRole: (communityId: string, memberId: string, role: string) =>
+        communityMembersApi.assignRole(communityId, memberId, role),
 
-    kickMember: (_communityId: string, _memberId: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Member kicked", success: true }),
+    performAction: (communityId: string, data: CommunityMemberActionDto) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/actions`,
+                { method: "POST", body: data }
+            ),
 
-    banMember: (_communityId: string, _memberId: string, _reason?: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Member banned", success: true }),
+    kickMember: (communityId: string, memberId: string, reason?: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/kick`,
+                { method: "PATCH", body: reason ? { reason } : undefined }
+            ),
 
-    unbanMember: (_communityId: string, _memberId: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Member unbanned", success: true }),
+    banMember: (communityId: string, memberId: string, dataOrReason?: string | { reason?: string; durationMinutes?: number }) => {
+        const body = typeof dataOrReason === "string" ? { reason: dataOrReason } : dataOrReason;
+        return apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/ban`,
+                { method: "PATCH", body }
+            );
+    },
 
-    muteMember: (_communityId: string, _memberId: string, _durationMinutes?: number) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Member muted", success: true }),
+    unbanMember: (communityId: string, memberId: string, reason?: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/unban`,
+                { method: "PATCH", body: reason ? { reason } : undefined }
+            ),
 
-    unmuteMember: (_communityId: string, _memberId: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Member unmuted", success: true }),
+    muteMember: (communityId: string, memberId: string, muteMinutesOrData?: number | { muteMinutes?: number; durationMinutes?: number }) => {
+        let muteMinutes: number | undefined;
+        if (typeof muteMinutesOrData === "number") {
+            muteMinutes = muteMinutesOrData;
+        } else if (muteMinutesOrData) {
+            muteMinutes = muteMinutesOrData.muteMinutes ?? muteMinutesOrData.durationMinutes;
+        }
+        return apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/mute`,
+                { method: "PATCH", body: muteMinutes ? { muteMinutes } : {} }
+            );
+    },
 
-    transferOwnership: (_communityId: string, _newOwnerIdOrData: string | { newOwnerId: string }) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Ownership transferred", success: true }),
+    unmuteMember: (communityId: string, memberId: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/${encodeURIComponent(memberId)}/unmute`,
+                { method: "PATCH" }
+            ),
+
+    transferOwnership: (communityId: string, newOwnerIdOrData: string | { newOwnerId: string }) =>
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/communities/${encodeURIComponent(communityId)}/members/transfer-ownership`,
+                { method: "PATCH", body: typeof newOwnerIdOrData === "string" ? { newOwnerId: newOwnerIdOrData } : newOwnerIdOrData }
+            ),
 };
 
 // =========================================================================
@@ -629,120 +681,70 @@ export const postsApi = {
         page?: number;
         limit?: number;
     }) =>
-        callMock<PostDto[] | { items: PostDto[]; total?: number; data?: PostDto[] }>(() => {
-            let list = [...MOCK_POST_DTOS];
-            if (params?.communityId) {
-                const target = params.communityId.toLowerCase();
-                list = list.filter((p) => {
-                    const cId = (p.communityId || "").toLowerCase();
-                    return (
-                        cId === target ||
-                        cId.startsWith(target) ||
-                        target.startsWith(cId) ||
-                        (target === "raft" && (cId === "indie-games-vietnam" || cId === "raft")) ||
-                        (target === "cs2" && (cId === "cs2-vietnam" || cId === "cs2")) ||
-                        (target === "elden-ring" && (cId === "elden-ring-vietnam" || cId === "elden-ring")) ||
-                        (target === "wukong" && (cId === "black-myth-wukong-vn" || cId === "black-myth-wukong")) ||
-                        (target === "cyberpunk" && (cId === "cyberpunk-2077-vn" || cId === "cyberpunk-2077"))
-                    );
-                });
-            }
-            if (params?.authorId) {
-                list = list.filter((p) => p.authorId === params.authorId);
-            }
-            return { items: list, data: list, total: list.length };
-        }),
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts", {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }),
 
-    getFeed: (_params?: { page?: number; limit?: number; tab?: string }) =>
-        callMock<PostDto[] | { items: PostDto[]; total?: number; data?: PostDto[] }>(() => ({
-            items: MOCK_POST_DTOS,
-            data: MOCK_POST_DTOS,
-            total: MOCK_POST_DTOS.length,
-        })),
+    getFeed: (params?: { page?: number; limit?: number; tab?: string }) =>
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts/feed", {
+                method: "GET",
+                params: sanitizePaginationParams(params, 50),
+            }),
 
-    getByCommunity: (communityId: string, _params?: { page?: number; limit?: number }) =>
-        callMock<PostDto[] | { items: PostDto[]; total?: number }>(() => {
-            const target = (communityId || "").toLowerCase();
-            const filtered = MOCK_POST_DTOS.filter((p) => {
-                const cId = (p.communityId || "").toLowerCase();
-                return (
-                    cId === target ||
-                    cId.startsWith(target) ||
-                    target.startsWith(cId) ||
-                    (target === "raft" && (cId === "indie-games-vietnam" || cId === "raft")) ||
-                    (target === "cs2" && (cId === "cs2-vietnam" || cId === "cs2")) ||
-                    (target === "elden-ring" && (cId === "elden-ring-vietnam" || cId === "elden-ring")) ||
-                    (target === "wukong" && (cId === "black-myth-wukong-vn" || cId === "black-myth-wukong")) ||
-                    (target === "cyberpunk" && (cId === "cyberpunk-2077-vn" || cId === "cyberpunk")) ||
-                    (target === "valorant" && (cId === "valorant-vietnam" || cId === "valorant")) ||
-                    (target === "minecraft" && (cId === "minecraft-vietnam" || cId === "minecraft")) ||
-                    (target === "rdr2" && (cId === "red-dead-redemption-vn" || cId === "rdr2"))
-                );
-            });
-            return filtered.length > 0 ? filtered : MOCK_POST_DTOS.slice(0, 5);
-        }),
+    getByCommunity: (communityId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>(
+                `/posts/community/${encodeURIComponent(communityId)}`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
 
-    getByAuthor: (authorId: string, _params?: { page?: number; limit?: number }) =>
-        callMock<PostDto[] | { items: PostDto[]; total?: number }>(() =>
-            MOCK_POST_DTOS.filter((p) => p.authorId === authorId || authorId === "me" || authorId === "user-me")
-        ),
+    getByAuthor: (authorId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>(
+                `/posts/author/${encodeURIComponent(authorId)}`,
+                { method: "GET", params: sanitizePaginationParams(params, 50) }
+            ),
 
-    getOne: (id: string) =>
-        callMock<PostDto>(() => getMockPostDtoById(id)),
+    getOne: (id: string | number) =>
+        apiRequest<PostDto>(`/posts/${encodeURIComponent(String(id))}`, { method: "GET" }),
+
+    getPostById: (id: string | number) =>
+        apiRequest<PostDto>(`/posts/${encodeURIComponent(String(id))}`, { method: "GET" }),
+
+    getById: (id: string | number) =>
+        apiRequest<PostDto>(`/posts/${encodeURIComponent(String(id))}`, { method: "GET" }),
 
     create: (data: CreatePostDto) =>
-        callMock<PostDto>(() => {
-            const newPost: PostDto = {
-                id: `post-${Date.now()}`,
-                title: data.title || "",
-                content: data.content,
-                authorId: "user-me",
-                communityId: data.communityId,
-                gameTag: data.gameTag,
-                likes: 1,
-                upvotes: 1,
-                downvotes: 0,
-                score: 1,
-                commentsCount: 0,
-                images: data.images || [],
-                tags: data.tags || [],
-                currentUserVoteType: 1,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                    id: "user-me",
-                    username: "IndieGamer",
-                    name: "Indie Gamer Pro",
-                    displayName: "Indie Gamer Pro",
-                    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=IndieGamer",
-                },
-            };
-            return newPost;
-        }),
+        apiRequest<PostDto>("/posts", { method: "POST", body: data }),
 
-    update: (id: string, data: UpdatePostDto) =>
-        callMock<PostDto>(() => {
-            const existing = getMockPostDtoById(id);
-            return { ...existing, ...data };
-        }),
+    createPost: (data: CreatePostDto) =>
+        apiRequest<PostDto>("/posts", { method: "POST", body: data }),
 
-    delete: (_id: string) =>
-        callMock<void>(undefined),
+    update: (id: string | number, data: UpdatePostDto) =>
+        apiRequest<PostDto>(`/posts/${encodeURIComponent(String(id))}`, { method: "PATCH", body: data }),
 
-    pinPost: (_id: string) =>
-        callMock<PostActionResponse>({ success: true, message: "Post pinned" }),
+    updatePost: (id: string | number, data: UpdatePostDto) =>
+        apiRequest<PostDto>(`/posts/${encodeURIComponent(String(id))}`, { method: "PATCH", body: data }),
 
-    unpinPost: (_id: string) =>
-        callMock<PostActionResponse>({ success: true, message: "Post unpinned" }),
+    delete: (id: string | number) =>
+        apiRequest<void>(`/posts/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
 
-    lockPost: (_id: string) =>
-        callMock<PostActionResponse>({ success: true, message: "Post locked" }),
+    deletePost: (id: string | number) =>
+        apiRequest<void>(`/posts/${encodeURIComponent(String(id))}`, { method: "DELETE" }),
 
-    unlockPost: (_id: string) =>
-        callMock<PostActionResponse>({ success: true, message: "Post unlocked" }),
+    pinPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${encodeURIComponent(String(id))}/pin`, { method: "PATCH" }),
 
-    getPostVoters: (_id: string) =>
-        callMock<UserProfileDto[]>(MOCK_USERS.slice(0, 3)),
+    unpinPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${encodeURIComponent(String(id))}/unpin`, { method: "PATCH" }),
+
+    lockPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${encodeURIComponent(String(id))}/lock`, { method: "PATCH" }),
+
+    unlockPost: (id: string | number) =>
+        apiRequest<PostActionResponse>(`/posts/${encodeURIComponent(String(id))}/unlock`, { method: "PATCH" }),
+
+    getPostVoters: (id: string | number) =>
+        apiRequest<UserProfileDto[]>(`/posts/${encodeURIComponent(String(id))}/voters`, { method: "GET" }),
 };
 
 // =========================================================================
@@ -750,158 +752,93 @@ export const postsApi = {
 // =========================================================================
 export const commentsApi = {
     create: (data: CreateCommentDto) =>
-        callMock<CommentEntity>(() => {
-            let currentUser = MOCK_CURRENT_USER;
-            if (typeof window !== "undefined") {
-                const token = localStorage.getItem("token") || "";
-                if (token.startsWith("mock_token_")) {
-                    const targetId = token.replace("mock_token_", "");
-                    currentUser = getMockUserById(targetId);
-                }
-            }
-            const newComment: CommentEntity = {
-                id: `cmt-${Date.now()}`,
-                postId: data.postId || "post-1",
-                parentId: data.parentId ? String(data.parentId) : null,
-                authorId: currentUser.id,
-                authorName: currentUser.displayName || currentUser.name,
-                authorAvatar: currentUser.avatarUrl || currentUser.avatar,
-                content: data.content,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                likes: 0,
-                upvotes: 0,
-                downvotes: 0,
-                score: 0,
-                image: data.image,
-                author: {
-                    id: currentUser.id,
-                    username: currentUser.username,
-                    name: currentUser.displayName || currentUser.name,
-                    displayName: currentUser.displayName || currentUser.name,
-                    avatar: currentUser.avatarUrl || currentUser.avatar,
-                    avatarUrl: currentUser.avatarUrl || currentUser.avatar,
-                },
-            };
-            addMockComment(newComment);
-            return newComment;
-        }),
+        apiRequest<CommentEntity>("/comments", { method: "POST", body: data }),
 
     getOne: (id: string) =>
-        callMock<CommentEntity>(() => ({
-            id,
-            content: "Bình luận mẫu",
-            authorId: "user-1",
-            createdAt: new Date().toISOString(),
-            likes: 5,
-        })),
+        apiRequest<CommentEntity>(`/comments/${encodeURIComponent(id)}`, { method: "GET" }),
 
     update: (id: string, payload: { content: string }) =>
-        callMock<CommentEntity>(() => ({
-            id,
-            content: payload.content,
-            authorId: "user-me",
-            createdAt: new Date().toISOString(),
-            likes: 0,
-        })),
+        apiRequest<CommentEntity>(`/comments/${encodeURIComponent(id)}`, { method: "PATCH", body: payload }),
 
-    delete: (_id: string) =>
-        callMock<{ message?: string }>({ message: "Comment deleted" }),
+    delete: (id: string) =>
+        apiRequest<{ message?: string }>(`/comments/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-    getRootComments: (params: { postId: string | number; page?: number; limit?: number }) =>
-        callMock<RootCommentsResponse>(() => {
-            const list = getMockCommentsByPostId(params.postId);
-            const page = params.page || 1;
-            const limit = params.limit || 10;
-            return {
-                data: list,
-                items: list,
-                total: list.length,
-                meta: {
-                    total: list.length,
-                    page,
-                    limit,
-                    totalPages: Math.max(1, Math.ceil(list.length / limit)),
-                },
-            };
-        }),
+    getRootComments: (params: { postId: string | number; page?: number; limit?: number }) => {
+        const { postId, ...pagination } = params;
+        const queryParams = sanitizePaginationParams(pagination, 50);
+        return apiRequest<RootCommentsResponse>(
+            `/comments/post/${encodeURIComponent(String(postId))}/root`,
+            { method: "GET", params: queryParams }
+        ).catch(async (err) => {
+            if ((err as { status?: number })?.status === 404) {
+                try {
+                    return await apiRequest<RootCommentsResponse>(
+                        `/comments/post/${encodeURIComponent(String(postId))}`,
+                        { method: "GET", params: queryParams }
+                    );
+                } catch {
+                    return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+                }
+            }
+            return { data: [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
+        });
+    },
 
     getReplyComments: (params: { parentId: string | number; cursor?: string; limit?: number }) =>
-        callMock<ReplyCommentsResponse>(() => {
-            const replies = getMockRepliesByCommentId(params.parentId);
-            return {
-                data: replies,
-                items: replies,
-                total: replies.length,
-                hasMore: false,
-                meta: {
-                    limit: params.limit || 5,
-                    hasNextPage: false,
-                    nextCursor: null,
-                },
-            };
-        }),
+        apiRequest<ReplyCommentsResponse>("/comments/replies", { method: "GET", params: sanitizePaginationParams(params, 5) }),
 
     getReplies: (parentId: string | number, params?: { limit?: number; cursor?: string }) =>
         commentsApi.getReplyComments({ parentId, ...params }),
 
-    pinComment: (_id: string | number) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Comment pinned", success: true }),
+    pinComment: (id: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/comments/${encodeURIComponent(String(id))}/pin`, { method: "PATCH" }),
 
-    unpinComment: (_id: string | number) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Comment unpinned", success: true }),
+    unpinComment: (id: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/comments/${encodeURIComponent(String(id))}/unpin`, { method: "PATCH" }),
 
-    getPostComments: (postId: string, _params?: { page?: number; limit?: number }) =>
-        callMock<CommentEntity[] | { data: CommentEntity[]; total?: number }>(() => getMockCommentsByPostId(postId)),
+    getPostComments: (postId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<CommentEntity[] | { data: CommentEntity[]; total?: number }>(
+            `/comments/post/${encodeURIComponent(postId)}/root`,
+            { method: "GET", params: sanitizePaginationParams(params, 50) }
+        ).catch(async (err) => {
+            if ((err as { status?: number })?.status === 404) {
+                try {
+                    return await apiRequest<CommentEntity[] | { data: CommentEntity[]; total?: number }>(
+                        `/comments/post/${encodeURIComponent(postId)}`,
+                        { method: "GET", params: sanitizePaginationParams(params, 50) }
+                    );
+                } catch {
+                    return [];
+                }
+            }
+            return [];
+        }),
 };
 
 // =========================================================================
 // 8. REPORT SERVICES (/reports/*)
 // =========================================================================
 export const reportsApi = {
-    getAll: (_params?: GetReportsParams) =>
-        callMock<ReportDto[]>(() => getMockReports()),
+    getAll: (params?: GetReportsParams) =>
+        apiRequest<ReportDto[]>("/reports", { method: "GET", params: params as Record<string, unknown> }),
 
     create: (data: CreateReportDto) =>
-        callMock<ReportDto>(() => {
-            const newReport: ReportDto = {
-                id: `rep-${Date.now()}`,
-                targetType: (data.targetType as "post" | "comment") || "post",
-                targetId: data.targetId || data.postId || data.commentId || "",
-                postId: data.postId || (data.targetType === "post" ? data.targetId : undefined),
-                commentId: data.commentId || (data.targetType === "comment" ? data.targetId : undefined),
-                reason: data.reason,
-                status: "pending",
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                reporter: {
-                    id: MOCK_CURRENT_USER.id,
-                    username: MOCK_CURRENT_USER.username,
-                    name: MOCK_CURRENT_USER.name,
-                    avatarUrl: MOCK_CURRENT_USER.avatarUrl,
-                    avatar: MOCK_CURRENT_USER.avatar,
-                },
-            };
-            addMockReport(newReport);
-            return newReport;
-        }),
+        apiRequest<ReportDto>("/reports", { method: "POST", body: data }),
 
     getOne: (id: string) =>
-        callMock<ReportDto>(() => getMockReportById(id)),
+        apiRequest<ReportDto>(`/reports/${encodeURIComponent(id)}`, { method: "GET" }),
 
     getHistory: (id: string) =>
-        callMock<ReportHistoryItemDto[]>(() => getMockReportHistory(id)),
+        apiRequest<ReportHistoryItemDto[]>(`/reports/${encodeURIComponent(id)}/history`, { method: "GET" }),
 
     update: (id: string, reason: string) =>
-        callMock<ReportDto>(() => {
-            const rep = getMockReportById(id);
-            rep.reason = reason;
-            rep.updatedAt = new Date().toISOString();
-            return rep;
-        }),
+        apiRequest<ReportDto>(`/reports/${encodeURIComponent(id)}`, { method: "PATCH", body: { reason } }),
 
     resolve: (id: string, data: ResolveReportDto | string) =>
-        callMock<{ message?: string; success?: boolean }>(() => resolveMockReport(id, data)),
+        apiRequest<{ message?: string; success?: boolean }>(
+                `/reports/${encodeURIComponent(id)}/resolve`,
+                { method: "PATCH", body: typeof data === "string" ? { status: "resolved", moderatorNote: data } : data }
+            ),
 
     dismiss: (id: string) =>
         reportsApi.resolve(id, { status: "dismissed" }),
@@ -916,10 +853,7 @@ export const reportsApi = {
         reportsApi.create({ targetType: "post", targetId: userId, reason }),
 
     delete: (id: string) =>
-        callMock<{ message?: string }>(() => {
-            deleteMockReport(id);
-            return { message: "Report deleted" };
-        }),
+        apiRequest<{ message?: string }>(`/reports/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -927,21 +861,16 @@ export const reportsApi = {
 // =========================================================================
 export const votesApi = {
     getAll: () =>
-        callMock<VoteDto[]>([]),
+        apiRequest<VoteDto[]>("/votes", { method: "GET" }),
 
-    getByPost: (_postId: string | number) =>
-        callMock<VoteDto | { hasVoted?: boolean; score?: number }>({ hasVoted: true, score: 152 }),
+    getByPost: (postId: string | number) =>
+        apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(`/votes/post/${encodeURIComponent(String(postId))}`, { method: "GET" }),
 
-    getMyPostVote: (_postId: string | number) =>
-        callMock<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>({ hasVoted: true, voteType: 1, score: 152 }),
+    getMyPostVote: (postId: string | number) =>
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/post/${encodeURIComponent(String(postId))}/me`, { method: "GET" }),
 
-    votePost: (_postId: string | number, voteType: VoteType = 1) =>
-        callMock<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>({
-            message: "Vote recorded",
-            success: true,
-            score: 152,
-            voteType,
-        }),
+    votePost: (postId: string | number, voteType: VoteType = 1) =>
+        apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(`/votes/post/${encodeURIComponent(String(postId))}`, { method: "POST", body: { voteType } }),
 
     upVotePost: (postId: string | number) =>
         votesApi.votePost(postId, 1),
@@ -949,22 +878,17 @@ export const votesApi = {
     downVotePost: (postId: string | number) =>
         votesApi.votePost(postId, -1),
 
-    deleteVotePost: (_postId: string | number) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Vote removed", success: true }),
+    deleteVotePost: (postId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/votes/${encodeURIComponent(String(postId))}/post`, { method: "DELETE" }),
 
-    getByComment: (_commentId: string | number) =>
-        callMock<VoteDto | { hasVoted?: boolean; score?: number }>({ hasVoted: false, score: 10 }),
+    getByComment: (commentId: string | number) =>
+        apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(`/votes/comment/${encodeURIComponent(String(commentId))}`, { method: "GET" }),
 
-    getMyCommentVote: (_commentId: string | number) =>
-        callMock<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>({ hasVoted: false, voteType: 0, score: 10 }),
+    getMyCommentVote: (commentId: string | number) =>
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/comment/${encodeURIComponent(String(commentId))}/me`, { method: "GET" }),
 
-    voteComment: (_commentId: string | number, voteType: VoteType = 1) =>
-        callMock<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>({
-            message: "Vote recorded",
-            success: true,
-            score: 10,
-            voteType,
-        }),
+    voteComment: (commentId: string | number, voteType: VoteType = 1) =>
+        apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(`/votes/comment/${encodeURIComponent(String(commentId))}`, { method: "POST", body: { voteType } }),
 
     upVoteComment: (commentId: string | number) =>
         votesApi.voteComment(commentId, 1),
@@ -972,8 +896,8 @@ export const votesApi = {
     downVoteComment: (commentId: string | number) =>
         votesApi.voteComment(commentId, -1),
 
-    deleteVoteComment: (_commentId: string | number) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Vote removed", success: true }),
+    deleteVoteComment: (commentId: string | number) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/votes/${encodeURIComponent(String(commentId))}/comment`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -981,185 +905,139 @@ export const votesApi = {
 // =========================================================================
 export const gamesApi = {
     create: (data: CreateGameDto) =>
-        callMock<GameDto>({
-            id: data.slug || "new-game",
-            name: data.name,
-            slug: data.slug || "new-game",
-            appid: data.appid || 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        }),
+        apiRequest<GameDto>("/games", { method: "POST", body: data }),
 
-    getAll: (_params?: GetGamesParams) =>
-        callMock<GameDto[] | { items: GameDto[]; total?: number }>(() => MOCK_GAME_DTOS),
+    getAll: (params?: GetGamesParams) =>
+        apiRequest<GameDto[] | { items: GameDto[]; total?: number }>("/games", { method: "GET", params: sanitizePaginationParams(params, 50) }),
 
     getFeatured: () =>
-        callMock<GameDto[]>(MOCK_GAME_DTOS.slice(0, 3)),
+        apiRequest<GameDto[]>("/games/featured", { method: "GET" }),
 
     getPopular: () =>
-        callMock<GameDto[]>(MOCK_GAME_DTOS),
+        apiRequest<GameDto[]>("/games/popular", { method: "GET" }),
 
     getRecent: () =>
-        callMock<GameDto[]>(MOCK_GAME_DTOS),
+        apiRequest<GameDto[]>("/games/recent", { method: "GET" }),
 
     syncSteam: (appid: number | string) =>
-        callMock<SteamSyncResponse>({ success: true, appid: Number(appid), message: "Steam data synchronized" }),
+        apiRequest<SteamSyncResponse>(`/games/${encodeURIComponent(String(appid))}/sync-steam`, { method: "POST" }),
+
+    search: (q: string, page = 1, limit = 20) =>
+        apiRequest<{ data: (GameDto | SteamSearchResultDto)[]; total: number; page: number; limit: number }>("/games/search", { method: "GET", params: { q, page, limit } }),
 
     searchSteam: (q: string) =>
-        callMock<SteamSearchResultDto[]>(() =>
-            MOCK_GAME_DTOS.filter((g) => g.name.toLowerCase().includes(q.toLowerCase())).map((g) => ({
-                appid: g.appid || 730,
-                name: g.name,
-            }))
-        ),
+        apiRequest<SteamSearchResultDto[]>("/games/search/steam", { method: "GET", params: { q } }),
 
-    importSteamSearch: (_q: string) =>
-        callMock<GameDto | GameDto[]>(MOCK_GAME_DTOS[0]),
+    searchForFeed: (q: string, page = 1, limit = 20) =>
+        apiRequest<{ data: SteamSearchResultDto[]; total: number; page: number; limit: number }>("/games/search/feed", { method: "GET", params: { q, page, limit } }),
+
+    importSteamSearch: (q: string) =>
+        apiRequest<GameDto | GameDto[]>("/games/search/steam/import", { method: "POST", params: { q } }),
 
     importByAppid: (appid: number | string) =>
-        callMock<GameDto>(() => MOCK_GAME_DTOS.find((g) => g.appid === Number(appid)) || MOCK_GAME_DTOS[0]),
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}/import`, { method: "POST" }),
+
+    getUnifiedDetail: (appid: number | string) =>
+        apiRequest<UnifiedGameDetailDto>(`/games/${encodeURIComponent(String(appid))}/unified`, { method: "GET" }),
 
     getExternalData: (appid: number | string) =>
-        callMock<ExternalGameDataDto>(() => {
-            const found = MOCK_GAMES.find((g) => g.appid === Number(appid));
-            return {
-                appid: Number(appid),
-                name: found?.name || "Game",
-                detailedDescription: found?.description,
-                shortDescription: found?.summary,
-                headerImage: found?.bannerUrl,
-            };
-        }),
+        apiRequest<ExternalGameDataDto>(`/games/${encodeURIComponent(String(appid))}/external`, { method: "GET" }),
 
-    refreshExternalData: (_appid: number | string) =>
-        callMock<ExternalGameDataDto | { message?: string; success?: boolean }>({ message: "External data refreshed", success: true }),
+    refreshExternalData: (appid: number | string) =>
+        apiRequest<ExternalGameDataDto | { message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/external/refresh`, { method: "POST" }),
 
     getBySlug: (slug: string) =>
-        callMock<GameDto>(() => MOCK_GAME_DTOS.find((g) => g.slug === slug || g.id === slug) || MOCK_GAME_DTOS[0]),
+        apiRequest<GameDto>(`/games/slug/${encodeURIComponent(slug)}`, { method: "GET" }),
 
     getByAppid: (appid: number | string) =>
-        callMock<GameDto>(() => MOCK_GAME_DTOS.find((g) => g.appid === Number(appid)) || MOCK_GAME_DTOS[0]),
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}`, { method: "GET" }),
 
-    update: (_appid: number | string, data: UpdateGameDto) =>
-        callMock<GameDto>(() => ({ ...MOCK_GAME_DTOS[0], ...data })),
+    update: (appid: number | string, data: UpdateGameDto) =>
+        apiRequest<GameDto>(`/games/${encodeURIComponent(String(appid))}`, { method: "PATCH", body: data }),
 
-    delete: (_appid: number | string) =>
-        callMock<void>(undefined),
+    delete: (appid: number | string) =>
+        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}`, { method: "DELETE" }),
 };
 
 // =========================================================================
 // 11. GAME GUIDES SERVICES (/games/{appid}/guides/*)
 // =========================================================================
 export const gameGuidesApi = {
-    getAll: (appid: number | string, _params?: GetGameGuidesParams) =>
-        callMock<GameGuideDto[] | { items: GameGuideDto[]; total?: number }>(() =>
-            MOCK_GUIDES.filter((g) => g.appid === Number(appid)) || MOCK_GUIDES
-        ),
+    getAll: (appid: number | string, params?: GetGameGuidesParams) =>
+        apiRequest<GameGuideDto[] | { items: GameGuideDto[]; total?: number }>(`/games/${encodeURIComponent(String(appid))}/guides`, { method: "GET", params: sanitizePaginationParams(params, 50) }),
 
     create: (appid: number | string, data: CreateGameGuideDto) =>
-        callMock<GameGuideDto>(() => ({
-            id: `guide-${Date.now()}`,
-            appid: Number(appid),
-            title: data.title,
-            content: data.content,
-            authorId: "user-me",
-            views: 1,
-            likes: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })),
+        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides`, { method: "POST", body: data }),
 
-    getById: (_appid: number | string, id: string) =>
-        callMock<GameGuideDto>(() => MOCK_GUIDES.find((g) => g.id === id) || MOCK_GUIDES[0]),
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "GET" }),
 
-    update: (_appid: number | string, _id: string, data: UpdateGameGuideDto) =>
-        callMock<GameGuideDto>(() => ({ ...MOCK_GUIDES[0], ...data })),
+    update: (appid: number | string, id: string, data: UpdateGameGuideDto) =>
+        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    delete: (_appid: number | string, _id: string) =>
-        callMock<void>(undefined),
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-    like: (_appid: number | string, _id: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Guide liked", success: true }),
+    like: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`, { method: "PATCH" }),
 
-    unlike: (_appid: number | string, _id: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Guide unliked", success: true }),
+    unlike: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`, { method: "DELETE" }),
 
-    recordView: (_appid: number | string, _id: string) =>
-        callMock<{ success?: boolean; views?: number }>({ success: true, views: 100 }),
+    recordView: (appid: number | string, id: string) =>
+        apiRequest<{ success?: boolean; views?: number }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/view`, { method: "POST" }),
 };
 
 // =========================================================================
 // 12. GAME REVIEWS SERVICES (/games/{appid}/reviews/*)
 // =========================================================================
 export const gameReviewsApi = {
-    getAll: (appid: number | string, _params?: GetGameReviewsParams) =>
-        callMock<GameReviewDto[] | { items: GameReviewDto[]; total?: number }>(() =>
-            MOCK_REVIEWS.filter((r) => r.appid === Number(appid)) || MOCK_REVIEWS
-        ),
+    getAll: (appid: number | string, params?: GetGameReviewsParams) =>
+        apiRequest<GameReviewDto[] | { items: GameReviewDto[]; total?: number }>(`/games/${encodeURIComponent(String(appid))}/reviews`, { method: "GET", params: sanitizePaginationParams(params, 50) }),
 
     create: (appid: number | string, data: CreateGameReviewDto) =>
-        callMock<GameReviewDto>(() => ({
-            id: `rev-${Date.now()}`,
-            appid: Number(appid),
-            authorId: "user-me",
-            rating: data.rating,
-            content: data.content,
-            likes: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })),
+        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews`, { method: "POST", body: data }),
 
-    getById: (_appid: number | string, id: string) =>
-        callMock<GameReviewDto>(() => MOCK_REVIEWS.find((r) => r.id === id) || MOCK_REVIEWS[0]),
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "GET" }),
 
     getMyReview: (appid: number | string) =>
-        callMock<GameReviewDto>(() => MOCK_REVIEWS.find((r) => r.appid === Number(appid)) || MOCK_REVIEWS[0]),
+        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/me`, { method: "GET" }),
 
-    update: (_appid: number | string, _id: string, data: UpdateGameReviewDto) =>
-        callMock<GameReviewDto>(() => ({ ...MOCK_REVIEWS[0], ...data })),
+    update: (appid: number | string, id: string, data: UpdateGameReviewDto) =>
+        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    delete: (_appid: number | string, _id: string) =>
-        callMock<void>(undefined),
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-    like: (_appid: number | string, _id: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Review liked", success: true }),
+    like: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`, { method: "PATCH" }),
 
-    unlike: (_appid: number | string, _id: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Review unliked", success: true }),
+    unlike: (appid: number | string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`, { method: "DELETE" }),
 };
 
 // =========================================================================
 // 13. GAME PATCH NOTES SERVICES (/games/{appid}/patch-notes/*)
 // =========================================================================
 export const gamePatchNotesApi = {
-    getAll: (appid: number | string, _params?: GetGamePatchNotesParams) =>
-        callMock<GamePatchNoteDto[] | { items: GamePatchNoteDto[]; total?: number }>(() =>
-            MOCK_PATCH_NOTES.filter((p) => p.appid === Number(appid)) || MOCK_PATCH_NOTES
-        ),
+    getAll: (appid: number | string, params?: GetGamePatchNotesParams) =>
+        apiRequest<GamePatchNoteDto[] | { items: GamePatchNoteDto[]; total?: number }>(`/games/${encodeURIComponent(String(appid))}/patch-notes`, { method: "GET", params: sanitizePaginationParams(params, 50) }),
 
     create: (appid: number | string, data: CreateGamePatchNoteDto) =>
-        callMock<GamePatchNoteDto>(() => ({
-            id: `patch-${Date.now()}`,
-            appid: Number(appid),
-            title: data.title,
-            content: data.content,
-            version: data.version,
-            releaseDate: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })),
+        apiRequest<GamePatchNoteDto>(`/games/${encodeURIComponent(String(appid))}/patch-notes`, { method: "POST", body: data }),
 
-    getLatest: (_appid: number | string) =>
-        callMock<GamePatchNoteDto>(() => MOCK_PATCH_NOTES[0]),
+    getLatest: (appid: number | string) =>
+        apiRequest<GamePatchNoteDto>(`/games/${encodeURIComponent(String(appid))}/patch-notes/latest`, { method: "GET" }),
 
-    getById: (_appid: number | string, id: string) =>
-        callMock<GamePatchNoteDto>(() => MOCK_PATCH_NOTES.find((p) => p.id === id) || MOCK_PATCH_NOTES[0]),
+    getById: (appid: number | string, id: string) =>
+        apiRequest<GamePatchNoteDto>(`/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`, { method: "GET" }),
 
-    update: (_appid: number | string, _id: string, data: UpdateGamePatchNoteDto) =>
-        callMock<GamePatchNoteDto>(() => ({ ...MOCK_PATCH_NOTES[0], ...data })),
+    update: (appid: number | string, id: string, data: UpdateGamePatchNoteDto) =>
+        apiRequest<GamePatchNoteDto>(`/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    delete: (_appid: number | string, _id: string) =>
-        callMock<void>(undefined),
+    delete: (appid: number | string, id: string) =>
+        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}/patch-notes/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -1167,56 +1045,19 @@ export const gamePatchNotesApi = {
 // =========================================================================
 export const guestbookCommentsApi = {
     getByProfileId: (profileId: string) =>
-        callMock<GuestbookCommentDto[]>(() => getMockGuestbookCommentsByProfileId(profileId)),
+        apiRequest<GuestbookCommentDto[]>(`/profiles/${encodeURIComponent(profileId)}/guestbook-comments`, { method: "GET" }),
 
     create: (profileId: string, data: CreateGuestbookCommentDto) =>
-        callMock<GuestbookCommentDto>(() => {
-            let currentUser = MOCK_CURRENT_USER;
-            if (typeof window !== "undefined") {
-                const token = localStorage.getItem("token") || "";
-                if (token.startsWith("mock_token_")) {
-                    const targetId = token.replace("mock_token_", "");
-                    currentUser = getMockUserById(targetId);
-                }
-            }
-            const newComment = {
-                id: `gb-${Date.now()}`,
-                profileId,
-                authorId: currentUser.id,
-                author: {
-                    id: currentUser.id,
-                    username: currentUser.username,
-                    displayName: currentUser.displayName || currentUser.name,
-                    name: currentUser.displayName || currentUser.name,
-                    avatarUrl: currentUser.avatarUrl || currentUser.avatar,
-                    avatar: currentUser.avatarUrl || currentUser.avatar,
-                },
-                authorName: currentUser.displayName || currentUser.name,
-                authorUsername: currentUser.username,
-                authorAvatar: currentUser.avatarUrl || currentUser.avatar,
-                content: data.content,
-                likes: 0,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            };
-            addMockGuestbookComment(profileId, newComment);
-            return newComment;
-        }),
+        apiRequest<GuestbookCommentDto>(`/profiles/${encodeURIComponent(profileId)}/guestbook-comments`, { method: "POST", body: data }),
 
-    update: (_profileId: string, id: string, data: UpdateGuestbookCommentDto) =>
-        callMock<GuestbookCommentDto>({
-            id,
-            authorId: "user-me",
-            content: data.content,
-            createdAt: new Date().toISOString(),
-            likes: 0,
-        }),
+    update: (profileId: string, id: string, data: UpdateGuestbookCommentDto) =>
+        apiRequest<GuestbookCommentDto>(`/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    like: (_profileId: string, _id: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "Liked", success: true }),
+    like: (profileId: string, id: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}/like`, { method: "PATCH" }),
 
-    delete: (_profileId: string, _id: string) =>
-        callMock<void>(undefined),
+    delete: (profileId: string, id: string) =>
+        apiRequest<void>(`/profiles/${encodeURIComponent(profileId)}/guestbook-comments/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -1224,34 +1065,25 @@ export const guestbookCommentsApi = {
 // =========================================================================
 export const bookmarksApi = {
     create: (data: CreateBookmarkDto) =>
-        callMock<BookmarkDto>({
-            id: `bm-${Date.now()}`,
-            userId: "user-me",
-            targetType: data.targetType,
-            targetId: data.targetId,
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<BookmarkDto>("/bookmarks", { method: "POST", body: data }),
 
     getAll: () =>
-        callMock<BookmarkDto[]>(MOCK_BOOKMARKS),
+        apiRequest<BookmarkDto[]>("/bookmarks", { method: "GET" }),
 
     getMyBookmarks: () =>
         bookmarksApi.getAll(),
 
     check: (params: CheckBookmarkParams) =>
-        callMock<{ bookmarked: boolean; id?: string }>(() => {
-            const found = MOCK_BOOKMARKS.find((b) => b.targetType === params.targetType && b.targetId === params.targetId);
-            return { bookmarked: !!found, id: found?.id };
-        }),
+        apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/check", { method: "GET", params }),
 
-    toggle: (_data?: { targetType?: string; targetId?: string }) =>
-        callMock<{ bookmarked: boolean; id?: string }>({ bookmarked: true, id: `bm-${Date.now()}` }),
+    toggle: (data?: { targetType?: string; targetId?: string }) =>
+        apiRequest<{ bookmarked: boolean; id?: string }>("/bookmarks/toggle", { method: "POST", body: data }),
 
-    deleteById: (_id: string) =>
-        callMock<void>(undefined),
+    deleteById: (id: string) =>
+        apiRequest<void>(`/bookmarks/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-    delete: (_targetType: BookmarkTargetType, _targetId: string) =>
-        callMock<void>(undefined),
+    delete: (targetType: BookmarkTargetType, targetId: string) =>
+        apiRequest<void>(`/bookmarks/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -1259,51 +1091,46 @@ export const bookmarksApi = {
 // =========================================================================
 export const libraryGamesApi = {
     getByUserId: (userId: string) =>
-        callMock<LibraryGameDto[]>(
-            MOCK_GAMES.map((g) => ({
-                id: `lib-${g.id}`,
-                userId,
-                appid: g.appid || 730,
-                name: g.name,
-                coverUrl: g.coverUrl,
-                playtimeMinutes: 1200,
-                playtimeTwoWeeksMinutes: 180,
-                lastPlayedAt: new Date().toISOString(),
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-            }))
-        ),
+        apiRequest<LibraryGameDto[]>(`/users/${encodeURIComponent(userId)}/library-games`, { method: "GET" }),
 
-    getMyLibrary: () =>
-        libraryGamesApi.getByUserId("user-me"),
+    getMyLibrary: () => {
+        let userId: string | undefined;
+        if (typeof window !== "undefined") {
+            const token = localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token");
+            if (token) {
+                try {
+                    const parts = token.split(".");
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))) as { sub?: string };
+                        if (typeof payload?.sub === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.sub)) {
+                            userId = payload.sub;
+                        }
+                    }
+                } catch {
+                    // Ignore parse error
+                }
+            }
+        }
+        if (!userId) {
+            return Promise.resolve([]);
+        }
+        return libraryGamesApi.getByUserId(userId);
+    },
 
-    getById: (_id: string) =>
-        callMock<LibraryGameDto>(() => libraryGamesApi.getByUserId("user-me").then((list) => list[0])),
+    getById: (id: string) =>
+        apiRequest<LibraryGameDto>(`/library-games/${encodeURIComponent(id)}`, { method: "GET" }),
 
     create: (data: CreateLibraryGameDto) =>
-        callMock<LibraryGameDto>({
-            id: `lib-${Date.now()}`,
-            userId: "user-me",
-            appid: data.appid,
-            playtimeMinutes: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        }),
+        apiRequest<LibraryGameDto>("/library-games", { method: "POST", body: data }),
 
-    sync: (_data?: Record<string, unknown>) =>
-        callMock<unknown>({ success: true, message: "Library synchronized" }),
+    sync: (data?: Record<string, unknown>) =>
+        apiRequest<unknown>("/library-games/sync", { method: "POST", body: data || {} }),
 
     update: (id: string, data: UpdateLibraryGameDto) =>
-        callMock<LibraryGameDto>({
-            id,
-            userId: "user-me",
-            appid: 730,
-            ...data,
-            updatedAt: new Date().toISOString(),
-        }),
+        apiRequest<LibraryGameDto>(`/library-games/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
 
-    delete: (_id: string) =>
-        callMock<void>(undefined),
+    delete: (id: string) =>
+        apiRequest<void>(`/library-games/${encodeURIComponent(id)}`, { method: "DELETE" }),
 };
 
 // =========================================================================
@@ -1311,61 +1138,43 @@ export const libraryGamesApi = {
 // =========================================================================
 export const friendshipsApi = {
     sendRequest: (data: CreateFriendshipRequestDto) =>
-        callMock<FriendshipDto>({
-            id: `fr-${Date.now()}`,
-            requesterId: "user-me",
-            addresseeId: data.targetUserId,
-            status: "pending",
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<FriendshipDto>("/friendships/requests", { method: "POST", body: data }),
 
     acceptRequest: (id: string) =>
-        callMock<FriendshipDto>({
-            id,
-            requesterId: "user-1",
-            addresseeId: "user-me",
-            status: "accepted",
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<FriendshipDto>(`/friendships/${encodeURIComponent(id)}/accept`, { method: "PATCH" }),
 
-    rejectRequest: (_id: string) =>
-        callMock<{ message?: string }>({ message: "Friend request rejected" }),
+    rejectRequest: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/request`, { method: "DELETE" }),
 
-    cancelRequest: (_id: string) =>
-        callMock<void>(undefined),
+    cancelRequest: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/request`, { method: "DELETE" }),
 
-    unfriend: (_id: string) =>
-        callMock<void>(undefined),
+    unfriend: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/unfriend`, { method: "DELETE" }),
 
     block: (targetUserId: string) =>
-        callMock<FriendshipDto>({
-            id: `blk-${Date.now()}`,
-            requesterId: "user-me",
-            addresseeId: targetUserId,
-            status: "blocked",
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<FriendshipDto>(`/friendships/block/${encodeURIComponent(targetUserId)}`, { method: "POST" }),
 
-    unblock: (_id: string) =>
-        callMock<void>(undefined),
+    unblock: (id: string) =>
+        apiRequest<void>(`/friendships/${encodeURIComponent(id)}/unblock`, { method: "DELETE" }),
 
-    unblockUser: (_targetUserId: string) =>
-        callMock<void>(undefined),
+    unblockUser: (targetUserId: string) =>
+        apiRequest<void>(`/friendships/block/${encodeURIComponent(targetUserId)}`, { method: "DELETE" }),
 
-    checkStatus: (_targetUserId: string) =>
-        callMock<FriendshipStatusDto>({ status: "friends", isFriend: true, isBlocked: false, isPending: false }),
+    checkStatus: (targetUserId: string) =>
+        apiRequest<FriendshipStatusDto>(`/friendships/status/${encodeURIComponent(targetUserId)}`, { method: "GET" }),
 
     getFriends: () =>
-        callMock<UserProfileDto[]>(MOCK_USERS.filter((u) => u.isFriend)),
+        apiRequest<UserProfileDto[]>("/friendships/friends", { method: "GET" }),
 
     getIncomingRequests: () =>
-        callMock<FriendshipDto[]>([]),
+        apiRequest<FriendshipDto[]>("/friendships/requests/incoming", { method: "GET" }),
 
     getOutgoingRequests: () =>
-        callMock<FriendshipDto[]>([]),
+        apiRequest<FriendshipDto[]>("/friendships/requests/outgoing", { method: "GET" }),
 
     getBlocked: () =>
-        callMock<FriendshipDto[]>([]),
+        apiRequest<FriendshipDto[]>("/friendships/blocked", { method: "GET" }),
 };
 
 // =========================================================================
@@ -1373,32 +1182,7 @@ export const friendshipsApi = {
 // =========================================================================
 export const searchApi = {
     search: <T = unknown>(params: SearchParams) =>
-        callMock<T>(() => {
-            const q = (params.q || "").toLowerCase().trim();
-            const games = MOCK_GAME_DTOS.filter((g) => g.name.toLowerCase().includes(q));
-            const communities = MOCK_COMMUNITY_DTOS.filter(
-                (c) => c.name.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q)
-            );
-            const posts = MOCK_POST_DTOS.filter(
-                (p) => p.title?.toLowerCase().includes(q) || p.content.toLowerCase().includes(q)
-            );
-            const users = MOCK_USERS.filter(
-                (u) => u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q)
-            );
-
-            if (params.type === "game") return games as unknown as T;
-            if (params.type === "community") return communities as unknown as T;
-            if (params.type === "post") return posts as unknown as T;
-            if (params.type === "profile") return users as unknown as T;
-
-            return {
-                games: games.slice(0, 5),
-                communities: communities.slice(0, 5),
-                posts: posts.slice(0, 5),
-                users: users.slice(0, 5),
-                total: games.length + communities.length + posts.length + users.length,
-            } as unknown as T;
-        }),
+        apiRequest<T>("/search", { method: "GET", params: sanitizePaginationParams(params, 50) }),
 
     searchGames: (query: string, page?: number, limit?: number) =>
         searchApi.search({ q: query, type: "game", page, limit }),
@@ -1420,59 +1204,39 @@ export const searchApi = {
 // 19. NOTIFICATIONS API (/notifications/*)
 // =========================================================================
 export const notificationsApi = {
-    getAll: (_params?: { userId?: string; page?: number; limit?: number }) =>
-        callMock<NotificationDto[] | { items: NotificationDto[]; total?: number; data?: NotificationDto[] }>(() => ({
-            items: MOCK_NOTIFICATIONS,
-            data: MOCK_NOTIFICATIONS,
-            total: MOCK_NOTIFICATIONS.length,
-        })),
+    getAll: (params?: { userId?: string; page?: number; limit?: number }) =>
+        apiRequest<NotificationDto[] | { items: NotificationDto[]; total?: number }>("/notifications", { method: "GET", params }),
 
     create: (data: CreateNotificationDto) =>
-        callMock<NotificationDto>({
-            id: `notif-${Date.now()}`,
-            userId: data.userId,
-            title: data.title,
-            message: data.message,
-            type: data.type || "system",
-            read: false,
-            createdAt: new Date().toISOString(),
-        }),
+        apiRequest<NotificationDto>("/notifications", { method: "POST", body: data }),
 
-    markAsRead: (_id: string) =>
-        callMock<void>(undefined),
+    markAsRead: (id: string) =>
+        apiRequest<void>(`/notifications/${encodeURIComponent(id)}/read`, { method: "PUT" }),
 
     markAllAsRead: () =>
-        callMock<void>(undefined),
+        apiRequest<void>("/notifications/read-all", { method: "PUT" }),
 
-    delete: (_id: string) =>
-        callMock<void>(undefined),
+    delete: (id: string) =>
+        apiRequest<void>(`/notifications/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
     getUnreadCount: () =>
-        callMock<{ count: number }>({ count: MOCK_NOTIFICATIONS.filter((n) => !n.read).length }),
+        apiRequest<{ count: number }>("/notifications/unread-count", { method: "GET" }),
 };
 
 // =========================================================================
 // 20. STORAGE SERVICES (/storage/*)
 // =========================================================================
 export const storageApi = {
-    getPresignedUrl: (_data: { type: import("../utils/image-processor").UploadType; originalSize: number; originalMimeType: string; postId?: string }) =>
-        callMock<{ presignedUrl: string; fileKey: string }>({
-            presignedUrl: "https://mock-storage.indieg.local/upload",
-            fileKey: `mock_file_${Date.now()}`,
-        }),
+    getPresignedUrl: (data: { type: import("../utils/image-processor").UploadType; originalSize: number; originalMimeType: string; postId?: string }) =>
+        apiRequest<{ presignedUrl: string; fileKey: string }>("/storage/presigned-url", { method: "POST", body: data }),
 
-    deleteFile: (_fileKey: string) =>
-        callMock<{ message?: string; success?: boolean }>({ message: "File deleted", success: true }),
+    deleteFile: (fileKey: string) =>
+        apiRequest<{ message?: string; success?: boolean }>(`/storage/file/${encodeURIComponent(fileKey)}`, { method: "DELETE" }),
 
     confirmUpload: (data: { fileKey: string; type?: string; entityId?: string }) =>
-        callMock<{ message?: string; success?: boolean; url?: string }>({
-            message: "Upload confirmed",
-            success: true,
-            url: `https://mock-storage.indieg.local/${data.fileKey}`,
-        }),
+        apiRequest<{ message?: string; success?: boolean; url?: string }>("/storage/confirm", { method: "POST", body: data }),
 
-    uploadImageToR2: (options: import("../services/upload-service").UploadOptions) =>
-        import("../services/upload-service").then((m) => m.uploadImageToR2(options)),
+    uploadImageToR2: (options: UploadOptions) => uploadImageToR2(options),
 };
 
 export {

@@ -58,6 +58,9 @@ import type {
     CreateNotificationDto,
     SearchParams,
     VoteType,
+    UpdateUserSettingsDto,
+    UserSettingsDto,
+    AuthResendVerificationDto,
 } from "./types";
 
 
@@ -67,6 +70,7 @@ export const QUERY_KEYS = {
     myProfile: ["profiles", "me"] as const,
     profileByUsername: (username: string) => ["profiles", "username", username] as const,
     profilesList: (params?: Record<string, unknown>) => ["profiles", "list", params || {}] as const,
+    checkUsername: (username: string) => ["profiles", "check-username", username] as const,
     userSessions: ["users", "sessions"] as const,
     usersList: ["users", "list"] as const,
 
@@ -86,6 +90,12 @@ export const QUERY_KEYS = {
     communityMemberMe: (communityId: string) => ["communities", communityId, "members", "me"] as const,
     communityMembersSearch: (communityId: string, keyword: string, params?: Record<string, unknown>) =>
         ["communities", communityId, "members", "search", keyword, params || {}] as const,
+    communityStats: (communityId: string) => ["communities", communityId, "stats"] as const,
+    communityModerationLogs: (communityId: string, params?: Record<string, unknown>) =>
+        ["communities", communityId, "members", "moderation-logs", params || {}] as const,
+
+    // User Settings
+    userSettings: ["users", "me", "settings"] as const,
 
     // Comments
     comments: (postId: string, params?: Record<string, unknown>) => ["comments", postId, params || {}] as const,
@@ -212,19 +222,30 @@ export function useDeletePostMutation() {
 // -------------------------------------------------------------
 // 2. Hooks for Profiles
 // -------------------------------------------------------------
-export function useMyProfileQuery(enabled = true) {
+export function useMyProfileQuery(enabled = true, userId?: string) {
     return useQuery({
-        queryKey: QUERY_KEYS.myProfile,
+        queryKey: userId ? (["profiles", "me", userId] as const) : QUERY_KEYS.myProfile,
         queryFn: () => profilesApi.getMyProfile(),
         enabled,
     });
 }
 
 export function useUserProfileQuery(username: string) {
+    const clean = username.trim().replace(/^@+/, "");
     return useQuery({
-        queryKey: QUERY_KEYS.profileByUsername(username),
+        queryKey: QUERY_KEYS.profileByUsername(clean || username),
         queryFn: () => profilesApi.getUserByUsername(username),
-        enabled: Boolean(username) && username !== "me",
+        enabled: Boolean(clean) && clean !== "me" && clean !== "demo",
+    });
+}
+
+export function useCheckUsernameQuery(username: string, enabled = true) {
+    const clean = username.trim().replace(/^@+/, "");
+    return useQuery({
+        queryKey: QUERY_KEYS.checkUsername(clean.toLowerCase()),
+        queryFn: () => profilesApi.checkUsername(clean),
+        enabled: enabled && clean.length >= 3 && clean.length <= 16 && /^[a-zA-Z0-9_]+$/.test(clean),
+        staleTime: 10_000,
     });
 }
 
@@ -240,6 +261,7 @@ export function useUpdateProfileMutation() {
     return useMutation({
         mutationFn: (data: UpdateProfileDto) => profilesApi.updateMyProfile(data),
         onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["profiles", "me"] });
             void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
         },
     });
@@ -259,7 +281,17 @@ export function useCommunitiesQuery(params?: GetCommunitiesParams, options?: { e
 export function useCommunityDetailQuery(id: string) {
     return useQuery({
         queryKey: QUERY_KEYS.communityById(id),
-        queryFn: () => communitiesApi.getById(id),
+        queryFn: async () => {
+            try {
+                return await communitiesApi.getById(id);
+            } catch (err) {
+                try {
+                    return await communitiesApi.getBySlug(id);
+                } catch {
+                    throw err;
+                }
+            }
+        },
         enabled: Boolean(id),
     });
 }
@@ -332,6 +364,55 @@ export function useLeaveCommunityMutation() {
     });
 }
 
+export function useCommunityStatsQuery(communityId: string) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityStats(communityId),
+        queryFn: () => communitiesApi.getStats(communityId),
+        enabled: Boolean(communityId),
+    });
+}
+
+export function useSuspendCommunityMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (communityId: string) => communitiesApi.suspend(communityId),
+        onSuccess: (_data, communityId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(communityId) });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
+        },
+    });
+}
+
+export function useArchiveCommunityMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (communityId: string) => communitiesApi.archive(communityId),
+        onSuccess: (_data, communityId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(communityId) });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
+        },
+    });
+}
+
+export function useReactivateCommunityMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (communityId: string) => communitiesApi.reactivate(communityId),
+        onSuccess: (_data, communityId) => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityById(communityId) });
+            void queryClient.invalidateQueries({ queryKey: ["communities"] });
+        },
+    });
+}
+
+export function useCommunityModerationLogsQuery(communityId: string, params?: { page?: number; limit?: number }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.communityModerationLogs(communityId, params as Record<string, unknown>),
+        queryFn: () => communityMembersApi.getModerationLogs(communityId, params),
+        enabled: Boolean(communityId),
+    });
+}
+
 export function useCommunityMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
     return useQuery({
         queryKey: QUERY_KEYS.communityMembers(communityId, params as Record<string, unknown>),
@@ -369,9 +450,10 @@ export function useApproveJoinRequestMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.approveJoinRequest(communityId, memberId || data?.memberId || data?.userId, data),
+            communityMembersApi.approveJoinRequest(communityId, memberId || data?.memberId || data?.userId || ""),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -380,9 +462,22 @@ export function useRejectJoinRequestMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.rejectJoinRequest(communityId, memberId || data?.memberId || data?.userId, data),
+            communityMembersApi.rejectJoinRequest(communityId, memberId || data?.memberId || data?.userId || ""),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
+        },
+    });
+}
+
+export function useKickMemberMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ communityId, memberId, reason }: { communityId: string; memberId: string; reason?: string }) =>
+            communityMembersApi.kickMember(communityId, memberId, reason),
+        onSuccess: (_data, { communityId }) => {
+            void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -390,10 +485,13 @@ export function useRejectJoinRequestMutation() {
 export function useMuteMemberMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.muteMember(communityId, memberId || data?.memberId || data?.userId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto | { muteMinutes?: number; durationMinutes?: number } }) => {
+            const targetId = memberId || (data as CommunityMemberActionDto)?.memberId || (data as CommunityMemberActionDto)?.userId || "";
+            return communityMembersApi.muteMember(communityId, targetId, data);
+        },
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -405,6 +503,7 @@ export function useUnmuteMemberMutation() {
             communityMembersApi.unmuteMember(communityId, memberId),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -412,10 +511,13 @@ export function useUnmuteMemberMutation() {
 export function useBanMemberMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto }) =>
-            communityMembersApi.banMember(communityId, memberId || data?.memberId || data?.userId, data),
+        mutationFn: ({ communityId, memberId, data }: { communityId: string; memberId?: string; data?: CommunityMemberActionDto | { reason?: string; durationMinutes?: number } }) => {
+            const targetId = memberId || (data as CommunityMemberActionDto)?.memberId || (data as CommunityMemberActionDto)?.userId || "";
+            return communityMembersApi.banMember(communityId, targetId, data);
+        },
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -423,10 +525,11 @@ export function useBanMemberMutation() {
 export function useUnbanMemberMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ communityId, memberId }: { communityId: string; memberId: string }) =>
-            communityMembersApi.unbanMember(communityId, memberId),
+        mutationFn: ({ communityId, memberId, reason }: { communityId: string; memberId: string; reason?: string }) =>
+            communityMembersApi.unbanMember(communityId, memberId, reason),
         onSuccess: (_data, { communityId }) => {
             void queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(communityId) });
         },
     });
 }
@@ -546,10 +649,10 @@ export function useUsersListQuery() {
     });
 }
 
-export function useUserSessionsQuery() {
+export function useUserSessionsQuery(type?: "active" | "history") {
     return useQuery({
-        queryKey: QUERY_KEYS.userSessions,
-        queryFn: () => usersApi.getSessions(),
+        queryKey: type ? [...QUERY_KEYS.userSessions, type] : QUERY_KEYS.userSessions,
+        queryFn: () => usersApi.getSessions(type),
     });
 }
 
@@ -563,9 +666,44 @@ export function useRevokeSessionMutation() {
     });
 }
 
+export function useRevokeAllSessionsMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => usersApi.revokeAllSessions(),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userSessions });
+        },
+    });
+}
+
 export function useChangePasswordMutation() {
     return useMutation({
         mutationFn: (data: ChangePasswordDto) => usersApi.changePassword(data),
+    });
+}
+
+export function useResendVerificationMutation() {
+    return useMutation({
+        mutationFn: (data: AuthResendVerificationDto) => authApi.resendVerification(data),
+    });
+}
+
+export function useUserSettingsQuery(options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: QUERY_KEYS.userSettings,
+        queryFn: () => usersApi.getSettings(),
+        enabled: options?.enabled ?? true,
+    });
+}
+
+export function useUpdateUserSettingsMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: UpdateUserSettingsDto) => usersApi.updateSettings(data),
+        onSuccess: (updated) => {
+            queryClient.setQueryData(QUERY_KEYS.userSettings, updated);
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userSettings });
+        },
     });
 }
 
@@ -693,6 +831,15 @@ export function useGameDetailByAppidQuery(appid: number | string) {
         queryKey: QUERY_KEYS.gameByAppid(appid),
         queryFn: () => gamesApi.getByAppid(appid),
         enabled: Boolean(appid),
+    });
+}
+
+export function useUnifiedGameDetailQuery(appid: number | string | undefined | null) {
+    return useQuery({
+        queryKey: ["games", "unified", String(appid || "")],
+        queryFn: () => gamesApi.getUnifiedDetail(appid!),
+        enabled: Boolean(appid),
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 }
 
@@ -915,10 +1062,11 @@ export function useDeleteGamePatchNoteMutation() {
 // 10. Hooks for Guestbook Comments
 // -------------------------------------------------------------
 export function useGuestbookCommentsQuery(profileId: string, enabled = true) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileId);
     return useQuery({
         queryKey: QUERY_KEYS.guestbookComments(profileId),
         queryFn: () => guestbookCommentsApi.getByProfileId(profileId),
-        enabled: !!profileId && enabled,
+        enabled: isUuid && enabled,
     });
 }
 
@@ -1014,10 +1162,11 @@ export function useToggleBookmarkMutation() {
 // 12. Hooks for Library Games
 // -------------------------------------------------------------
 export function useLibraryGamesQuery(userId: string, enabled = true) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
     return useQuery({
         queryKey: QUERY_KEYS.libraryGames(userId),
         queryFn: () => libraryGamesApi.getByUserId(userId),
-        enabled: !!userId && enabled,
+        enabled: isUuid && enabled,
     });
 }
 
@@ -1196,12 +1345,21 @@ export function useLockPostMutation(postId: string | number) {
 // -------------------------------------------------------------
 // 12. Extended Community & Members Hooks
 // -------------------------------------------------------------
-export function useKickCommunityMemberMutation(communityId: string) {
+export function useKickCommunityMemberMutation(communityId?: string) {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (memberId: string) => communityMembersApi.kickMember(communityId, memberId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["communities", communityId, "members"] });
+        mutationFn: (args: string | { communityId?: string; memberId: string; reason?: string }) => {
+            const cId = typeof args === "string" ? (communityId || "") : (args.communityId || communityId || "");
+            const mId = typeof args === "string" ? args : args.memberId;
+            const reason = typeof args === "object" ? args.reason : undefined;
+            return communityMembersApi.kickMember(cId, mId, reason);
+        },
+        onSuccess: (_data, args) => {
+            const cId = typeof args === "string" ? communityId : (args.communityId || communityId);
+            if (cId) {
+                void queryClient.invalidateQueries({ queryKey: ["communities", cId, "members"] });
+                void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.communityStats(cId) });
+            }
         },
     });
 }
@@ -1413,6 +1571,14 @@ export function useMyCommentVoteQuery(commentId: string | number, options?: { en
         queryKey: QUERY_KEYS.commentVoteMe(commentId),
         queryFn: () => votesApi.getMyCommentVote(commentId),
         enabled: (options?.enabled ?? true) && !!commentId,
+    });
+}
+
+export function useSearchGamesQuery(q: string, page = 1, limit = 20, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: ["games", "search", q, page, limit],
+        queryFn: () => gamesApi.search(q, page, limit),
+        enabled: (options?.enabled ?? true) && !!q && q.trim().length >= 1,
     });
 }
 
