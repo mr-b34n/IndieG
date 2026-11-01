@@ -1,4 +1,4 @@
-# 🎮 IndieG - Nền Tảng Mạng Xã Hội, Thảo Luận & Khám Phá Game Đỉnh Cao
+# 🎮 Ludon - Nền Tảng Mạng Xã Hội, Thảo Luận & Khám Phá Game Đỉnh Cao
 
 ![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -7,7 +7,7 @@
 ![TanStack Router](https://img.shields.io/badge/TanStack_Router-v1-FF4154?style=for-the-badge&logo=react&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-v5-43853D?style=for-the-badge&logo=react&logoColor=white)
 
-**IndieG** là một nền tảng mạng xã hội và trung tâm kết nối cộng đồng game thủ hiện đại, kết hợp giữa phong cách mạng xã hội (Social Feed) và diễn đàn game chuyên sâu (Gaming Hub). Ứng dụng mang đến trải nghiệm toàn diện cho game thủ: từ thảo luận chiến thuật, chia sẻ khoảnh khắc, tìm kiếm tổ đội leo rank (LFG - Looking For Group), khám phá kho game & nhà phát triển indie Việt Nam, đến việc phô diễn cá tính chiến binh và góc máy **Gaming Gear** cực chất.
+**Ludon** là một nền tảng mạng xã hội và trung tâm kết nối cộng đồng game thủ hiện đại, kết hợp giữa phong cách mạng xã hội (Social Feed) và diễn đàn game chuyên sâu (Gaming Hub). Ứng dụng mang đến trải nghiệm toàn diện cho game thủ: từ thảo luận chiến thuật, chia sẻ khoảnh khắc, tìm kiếm tổ đội leo rank (LFG - Looking For Group), khám phá kho game & nhà phát triển indie Việt Nam, đến việc phô diễn cá tính chiến binh và góc máy **Gaming Gear** cực chất.
 
 ---
 

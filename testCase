@@ -1,5 +1,5 @@
-# BỘ TEST CASE KIỂM THỬ TÍNH NĂNG COMMUNITY & LIÊN KẾT TRANG GAME INDIEG
-**Dự án**: IndieG Platform  
+# BỘ TEST CASE KIỂM THỬ TÍNH NĂNG COMMUNITY & LIÊN KẾT TRANG GAME LUDON
+**Dự án**: Ludon Platform  
 **Module**: Community Hub (`/community`, `/community/$communityId`) & Game Hub (`/game/$gameSlug`)  
 **Tài liệu**: Kế hoạch kiểm thử tính năng liên kết Game Hub và dữ liệu Mock Test  
 
@@ -7,9 +7,9 @@
 
 ## 1. TỔNG QUAN TÍNH NĂNG
 1. **Liên kết hai chiều (Bidirectional Linking)**:
-   - Từ trang Cộng đồng (Community Hub) người chơi có thể truy cập trực tiếp vào Trang Chi Tiết Game trên IndieG thông qua:
-     + Nút CTA nổi bật tại Header: **"Trang Game IndieG"** (icon Gamepad).
-     + Widget **"INDIEG GAME HUB"** ở thanh tiện ích bên phải (Right Rail) hiển thị ảnh bìa, điểm đánh giá, nhà phát triển, số lượng người chơi hoạt động và nút truy cập.
+   - Từ trang Cộng đồng (Community Hub) người chơi có thể truy cập trực tiếp vào Trang Chi Tiết Game trên Ludon thông qua:
+     + Nút CTA nổi bật tại Header: **"Trang Game Ludon"** (icon Gamepad).
+     + Widget **"LUDON GAME HUB"** ở thanh tiện ích bên phải (Right Rail) hiển thị ảnh bìa, điểm đánh giá, nhà phát triển, số lượng người chơi hoạt động và nút truy cập.
      + Mục **"COMMUNITY LINKS"** tại Right Rail.
      + Nút lối tắt **"GAME PAGE"** tại Sidebar bên trái.
      + Tab **"Liên kết / Links"** trong phần Giới thiệu (About View).
@@ -24,29 +24,29 @@
 
 ## 2. DANH SÁCH TEST CASES CHI TIẾT
 
-### TC-COM-01: Kiểm tra liên kết từ Community Header sang IndieG Game Page
-- **Mục tiêu**: Đảm bảo nút "Trang Game IndieG" tại Header chuyển hướng đúng đến `/game/$gameSlug`.
+### TC-COM-01: Kiểm tra liên kết từ Community Header sang Ludon Game Page
+- **Mục tiêu**: Đảm bảo nút "Trang Game Ludon" tại Header chuyển hướng đúng đến `/game/$gameSlug`.
 - **Tiền điều kiện**: Người dùng truy cập cộng đồng bất kỳ có liên kết game (ví dụ: `/community/cs2-vietnam` hoặc `/community/cs2`).
 - **Các bước thực hiện**:
   1. Mở trang `/community/cs2-vietnam`.
   2. Quan sát khu vực Header bên phải nút "Đã tham gia / Tham gia".
-  3. Kiểm tra hiển thị nút có icon tay cầm game `faGamepad` và nhãn `"Trang Game IndieG"`.
-  4. Nhấp vào nút "Trang Game IndieG".
+  3. Kiểm tra hiển thị nút có icon tay cầm game `faGamepad` và nhãn `"Trang Game Ludon"`.
+  4. Nhấp vào nút "Trang Game Ludon".
 - **Kết quả mong đợi**:
   - URL chuyển hướng tức thì sang `/game/counter-strike-2`.
   - Trang Game Detail hiển thị đầy đủ thông tin: Counter-Strike 2, Valve, cấu hình máy, điểm đánh giá.
 
 ---
 
-### TC-COM-02: Kiểm tra Widget "INDIEG GAME HUB" ở Right Rail
+### TC-COM-02: Kiểm tra Widget "LUDON GAME HUB" ở Right Rail
 - **Mục tiêu**: Xác thực widget thẻ game bên cột phải hiển thị đúng thông tin và điều hướng mượt mà.
 - **Tiền điều kiện**: Truy cập `/community/elden-ring-vietnam` trên màn hình desktop.
 - **Các bước thực hiện**:
   1. Mở trang `/community/elden-ring-vietnam`.
   2. Nhìn sang cột Right Rail (bên phải).
-  3. Kiểm tra khối widget đầu tiên có tiêu đề `"INDIEG GAME HUB"`.
+  3. Kiểm tra khối widget đầu tiên có tiêu đề `"LUDON GAME HUB"`.
   4. Kiểm tra ảnh bìa game, tên game ("ELDEN RING"), điểm đánh giá (4.9), nhà phát triển ("FromSoftware Inc.") và trạng thái "Đang chơi: 42,500+".
-  5. Nhấp vào nút "XEM TRANG GAME TRÊN INDIEG →".
+  5. Nhấp vào nút "XEM TRANG GAME TRÊN LUDON →".
 - **Kết quả mong đợi**:
   - Chuyển hướng thành công đến `/game/elden-ring`.
 
@@ -69,12 +69,12 @@
 ---
 
 ### TC-COM-04: Kiểm tra thẻ Game trong Tab Links của About View
-- **Mục tiêu**: Đảm bảo tab Links hiển thị card nổi bật liên kết trang game IndieG.
+- **Mục tiêu**: Đảm bảo tab Links hiển thị card nổi bật liên kết trang game Ludon.
 - **Tiền điều kiện**: Truy cập `/community/indie-games-vietnam`.
 - **Các bước thực hiện**:
   1. Nhấp vào mục "Liên kết" (Links) ở Sidebar hoặc Right Rail (hoặc truy cập `/community/indie-games-vietnam?nav=links`).
   2. Kiểm tra phần "LIÊN KẾT NỔI BẬT":
-     - Khối banner "Trang Game trên IndieG" với tag "OFFICIAL GAME PAGE" và nút "TRUY CẬP TRANG GAME →".
+     - Khối banner "Trang Game trên Ludon" với tag "OFFICIAL GAME PAGE" và nút "TRUY CẬP TRANG GAME →".
   3. Nhấp vào nút "TRUY CẬP TRANG GAME →".
 - **Kết quả mong đợi**:
   - Điều hướng thành công đến `/game/raft`.
@@ -102,7 +102,7 @@
   3. Kiểm tra bên cạnh thể loại (Category) có chip `🎮 {Tên Game}`.
   4. Nhấp trực tiếp vào chip Game trên card.
 - **Kết quả mong đợi**:
-  - Ngăn không kích hoạt sự kiện click thẻ cộng đồng, chuyển hướng trực tiếp đến trang chi tiết của game đó trên IndieG.
+  - Ngăn không kích hoạt sự kiện click thẻ cộng đồng, chuyển hướng trực tiếp đến trang chi tiết của game đó trên Ludon.
 
 ---
 
@@ -139,7 +139,7 @@
   1. Nhấp vào tab "Sự kiện" (`?nav=events`).
   2. Kiểm tra danh sách sự kiện sắp diễn ra và sự kiện nổi bật.
 - **Kết quả mong đợi**:
-  - Hiển thị các sự kiện giải đấu thực tế (ví dụ: *"Giải đấu IndieG Premier Cup Mùa Thu 2024 - Tổng thưởng 20.000.000 VNĐ"*).
+  - Hiển thị các sự kiện giải đấu thực tế (ví dụ: *"Giải đấu Ludon Premier Cup Mùa Thu 2024 - Tổng thưởng 20.000.000 VNĐ"*).
   - Hiển thị ngày tổ chức, thời gian, số lượng đội/người tham gia.
 
 ---
