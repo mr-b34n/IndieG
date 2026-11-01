@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.0 TypeScript definitions & UI Mappers for IndieG Backend Services
+ * OpenAPI 3.0 TypeScript definitions & UI Mappers for Ludon Backend Services
  */
 import { DEFAULT_GAME_LOGO, DEFAULT_BG, DEFAULT_AVATAR } from "@/shared/constants/images";
 
@@ -44,8 +44,10 @@ export interface UserProfileDto {
     username: string;
     name: string;
     avatarUrl?: string;
+    customAvatar?: string;
     coverUrl?: string;
     bio?: string | Record<string, unknown> | unknown[];
+    gear?: Record<string, string>;
     rank?: string;
     status?: string;
     archived?: boolean;
@@ -56,29 +58,95 @@ export interface UserProfileDto {
     updatedAt?: string;
 }
 
+export interface CheckUsernameResponseDto {
+    username: string;
+    exists: boolean;
+    available: boolean;
+}
+
 export interface UpdateProfileDto {
     username?: string;
     name?: string;
     bio?: string | Record<string, unknown> | unknown[];
     avatarUrl?: string;
     coverUrl?: string;
+    gear?: Record<string, string>;
 }
 
 export interface UserSessionDto {
     id: string;
     user_id: string;
     userAgent?: string;
-    ip_address: string;
-    token_hash: string;
-    token_version: number;
-    expires_at: string;
-    revoked_at?: string;
-    created_at: string;
+    ip_address?: string;
+    token_hash?: string;
+    token_version?: number;
+    expires_at?: string;
+    revoked_at?: string | null;
+    created_at?: string;
+    browser?: string;
+    os?: string;
+    device?: string;
+    ip?: string;
+    isCurrent?: boolean;
+    isRevoked?: boolean;
+    lastActive?: string;
+}
+
+export interface UserSessionsResponseDto {
+    active?: UserSessionDto[];
+    history?: UserSessionDto[];
 }
 
 export interface ChangePasswordDto {
     oldPassword: string;
     newPassword: string;
+}
+
+export type UserSettingsTheme = "system" | "light" | "dark";
+export type UserSettingsLanguage = "vi" | "en";
+export type UserSettingsProfileVisibility = "public" | "community" | "private";
+export type UserSettingsFeedSorting = "hot" | "new" | "top";
+
+export interface UserSettingsNotificationDto {
+    email?: boolean;
+    push?: boolean;
+    comment?: boolean;
+    reply?: boolean;
+    mention?: boolean;
+    community?: boolean;
+}
+
+export interface UserSettingsPrivacyDto {
+    profileVisibility?: UserSettingsProfileVisibility;
+    onlineStatus?: boolean;
+    allowMessages?: boolean;
+    allowMentions?: boolean;
+}
+
+export interface UserSettingsContentDto {
+    showNsfw?: boolean;
+    autoplayMedia?: boolean;
+    defaultFeedSorting?: UserSettingsFeedSorting;
+}
+
+export interface UserSettingsDto {
+    id?: string;
+    userId?: string;
+    theme?: UserSettingsTheme;
+    language?: UserSettingsLanguage;
+    notifications?: UserSettingsNotificationDto;
+    privacy?: UserSettingsPrivacyDto;
+    content?: UserSettingsContentDto;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface UpdateUserSettingsDto {
+    theme?: UserSettingsTheme;
+    language?: UserSettingsLanguage;
+    notifications?: UserSettingsNotificationDto;
+    privacy?: UserSettingsPrivacyDto;
+    content?: UserSettingsContentDto;
 }
 
 export interface CommunityDto {
@@ -205,10 +273,47 @@ export interface CreateCommunityInviteDto {
     email?: string;
 }
 
+export interface CommunityStatsDto {
+    totalMembers: number;
+    activeMembers: number;
+    pendingMembers: number;
+    bannedMembers: number;
+    onlineNow: number;
+}
+
+export interface CommunityModerationLogDto {
+    id: string;
+    communityId: string;
+    moderatorId: string;
+    targetUserId?: string;
+    targetPostId?: string;
+    action: string;
+    reason?: string;
+    createdAt: string;
+}
+
+export interface CommunityModerationLogsResponseDto {
+    data: CommunityModerationLogDto[];
+    meta: {
+        total: number;
+        limit: number;
+        page: number;
+        totalPages: number;
+    };
+}
+
+export interface PostCommunityDto {
+    id: string;
+    name: string;
+    logo?: string;
+    backdrop?: string;
+}
+
 export interface PostDto {
     id: string;
     authorId: string;
     communityId: string;
+    community?: PostCommunityDto | null;
     user?: {
         id?: string;
         username?: string;
@@ -488,11 +593,45 @@ export interface GameDto {
     [key: string]: unknown;
 }
 
+export interface PlatformGameInfoDto {
+    exists: boolean;
+    slug: string | null;
+    communityId: string | null;
+}
+
+export interface UnifiedGameDetailDto {
+    appid: number;
+    name: string;
+    type?: string;
+    shortDescription?: string;
+    aboutTheGame?: string;
+    headerImage?: string;
+    capsuleImage?: string;
+    background?: string;
+    backgroundRaw?: string;
+    screenshots?: { id: number; thumbnail: string; full: string }[];
+    developers?: string[];
+    publishers?: string[];
+    genres?: { id: string; description: string }[];
+    categories?: { id: number; description: string }[];
+    releaseDate?: { comingSoon: boolean; date: string } | null;
+    platforms?: { windows: boolean; mac: boolean; linux: boolean } | null;
+    isFree?: boolean;
+    metacritic?: { score: number; url: string } | null;
+    recommendations?: { total: number } | null;
+    achievements?: { total: number } | null;
+    platform?: PlatformGameInfoDto;
+    steamAvailable?: boolean;
+    [key: string]: unknown;
+}
+
 export interface SteamSearchResultDto {
     appid: number;
     name: string;
     icon?: string;
     logo?: string;
+    thumbnail?: string;
+    platform?: PlatformGameInfoDto;
     [key: string]: unknown;
 }
 
@@ -694,7 +833,10 @@ export interface GetGamePatchNotesParams {
  * Adapter Mappers: Safely convert backend DTOs into frontend UI models
  * handling all optional / missing fields gracefully without runtime errors.
  */
-export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorAvatar = "") {
+export function mapPostDtoToPostData(rawInput: PostDto, authorName = "Gamer", authorAvatar = "") {
+    const dto = (rawInput && typeof rawInput === "object" && "data" in rawInput && (rawInput as { data?: PostDto }).data)
+        ? (rawInput as { data: PostDto }).data
+        : rawInput;
     const rawAuthor = (dto as { author?: unknown }).author;
     const userObj = dto.user || (typeof rawAuthor === "object" && rawAuthor !== null ? (rawAuthor as { id?: string; username?: string; name?: string; displayName?: string; avatar?: string; avatarUrl?: string; avatar_url?: string; handle?: string }) : null) || (dto as { authorInfo?: { id?: string; username?: string; name?: string; avatar?: string } }).authorInfo;
 
@@ -705,6 +847,14 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
     const upvotes = dto.upvotes ?? dto.likes ?? 0;
     const downvotes = dto.downvotes ?? 0;
     const score = dto.score ?? (upvotes - downvotes);
+
+    // Basic Community Information from updated backend response
+    const resolvedCommunity = dto.community ? {
+        id: dto.community.id,
+        name: dto.community.name,
+        logo: dto.community.logo,
+        backdrop: dto.community.backdrop,
+    } : undefined;
 
     return {
         id: dto.id,
@@ -721,6 +871,9 @@ export function mapPostDtoToPostData(dto: PostDto, authorName = "Gamer", authorA
         images: dto.images || [],
         tags: dto.tags || [],
         gameTag: dto.gameTag,
+        communityId: dto.community?.id || dto.communityId,
+        communityName: dto.community?.name || dto.gameTag,
+        community: resolvedCommunity,
         likes: upvotes,
         upvotes: upvotes,
         downvotes: downvotes,
@@ -756,7 +909,7 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
         avatarUrl: resolvedLogo,
         backdrop: resolvedBackdrop,
         bannerUrl: resolvedBackdrop,
-        category: dto.category || "Indie",
+        category: dto.category || "",
         description: dto.description || "",
         members: resolvedMembers,
         membersCount: resolvedMembers,
@@ -771,17 +924,140 @@ export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
     };
 }
 
-export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
+export function mapGameDtoToGameData(dto: GameDto | UnifiedGameDetailDto | Record<string, unknown>) {
     const raw = dto as Record<string, unknown>;
     const appidNum = typeof raw.appid === "number" ? raw.appid : (typeof raw.appid === "string" && !isNaN(Number(raw.appid)) ? parseInt(raw.appid, 10) : undefined);
-    const slug = (raw.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(appidNum || "game"));
+    
+    // Resolve slug: check raw.slug, platform.slug, or generate slug from name
+    const platformObj = (raw.platform && typeof raw.platform === "object" ? raw.platform : {}) as Record<string, unknown>;
+    const slug = (raw.slug as string) || (platformObj.slug as string) || (raw.name ? String(raw.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") : String(appidNum || "game"));
 
-    const defaultSteamHeader = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/header.jpg` : DEFAULT_GAME_LOGO;
-    const defaultSteamHero = appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/library_hero.jpg` : DEFAULT_BG;
+    // Images
+    const backgroundImage = (raw.background as string) || (raw.backgroundRaw as string) || undefined;
+    const headerImage = (raw.headerImage as string) || (appidNum ? `https://cdn.akamai.steamstatic.com/steam/apps/${appidNum}/header.jpg` : undefined);
+    const capsuleImage = (raw.capsuleImage as string) || undefined;
+    
+    // For hero background, prefer background artwork, then headerImage
+    const resolvedBanner = backgroundImage || headerImage || (raw.bannerUrl as string) || DEFAULT_BG;
+    // For cover artwork, prefer capsuleImage, then headerImage
+    const resolvedCover = capsuleImage || headerImage || DEFAULT_GAME_LOGO;
 
-    const resolvedBanner = (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.backdrop as string) || (raw.header as string) || (raw.headerImg as string) || (raw.libraryHero as string) || defaultSteamHero;
-    // Fallback logo/avatar to header image / banner / cover if logo is not provided
-    const resolvedLogo = (raw.logoUrl as string) || (raw.logo as string) || (raw.iconUrl as string) || (raw.icon as string) || (raw.coverUrl as string) || (raw.header as string) || (raw.headerImg as string) || resolvedBanner || defaultSteamHeader;
+    // Resolve developers & publishers
+    const developers = Array.isArray(raw.developers) && raw.developers.length > 0
+        ? (raw.developers as string[])
+        : raw.developer ? [String(raw.developer)] : [];
+    const developer = developers.length > 0
+        ? developers.join(", ")
+        : (raw.developer as string) || undefined;
+
+    const publishers = Array.isArray(raw.publishers) && raw.publishers.length > 0
+        ? (raw.publishers as string[])
+        : raw.publisher ? [String(raw.publisher)] : [];
+    const publisher = publishers.length > 0
+        ? publishers.join(", ")
+        : (raw.publisher as string) || undefined;
+
+    // Resolve release date (ensure correct release date for franchise upgrades e.g. CS2 released in 2023 vs CS:GO in 2012)
+    let releaseDate: string | undefined = undefined;
+    let releaseDateComingSoon = false;
+    if (appidNum === 730 && String(raw.name || "").toLowerCase().includes("counter-strike 2")) {
+        releaseDate = "27 Thg 09, 2023";
+    } else if (typeof raw.releaseDate === "string") {
+        releaseDate = raw.releaseDate;
+    } else if (raw.releaseDate && typeof raw.releaseDate === "object") {
+        const rd = raw.releaseDate as { date?: string; comingSoon?: boolean };
+        if (rd.date) releaseDate = rd.date;
+        if (typeof rd.comingSoon === "boolean") releaseDateComingSoon = rd.comingSoon;
+    }
+
+    // Resolve platforms
+    let platforms: string[] | undefined = undefined;
+    if (Array.isArray(raw.platforms)) {
+        platforms = raw.platforms as string[];
+    } else if (raw.platforms && typeof raw.platforms === "object") {
+        const pObj = raw.platforms as { windows?: boolean; mac?: boolean; linux?: boolean };
+        const list: string[] = [];
+        if (pObj.windows) list.push("Windows");
+        if (pObj.mac) list.push("macOS");
+        if (pObj.linux) list.push("Linux");
+        if (list.length > 0) platforms = list;
+    }
+
+    // Resolve genres
+    let genre: string[] = [];
+    if (Array.isArray(raw.genres) && raw.genres.length > 0) {
+        genre = raw.genres.map(g => typeof g === "object" && g !== null && "description" in g ? (g as { description: string }).description : String(g));
+    } else if (Array.isArray(raw.genre) && raw.genre.length > 0) {
+        genre = raw.genre as string[];
+    } else if (typeof raw.genre === "string") {
+        genre = [raw.genre];
+    }
+
+    // Resolve categories (Steam features)
+    let categories: import("@/features/game/types").GameCategoryItem[] = [];
+    if (Array.isArray(raw.categories) && raw.categories.length > 0) {
+        categories = raw.categories.map((c, idx) => {
+            if (typeof c === "object" && c !== null && "description" in c) {
+                return {
+                    id: (c as { id?: number | string }).id ?? idx,
+                    description: String((c as { description?: unknown }).description || ""),
+                };
+            }
+            return { id: idx, description: String(c) };
+        }).filter(c => c.description.trim().length > 0);
+    }
+    const features: string[] = categories.map(c => c.description);
+
+    // Resolve screenshots and screenshot items
+    let screenshots: string[] = [];
+    let screenshotItems: import("@/features/game/types").GameScreenshotItem[] = [];
+    if (Array.isArray(raw.screenshots) && raw.screenshots.length > 0) {
+        raw.screenshots.forEach((s, idx) => {
+            if (typeof s === "string") {
+                screenshots.push(s);
+                screenshotItems.push({ id: idx, thumbnail: s, full: s });
+            } else if (typeof s === "object" && s !== null) {
+                const sObj = s as { id?: number | string; full?: string; thumbnail?: string; path_full?: string; path_thumbnail?: string };
+                const fullUrl = sObj.full || sObj.path_full || sObj.thumbnail || sObj.path_thumbnail || "";
+                const thumbUrl = sObj.thumbnail || sObj.path_thumbnail || fullUrl;
+                if (fullUrl) {
+                    screenshots.push(fullUrl);
+                    screenshotItems.push({
+                        id: sObj.id ?? idx,
+                        thumbnail: thumbUrl,
+                        full: fullUrl,
+                    });
+                }
+            }
+        });
+    }
+
+    // Steam recommendations count (accurate Steam metric, NOT player count or review count)
+    const recommendationsObj = raw.recommendations as { total?: number } | undefined;
+    const recommendationsCount = typeof raw.recommendationsCount === "number"
+        ? raw.recommendationsCount
+        : recommendationsObj?.total;
+
+    // Metacritic score & url
+    const metacriticObj = raw.metacritic as { score?: number; url?: string } | undefined;
+    const metacriticScore = typeof raw.metacriticScore === "number"
+        ? raw.metacriticScore
+        : metacriticObj?.score;
+    const metacriticUrl = typeof raw.metacriticUrl === "string"
+        ? raw.metacriticUrl
+        : metacriticObj?.url;
+
+    // Steam achievements count
+    const achievementsObj = raw.achievements as { total?: number } | undefined;
+    const achievementsCount = typeof raw.achievementsCount === "number"
+        ? raw.achievementsCount
+        : achievementsObj?.total;
+
+    const gameType = (raw.type as string) || "game";
+    const shortDescription = (raw.shortDescription as string) || (raw.description as string) || "";
+    const aboutTheGame = (raw.aboutTheGame as string) || shortDescription;
+    const communityId = (raw.communityId as string) || (platformObj.communityId as string) || undefined;
+    const steamAvailable = raw.steamAvailable !== false;
 
     return {
         slug,
@@ -789,26 +1065,140 @@ export function mapGameDtoToGameData(dto: GameDto | Record<string, unknown>) {
         id: String(raw.id || raw.appid || slug),
         name: (raw.name as string) || "Game",
         tag: (raw.tag as string) || (raw.name as string) || "Game",
-        communityId: (raw.communityId as string) || undefined,
+        type: gameType,
+        communityId,
         steamUrl: (raw.steamUrl as string) || (appidNum ? `https://store.steampowered.com/app/${appidNum}` : undefined),
-        developer: (raw.developer as string) || "Indie Dev",
-        publisher: (raw.publisher as string) || "Indie Publisher",
-        releaseDate: (raw.releaseDate as string) || "2024",
-        platforms: Array.isArray(raw.platforms) ? (raw.platforms as string[]) : ["PC"],
-        genre: Array.isArray(raw.genre) ? (raw.genre as string[]) : typeof raw.genre === "string" ? [(raw.genre as string)] : ["Indie"],
-        ratingScore: typeof raw.ratingScore === "number" ? raw.ratingScore : typeof raw.rating === "number" ? raw.rating : 5,
-        totalReviewsCount: typeof raw.totalReviewsCount === "number" ? raw.totalReviewsCount : 0,
-        sentiment: (raw.sentiment as "Overwhelmingly Positive" | "Very Positive" | "Positive" | "Mixed") || "Positive",
-        sentimentVi: (raw.sentimentVi as string) || undefined,
-        activePlayers: typeof raw.activePlayers === "number" ? raw.activePlayers : 0,
-        logoUrl: resolvedLogo,
+        steamAvailable,
+        developer,
+        developers,
+        publisher,
+        publishers,
+        releaseDate,
+        releaseDateComingSoon,
+        platforms,
+        genre,
+        genres: genre,
+        categories,
+        features,
+        recommendationsCount,
+        metacriticScore,
+        metacriticUrl,
+        achievementsCount,
+        headerImage,
+        capsuleImage,
+        backgroundImage,
+        background: (raw.background as string) || undefined,
+        backgroundRaw: (raw.backgroundRaw as string) || undefined,
+        logoUrl: resolvedCover,
         bannerUrl: resolvedBanner,
-        description: (raw.description as string) || (raw.descriptionVi as string) || "",
-        descriptionVi: (raw.descriptionVi as string) || (raw.description as string) || "",
-        features: Array.isArray(raw.features) ? (raw.features as string[]) : [],
-        screenshots: Array.isArray(raw.screenshots) ? (raw.screenshots as string[]) : [],
+        capsuleUrl: resolvedCover,
+        shortDescription,
+        description: shortDescription,
+        descriptionVi: (raw.descriptionVi as string) || undefined,
+        aboutTheGame,
+        screenshots,
+        screenshotItems,
+        isFree: Boolean(raw.isFree),
         guides: Array.isArray(raw.guides) ? (raw.guides as import("@/features/game/types").GameGuide[]) : [],
         reviews: Array.isArray(raw.reviews) ? (raw.reviews as import("@/features/game/types").GameReview[]) : [],
+        patchNotes: Array.isArray(raw.patchNotes) ? (raw.patchNotes as import("@/features/game/types").GamePatchNote[]) : [],
+        systemReqs: (raw.systemReqs as import("@/features/game/types").GameSystemReqs) || undefined,
+    };
+}
+
+export function mapGameGuideDtoToGameGuide(dto: GameGuideDto | Record<string, unknown>): import("@/features/game/types").GameGuide {
+    const raw = dto as Record<string, unknown>;
+    const authorObj = (raw.author && typeof raw.author === "object" ? raw.author : {}) as Record<string, unknown>;
+    const authorName = (authorObj.name as string) || (authorObj.username as string) || (raw.author as string) || "Gamer";
+    const authorAvatar = (authorObj.avatarUrl as string) || (raw.authorAvatar as string) || DEFAULT_AVATAR;
+    const authorUsername = (authorObj.username as string) || undefined;
+
+    let date = "Vừa xong";
+    if (raw.createdAt) {
+        try {
+            date = new Date(raw.createdAt as string).toLocaleDateString("vi-VN");
+        } catch {
+            date = String(raw.createdAt);
+        }
+    } else if (raw.date) {
+        date = String(raw.date);
+    }
+
+    return {
+        id: String(raw.id || `guide-${Date.now()}`),
+        title: (raw.title as string) || (raw.titleVi as string) || "Hướng dẫn Game",
+        titleVi: (raw.titleVi as string) || undefined,
+        author: authorName,
+        authorAvatar,
+        authorUsername,
+        authorId: (raw.authorId as string) || (authorObj.id as string) || undefined,
+        rank: (raw.rank as string) || (authorObj.rank as string) || undefined,
+        category: ((raw.category as string)?.toLowerCase() as any) || "general",
+        content: (raw.content as string) || "",
+        contentVi: (raw.contentVi as string) || undefined,
+        likes: typeof raw.likes === "number" ? raw.likes : 0,
+        views: typeof raw.views === "number" ? raw.views : 0,
+        date,
+    };
+}
+
+export function mapGameReviewDtoToGameReview(dto: GameReviewDto | Record<string, unknown>): import("@/features/game/types").GameReview {
+    const raw = dto as Record<string, unknown>;
+    const authorObj = (raw.author && typeof raw.author === "object" ? raw.author : {}) as Record<string, unknown>;
+    const authorName = (authorObj.name as string) || (authorObj.username as string) || (raw.author as string) || "Gamer";
+    const authorAvatar = (authorObj.avatarUrl as string) || (raw.authorAvatar as string) || DEFAULT_AVATAR;
+    const authorUsername = (authorObj.username as string) || undefined;
+
+    let date = "Vừa xong";
+    if (raw.createdAt) {
+        try {
+            date = new Date(raw.createdAt as string).toLocaleDateString("vi-VN");
+        } catch {
+            date = String(raw.createdAt);
+        }
+    } else if (raw.date) {
+        date = String(raw.date);
+    }
+
+    return {
+        id: String(raw.id || `rev-${Date.now()}`),
+        author: authorName,
+        authorAvatar,
+        authorUsername,
+        authorId: (raw.authorId as string) || (authorObj.id as string) || undefined,
+        rating: typeof raw.rating === "number" ? raw.rating : 8,
+        hoursPlayed: (raw.hoursPlayed as string) || "12 giờ",
+        content: (raw.content as string) || (raw.contentVi as string) || "",
+        contentVi: (raw.contentVi as string) || undefined,
+        recommended: raw.recommended !== false,
+        likes: typeof raw.likes === "number" ? raw.likes : 0,
+        date,
+    };
+}
+
+export function mapGamePatchNoteDtoToGamePatchNote(dto: GamePatchNoteDto | Record<string, unknown>): import("@/features/game/types").GamePatchNote {
+    const raw = dto as Record<string, unknown>;
+    let date = "Gần đây";
+    if (raw.createdAt) {
+        try {
+            date = new Date(raw.createdAt as string).toLocaleDateString("vi-VN");
+        } catch {
+            date = String(raw.createdAt);
+        }
+    } else if (raw.date) {
+        date = String(raw.date);
+    }
+
+    return {
+        id: String(raw.id || `patch-${Date.now()}`),
+        version: (raw.version as string) || "v1.0.0",
+        title: (raw.title as string) || (raw.titleVi as string) || "Bản cập nhật",
+        titleVi: (raw.titleVi as string) || undefined,
+        summary: (raw.summary as string) || (raw.summaryVi as string) || "",
+        summaryVi: (raw.summaryVi as string) || undefined,
+        type: ((raw.type as string)?.toLowerCase() as any) || "patch",
+        postId: typeof raw.postId === "number" ? raw.postId : undefined,
+        date,
     };
 }
 
