@@ -64,6 +64,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
 }));
 
+if (typeof window !== "undefined") {
+    window.addEventListener("indieg:auth-cleared", () => {
+        useNotificationStore.setState({ notifications: [], isOpen: false });
+    });
+}
+
 function getTitleForType(type: string): string {
     switch (type) {
         case "comment":
