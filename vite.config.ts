@@ -3,13 +3,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouterGenerator } from "@tanstack/router-plugin/vite";
-import {
-	searchApiPlugin,
-	notificationApiPlugin,
-	adminApiPlugin,
-} from "./vite/plugins/mock-api.ts";
-
-const isMockApiEnabled = process.env.VITE_MOCK_API === "true";
 
 export default defineConfig({
 	server: {
@@ -26,13 +19,6 @@ export default defineConfig({
 		},
 	},
 	plugins: [
-		...(isMockApiEnabled
-			? [
-					searchApiPlugin(),
-					notificationApiPlugin(),
-					adminApiPlugin(),
-				]
-			: []),
 		tanstackRouterGenerator({
 			routesDirectory: "./src/routes",
 			generatedRouteTree: "./src/routeTree.gen.ts",
