@@ -9,7 +9,9 @@ import {
     Pin,
 } from 'lucide-react';
 import { useGameStore } from '@/features/game';
-import { INITIAL_GAMES } from '@/features/game/constants';
+import { useGamesQuery } from '@/shared/api/useQueries';
+import { mapGameDtoToGameData } from '@/shared/api/types';
+import { type GameData } from '@/features/game/types';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
@@ -37,10 +39,18 @@ export function QuickAccessSettingsTab({
     const [searchQuery, setSearchQuery] = useState('');
 
     const storeGames = useGameStore((state) => state.games);
-    const allGames = useMemo(() => {
+    const { data: apiGamesData } = useGamesQuery({ limit: 50 });
+
+    const allGames: GameData[] = useMemo(() => {
+        const remoteList = Array.isArray(apiGamesData)
+            ? apiGamesData
+            : (apiGamesData as { items?: unknown[] })?.items || [];
+        if (remoteList.length > 0) {
+            return remoteList.map((g) => mapGameDtoToGameData(g));
+        }
         if (storeGames && storeGames.length > 0) return storeGames;
-        return INITIAL_GAMES;
-    }, [storeGames]);
+        return [];
+    }, [apiGamesData, storeGames]);
 
     const filteredGames = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
