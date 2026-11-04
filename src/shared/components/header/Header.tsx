@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Sun, Moon, Monitor, Palette } from "lucide-react";
 import { useAuthStore } from '@/features/auth';
+import { useCommunitiesStore } from '@/features/community';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getCurrentAuthor } from "@/features/post";
 import { useReportsQuery } from "@/shared/api/useQueries";
@@ -32,6 +33,7 @@ import { LudonLogo } from "@/shared/components/logo/LudonLogo";
 export const Header = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
+    const firstCommunityId = useCommunitiesStore((state) => state.communities[0]?.id);
     const customAvatar = useAuthStore((state) => state.customAvatar);
     const logout = useAuthStore((state) => state.logout);
     const isLoggedIn = !!user;
@@ -342,7 +344,7 @@ export const Header = () => {
                                                     setShowUserMenu(false);
                                                     const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
                                                         ? pathname.split("/")[2]
-                                                        : "cs2-vietnam";
+                                                        : firstCommunityId ? String(firstCommunityId) : "1";
                                                     navigate({
                                                         to: "/community/$communityId",
                                                         params: { communityId: targetId },

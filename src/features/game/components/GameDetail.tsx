@@ -1,9 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useGameStore } from "../store/useGameStore";
 import { usePostsStore } from "@/features/post";
@@ -13,9 +10,6 @@ import { useAuthStore } from "@/features/auth";
 import {
     useGameDetailBySlugQuery,
     useUnifiedGameDetailQuery,
-    useGameGuidesQuery,
-    useGameReviewsQuery,
-    useGamePatchNotesQuery,
     useGamesQuery,
 } from "@/shared/api/useQueries";
 import { mapGameDtoToGameData } from "@/shared/api/types";
@@ -24,9 +18,7 @@ import { type GameData, type GameTabType } from "../types";
 import { GameHero } from "./GameHero";
 import { GameTabs } from "./GameTabs";
 import { GameOverviewTab } from "./GameOverviewTab";
-import { GameGuidesTab } from "./GameGuidesTab";
-import { GameReviewsTab } from "./GameReviewsTab";
-import { GamePatchNotesTab } from "./GamePatchNotesTab";
+import { GameGalleryTab } from "./GameGalleryTab";
 import { GameDiscussionsTab } from "./GameDiscussionsTab";
 import { GameSidebar } from "./GameSidebar";
 
@@ -57,22 +49,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     // 3. Query rich unified game detail (Steam store data + platform data)
     const { data: unifiedData, isLoading: isUnifiedLoading } = useUnifiedGameDetailQuery(effectiveAppid);
 
-    // 4. Fetch counts for sub-tabs
-    const { data: guidesData } = useGameGuidesQuery(effectiveAppid || 0, { limit: 1 });
-    const { data: reviewsData } = useGameReviewsQuery(effectiveAppid || 0, { limit: 1 });
-    const { data: patchNotesData } = useGamePatchNotesQuery(effectiveAppid || 0, { limit: 1 });
-
-    const guidesCount = Array.isArray(guidesData)
-        ? guidesData.length
-        : (guidesData as any)?.total || 0;
-    const reviewsCount = Array.isArray(reviewsData)
-        ? reviewsData.length
-        : (reviewsData as any)?.total || 0;
-    const patchNotesCount = Array.isArray(patchNotesData)
-        ? patchNotesData.length
-        : (patchNotesData as any)?.total || 0;
-
-    // 5. Construct merged GameData
+    // 4. Construct merged GameData
     const localFallback = useMemo(() => fallbackGetGameBySlug(cleanSlug), [cleanSlug]);
 
     const game: GameData = useMemo(() => {
@@ -108,7 +85,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
         window.scrollTo({ top: 0, behavior: "instant" });
     }, [cleanSlug]);
 
-    // Following state (checks both cleanSlug and resolved game.slug)
+    // Following state (used for Add to Library)
     const followedSlugs = useGameStore((state) => state.followedSlugs);
     const isFollowing = useMemo(() => {
         if (followedSlugs.includes(cleanSlug)) return true;
@@ -181,17 +158,6 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
         }).slice(0, 10);
     }, [allPosts, game, resolvedCommunityId]);
 
-    // Transform remote guides for overview highlights
-    const guidesList = useMemo(() => {
-        const rawList = Array.isArray(guidesData)
-            ? guidesData
-            : (guidesData as any)?.data || (guidesData as any)?.items || [];
-        if (rawList.length > 0) {
-            return rawList.map((g: any) => mapGameGuideDtoToGameGuide(g));
-        }
-        return game.guides || [];
-    }, [guidesData, game.guides]);
-
     // Related games for overview tab (filtered by genre, excluding current game)
     const { data: allGamesData } = useGamesQuery({ limit: 12 });
     const relatedGames = useMemo(() => {
@@ -217,24 +183,24 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
             .slice(0, 4);
     }, [allGamesData, game, effectiveAppid, cleanSlug]);
 
-    // Active Tab state
+    // Active Tab state: overview, gallery, discussions
     const [activeTab, setActiveTab] = useState<GameTabType>("overview");
 
     const isInitialLoading = !unifiedData && (isSlugLoading || isUnifiedLoading);
 
     return (
         <div className="w-full pb-24 animate-fade-in bg-background min-h-screen text-text">
-            {/* Loading Indicator when initial request is resolving */}
+            {/* Elegant Loading Indicator when initial request is resolving */}
             {isInitialLoading && (
-                <div className="w-full py-1.5 bg-primary/10 text-primary text-xs font-medium text-center flex items-center justify-center gap-2">
-                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[11px]" />
+                <div className="w-full py-2 bg-primary/10 border-b border-primary/20 text-primary text-xs font-medium text-center flex items-center justify-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>
-                        {isVietnamese ? "Đang đồng bộ dữ liệu game..." : "Syncing game data..."}
+                        {isVietnamese ? "Đang đồng bộ dữ liệu game từ Steam..." : "Syncing game data from Steam..."}
                     </span>
                 </div>
             )}
 
-            {/* 1. GAME HERO */}
+            {/* 1. GAME HERO (Consolidated Details, Add to Library, No Share, White Linux icon) */}
             <GameHero
                 game={game}
                 isFollowing={isFollowing}
@@ -243,14 +209,11 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                 onCommunityAction={handleCommunityAction}
             />
 
-            {/* 2. SUB-TABS NAVIGATION */}
+            {/* 2. SUB-TABS NAVIGATION (OVERVIEW, GALLERY, DISCUSSIONS - NON-STICKY, HIGH CONTRAST BG) */}
             <GameTabs
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 counts={{
-                    guides: guidesCount,
-                    reviews: reviewsCount,
-                    updates: patchNotesCount,
                     discussions: relatedPosts.length,
                 }}
             />
@@ -262,28 +225,14 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     {activeTab === "overview" && (
                         <GameOverviewTab
                             game={game}
-                            relatedPosts={relatedPosts}
-                            relatedGuides={guidesList}
                             relatedGames={relatedGames}
-                            onViewCommunity={
-                                resolvedCommunityId
-                                    ? () => navigate({ to: "/community/$communityId", params: { communityId: String(resolvedCommunityId) } })
-                                    : undefined
-                            }
-                            onNavigateToTab={setActiveTab}
                         />
                     )}
 
-                    {activeTab === "guides" && (
-                        <GameGuidesTab game={game} gameAppid={effectiveAppid || 0} />
-                    )}
-
-                    {activeTab === "reviews" && (
-                        <GameReviewsTab game={game} gameAppid={effectiveAppid || 0} />
-                    )}
-
-                    {activeTab === "updates" && (
-                        <GamePatchNotesTab game={game} gameAppid={effectiveAppid || 0} />
+                    {activeTab === "gallery" && (
+                        <GameGalleryTab
+                            game={game}
+                        />
                     )}
 
                     {activeTab === "discussions" && (
@@ -300,7 +249,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     )}
                 </div>
 
-                {/* Right Column: Game Info & Community Widget Sidebar */}
+                {/* Right Column: Community & Includes Sidebar */}
                 <GameSidebar
                     game={game}
                     community={matchingCommunity}

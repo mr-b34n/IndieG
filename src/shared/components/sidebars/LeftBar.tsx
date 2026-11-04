@@ -344,7 +344,7 @@ export const LeftBar = () => {
                             onClick={() => {
                                 const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
                                     ? pathname.split("/")[2]
-                                    : "cs2-vietnam";
+                                    : communities[0]?.id ? String(communities[0].id) : "1";
                                 navigate({
                                     to: "/community/$communityId",
                                     params: { communityId: targetId },
@@ -375,7 +375,7 @@ export const LeftBar = () => {
                             onClick={() => {
                                 const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
                                     ? pathname.split("/")[2]
-                                    : "cs2-vietnam";
+                                    : communities[0]?.id ? String(communities[0].id) : "1";
                                 navigate({
                                     to: "/community/$communityId",
                                     params: { communityId: targetId },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
     faStar, 
     faUsers, 
@@ -8,16 +8,25 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { INITIAL_GAMES } from "@/features/game/constants";
+import { useGamesQuery } from "@/shared/api/useQueries";
+import { mapGameDtoToGameData } from "@/shared/api/types";
+import { type GameData } from "@/features/game/types";
 
 export const GamePromoBanner = () => {
     const { t, lang } = useTranslation();
     const navigate = useNavigate();
 
-    // 7 game nổi bật trên banner
-    const promoGames = INITIAL_GAMES.filter(g => 
-        ["counter-strike-2", "black-myth-wukong", "elden-ring", "cyberpunk-2077", "red-dead-redemption-2", "raft", "grand-theft-auto-v"].includes(g.slug)
-    );
+    // Query top featured games from API
+    const { data: apiGamesData } = useGamesQuery({ limit: 7 });
+    const promoGames: GameData[] = useMemo(() => {
+        const remoteList = Array.isArray(apiGamesData)
+            ? apiGamesData
+            : (apiGamesData as { items?: unknown[] })?.items || [];
+        if (remoteList.length > 0) {
+            return remoteList.map((g) => mapGameDtoToGameData(g));
+        }
+        return [];
+    }, [apiGamesData]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);

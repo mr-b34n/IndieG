@@ -84,14 +84,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     customReviews: {},
 
     getGameBySlug: (slug: string) => {
-        if (!slug) return get().games[0] || INITIAL_GAMES[0];
-        const cleanSlug = slug.trim().toLowerCase();
+        const cleanSlug = (slug || "game").trim().toLowerCase();
+        if (!slug && get().games[0]) return get().games[0];
         const found = get().games.find(
             (g) =>
                 g.slug === cleanSlug ||
                 g.id === cleanSlug ||
                 g.aliases?.includes(cleanSlug) ||
-                g.tag.toLowerCase() === cleanSlug.replace(/-/g, " ")
+                g.tag?.toLowerCase() === cleanSlug.replace(/-/g, " ")
         );
         if (found) return found;
         return fallbackGetGameBySlug(cleanSlug);

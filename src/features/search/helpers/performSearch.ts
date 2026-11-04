@@ -1,4 +1,3 @@
-import { INITIAL_GAMES } from "@/features/game/constants";
 import { type GameData } from "@/features/game/types";
 import { type CommunityData } from "@/features/community/types";
 import { type Post } from "@/features/post/types";
@@ -59,12 +58,7 @@ export function performSearchAPI(
     }
 
     // 1. Target: Games
-    const gamesList = [
-        ...INITIAL_GAMES,
-        ...safeCustomGames.filter(
-            (cg) => cg && cg.slug && !INITIAL_GAMES.some((g) => g.slug === cg.slug)
-        ),
-    ];
+    const gamesList = safeCustomGames;
     const matchedGames = gamesList.filter((game) => {
         if (!game) return false;
         const nameMatch = game.name?.toLowerCase().includes(q) ?? false;

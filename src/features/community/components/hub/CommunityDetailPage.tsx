@@ -10,7 +10,6 @@ import {
     faThumbtack,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCommunitiesStore } from '@/features/community';
-import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useGameStore } from '@/features/game';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
@@ -145,41 +144,12 @@ export function CommunityDetailPage() {
             (c) =>
                 c.id.toString().toLowerCase() === target ||
                 (c.slug && c.slug.toLowerCase() === target) ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
-                (target === "cs2" && c.id === "cs2-vietnam") ||
-                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
-                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
-                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
-                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
-                (target === "valorant" && c.id === "valorant-vietnam") ||
-                (target === "minecraft" && c.id === "minecraft-vietnam") ||
-                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
-                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
-                (target === "genshin" && c.id === "genshin-impact-vn") ||
-                (target === "apex" && c.id === "apex-legends-vn")
+                (c.gameSlug && c.gameSlug.toLowerCase() === target)
         );
         if (found) return found;
         if (communityDto) {
             return mapCommunityDtoToCommunityData(communityDto);
         }
-        const initialFound = INITIAL_COMMUNITIES.find(
-            (c) =>
-                c.id.toString().toLowerCase() === target ||
-                (c.slug && c.slug.toLowerCase() === target) ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
-                (target === "cs2" && c.id === "cs2-vietnam") ||
-                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
-                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
-                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
-                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
-                (target === "valorant" && c.id === "valorant-vietnam") ||
-                (target === "minecraft" && c.id === "minecraft-vietnam") ||
-                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
-                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
-                (target === "genshin" && c.id === "genshin-impact-vn") ||
-                (target === "apex" && c.id === "apex-legends-vn")
-        );
-        if (initialFound) return initialFound;
         return {
             id: communityId,
             name: communityId.charAt(0).toUpperCase() + communityId.slice(1),
@@ -686,7 +656,7 @@ export function CommunityDetailPage() {
                                     onClick={() => setShowCommunitySwitcher(false)}
                                 />
                                 <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
-                                    {INITIAL_COMMUNITIES.map((c, idx) => (
+                                    {communities.map((c, idx) => (
                                         <button
                                             key={`${c.id}-${idx}`}
                                             type="button"

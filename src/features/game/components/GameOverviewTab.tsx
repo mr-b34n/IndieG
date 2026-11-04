@@ -1,26 +1,20 @@
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faChevronLeft,
-    faChevronRight,
-    faExpand,
-    faMicrochip,
-    faDesktop,
-    faMemory,
-    faHdd,
-} from "@fortawesome/free-solid-svg-icons";
+    Cpu,
+    Monitor,
+    MemoryStick,
+    HardDrive,
+    Layers,
+    Sparkles,
+    BookOpen,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { Lightbox } from "@/shared/components/ui/Lightbox";
-import { type GameData, type GameScreenshotItem, type GameTabType } from "../types";
+import { type GameData } from "../types";
 
 interface GameOverviewTabProps {
     game: GameData;
-    relatedPosts?: any[];
-    relatedGuides?: any[];
     relatedGames?: GameData[];
-    onViewCommunity?: () => void;
-    onNavigateToTab?: (tab: GameTabType) => void;
 }
 
 export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
@@ -31,29 +25,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
     const isVietnamese = lang === "vi";
     const navigate = useNavigate();
 
-    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-    const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [showFullDesc, setShowFullDesc] = useState(false);
-
-    // Resolve structured screenshot items (thumbnail vs full)
-    const screenshotItems: GameScreenshotItem[] =
-        game.screenshotItems && game.screenshotItems.length > 0
-            ? game.screenshotItems
-            : (game.screenshots || []).map((s, idx) => ({ id: idx, thumbnail: s, full: s }));
-
-    const hasMedia = screenshotItems.length > 0;
-    const activeMedia = screenshotItems[selectedMediaIndex] || screenshotItems[0];
-    const fullImagesList = screenshotItems.map((item) => item.full);
-
-    const handlePrevMedia = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedMediaIndex((prev) => (prev === 0 ? screenshotItems.length - 1 : prev - 1));
-    };
-
-    const handleNextMedia = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedMediaIndex((prev) => (prev === screenshotItems.length - 1 ? 0 : prev + 1));
-    };
 
     // Clean and prepare HTML string for aboutTheGame
     const rawAboutText = game.aboutTheGame || game.shortDescription || game.description || "";
@@ -63,22 +35,20 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
 
     return (
         <div className="flex flex-col gap-10 text-text">
-            {/* 1. GAME INTRODUCTION (Redesigned with quote mark in top-right corner) */}
+            {/* 1. ABOUT THE GAME */}
             <section className="flex flex-col relative">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-5 h-5 text-primary" />
                     <h2 className="text-xl font-bold tracking-tight text-text">
                         {isVietnamese ? "Giới thiệu trò chơi" : "About the Game"}
                     </h2>
-                    <span className="text-3xl sm:text-4xl font-serif text-text-muted/30 select-none leading-none pointer-events-none">
-                        “
-                    </span>
                 </div>
 
                 <div className="relative text-[15px] sm:text-base text-text-muted leading-relaxed">
                     {shortDescText && (
-                        <p className="text-sm sm:text-base text-text/90 font-normal leading-relaxed mb-4 italic">
+                        <div className="p-4 rounded-xl bg-surface border border-border/30 text-text/90 font-normal leading-relaxed mb-4 text-sm sm:text-base">
                             {shortDescText}
-                        </p>
+                        </div>
                     )}
 
                     <div
@@ -90,7 +60,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                         }}
                     />
                     {!showFullDesc && rawAboutText.length > 500 && (
-                        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
                     )}
                 </div>
 
@@ -99,119 +69,41 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                         <button
                             type="button"
                             onClick={() => setShowFullDesc(!showFullDesc)}
-                            className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors cursor-pointer"
+                            className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors cursor-pointer inline-flex items-center gap-1.5"
                         >
-                            {showFullDesc
-                                ? (isVietnamese ? "Thu gọn" : "Show less")
-                                : (isVietnamese ? "Đọc thêm" : "Read more")}
+                            <span>
+                                {showFullDesc
+                                    ? (isVietnamese ? "Thu gọn nội dung" : "Show less")
+                                    : (isVietnamese ? "Đọc thêm toàn bộ" : "Read more")}
+                            </span>
                         </button>
                     </div>
                 )}
             </section>
 
-            {/* 2. SCREENSHOTS & GAMEPLAY GALLERY (Restrained radius & effect, outline on focus) */}
-            {hasMedia && (
-                <section className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold tracking-tight text-text">
-                            {isVietnamese ? "Hình ảnh & Gameplay" : "Screenshots & Gameplay"}
-                        </h2>
-                        <span className="text-xs font-mono text-text-muted font-medium bg-surface/60 px-2 py-0.5 rounded border border-border/20">
-                            {selectedMediaIndex + 1} / {screenshotItems.length}
-                        </span>
-                    </div>
-
-                    {/* Image Viewport (Restrained radius, no heavy effect) */}
-                    <div
-                        className="w-full aspect-video bg-black rounded overflow-hidden cursor-pointer relative group border border-border/20"
-                        onClick={() => setLightboxIndex(selectedMediaIndex)}
-                    >
-                        <img
-                            src={activeMedia.full}
-                            alt={`Screenshot ${selectedMediaIndex + 1}`}
-                            className="w-full h-full object-cover"
-                        />
-
-                        {/* Top-Left Image Counter Overlay */}
-                        <div className="absolute top-3 left-3 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded font-mono pointer-events-none">
-                            {selectedMediaIndex + 1} / {screenshotItems.length}
-                        </div>
-
-                        {/* Expand Button Overlay */}
-                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 hover:bg-black text-white text-xs px-2.5 py-1 rounded flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faExpand} className="text-xs" />
-                            <span>{isVietnamese ? "Xem toàn màn hình" : "View full size"}</span>
-                        </div>
-
-                        {/* Previous & Next Navigation Controls */}
-                        {screenshotItems.length > 1 && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={handlePrevMedia}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 cursor-pointer"
-                                    title={isVietnamese ? "Ảnh trước" : "Previous"}
-                                >
-                                    <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleNextMedia}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90 cursor-pointer"
-                                    title={isVietnamese ? "Ảnh sau" : "Next"}
-                                >
-                                    <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
-                                </button>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Horizontal Thumbnail Strip (Outline when selected/focused, restrained radius) */}
-                    <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1 scrollbar-thin snap-x">
-                        {screenshotItems.map((item, idx) => (
-                            <button
-                                key={item.id ?? idx}
-                                type="button"
-                                onClick={() => setSelectedMediaIndex(idx)}
-                                className={`relative w-28 sm:w-36 aspect-video shrink-0 rounded overflow-hidden snap-start cursor-pointer transition-all ${
-                                    selectedMediaIndex === idx
-                                        ? "outline outline-2 outline-primary outline-offset-1 opacity-100"
-                                        : "opacity-60 hover:opacity-100"
-                                }`}
-                            >
-                                <img
-                                    src={item.thumbnail}
-                                    className="w-full h-full object-cover"
-                                    alt={`Thumbnail ${idx + 1}`}
-                                    loading="lazy"
-                                />
-                            </button>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* 3. SYSTEM REQUIREMENTS (if available) */}
+            {/* 2. SYSTEM REQUIREMENTS */}
             {game.systemReqs && (game.systemReqs.minimum || game.systemReqs.recommended) && (
                 <section className="flex flex-col gap-3 pt-2">
-                    <div>
+                    <div className="flex items-center gap-2">
+                        <Cpu className="w-5 h-5 text-primary" />
                         <h2 className="text-xl font-bold tracking-tight text-text">
                             {isVietnamese ? "Cấu hình yêu cầu" : "System Requirements"}
                         </h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Minimum Specs */}
                         {game.systemReqs.minimum && (
-                            <div className="p-4 rounded-md bg-surface/35 border border-border/20 flex flex-col gap-3">
+                            <div className="p-4 rounded-xl bg-surface/40 border border-border/30 flex flex-col gap-3">
                                 <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                    <span className="w-2 h-2 rounded-full bg-primary" />
                                     <span>{isVietnamese ? "Cấu hình tối thiểu" : "Minimum Requirements"}</span>
                                 </span>
-                                <div className="flex flex-col divide-y divide-border/15 text-xs">
+                                <div className="flex flex-col divide-y divide-border/20 text-xs">
                                     {game.systemReqs.minimum.os && (
                                         <div className="py-2 flex items-start justify-between gap-3 first:pt-0">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faDesktop} className="text-[10px] text-text-muted/60" />
+                                                <Monitor className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>OS</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.minimum.os}</span>
@@ -220,7 +112,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.minimum.cpu && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faMicrochip} className="text-[10px] text-text-muted/60" />
+                                                <Cpu className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>CPU</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.minimum.cpu}</span>
@@ -229,7 +121,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.minimum.ram && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faMemory} className="text-[10px] text-text-muted/60" />
+                                                <MemoryStick className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>RAM</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.minimum.ram}</span>
@@ -238,7 +130,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.minimum.gpu && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faDesktop} className="text-[10px] text-text-muted/60" />
+                                                <Layers className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>GPU</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.minimum.gpu}</span>
@@ -247,7 +139,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.minimum.storage && (
                                         <div className="py-2 flex items-start justify-between gap-3 last:pb-0">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faHdd} className="text-[10px] text-text-muted/60" />
+                                                <HardDrive className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>Storage</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.minimum.storage}</span>
@@ -257,17 +149,18 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                             </div>
                         )}
 
+                        {/* Recommended Specs */}
                         {game.systemReqs.recommended && (
-                            <div className="p-4 rounded-md bg-surface/35 border border-border/20 flex flex-col gap-3">
+                            <div className="p-4 rounded-xl bg-surface/40 border border-border/30 flex flex-col gap-3">
                                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
                                     <span>{isVietnamese ? "Cấu hình khuyến nghị" : "Recommended Requirements"}</span>
                                 </span>
-                                <div className="flex flex-col divide-y divide-border/15 text-xs">
+                                <div className="flex flex-col divide-y divide-border/20 text-xs">
                                     {game.systemReqs.recommended.os && (
                                         <div className="py-2 flex items-start justify-between gap-3 first:pt-0">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faDesktop} className="text-[10px] text-text-muted/60" />
+                                                <Monitor className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>OS</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.recommended.os}</span>
@@ -276,7 +169,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.recommended.cpu && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faMicrochip} className="text-[10px] text-text-muted/60" />
+                                                <Cpu className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>CPU</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.recommended.cpu}</span>
@@ -285,7 +178,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.recommended.ram && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faMemory} className="text-[10px] text-text-muted/60" />
+                                                <MemoryStick className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>RAM</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.recommended.ram}</span>
@@ -294,7 +187,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.recommended.gpu && (
                                         <div className="py-2 flex items-start justify-between gap-3">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faDesktop} className="text-[10px] text-text-muted/60" />
+                                                <Layers className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>GPU</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.recommended.gpu}</span>
@@ -303,7 +196,7 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                     {game.systemReqs.recommended.storage && (
                                         <div className="py-2 flex items-start justify-between gap-3 last:pb-0">
                                             <span className="text-text-muted flex items-center gap-1.5 shrink-0">
-                                                <FontAwesomeIcon icon={faHdd} className="text-[10px] text-text-muted/60" />
+                                                <HardDrive className="w-3.5 h-3.5 text-text-muted/60" />
                                                 <span>Storage</span>
                                             </span>
                                             <span className="text-text font-medium text-right">{game.systemReqs.recommended.storage}</span>
@@ -316,12 +209,13 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                 </section>
             )}
 
-            {/* 4. RELATED GAMES (only when available) */}
+            {/* 3. SIMILAR GAMES */}
             {relatedGames && relatedGames.length > 0 && (
                 <section className="flex flex-col gap-3 pt-2">
-                    <div>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary" />
                         <h2 className="text-xl font-bold tracking-tight text-text">
-                            {isVietnamese ? "Trò chơi tương tự" : "Related Games"}
+                            {isVietnamese ? "Trò chơi tương tự" : "Similar Games"}
                         </h2>
                     </div>
 
@@ -336,23 +230,23 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                                             navigate({ to: "/game/$gameSlug", params: { gameSlug: targetSlug } });
                                         }
                                     }}
-                                    className="group cursor-pointer flex flex-col gap-2 transition-transform"
+                                    className="group cursor-pointer flex flex-col gap-2.5 transition-all duration-200 hover:-translate-y-1"
                                 >
-                                    <div className="w-full aspect-[460/215] rounded overflow-hidden bg-surface relative ring-1 ring-border/20">
+                                    <div className="w-full aspect-[460/215] rounded-xl overflow-hidden bg-surface relative ring-1 ring-border/30 group-hover:ring-primary/50 transition-all shadow-md">
                                         <img
                                             src={rg.capsuleImage || rg.headerImage || rg.background}
                                             alt={rg.name}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             loading="lazy"
                                         />
                                         {rg.isFree && (
-                                            <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-black/80 text-emerald-400 rounded">
+                                            <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-black/80 text-emerald-400 rounded-md border border-emerald-500/20">
                                                 {isVietnamese ? "Miễn phí" : "Free"}
                                             </span>
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col gap-0.5 px-0.5">
+                                    <div className="flex flex-col gap-1 px-0.5">
                                         <h4 className="text-sm font-semibold text-text group-hover:text-primary transition-colors line-clamp-1">
                                             {rg.name}
                                         </h4>
@@ -367,15 +261,6 @@ export const GameOverviewTab: React.FC<GameOverviewTabProps> = ({
                         })}
                     </div>
                 </section>
-            )}
-
-            {/* Lightbox for Full-Size Screenshot Viewing */}
-            {lightboxIndex !== null && fullImagesList.length > 0 && (
-                <Lightbox
-                    images={fullImagesList}
-                    initialIndex={lightboxIndex}
-                    onClose={() => setLightboxIndex(null)}
-                />
             )}
         </div>
     );
