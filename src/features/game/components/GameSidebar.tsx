@@ -1,19 +1,11 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faExternalLinkAlt,
-    faCheck,
-    faCalendarAlt,
-    faCode,
-    faGamepad,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-    faWindows,
-    faApple,
-    faLinux,
-    faPlaystation,
-    faXbox,
-} from "@fortawesome/free-brands-svg-icons";
+    Check,
+    ExternalLink,
+    Users,
+    CheckCircle2,
+    Layers,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type GameData } from "../types";
@@ -27,26 +19,6 @@ interface GameSidebarProps {
     onCommunityAction: () => void;
 }
 
-const getPlatformIcon = (platform: string) => {
-    const p = platform.toLowerCase();
-    if (p.includes("win") || p.includes("pc")) {
-        return { icon: faWindows, title: "Windows", colorClass: "text-[#00adef]" };
-    }
-    if (p.includes("mac") || p.includes("apple") || p.includes("osx")) {
-        return { icon: faApple, title: "macOS", colorClass: "text-zinc-200" };
-    }
-    if (p.includes("linux")) {
-        return { icon: faLinux, title: "Linux", colorClass: "text-[#fcc624]" };
-    }
-    if (p.includes("ps") || p.includes("playstation")) {
-        return { icon: faPlaystation, title: "PlayStation", colorClass: "text-[#0070d1]" };
-    }
-    if (p.includes("xbox")) {
-        return { icon: faXbox, title: "Xbox", colorClass: "text-[#107c10]" };
-    }
-    return null;
-};
-
 export const GameSidebar: React.FC<GameSidebarProps> = ({
     game,
     community,
@@ -57,25 +29,33 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
     const isVietnamese = lang === "vi";
     const navigate = useNavigate();
 
-    const isFree = game.isFree;
     const categoriesList = game.categories || [];
 
     return (
-        <aside className="w-full lg:w-80 shrink-0 flex flex-col gap-6 text-sm">
-            {/* 1. LUDON COMMUNITY WIDGET CARD */}
+        <aside className="w-full lg:w-80 shrink-0 flex flex-col gap-5 text-sm self-start">
+            {/* 1. COMMUNITY WIDGET CARD */}
             {community && (
-                <div className="p-4 rounded-md bg-surface/40 border border-border/20 flex flex-col gap-3">
-                    <span className="text-xs font-bold tracking-wider uppercase text-text-muted">
-                        {isVietnamese ? "Cộng đồng trò chơi" : "Game Community"}
-                    </span>
+                <div className="p-4 rounded-xl bg-surface/40 border border-border/30 flex flex-col gap-3.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold tracking-wider uppercase text-text-muted flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-primary" />
+                            <span>{isVietnamese ? "Cộng đồng trò chơi" : "Game Hub"}</span>
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[11px] text-emerald-400 font-medium">
+                                {isVietnamese ? "Đang hoạt động" : "Active"}
+                            </span>
+                        </div>
+                    </div>
 
                     <div className="flex items-center gap-3">
                         <img
                             src={community.logo || community.avatarUrl || game.logoUrl}
                             alt={community.name}
-                            className="w-10 h-10 rounded-md object-cover bg-surface ring-1 ring-border/20 shrink-0"
+                            className="w-11 h-11 rounded-lg object-cover bg-surface ring-1 ring-border/30 shrink-0"
                         />
-                        <div className="flex flex-col min-w-0">
+                        <div className="flex flex-col min-w-0 flex-1">
                             <h4
                                 onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(community.id) } })}
                                 className="font-bold text-text hover:text-primary transition-colors truncate cursor-pointer text-sm"
@@ -85,143 +65,67 @@ export const GameSidebar: React.FC<GameSidebarProps> = ({
                             </h4>
                             <span className="text-xs text-text-muted mt-0.5">
                                 {formatCompactNumber(community.members || community.membersCount || 0)}{" "}
-                                {isVietnamese ? "thành viên" : "members"}
+                                {isVietnamese ? "thành viên tham gia" : "members"}
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-2 pt-0.5">
                         <button
                             type="button"
                             onClick={onCommunityAction}
-                            className={`flex-1 py-1.5 px-3 rounded-md text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
+                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 ${
                                 isCommunityJoined
                                     ? "bg-surface-hover text-emerald-400 border border-emerald-500/25"
                                     : "bg-primary text-white hover:bg-primary-hover shadow-primary/10"
                             }`}
                         >
-                            {isCommunityJoined && <FontAwesomeIcon icon={faCheck} className="text-xs" />}
+                            {isCommunityJoined ? (
+                                <Check className="w-3.5 h-3.5" />
+                            ) : (
+                                <Users className="w-3.5 h-3.5" />
+                            )}
                             <span>
                                 {isCommunityJoined
                                     ? (isVietnamese ? "Đã tham gia" : "Joined")
-                                    : (isVietnamese ? "Tham gia cộng đồng" : "Join Community")}
+                                    : (isVietnamese ? "Tham gia cộng đồng" : "Join Hub")}
                             </span>
                         </button>
 
                         <button
                             type="button"
                             onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(community.id) } })}
-                            className="px-2.5 py-1.5 rounded-md text-xs font-medium text-text-muted hover:text-text bg-surface hover:bg-surface-hover border border-border/30 transition-all cursor-pointer active:scale-95"
+                            className="p-2 rounded-lg text-xs font-medium text-text-muted hover:text-text bg-surface hover:bg-surface-hover border border-border/30 transition-all cursor-pointer active:scale-95"
                             title={isVietnamese ? "Mở diễn đàn" : "Open Hub"}
                         >
-                            <FontAwesomeIcon icon={faExternalLinkAlt} />
+                            <ExternalLink className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* 2. GAME DETAILS CARD (Simplified title, restrained radius & border, achievements/appid/distribution removed) */}
-            <div className="p-4 rounded-md bg-surface/35 border border-border/20 flex flex-col gap-3">
-                <h3 className="text-xs font-bold tracking-wider uppercase text-text-muted">
-                    {isVietnamese ? "Thông tin game" : "Game Details"}
-                </h3>
-
-                <div className="flex flex-col divide-y divide-border/15 text-xs">
-                    {/* Developer */}
-                    {game.developer && (
-                        <div className="py-2 flex justify-between items-baseline gap-3 first:pt-0">
-                            <span className="text-text-muted flex items-center gap-2 shrink-0">
-                                <FontAwesomeIcon icon={faCode} className="text-[11px] text-text-muted/60" />
-                                <span>{isVietnamese ? "Nhà phát triển" : "Developer"}</span>
-                            </span>
-                            <span className="text-text font-medium text-right break-words">{game.developer}</span>
-                        </div>
-                    )}
-
-                    {/* Publisher */}
-                    {game.publisher && (
-                        <div className="py-2 flex justify-between items-baseline gap-3">
-                            <span className="text-text-muted flex items-center gap-2 shrink-0">
-                                <FontAwesomeIcon icon={faGamepad} className="text-[11px] text-text-muted/60" />
-                                <span>{isVietnamese ? "Nhà phát hành" : "Publisher"}</span>
-                            </span>
-                            <span className="text-text font-medium text-right break-words">{game.publisher}</span>
-                        </div>
-                    )}
-
-                    {/* Release Date */}
-                    {game.releaseDate && (
-                        <div className="py-2 flex justify-between items-baseline gap-3">
-                            <span className="text-text-muted flex items-center gap-2 shrink-0">
-                                <FontAwesomeIcon icon={faCalendarAlt} className="text-[11px] text-text-muted/60" />
-                                <span>{isVietnamese ? "Ngày phát hành" : "Release Date"}</span>
-                            </span>
-                            <div className="flex items-center gap-1.5 text-right">
-                                <span className="text-text font-medium">{game.releaseDate}</span>
-                                {game.releaseDateComingSoon && (
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-400">
-                                        {isVietnamese ? "Sắp ra" : "Soon"}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Price */}
-                    <div className="py-2 flex justify-between items-baseline gap-3">
-                        <span className="text-text-muted">{isVietnamese ? "Giá" : "Price"}</span>
-                        <span className="text-text font-medium text-right">
-                            {isFree
-                                ? (isVietnamese ? "Miễn phí (Free to Play)" : "Free to Play")
-                                : (isVietnamese ? "Có phí (Paid)" : "Paid")}
+            {/* 2. INCLUDES / FEATURES CARD (Replaces the old Game Details position) */}
+            {categoriesList.length > 0 && (
+                <div className="p-4 rounded-xl bg-surface/40 border border-border/30 flex flex-col gap-3.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold tracking-wider uppercase text-text-muted flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-primary" />
+                            <span>{isVietnamese ? "Bao gồm (Includes)" : "Includes"}</span>
+                        </span>
+                        <span className="text-xs font-mono text-text-muted">
+                            {categoriesList.length}
                         </span>
                     </div>
 
-                    {/* Supported Platforms */}
-                    {game.platforms && game.platforms.length > 0 && (
-                        <div className="py-2 flex justify-between items-center gap-3 last:pb-0">
-                            <span className="text-text-muted">{isVietnamese ? "Nền tảng hỗ trợ" : "Platforms"}</span>
-                            <div className="flex items-center gap-2">
-                                {game.platforms.map((platform) => {
-                                    const info = getPlatformIcon(platform);
-                                    return info ? (
-                                        <span
-                                            key={platform}
-                                            title={info.title}
-                                            className={`text-sm cursor-default ${info.colorClass}`}
-                                        >
-                                            <FontAwesomeIcon icon={info.icon} />
-                                        </span>
-                                    ) : (
-                                        <span
-                                            key={platform}
-                                            className="text-xs text-text font-medium"
-                                        >
-                                            {platform}
-                                        </span>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* 3. FEATURES CARD (Simplified title, restrained radius & border, icon removed) */}
-            {categoriesList.length > 0 && (
-                <div className="p-4 rounded-md bg-surface/35 border border-border/20 flex flex-col gap-3">
-                    <h3 className="text-xs font-bold tracking-wider uppercase text-text-muted">
-                        {isVietnamese ? "Tính năng" : "Features"}
-                    </h3>
-
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-col divide-y divide-border/20 text-xs">
                         {categoriesList.map((cat) => (
-                            <span
+                            <div
                                 key={cat.id}
-                                className="px-2.5 py-1 rounded text-xs font-medium bg-surface/60 text-text-muted border border-border/20 cursor-default"
+                                className="py-2.5 flex items-center gap-2.5 first:pt-0 last:pb-0 text-text-muted hover:text-text transition-colors"
                             >
-                                {cat.description}
-                            </span>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                                <span className="font-medium">{cat.description}</span>
+                            </div>
                         ))}
                     </div>
                 </div>

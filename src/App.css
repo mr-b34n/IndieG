@@ -66,6 +66,28 @@
         display: none;
     }
 
+    .custom-scrollbar-x {
+        overflow-x: auto;
+        scrollbar-width: thin !important;
+        scrollbar-color: var(--app-border-strong) var(--app-surface-inner) !important;
+    }
+    .custom-scrollbar-x::-webkit-scrollbar {
+        display: block !important;
+        height: 6px !important;
+    }
+    .custom-scrollbar-x::-webkit-scrollbar-track {
+        background: var(--app-surface-inner) !important;
+        border-radius: 9999px !important;
+    }
+    .custom-scrollbar-x::-webkit-scrollbar-thumb {
+        background: var(--app-border-strong) !important;
+        border-radius: 9999px !important;
+        transition: background-color 0.2s ease !important;
+    }
+    .custom-scrollbar-x::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary) !important;
+    }
+
     .animate-fade-in {
         animation: fade-in 0.2s ease-out both;
     }

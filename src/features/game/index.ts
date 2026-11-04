@@ -6,6 +6,7 @@ export { GameDetail } from "./components/GameDetail";
 export { GameHero } from "./components/GameHero";
 export { GameTabs } from "./components/GameTabs";
 export { GameOverviewTab } from "./components/GameOverviewTab";
+export { GameGalleryTab } from "./components/GameGalleryTab";
 export { GameGuidesTab } from "./components/GameGuidesTab";
 export { GameReviewsTab } from "./components/GameReviewsTab";
 export { GamePatchNotesTab } from "./components/GamePatchNotesTab";

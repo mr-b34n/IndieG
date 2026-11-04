@@ -1,4 +1,4 @@
-export type GameTabType = "overview" | "guides" | "reviews" | "updates" | "discussions";
+export type GameTabType = "overview" | "gallery" | "discussions" | "guides" | "reviews" | "updates";
 
 export interface GameGuide {
     id: string;
