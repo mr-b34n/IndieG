@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { faBookmark } from "@fortawesome/free-regular-svg-icons";
-import { faSpinner, faBookmark as faBookmarkSolid } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { BookmarkSimple as faBookmark, CircleNotch as faSpinner, BookmarkSimple as faBookmarkSolid } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
@@ -99,7 +98,7 @@ export const BookmarkList = ({ showHeader = false }: BookmarkListProps) => {
                     title: t("bookmark.fallbackTitle", { defaultValue: "Bài viết đã lưu" }),
                     content: t("bookmark.fallbackContent", { defaultValue: "Nội dung bài viết đang được đồng bộ..." }),
                     author: t("bookmark.fallbackAuthor", { defaultValue: "Người dùng" }),
-                    authorAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(id)}`,
+                    authorAvatar: "",
                     likes: 0,
                     comments: 0,
                     timeAgo: t("bookmark.fallbackTime", { defaultValue: "Đã lưu" }),
