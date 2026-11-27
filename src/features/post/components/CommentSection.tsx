@@ -1,21 +1,32 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretUp, faCaretDown, faReply, faImage, faFaceSmile, faXmark, faLock, faEllipsis, faTrash, faFlag, faCopy, faCheck, faPen, faThumbtack, faShieldHalved, faTriangleExclamation, faChevronUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "@tanstack/react-router";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CaretUp as faCaretUp, CaretDown as faCaretDown, ArrowBendUpLeft as faReply, Image as faImage, Smiley as faFaceSmile, X as faXmark, Lock as faLock, DotsThree as faEllipsis, Trash as faTrash, Flag as faFlag, Copy as faCopy, Check as faCheck, Pen as faPen, PushPin as faThumbtack, Shield as faShieldHalved, Warning as faTriangleExclamation, CaretUp as faChevronUp, CircleNotch as faSpinner, Chats as faCommentsIcon } from "@phosphor-icons/react";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
-import { DEFAULT_AVATAR as avatarUser } from "@/shared/constants/images";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { getActiveMentionQuery, insertMentionIntoText, type ActiveMentionMatch } from "@/shared/components/ui/mentionUtils";
+import {
+    MentionSuggestionsPopover,
+    useMentionCandidates,
+    type MentionCandidate,
+} from "@/shared/components/ui/MentionSuggestionsPopover";
 import { useAuthStore } from "@/features/auth";
 import { usePostsStore } from "../store/usePostsStore";
 import { ReportModal } from "@/features/report";
 import { getCurrentAuthor } from "../helpers/getCurrentAuthor";
-import { getRankLabel, getRankConfigIfPresent } from "../helpers/userRanks";
+import {
+    saveCommentDraft,
+    loadCommentDraft,
+    clearCommentDraft,
+} from "../helpers/draftStorage";
 import { formatTimeAgo } from "@/shared/utils/formatTimeAgo";
+import { uploadImageToR2 } from "@/shared/services/upload-service";
 import EmojiBox from "@/shared/components/ui/EmojiBox";
 import { useCommentsQuery, useReplyCommentsQuery, useCreateCommentMutation, useUpdateCommentMutation, useDeleteCommentMutation } from "@/shared/api/useQueries";
+import { votesApi } from "@/shared/api";
 import type { CommentEntity } from "@/shared/api/types";
-import { faComments as faCommentsIcon } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -29,7 +40,6 @@ export interface CommentData {
     author: string;
     authorUsername?: string;
     authorAvatar: string;
-    authorRank?: string;
     authorBio?: string;
     authorStatus?: string;
     content: string;
@@ -47,6 +57,7 @@ export interface CommentData {
     replies?: CommentData[]; // Danh sách reply con
     replyCount?: number; // Tổng số câu trả lời từ backend
     pinned?: boolean; // Ghim bình luận
+    userVote?: number | null;
 }
 
 interface CommentSectionProps {
@@ -54,6 +65,7 @@ interface CommentSectionProps {
 }
 
 interface CommentItemProps {
+    postId: string | number;
     comment: CommentData;
     isLoggedIn: boolean;
     isCommentsAllowed?: boolean;
@@ -129,7 +141,21 @@ function useCommentImageAttachment() {
         });
     };
 
-    return { previewUrl, error, inputRef, handleSelect, clear, openPicker, toDataUrl };
+    const uploadForPost = async (targetPostId: string | number): Promise<string | undefined> => {
+        if (!file) return undefined;
+        try {
+            const uploaded = await uploadImageToR2({
+                file,
+                type: "comment",
+                postId: String(targetPostId),
+            });
+            return uploaded.imageUrl || uploaded.url || (await toDataUrl());
+        } catch {
+            return toDataUrl();
+        }
+    };
+
+    return { previewUrl, error, inputRef, handleSelect, clear, openPicker, toDataUrl, uploadForPost };
 }
 
 const CommentImageInput = ({ inputRef, onSelect }: { inputRef: React.RefObject<HTMLInputElement | null>; onSelect: (file: File | null) => void }) => (
@@ -169,11 +195,17 @@ const renderCommentContent = (text: string) => {
     return (
         <span>
             {parts.map((part, i) => {
-                if (part.startsWith("@")) {
+                if (part.startsWith("@") && part.length > 1) {
                     return (
-                        <span key={i} className="text-primary font-semibold hover:underline cursor-pointer mr-1">
+                        <Link
+                            key={i}
+                            to="/profile/$userId"
+                            params={{ userId: part }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-primary font-semibold hover:underline cursor-pointer"
+                        >
                             {part}
-                        </span>
+                        </Link>
                     );
                 }
                 return part;
@@ -209,6 +241,7 @@ const sortComments = (list: CommentData[], sort: "top" | "newest" = "top"): Comm
 };
 
 const CommentItem = ({
+    postId,
     comment,
     isLoggedIn,
     isCommentsAllowed = true,
@@ -219,13 +252,28 @@ const CommentItem = ({
     onEditComment,
     onTogglePinComment,
 }: CommentItemProps) => {
-    const [liked, setLiked] = useState(false);
-    const [downvoted, setDownvoted] = useState(false);
+    const [liked, setLiked] = useState(comment.userVote === 1);
+    const [downvoted, setDownvoted] = useState(comment.userVote === -1);
     const [likeCount, setLikeCount] = useState(comment.upvotes ?? comment.likes ?? 0);
     const [downvoteCount, setDownvoteCount] = useState(comment.downvotes ?? 0);
 
+    useEffect(() => {
+        setLiked(comment.userVote === 1);
+        setDownvoted(comment.userVote === -1);
+    }, [comment.userVote]);
+
+    useEffect(() => {
+        setLikeCount(comment.upvotes ?? comment.likes ?? 0);
+        setDownvoteCount(comment.downvotes ?? 0);
+    }, [comment.upvotes, comment.downvotes, comment.likes]);
+
     const [isReplying, setIsReplying] = useState(false);
     const [replyText, setReplyText] = useState("");
+    const [replyMention, setReplyMention] = useState<ActiveMentionMatch | null>(null);
+    const [replyMentionIdx, setReplyMentionIdx] = useState(0);
+    const { candidates: replyMentionCandidates, loading: replyMentionLoading } = useMentionCandidates(
+        replyMention ? replyMention.query : null
+    );
     const [showSubEmoji, setShowSubEmoji] = useState(false);
     const [showAllReplies, setShowAllReplies] = useState(depth > 0);
     const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -282,43 +330,119 @@ const CommentItem = ({
 
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
-    const toggleLike = () => {
+    const toggleLike = async () => {
         if (!isLoggedIn) {
             navigate({ to: "/auth" });
             return;
         }
         if (!requireVerifiedEmail("upvote bình luận")) return;
+        const commentId = comment.id;
         if (liked) {
             setLiked(false);
             setLikeCount((prev) => Math.max(0, prev - 1));
+            try {
+                await votesApi.deleteVoteComment(commentId);
+            } catch (err) {
+                setLiked(true);
+                setLikeCount((prev) => prev + 1);
+            }
         } else {
+            const wasDownvoted = downvoted;
             setLiked(true);
             setLikeCount((prev) => prev + 1);
-            if (downvoted) {
+            if (wasDownvoted) {
                 setDownvoted(false);
                 setDownvoteCount((prev) => Math.max(0, prev - 1));
+            }
+            try {
+                await votesApi.voteComment(commentId, 1);
+            } catch (err) {
+                setLiked(false);
+                setLikeCount((prev) => Math.max(0, prev - 1));
+                if (wasDownvoted) {
+                    setDownvoted(true);
+                    setDownvoteCount((prev) => prev + 1);
+                }
             }
         }
     };
 
-    const toggleDownvote = () => {
+    const toggleDownvote = async () => {
         if (!isLoggedIn) {
             navigate({ to: "/auth" });
             return;
         }
         if (!requireVerifiedEmail("downvote bình luận")) return;
+        const commentId = comment.id;
         if (downvoted) {
             setDownvoted(false);
             setDownvoteCount((prev) => Math.max(0, prev - 1));
+            try {
+                await votesApi.deleteVoteComment(commentId);
+            } catch (err) {
+                setDownvoted(true);
+                setDownvoteCount((prev) => prev + 1);
+            }
         } else {
+            const wasLiked = liked;
             setDownvoted(true);
             setDownvoteCount((prev) => prev + 1);
-            if (liked) {
+            if (wasLiked) {
                 setLiked(false);
                 setLikeCount((prev) => Math.max(0, prev - 1));
             }
+            try {
+                await votesApi.voteComment(commentId, -1);
+            } catch (err) {
+                setDownvoted(false);
+                setDownvoteCount((prev) => Math.max(0, prev - 1));
+                if (wasLiked) {
+                    setLiked(true);
+                    setLikeCount((prev) => prev + 1);
+                }
+            }
         }
     };
+
+    const userId = user?.id ? String(user.id) : undefined;
+    const replyHandle = comment.authorUsername || comment.author;
+    const mentionPrefix = depth >= 1 ? `@${replyHandle}` : "";
+
+    useEffect(() => {
+        setReplyMentionIdx(0);
+    }, [replyMention?.query, replyMentionCandidates.length]);
+
+    const handleSelectReplyMention = (candidate: MentionCandidate) => {
+        if (!replyMention) return;
+        const { nextText, nextCursorPos } = insertMentionIntoText(
+            replyText,
+            replyMention.startIndex,
+            replyMention.endIndex,
+            candidate.username
+        );
+        setReplyText(nextText);
+        setReplyMention(null);
+        requestAnimationFrame(() => {
+            if (replyTextareaRef.current) {
+                replyTextareaRef.current.focus();
+                replyTextareaRef.current.setSelectionRange(nextCursorPos, nextCursorPos);
+            }
+        });
+    };
+
+    // Debounced auto-save of user's reply draft to localStorage
+    useEffect(() => {
+        if (!isReplying || !userId) return;
+        const timer = window.setTimeout(() => {
+            const trimmed = replyText.trim();
+            if (!trimmed || (mentionPrefix && trimmed === mentionPrefix)) {
+                clearCommentDraft(userId, postId, comment.id);
+                return;
+            }
+            saveCommentDraft(userId, postId, replyText, comment.id);
+        }, 300);
+        return () => window.clearTimeout(timer);
+    }, [isReplying, userId, postId, comment.id, replyText, mentionPrefix]);
 
     const handleReplyClick = () => {
         if (!isLoggedIn) {
@@ -328,15 +452,22 @@ const CommentItem = ({
         if (!requireVerifiedEmail("trả lời bình luận")) return;
         setIsReplying((prev) => {
             const next = !prev;
-            if (next && depth >= 1 && !replyText.trim()) {
-                setReplyText(`@${comment.author} `);
+            if (next && !replyText.trim()) {
+                const savedReply = loadCommentDraft(userId, postId, comment.id);
+                if (savedReply) {
+                    setReplyText(savedReply);
+                } else if (depth >= 1) {
+                    setReplyText(`@${replyHandle} `);
+                }
             }
             return next;
         });
     };
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setReplyText(e.target.value);
+        const val = e.target.value;
+        setReplyText(val);
+        setReplyMention(getActiveMentionQuery(val, e.target.selectionStart ?? val.length));
         e.target.style.height = "auto";
         e.target.style.height = `${e.target.scrollHeight}px`;
     };
@@ -347,9 +478,10 @@ const CommentItem = ({
         if (textLen > 0 && textLen < 6) return;
         if (textLen === 0 && !replyImage.previewUrl) return;
         if (textLen > 1000) return;
-        const imageDataUrl = await replyImage.toDataUrl();
-        onAddReply(comment.id, replyText.trim(), imageDataUrl);
+        const imageUrl = await replyImage.uploadForPost(postId);
+        onAddReply(comment.id, replyText.trim(), imageUrl);
         setReplyText("");
+        clearCommentDraft(userId, postId, comment.id);
         replyImage.clear();
         setIsReplying(false);
         setShowAllReplies(true);
@@ -394,16 +526,16 @@ const CommentItem = ({
     const avatarSize = depth === 0 ? "w-9 h-9" : depth === 1 ? "w-7 h-7" : "w-6 h-6";
     const nameSize = depth === 0 ? "text-[14px]" : depth === 1 ? "text-[13px]" : "text-[12.5px]";
     const contentSize = depth === 0 ? "text-[14px]" : depth === 1 ? "text-[13.5px]" : "text-[13px]";
-    const commentRank = getRankConfigIfPresent(comment.authorRank);
 
     return (
         <div className={`flex flex-col w-full animate-fade-in group ${showMenu ? "relative z-[100]" : "relative has-[.menu-dropdown]:z-[100]"}`}>
             <div className="flex flex-row items-start gap-2.5 sm:gap-3 w-full">
-                <img
+                <UserAvatar
                     src={comment.authorAvatar}
-                    alt={comment.author}
+                    name={comment.author}
                     onClick={handleAuthorClick}
-                    className={`${avatarSize} rounded-full object-cover shrink-0 mt-0.5 cursor-pointer hover:opacity-90 transition-opacity`}
+                    className={`${avatarSize} mt-0.5 cursor-pointer hover:opacity-90 transition-opacity`}
+                    textClassName={depth === 0 ? "text-xs" : "text-[10px]"}
                 />
 
                 <div className="flex flex-col flex-1 gap-1 min-w-0">
@@ -412,18 +544,10 @@ const CommentItem = ({
                             <div className="flex flex-row items-center gap-2 flex-wrap">
                                 <p 
                                     onClick={handleAuthorClick}
-                                    className={`font-bold ${nameSize} hover:underline cursor-pointer ${
-                                        commentRank?.textColor || "text-text"
-                                    }`}
+                                    className={`font-bold ${nameSize} hover:underline cursor-pointer text-text`}
                                 >
                                     {comment.author}
                                 </p>
-                                {commentRank && (
-                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${commentRank.classes}`}>
-                                        <FontAwesomeIcon icon={commentRank.icon} className="mr-1" />
-                                        {getRankLabel(commentRank, t)}
-                                    </span>
-                                )}
                                 <span className="text-xs text-text-faint">· {formatTimeAgo(comment.timeAgo, t)}</span>
                                 {comment.pinned && (
                                     <span 
@@ -614,12 +738,51 @@ const CommentItem = ({
 
                     {/* Reply Input */}
                     {isReplying && isCommentsAllowed && (
-                        <div className="flex flex-col gap-2 mt-3 p-3 bg-surface hover:bg-surface-hover/30 border border-border/60 rounded-xl focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-sm transition-all duration-200 animate-fade-in">
+                        <div className="relative flex flex-col gap-2 mt-3 p-3 bg-surface hover:bg-surface-hover/30 border border-border/60 rounded-xl focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-sm transition-all duration-200 animate-fade-in">
+                            <MentionSuggestionsPopover
+                                query={replyMention ? replyMention.query : null}
+                                candidates={replyMentionCandidates}
+                                loading={replyMentionLoading}
+                                activeIndex={replyMentionIdx}
+                                onSelect={handleSelectReplyMention}
+                                onHoverIndex={setReplyMentionIdx}
+                                position="above"
+                            />
                             <textarea
                                 ref={replyTextareaRef}
                                 value={replyText}
                                 onChange={handleInput}
+                                onKeyUp={(e) => {
+                                    const target = e.currentTarget;
+                                    setReplyMention(getActiveMentionQuery(target.value, target.selectionStart ?? target.value.length));
+                                }}
+                                onBlur={() => {
+                                    window.setTimeout(() => setReplyMention(null), 150);
+                                }}
                                 onKeyDown={(e) => {
+                                    if (replyMention && replyMentionCandidates.length > 0) {
+                                        if (e.key === "ArrowDown") {
+                                            e.preventDefault();
+                                            setReplyMentionIdx((prev) => (prev + 1) % replyMentionCandidates.length);
+                                            return;
+                                        }
+                                        if (e.key === "ArrowUp") {
+                                            e.preventDefault();
+                                            setReplyMentionIdx((prev) => (prev - 1 + replyMentionCandidates.length) % replyMentionCandidates.length);
+                                            return;
+                                        }
+                                        if (e.key === "Enter" || e.key === "Tab") {
+                                            e.preventDefault();
+                                            const chosen = replyMentionCandidates[replyMentionIdx] || replyMentionCandidates[0];
+                                            if (chosen) handleSelectReplyMention(chosen);
+                                            return;
+                                        }
+                                        if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            setReplyMention(null);
+                                            return;
+                                        }
+                                    }
                                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                                         e.preventDefault();
                                         const textLen = replyText.trim().length;
@@ -757,6 +920,7 @@ const CommentItem = ({
                         {visibleReplies.map((subCmt) => (
                             <CommentItem
                                 key={subCmt.id}
+                                postId={postId}
                                 comment={subCmt}
                                 depth={depth + 1}
                                 isLoggedIn={isLoggedIn}
@@ -856,21 +1020,29 @@ function extractCommentList(res: unknown): CommentEntity[] {
 
 function mapCommentEntityToCommentData(c: CommentEntity, parentDepth?: number): CommentData {
     const currentDepth = c.depth !== undefined ? c.depth : (parentDepth !== undefined ? parentDepth + 1 : 0);
-    const authorObj = typeof c.author === "object" && c.author !== null
+    const authorObj = (typeof c.author === "object" && c.author !== null
         ? c.author
-        : ((c as { user?: unknown }).user && typeof (c as { user?: unknown }).user === "object" ? (c as { user?: unknown }).user as { name?: string; username?: string; displayName?: string; avatar?: string; avatarUrl?: string } : null);
+        : ((c as { user?: unknown }).user && typeof (c as { user?: unknown }).user === "object"
+            ? (c as { user?: unknown }).user
+            : null)) as {
+        id?: string;
+        name?: string;
+        username?: string;
+        displayName?: string;
+        avatar?: string;
+        avatarUrl?: string;
+        avatar_url?: string;
+        bio?: string;
+        status?: string;
+    } | null;
 
     const authorName = authorObj
         ? (authorObj.name || (authorObj as { displayName?: string }).displayName || authorObj.username || "Thành viên")
         : (typeof c.author === "string" && c.author.trim() ? c.author : ((c as { authorName?: string }).authorName || (c.authorId ? `User_${c.authorId.slice(-4)}` : "Thành viên")));
 
-    const fallbackAvatar = authorObj?.username
-        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorObj.username)}`
-        : ((c as { authorAvatar?: string }).authorAvatar || (c.authorId ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(c.authorId)}` : avatarUser));
-
     const authorAvatar = authorObj
-        ? (authorObj.avatarUrl || authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || fallbackAvatar)
-        : ((c as { authorAvatar?: string }).authorAvatar || fallbackAvatar);
+        ? (authorObj.avatarUrl || authorObj.avatar || (authorObj as { avatar_url?: string }).avatar_url || "")
+        : ((c as { authorAvatar?: string }).authorAvatar || "");
 
     // Children can be an array of CommentEntity objects or an array of ID strings
     const isChildObject = (item: unknown): item is CommentEntity =>
@@ -911,7 +1083,6 @@ function mapCommentEntityToCommentData(c: CommentEntity, parentDepth?: number): 
         author: authorName,
         authorUsername: authorObj?.username,
         authorAvatar: authorAvatar,
-        authorRank: authorObj?.rank,
         authorBio: authorObj?.bio,
         authorStatus: authorObj?.status,
         parentId: c.parentId ?? (typeof c.parent === "string" ? c.parent : (c.parent?.id ?? null)),
@@ -926,9 +1097,10 @@ function mapCommentEntityToCommentData(c: CommentEntity, parentDepth?: number): 
         downvotes: c.downvotes ?? 0,
         likes: calculatedScore,
         pinned: !!c.pinned,
-        image: c.image,
+        image: c.imageUrl || c.image || undefined,
         replies: mappedReplies.length > 0 ? mappedReplies : undefined,
         replyCount: parsedReplyCount,
+        userVote: c.userVote ?? null,
     };
 }
 
@@ -938,13 +1110,44 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
     const post = usePostsStore((state) => state.getPostById(postId));
     const isCommentsAllowed = post?.allowComments !== false;
     const [commentText, setCommentText] = useState("");
+    const [mainMention, setMainMention] = useState<ActiveMentionMatch | null>(null);
+    const [mainMentionIdx, setMainMentionIdx] = useState(0);
+    const { candidates: mainMentionCandidates, loading: mainMentionLoading } = useMentionCandidates(
+        mainMention ? mainMention.query : null
+    );
     const [sortBy, setSortBy] = useState<"top" | "newest">("top");
     const mainTextareaRef = useRef<HTMLTextAreaElement>(null);
     const mainImage = useCommentImageAttachment();
     const user = useAuthStore((state) => state.user);
+    const userId = user?.id ? String(user.id) : undefined;
     const openVerifyModal = useAuthStore((state) => state.openVerifyModal);
     const isLoggedIn = !!user;
     const navigate = useNavigate();
+    const loadedMainDraftKeyRef = useRef<string | null>(null);
+
+    // Restore user's main comment draft for this post from localStorage
+    useEffect(() => {
+        if (!userId) {
+            loadedMainDraftKeyRef.current = null;
+            return;
+        }
+        const scopeKey = `${userId}:${String(postId)}`;
+        if (loadedMainDraftKeyRef.current === scopeKey) return;
+        loadedMainDraftKeyRef.current = scopeKey;
+        const saved = loadCommentDraft(userId, postId);
+        setCommentText(saved);
+    }, [userId, postId]);
+
+    // Debounced auto-save of user's main comment draft to localStorage
+    useEffect(() => {
+        if (!userId) return;
+        const scopeKey = `${userId}:${String(postId)}`;
+        if (loadedMainDraftKeyRef.current !== scopeKey) return;
+        const timer = window.setTimeout(() => {
+            saveCommentDraft(userId, postId, commentText);
+        }, 300);
+        return () => window.clearTimeout(timer);
+    }, [userId, postId, commentText]);
 
     // TanStack Query for Comments with limit = 6 (between 5 and 7)
     const [commentLimit, setCommentLimit] = useState(6);
@@ -1015,8 +1218,32 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
 
 
 
+    useEffect(() => {
+        setMainMentionIdx(0);
+    }, [mainMention?.query, mainMentionCandidates.length]);
+
+    const handleSelectMainMention = (candidate: MentionCandidate) => {
+        if (!mainMention) return;
+        const { nextText, nextCursorPos } = insertMentionIntoText(
+            commentText,
+            mainMention.startIndex,
+            mainMention.endIndex,
+            candidate.username
+        );
+        setCommentText(nextText);
+        setMainMention(null);
+        requestAnimationFrame(() => {
+            if (mainTextareaRef.current) {
+                mainTextareaRef.current.focus();
+                mainTextareaRef.current.setSelectionRange(nextCursorPos, nextCursorPos);
+            }
+        });
+    };
+
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setCommentText(e.target.value);
+        const val = e.target.value;
+        setCommentText(val);
+        setMainMention(getActiveMentionQuery(val, e.target.selectionStart ?? val.length));
         e.target.style.height = "auto";
         e.target.style.height = `${e.target.scrollHeight}px`;
     };
@@ -1056,13 +1283,14 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         if (textLen === 0 && !mainImage.previewUrl) return;
         if (textLen > 1000) return;
         const textContent = commentText.trim();
-        const imageDataUrl = await mainImage.toDataUrl();
+        const uploadedImageUrl = await mainImage.uploadForPost(postId);
+        const remoteImageUrl = uploadedImageUrl && /^https?:\/\//i.test(uploadedImageUrl) ? uploadedImageUrl : undefined;
         const authorName = user?.name || user?.username || getCurrentAuthor() || "You";
         const authorAvatar =
             user?.avatarUrl ||
             user?.avatar_url ||
             (user?.user_metadata?.avatar_url as string | undefined) ||
-            (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
+            "";
 
         const tempId = `${postId}-${Date.now()}`;
         const newComment: CommentData = {
@@ -1072,7 +1300,6 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             author: authorName,
             authorUsername: user?.username,
             authorAvatar: authorAvatar,
-            authorRank: (user as { rank?: string })?.rank,
             content: textContent,
             timeAgo: "Vừa xong",
             score: 0,
@@ -1080,10 +1307,11 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             downvotes: 0,
             likes: 0,
             depth: 0,
-            image: imageDataUrl,
+            image: uploadedImageUrl,
         };
         setComments((prev) => [...prev, newComment]);
         setCommentText("");
+        clearCommentDraft(userId, postId);
         mainImage.clear();
         if (mainTextareaRef.current) mainTextareaRef.current.style.height = "auto";
 
@@ -1101,6 +1329,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             const createdRes = await createCommentMutation.mutateAsync({
                 postId: String(postId),
                 content: textContent || "[Ảnh đính kèm]",
+                ...(remoteImageUrl ? { imageUrl: remoteImageUrl } : {}),
             });
             if (createdRes && (createdRes.id || (createdRes as unknown as { _id?: string })._id)) {
                 const realId = createdRes.id || (createdRes as unknown as { _id?: string })._id!;
@@ -1132,7 +1361,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             user?.avatarUrl ||
             user?.avatar_url ||
             (user?.user_metadata?.avatar_url as string | undefined) ||
-            (user?.username ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}` : avatarUser);
+            "";
 
         // Find parent to calculate next depth level (0 -> 1 -> 2, depth = 3 levels total)
         const parentComment = findCommentInTree(comments, parentId);
@@ -1148,7 +1377,6 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
             author: authorName,
             authorUsername: user?.username,
             authorAvatar: authorAvatar,
-            authorRank: (user as { rank?: string })?.rank,
             content: text,
             timeAgo: "Vừa xong",
             score: 0,
@@ -1171,10 +1399,12 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
         }
 
         try {
+            const remoteSubImageUrl = image && /^https?:\/\//i.test(image) ? image : undefined;
             const createdRes = await createCommentMutation.mutateAsync({
                 postId: String(postId),
                 parentId: String(parentId),
-                content: text,
+                content: text || "[Ảnh đính kèm]",
+                ...(remoteSubImageUrl ? { imageUrl: remoteSubImageUrl } : {}),
             });
             if (createdRes && (createdRes.id || (createdRes as unknown as { _id?: string })._id)) {
                 const realId = createdRes.id || (createdRes as unknown as { _id?: string })._id!;
@@ -1324,13 +1554,57 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                     </div>
                 ) : isLoggedIn ? (
                     <>
-                        <img src={avatarUser} alt="You" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-1 ring-border shrink-0" />
-                        <div className="flex flex-col flex-1 gap-2 bg-surface hover:bg-surface-hover/30 border border-border/80 rounded-xl p-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200">
+                        <UserAvatar
+                            src={user?.avatarUrl || user?.avatar_url}
+                            name={user?.name || user?.username || getCurrentAuthor()}
+                            className="w-9 h-9 sm:w-10 sm:h-10 ring-1 ring-border"
+                            textClassName="text-xs sm:text-sm"
+                        />
+                        <div className="relative flex flex-col flex-1 gap-2 bg-surface hover:bg-surface-hover/30 border border-border/80 rounded-xl p-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-200">
+                            <MentionSuggestionsPopover
+                                query={mainMention ? mainMention.query : null}
+                                candidates={mainMentionCandidates}
+                                loading={mainMentionLoading}
+                                activeIndex={mainMentionIdx}
+                                onSelect={handleSelectMainMention}
+                                onHoverIndex={setMainMentionIdx}
+                                position="above"
+                            />
                             <textarea
                                 ref={mainTextareaRef}
                                 value={commentText}
                                 onChange={handleInput}
+                                onKeyUp={(e) => {
+                                    const target = e.currentTarget;
+                                    setMainMention(getActiveMentionQuery(target.value, target.selectionStart ?? target.value.length));
+                                }}
+                                onBlur={() => {
+                                    window.setTimeout(() => setMainMention(null), 150);
+                                }}
                                 onKeyDown={(e) => {
+                                    if (mainMention && mainMentionCandidates.length > 0) {
+                                        if (e.key === "ArrowDown") {
+                                            e.preventDefault();
+                                            setMainMentionIdx((prev) => (prev + 1) % mainMentionCandidates.length);
+                                            return;
+                                        }
+                                        if (e.key === "ArrowUp") {
+                                            e.preventDefault();
+                                            setMainMentionIdx((prev) => (prev - 1 + mainMentionCandidates.length) % mainMentionCandidates.length);
+                                            return;
+                                        }
+                                        if (e.key === "Enter" || e.key === "Tab") {
+                                            e.preventDefault();
+                                            const chosen = mainMentionCandidates[mainMentionIdx] || mainMentionCandidates[0];
+                                            if (chosen) handleSelectMainMention(chosen);
+                                            return;
+                                        }
+                                        if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            setMainMention(null);
+                                            return;
+                                        }
+                                    }
                                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                                         e.preventDefault();
                                         if (canSubmitMain) {
@@ -1458,6 +1732,7 @@ export const CommentSection = ({ postId }: CommentSectionProps) => {
                         {displayedComments.map((cmt) => (
                             <CommentItem
                                 key={cmt.id}
+                                postId={postId}
                                 comment={cmt}
                                 isLoggedIn={isLoggedIn}
                                 isCommentsAllowed={isCommentsAllowed}

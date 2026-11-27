@@ -1,4 +1,4 @@
-import { faStar, faUsers, faFire } from "@fortawesome/free-solid-svg-icons";
+import { Star as faStar, Users as faUsers, Fire as faFire } from "@phosphor-icons/react";
 
 export const POST_TAG_CLASSES = [
     "bg-surface-hover text-text-muted hover:text-primary transition-colors",

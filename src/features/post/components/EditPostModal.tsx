@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faComment, faThumbtack, faTriangleExclamation, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { X as faXmark, Chat as faComment, PushPin as faThumbtack, Warning as faTriangleExclamation, EyeSlash as faEyeSlash } from "@phosphor-icons/react";
 import type { PostData, PostFileAttachment } from "../types";
 import { postToEditableAttachments, prepareAttachmentsForSave, revokeAttachmentUrls, type EditableAttachment } from "../helpers/postAttachments";
 import { AttachmentPicker } from "./AttachmentPicker";

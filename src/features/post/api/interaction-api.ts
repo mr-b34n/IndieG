@@ -15,8 +15,8 @@ export const usePostVoteInteraction = (postId: string | number) => {
           await votesApi.deleteVotePost(postId);
         }
       } catch (err) {
-        // Log error while maintaining graceful local state responsiveness
         console.warn(`Vote API call failed for post ${postId}`, err);
+        throw err;
       }
       return voteType;
     },
@@ -31,6 +31,9 @@ export const usePostVoteInteraction = (postId: string | number) => {
         }
         return null;
       });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['votes', 'post', String(postId)] });
     },
   });
 };
