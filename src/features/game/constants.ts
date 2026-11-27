@@ -1,5 +1,4 @@
 import { type GameData } from "./types";
-
 import {
     GAME_ILLU_BG as gameIlluBg,
 } from "@/shared/constants/images";
@@ -16,7 +15,9 @@ export const STEAM_URL_MAP: Record<string, string> = {
     "elden-ring": "https://store.steampowered.com/app/1245620/ELDEN_RING/",
     "black-myth-wukong": "https://store.steampowered.com/app/2358720/Black_Myth_Wukong/",
     "grand-theft-auto-v": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/",
-    "gtav": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/"
+    "gtav": "https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/",
+    "hades-ii": "https://store.steampowered.com/app/1145350/Hades_II/",
+    "hollow-knight-silksong": "https://store.steampowered.com/app/1030300/Hollow_Knight_Silksong/"
 };
 
 export const GAME_APPID_MAP: Record<string, number> = {
@@ -30,6 +31,8 @@ export const GAME_APPID_MAP: Record<string, number> = {
     "black-myth-wukong": 2358720,
     "grand-theft-auto-v": 271590,
     "gtav": 271590,
+    "hades-ii": 1145350,
+    "hollow-knight-silksong": 1030300,
 };
 
 export const getGameBySlug = (slug: string): GameData => {
@@ -39,7 +42,7 @@ export const getGameBySlug = (slug: string): GameData => {
         g.slug === cleanSlug || 
         g.id === cleanSlug || 
         g.aliases?.includes(cleanSlug) ||
-        g.tag.toLowerCase() === cleanSlug.replace(/-/g, " ")
+        g.tag?.toLowerCase() === cleanSlug.replace(/-/g, " ")
     );
     if (found) {
         return {
@@ -78,8 +81,6 @@ export const getGameBySlug = (slug: string): GameData => {
         features: [],
         featuresVi: [],
         screenshots: [],
-        systemReqs: undefined,
-        guides: [],
-        reviews: []
+        systemReqs: undefined
     };
 };

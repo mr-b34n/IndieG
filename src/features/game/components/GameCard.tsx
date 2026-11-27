@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Star, Users, Gamepad2 } from "lucide-react";
+import { Star, Users, GameController as Gamepad2 } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type GameData } from "../types";
 
@@ -44,7 +44,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
     return (
         <div
             onClick={handleCardClick}
-            className="group relative w-full flex flex-col rounded-xl bg-surface-inner/60 hover:bg-surface-inner p-2.5 sm:p-3 cursor-pointer select-none transition-colors"
+            className="group relative w-full flex flex-col rounded-xl bg-surface-inner/60 hover:bg-surface-inner p-2.5 sm:p-3 cursor-pointer select-none transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
         >
             {/* 1. Artwork Window (16:9 Aspect Ratio) - Borderless clean presentation */}
             <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg bg-black/40">
@@ -54,7 +54,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
                         alt={game.name}
                         loading="lazy"
                         onError={() => setImageError(true)}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-surface-inner text-text-faint/30">

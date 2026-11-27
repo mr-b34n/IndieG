@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { Calendar, MessageSquare, Clock, Sparkles } from "lucide-react";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Chats as faComments, ClockCounterClockwise as faClockRotateLeft, CalendarDots as faCalendarDays } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useGamePatchNotesQuery } from "@/shared/api/useQueries";
@@ -82,7 +83,7 @@ export const GamePatchNotesTab: React.FC<GamePatchNotesTabProps> = ({ game, game
                 </div>
 
                 {/* Filter buttons */}
-                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
                     {types.map((t) => (
                         <button
                             key={t.id}
@@ -135,7 +136,7 @@ export const GamePatchNotesTab: React.FC<GamePatchNotesTabProps> = ({ game, game
                                         </div>
 
                                         <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                                            <Calendar className="w-3.5 h-3.5 text-text-muted/70" />
+                                            <FontAwesomeIcon icon={faCalendarDays} className="text-[11px] text-text-muted/70" />
                                             <span>{note.date}</span>
                                         </div>
                                     </div>
@@ -159,7 +160,7 @@ export const GamePatchNotesTab: React.FC<GamePatchNotesTabProps> = ({ game, game
                                                 onClick={() => navigate({ to: "/post/$postId", params: { postId: String(note.postId) } })}
                                                 className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                                             >
-                                                <MessageSquare className="w-3.5 h-3.5" />
+                                                <FontAwesomeIcon icon={faComments} />
                                                 <span>
                                                     {isVietnamese ? "Xem bài thảo luận chi tiết" : "View discussion thread"}
                                                 </span>
@@ -174,7 +175,7 @@ export const GamePatchNotesTab: React.FC<GamePatchNotesTabProps> = ({ game, game
             ) : (
                 <div className="py-16 text-center flex flex-col items-center justify-center gap-3 border border-dashed border-border/30 rounded-2xl bg-surface/10 p-6">
                     <div className="w-12 h-12 rounded-full bg-surface/50 border border-border/30 flex items-center justify-center text-text-muted text-lg">
-                        <Clock className="w-5 h-5" />
+                        <FontAwesomeIcon icon={faClockRotateLeft} />
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-text">

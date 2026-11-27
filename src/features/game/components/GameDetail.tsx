@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CircleNotch as faSpinner } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useGameStore } from "../store/useGameStore";
 import { usePostsStore } from "@/features/post";
@@ -10,6 +11,7 @@ import { useAuthStore } from "@/features/auth";
 import {
     useGameDetailBySlugQuery,
     useUnifiedGameDetailQuery,
+    useGamePatchNotesQuery,
     useGamesQuery,
 } from "@/shared/api/useQueries";
 import { mapGameDtoToGameData } from "@/shared/api/types";
@@ -18,7 +20,7 @@ import { type GameData, type GameTabType } from "../types";
 import { GameHero } from "./GameHero";
 import { GameTabs } from "./GameTabs";
 import { GameOverviewTab } from "./GameOverviewTab";
-import { GameGalleryTab } from "./GameGalleryTab";
+import { GamePatchNotesTab } from "./GamePatchNotesTab";
 import { GameDiscussionsTab } from "./GameDiscussionsTab";
 import { GameSidebar } from "./GameSidebar";
 
@@ -31,7 +33,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     const navigate = useNavigate();
     const isVietnamese = lang === "vi";
 
-    const cleanSlug = (slug || "counter-strike-2").trim().toLowerCase();
+    const cleanSlug = (slug || "").trim().toLowerCase();
     const isNumericSlug = /^\d+$/.test(cleanSlug);
 
     // 1. Resolve numeric AppID if known or passed directly
@@ -49,7 +51,14 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     // 3. Query rich unified game detail (Steam store data + platform data)
     const { data: unifiedData, isLoading: isUnifiedLoading } = useUnifiedGameDetailQuery(effectiveAppid);
 
-    // 4. Construct merged GameData
+    // 4. Fetch counts for sub-tabs
+    const { data: patchNotesData } = useGamePatchNotesQuery(effectiveAppid || 0, { limit: 1 });
+
+    const patchNotesCount = Array.isArray(patchNotesData)
+        ? patchNotesData.length
+        : (patchNotesData as any)?.total || 0;
+
+    // 5. Construct merged GameData
     const localFallback = useMemo(() => fallbackGetGameBySlug(cleanSlug), [cleanSlug]);
 
     const game: GameData = useMemo(() => {
@@ -85,7 +94,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
         window.scrollTo({ top: 0, behavior: "instant" });
     }, [cleanSlug]);
 
-    // Following state (used for Add to Library)
+    // Following state (checks both cleanSlug and resolved game.slug)
     const followedSlugs = useGameStore((state) => state.followedSlugs);
     const isFollowing = useMemo(() => {
         if (followedSlugs.includes(cleanSlug)) return true;
@@ -183,24 +192,24 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
             .slice(0, 4);
     }, [allGamesData, game, effectiveAppid, cleanSlug]);
 
-    // Active Tab state: overview, gallery, discussions
+    // Active Tab state
     const [activeTab, setActiveTab] = useState<GameTabType>("overview");
 
     const isInitialLoading = !unifiedData && (isSlugLoading || isUnifiedLoading);
 
     return (
         <div className="w-full pb-24 animate-fade-in bg-background min-h-screen text-text">
-            {/* Elegant Loading Indicator when initial request is resolving */}
+            {/* Loading Indicator when initial request is resolving */}
             {isInitialLoading && (
-                <div className="w-full py-2 bg-primary/10 border-b border-primary/20 text-primary text-xs font-medium text-center flex items-center justify-center gap-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <div className="w-full py-1.5 bg-primary/10 text-primary text-xs font-medium text-center flex items-center justify-center gap-2">
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-[11px]" />
                     <span>
-                        {isVietnamese ? "Đang đồng bộ dữ liệu game từ Steam..." : "Syncing game data from Steam..."}
+                        {isVietnamese ? "Đang đồng bộ dữ liệu game..." : "Syncing game data..."}
                     </span>
                 </div>
             )}
 
-            {/* 1. GAME HERO (Consolidated Details, Add to Library, No Share, White Linux icon) */}
+            {/* 1. GAME HERO */}
             <GameHero
                 game={game}
                 isFollowing={isFollowing}
@@ -209,11 +218,12 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                 onCommunityAction={handleCommunityAction}
             />
 
-            {/* 2. SUB-TABS NAVIGATION (OVERVIEW, GALLERY, DISCUSSIONS - NON-STICKY, HIGH CONTRAST BG) */}
+            {/* 2. SUB-TABS NAVIGATION */}
             <GameTabs
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 counts={{
+                    updates: patchNotesCount,
                     discussions: relatedPosts.length,
                 }}
             />
@@ -225,14 +235,19 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     {activeTab === "overview" && (
                         <GameOverviewTab
                             game={game}
+                            relatedPosts={relatedPosts}
                             relatedGames={relatedGames}
+                            onViewCommunity={
+                                resolvedCommunityId
+                                    ? () => navigate({ to: "/community/$communityId", params: { communityId: String(resolvedCommunityId) } })
+                                    : undefined
+                            }
+                            onNavigateToTab={setActiveTab}
                         />
                     )}
 
-                    {activeTab === "gallery" && (
-                        <GameGalleryTab
-                            game={game}
-                        />
+                    {activeTab === "updates" && (
+                        <GamePatchNotesTab game={game} gameAppid={effectiveAppid || 0} />
                     )}
 
                     {activeTab === "discussions" && (
@@ -249,7 +264,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                     )}
                 </div>
 
-                {/* Right Column: Community & Includes Sidebar */}
+                {/* Right Column: Game Info & Community Widget Sidebar */}
                 <GameSidebar
                     game={game}
                     community={matchingCommunity}

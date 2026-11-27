@@ -1,5 +1,6 @@
 import React from "react";
-import { ArrowRight, Plus, MessageSquare } from "lucide-react";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ArrowRight as faArrowRight, Plus as faPlus, Chats as faComments } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { Post } from "@/features/post";
@@ -43,10 +44,10 @@ export const GameDiscussionsTab: React.FC<GameDiscussionsTabProps> = ({
                     <button
                         type="button"
                         onClick={onViewCommunityFeed}
-                        className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface/50 border border-border/30 hover:border-border/60"
+                        className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface/50"
                     >
                         <span>{isVietnamese ? "Diễn đàn cộng đồng" : "Community Hub"}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                     </button>
                 )}
             </div>
@@ -64,7 +65,7 @@ export const GameDiscussionsTab: React.FC<GameDiscussionsTabProps> = ({
             ) : (
                 <div className="py-16 text-center flex flex-col items-center justify-center gap-3 border border-dashed border-border/30 rounded-2xl bg-surface/10 p-6">
                     <div className="w-12 h-12 rounded-full bg-surface/50 border border-border/30 flex items-center justify-center text-text-muted text-lg">
-                        <MessageSquare className="w-5 h-5" />
+                        <FontAwesomeIcon icon={faComments} />
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-text">
@@ -80,9 +81,9 @@ export const GameDiscussionsTab: React.FC<GameDiscussionsTabProps> = ({
                         <button
                             type="button"
                             onClick={() => navigate({ to: "/community/$communityId", params: { communityId: String(targetCommId) } })}
-                            className="mt-2 px-4 py-2 rounded-xl font-semibold bg-primary text-white hover:bg-primary-hover transition-all text-xs cursor-pointer inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+                            className="mt-2 px-4 py-2 rounded-xl font-semibold bg-primary text-white hover:bg-primary-hover transition-all text-xs cursor-pointer inline-flex items-center gap-1.5 shadow-sm active:scale-98"
                         >
-                            <Plus className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faPlus} />
                             <span>{isVietnamese ? "Đăng bài trong cộng đồng" : "Post in Community"}</span>
                         </button>
                     )}

@@ -1,36 +1,4 @@
-export type GameTabType = "overview" | "gallery" | "discussions" | "guides" | "reviews" | "updates";
-
-export interface GameGuide {
-    id: string;
-    title: string;
-    titleVi?: string;
-    author: string;
-    authorAvatar: string;
-    authorUsername?: string;
-    authorId?: string;
-    rank?: string;
-    category: "tactics" | "builds" | "secrets" | "general";
-    content: string;
-    contentVi?: string;
-    likes: number;
-    views: number;
-    date: string;
-}
-
-export interface GameReview {
-    id: string;
-    author: string;
-    authorAvatar: string;
-    authorUsername?: string;
-    authorId?: string;
-    rating: number; // 1 to 10
-    hoursPlayed?: string;
-    content: string;
-    contentVi?: string;
-    date: string;
-    recommended: boolean;
-    likes: number;
-}
+export type GameTabType = "overview" | "updates" | "discussions";
 
 export interface GameSystemReqs {
     minimum?: {
@@ -111,11 +79,10 @@ export interface GameData {
     descriptionVi?: string;
     aboutTheGame?: string;
     features?: string[];
+    featuresVi?: string[];
     screenshots: string[];
     screenshotItems?: GameScreenshotItem[];
     systemReqs?: GameSystemReqs;
-    guides?: GameGuide[];
-    reviews?: GameReview[];
     patchNotes?: GamePatchNote[];
     ratingScore?: number;
     totalReviewsCount?: number;
