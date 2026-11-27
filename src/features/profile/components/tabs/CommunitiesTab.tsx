@@ -1,14 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-    faUsers, 
-    faShieldHalved, 
-    faSpinner, 
-    faSearch,
-    faXmark,
-    faCheck
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Users as faUsers, CircleNotch as faSpinner, MagnifyingGlass as faSearch, X as faXmark, Check as faCheck } from "@phosphor-icons/react";
 import type { CommunityReputation } from "../../types";
 import type { CommunityDto } from "@/shared/api/types";
 import { DEFAULT_BG } from "@/shared/constants/images";
@@ -126,16 +119,13 @@ export const CommunitiesTab = ({ reputations = [], communities = [], isLoading =
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d1117] opacity-80" />
                                 
                                 {/* Badges top right */}
-                                <div className="absolute top-2 right-2 flex gap-1">
-                                    {item.role === "ADMIN" && (
+                                {item.role === "ADMIN" && (
+                                    <div className="absolute top-2 right-2 flex gap-1">
                                         <span className="px-1.5 py-0.5 rounded-[4px] bg-[#E5A93D]/20 text-[#E5A93D] text-[9px] font-bold border border-[#E5A93D]/30 backdrop-blur-sm">
                                             ADMIN
                                         </span>
-                                    )}
-                                    <span className="px-1.5 py-0.5 rounded-[4px] bg-[#13161C]/80 text-[#8A8F98] text-[9px] font-bold border border-[#1A1F2A] backdrop-blur-sm">
-                                        {item.privacy}
-                                    </span>
-                                </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="p-4 pt-0 relative flex flex-col flex-1">
@@ -164,12 +154,7 @@ export const CommunitiesTab = ({ reputations = [], communities = [], isLoading =
                                 </div>
 
                                 {/* Bottom action button */}
-                                <div className="mt-auto pt-3 border-t border-[#1A1F2A]/40 flex items-center justify-between">
-                                    <span className="text-[10px] font-bold text-[#5F697C] flex items-center gap-1.5">
-                                        <FontAwesomeIcon icon={faShieldHalved} className="text-[#5F697C]" />
-                                        {item.tier.toUpperCase()}
-                                    </span>
-                                    
+                                <div className="mt-auto pt-3 border-t border-[#1A1F2A]/40 flex items-center justify-end">
                                     <button 
                                         type="button"
                                         onClick={(e) => {

@@ -5,22 +5,20 @@ import {
     X,
     UserPlus,
     UserCheck,
-    UserX,
-    MoreHorizontal,
-    ChevronDown,
-    Ban,
-    MessageSquare,
+    UserMinus as UserX,
+    CaretDown as ChevronDown,
+    Prohibit as Ban,
+    Chat as MessageSquare,
     Clock,
-    Loader2,
-    CheckCircle2,
+    CircleNotch as Loader2,
+    CheckCircle as CheckCircle2,
     XCircle,
-    AlertTriangle,
+    Warning as AlertTriangle,
     MapPin,
-    Calendar,
-    Pen,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@/features/auth";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { useUsernameAvailability } from "../hooks/useUsernameAvailability";
 import type { Badge, ProfileIdentity, ProfileStatus } from "../types";
@@ -73,6 +71,9 @@ const STATUS_OPTIONS: { val: ProfileStatus; label: string; dotColor: string }[] 
     { val: "offline", label: "Offline", dotColor: "bg-text-faint" },
 ];
 
+const STANDARD_COVER_WIDTH = 1200;
+const STANDARD_COVER_HEIGHT = 267;
+
 const statusCfg = (s: ProfileStatus) =>
     STATUS_OPTIONS.find((o) => o.val === s) ?? STATUS_OPTIONS[0];
 
@@ -97,7 +98,6 @@ export const ProfileHero = ({
     isCustomizeMode,
     onToggleCustomizeMode,
     isEditMode = false,
-    onStartEditMode,
     onSaveEdit,
     onDiscardEdit,
     onAddFriend,
@@ -105,7 +105,6 @@ export const ProfileHero = ({
     onBlock,
     onUnblock,
     location,
-    joinedDate,
     followersCount = 0,
     followingCount = 0,
     t,
@@ -120,27 +119,10 @@ export const ProfileHero = ({
 
     const [showFriendMenu, setShowFriendMenu] = useState(false);
     const [isEditingStatus, setIsEditingStatus] = useState(false);
-    const [coverRatio, setCoverRatio] = useState<number>(4.5);
-    const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
     const [coverLoadFailed, setCoverLoadFailed] = useState(false);
 
     useEffect(() => {
-        setAvatarLoadFailed(false);
-    }, [avatarUrl]);
-
-    useEffect(() => {
         setCoverLoadFailed(false);
-    }, [coverSrc]);
-
-    useEffect(() => {
-        if (!coverSrc) return;
-        const img = new Image();
-        img.src = coverSrc;
-        img.onload = () => {
-            if (img.naturalWidth && img.naturalHeight > 0) {
-                setCoverRatio(img.naturalWidth / img.naturalHeight);
-            }
-        };
     }, [coverSrc]);
 
     const navigate = useNavigate();
@@ -174,21 +156,15 @@ export const ProfileHero = ({
     return (
         <div className="relative w-full rounded-2xl overflow-hidden bg-surface border border-border shadow-xs transition-colors" style={{ isolation: "isolate" }}>
 
-            {/* ── 1. Full Cover Banner (Adaptive ratio) ── */}
+            {/* ── 1. Full Cover Banner (Standard 1200x267 ratio, max-h 267px) ── */}
             <div
-                className="relative w-full overflow-hidden bg-surface-inner min-h-[220px] sm:min-h-[260px] md:min-h-[300px] flex flex-col justify-end"
-                style={{ aspectRatio: coverRatio }}
+                className="relative w-full overflow-hidden bg-surface-inner min-h-[200px] sm:min-h-[220px] md:min-h-[267px] max-h-[267px] flex flex-col justify-end"
+                style={{ aspectRatio: `${STANDARD_COVER_WIDTH} / ${STANDARD_COVER_HEIGHT}` }}
             >
                 {coverSrc && !coverLoadFailed ? (
                     <img
                         src={coverSrc}
                         alt="Gamer Cover"
-                        onLoad={(e) => {
-                            const { naturalWidth, naturalHeight } = e.currentTarget;
-                            if (naturalWidth && naturalHeight > 0) {
-                                setCoverRatio(naturalWidth / naturalHeight);
-                            }
-                        }}
                         onError={() => setCoverLoadFailed(true)}
                         className="absolute inset-0 w-full h-full object-cover object-center"
                     />
@@ -204,18 +180,13 @@ export const ProfileHero = ({
                         {/* Avatar Box with Initial Letter Fallback */}
                         <div className="relative shrink-0 group">
                             <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-26 md:h-26 rounded-full overflow-hidden bg-surface ring-4 ring-black/40 shadow-2xl flex items-center justify-center">
-                                {avatarUrl && !avatarLoadFailed ? (
-                                    <img
-                                        src={avatarUrl}
-                                        alt={identity.name}
-                                        className="w-full h-full object-cover"
-                                        onError={() => setAvatarLoadFailed(true)}
-                                    />
-                                ) : (
-                                    <span className="text-2xl sm:text-3xl font-extrabold text-primary select-none uppercase">
-                                        {(identity.name || identity.username || "G").replace(/^@/, "").charAt(0) || "G"}
-                                    </span>
-                                )}
+                                <UserAvatar
+                                    src={avatarUrl}
+                                    name={identity.name || identity.username}
+                                    alt={identity.name}
+                                    className="w-full h-full"
+                                    textClassName="text-2xl sm:text-3xl font-extrabold"
+                                />
                             </div>
 
                             {/* Avatar upload overlay (Owner Only) */}
@@ -273,11 +244,11 @@ export const ProfileHero = ({
                             </div>
                         </div>
 
-                        {/* Text Identity Block with tight fade matching displayname/username size */}
+                        {/* Text Identity Block with fade matching displayname/username size */}
                         <div className="relative w-fit max-w-full flex flex-col gap-1 pb-0.5 min-w-0">
-                            {/* Diffused fade tightly bounded to displayname/username bounds */}
+                            {/* Diffused fade with increased darkness behind text to make it stand out */}
                             <div 
-                                className="absolute -inset-x-3 -inset-y-1.5 rounded-xl bg-black/55 blur-md pointer-events-none -z-10" 
+                                className="absolute -inset-x-4 -inset-y-2 rounded-2xl bg-black/85 blur-md pointer-events-none -z-10" 
                                 aria-hidden="true" 
                             />
 
@@ -305,7 +276,7 @@ export const ProfileHero = ({
                                                         }
                                                     }
                                                 }}
-                                                className={`h-9 px-3 pr-8 rounded-xl bg-black/60 backdrop-blur-md border text-xs sm:text-sm text-zinc-200 font-mono font-medium w-36 sm:w-48 focus:outline-none transition-colors ${
+                                                className={`h-9 px-3 pr-8 rounded-xl bg-black/60 backdrop-blur-md border text-xs sm:text-sm text-zinc-200 font-sans font-medium w-36 sm:w-48 focus:outline-none transition-colors ${
                                                     usernameCheck.status === "taken"
                                                         ? "border-rose-500/80 focus:border-rose-500"
                                                         : usernameCheck.status === "available"
@@ -373,8 +344,8 @@ export const ProfileHero = ({
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-300 drop-shadow-sm">
-                                        {/* Point 5: Neutral gray username with suitable tone */}
-                                        <span className="font-mono font-medium text-zinc-300 tracking-tight">{identity.username}</span>
+                                        {/* Sans-serif username with original zinc-300 color */}
+                                        <span className="font-sans font-medium text-zinc-300 tracking-normal">{identity.username}</span>
 
                                         {location && (
                                             <>
@@ -382,16 +353,6 @@ export const ProfileHero = ({
                                                 <span className="flex items-center gap-1 text-zinc-300">
                                                     <MapPin className="size-3 text-zinc-400" />
                                                     <span>{location}</span>
-                                                </span>
-                                            </>
-                                        )}
-
-                                        {joinedDate && (
-                                            <>
-                                                <span className="text-zinc-400">•</span>
-                                                <span className="flex items-center gap-1 text-zinc-300">
-                                                    <Calendar className="size-3 text-zinc-400" />
-                                                    <span>{joinedDate}</span>
                                                 </span>
                                             </>
                                         )}
@@ -529,15 +490,6 @@ export const ProfileHero = ({
                                         <span>{t("profile.addFriend", { defaultValue: "Kết bạn" })}</span>
                                     </button>
                                 )}
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleProtectedAction(t("common.settings", { defaultValue: "mở tùy chọn" }), () => setShowFriendMenu((v) => !v))}
-                                    className="w-8 h-8 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs transition-all cursor-pointer shadow-md active:scale-95"
-                                    title="Tùy chọn khác"
-                                >
-                                    <MoreHorizontal className="size-4" />
-                                </button>
 
                                 {showFriendMenu && (
                                     <div className="absolute right-0 bottom-full mb-1.5 w-44 bg-surface rounded-xl p-1.5 shadow-2xl z-50 flex flex-col gap-0.5 border border-border animate-dropdown origin-bottom-right">

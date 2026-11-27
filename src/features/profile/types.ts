@@ -1,4 +1,4 @@
-import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { type AppIconComponent as IconDefinition } from "@/shared/components/ui/Icon";
 
 export type ProfileStatus = "online" | "in-game" | "offline";
 export type ProfileTab = "overview" | "games" | "posts" | "communities" | "achievements" | "friends" | "bookmarks" | "guestbook";
@@ -28,10 +28,14 @@ export interface LibraryGame {
     name: string;
     logo: string;
     coverUrl?: string;
+    banner?: string;
+    iconUrl?: string;
     hours: number;
     lastPlayed: string;
-    achievements: number;
+    achievements: number | { current: number; total: number };
     totalAchievements: number;
+    completion?: number;
+    difficulty?: string;
     keyStat: string;
     rank: string;
     mvpCount: string;
@@ -58,7 +62,10 @@ export interface FriendEntry {
 export interface FriendRequest {
     id: string;
     userId?: string;
+    requesterId?: string;
+    addresseeId?: string;
     name: string;
+    username?: string;
     handle?: string;
     avatar?: string;
     game: string | null;
@@ -81,6 +88,7 @@ export interface GuestbookComment {
 export interface ProfileIdentity {
     name: string;
     username: string;
+    handle?: string;
     bio: string;
     status: ProfileStatus;
     rank?: string | null;

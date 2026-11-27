@@ -1,8 +1,4 @@
-import {
-    faGamepad, faCrown, faShieldHalved, faTrophy, faFire, faClock, faMedal,
-    faDesktop, faHeadphones, faMicrochip, faComputerMouse, faKeyboard,
-    faMicrophone, faLayerGroup, faVolumeHigh, faTv,
-} from "@fortawesome/free-solid-svg-icons";
+import { GameController as faGamepad, Crown as faCrown, Shield as faShieldHalved, Trophy as faTrophy, Fire as faFire, Clock as faClock, Medal as faMedal, Monitor as faDesktop, Headphones as faHeadphones, Cpu as faMicrochip, Mouse as faComputerMouse, Keyboard as faKeyboard, Microphone as faMicrophone, Stack as faLayerGroup, SpeakerHigh as faVolumeHigh, Television as faTv } from "@phosphor-icons/react";
 import type {
     Badge, GearCategory, LibraryGame, FriendEntry, FriendRequest,
     GuestbookComment, ProfileIdentity, ProfileStatus, CommunityReputation, RecentActivityItem,

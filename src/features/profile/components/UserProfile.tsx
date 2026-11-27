@@ -4,9 +4,8 @@ import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { useAuthStore } from "@/features/auth";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { usePostsStore, getCurrentAuthor } from "@/features/post";
-import { getRankLabel, getRankConfigIfPresent } from "@/features/post/helpers/userRanks";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faSpinner, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CheckCircle as faCheckCircle, CircleNotch as faSpinner, Warning as faExclamationTriangle } from "@phosphor-icons/react";
 
 import { ImageCropperModal } from "./ImageCropperModal";
 import { ProfileHero } from "./ProfileHero";
@@ -14,17 +13,19 @@ import { ProfileTabBar } from "./ProfileTabBar";
 
 import {
     DEFAULT_COVER,
-    COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES,
+    COMMUNITY_REPUTATIONS, RECENT_ACTIVITIES, getBadgeCatalogue,
 } from "../constants";
 import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
-import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment } from "../types";
+import type { FriendEntry, FriendRequest, ProfileTab, ProfileIdentity, GuestbookComment, LibraryGame } from "../types";
 import { useProfileIdentity } from "../hooks/useProfileIdentity";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { GamesTab } from "./tabs/GamesTab";
 import { CommunitiesTab } from "./tabs/CommunitiesTab";
 import { PostsTab } from "./tabs/PostsTab";
 import { FriendsTab } from "./tabs/FriendsTab";
+import { AchievementsTab } from "./tabs/AchievementsTab";
 import { GuestbookTab } from "./tabs/GuestbookTab";
+import { BadgeSelectorModal } from "./BadgeSelectorModal";
 import { BookmarkList } from "@/features/bookmark";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -82,17 +83,16 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const isLoggedIn = !!user;
     const currentAuthor = getCurrentAuthor();
 
-    const isOwnProfile =
+    const isOwnProfile = Boolean(
         isLoggedIn &&
-        (!userId || userId === "demo" || userId === "me" || userId === user?.id ||
-        userId === currentAuthor || userId === `@${currentAuthor}` ||
-        (user?.username && (userId === `@${user.username}` || userId === user.username)));
+        (!userId || userId === "me" || userId === user?.id ||
+        (user?.username && (userId === `@${user.username}` || userId === user.username)))
+    );
 
     // TanStack Query hooks for profile data
     const cleanUsername = userId?.replace(/^@/, "");
     const { data: rawMyProfileData, isLoading: isMyProfileLoading } = useMyProfileQuery(
-        isOwnProfile && isLoggedIn,
-        user?.id || user?.username
+        isOwnProfile && isLoggedIn
     );
     const { data: rawOtherUserProfileData, isLoading: isOtherProfileLoading } = useUserProfileQuery(!isOwnProfile && !!cleanUsername && cleanUsername !== "me" ? cleanUsername : "");
     const myProfileData = useMemo(() => extractUserProfile(rawMyProfileData), [rawMyProfileData]);
@@ -244,6 +244,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
     const [rawAvatarSrc, setRawAvatarSrc] = useState<string | null>(null);
     const [rawCoverSrc, setRawCoverSrc] = useState<string | null>(null);
     const [customBg, setCustomBg] = useState<string>(DEFAULT_COVER);
+    const [isBadgeSelectorOpen, setIsBadgeSelectorOpen] = useState(false);
+    const [selectedBadgeId, setSelectedBadgeId] = useState<string>("founder");
+    const badges = useMemo(() => getBadgeCatalogue(t), [t]);
+    const equippedBadge = useMemo(() => badges.find((b) => b.id === selectedBadgeId) || badges[0], [badges, selectedBadgeId]);
     const profileLocation = "";
 
     const effectiveCover = identity.coverUrl || customBg;
@@ -253,8 +257,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
 
     // Computer specs / gear data loaded exclusively from API (remoteProfile)
     const remoteGear = useMemo(() => {
-        const unwrapped = extractUserProfile(remoteProfile) || remoteProfile;
-        const raw = (unwrapped as Record<string, unknown>)?.specs || (unwrapped as Record<string, unknown>)?.gear || (unwrapped as Record<string, unknown>)?.hardware;
+        const unwrapped = (extractUserProfile(remoteProfile) || remoteProfile) as unknown as Record<string, unknown> | null;
+        const raw = unwrapped?.specs || unwrapped?.gear || unwrapped?.hardware;
         return (raw && typeof raw === "object") ? (raw as Record<string, string>) : {};
     }, [remoteProfile]);
 
@@ -300,7 +304,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
             const trimmedBio = identity.bio !== undefined ? identity.bio.trim() : undefined;
             const originalBio = snapshotIdentity?.bio !== undefined
                 ? snapshotIdentity.bio.trim()
-                : (remoteProfile?.bio || "").trim();
+                : (typeof remoteProfile?.bio === "string" ? remoteProfile.bio : "").trim();
 
             if (trimmedBio !== undefined && trimmedBio !== originalBio) {
                 if ((trimmedBio.startsWith("{") && trimmedBio.endsWith("}")) || (trimmedBio.startsWith("[") && trimmedBio.endsWith("]"))) {
@@ -446,13 +450,15 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         : (otherUserProfileData?.id || remoteProfile?.id);
     const profileUserId = isUuid(resolvedProfileUserId) ? resolvedProfileUserId : undefined;
 
-    // Real API Queries for Posts & Communities
+    // Real API Queries for Posts & Communities (Lazy loaded by tab & reusing joined communities cache)
     const { data: remoteUserPostsData, isLoading: isPostsLoading } = usePostsQuery(
-        profileUserId ? { authorId: profileUserId } : undefined
+        profileUserId ? { authorId: profileUserId } : undefined,
+        { enabled: activeTab === "posts" }
     );
 
     const { data: remoteCommunitiesData, isLoading: isCommunitiesLoading } = useCommunitiesQuery(
-        isOwnProfile ? { type: "joined" } : undefined
+        isOwnProfile ? { type: "joined", limit: 50 } : undefined,
+        { enabled: isOwnProfile || activeTab === "communities" || activeTab === "overview" }
     );
 
     // User's posts (combining API posts with local posts)
@@ -508,11 +514,12 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         return extractCommunityList(remoteCommunitiesData);
     }, [remoteCommunitiesData]);
 
-    // Real Friendships API Queries
-    const { data: rawFriends = [], isLoading: isFriendsLoading } = useFriendsQuery(!!user);
-    const { data: rawIncomingRequests = [], isLoading: isIncomingLoading } = useIncomingFriendRequestsQuery(!!user);
-    const { data: rawOutgoingRequests = [], isLoading: isOutgoingLoading } = useOutgoingFriendRequestsQuery(!!user);
-    const { data: rawBlockedUsers = [], isLoading: isBlockedLoading } = useBlockedUsersQuery(!!user);
+    // Real Friendships API Queries (Lazy loaded for own profile when friends tab is active)
+    const shouldFetchFriends = Boolean(user) && (!isOwnProfile || activeTab === "friends");
+    const { data: rawFriends = [], isLoading: isFriendsLoading } = useFriendsQuery(shouldFetchFriends);
+    const { data: rawIncomingRequests = [], isLoading: isIncomingLoading } = useIncomingFriendRequestsQuery(shouldFetchFriends);
+    const { data: rawOutgoingRequests = [], isLoading: isOutgoingLoading } = useOutgoingFriendRequestsQuery(shouldFetchFriends);
+    const { data: rawBlockedUsers = [], isLoading: isBlockedLoading } = useBlockedUsersQuery(shouldFetchFriends);
 
     // Friendships Mutations
     const sendFriendRequestMutation = useSendFriendRequestMutation();
@@ -540,7 +547,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                (rawIncomingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).requests || [])
             : [];
         return raw
-            .map((item) => extractFriendRequest(item, "incoming"))
+            .map((item) => extractFriendRequest(item))
             .filter((r): r is FriendRequest => r !== null);
     }, [rawIncomingRequests]);
 
@@ -553,7 +560,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                (rawOutgoingRequests as unknown as { items?: unknown[]; data?: unknown[]; requests?: unknown[] }).requests || [])
             : [];
         return raw
-            .map((item) => extractFriendRequest(item, "outgoing"))
+            .map((item) => extractFriendRequest(item))
             .filter((r): r is FriendRequest => r !== null);
     }, [rawOutgoingRequests]);
 
@@ -726,7 +733,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         ? (myProfileData?.id || user?.id)
         : (otherUserProfileData?.id || remoteProfile?.id);
     const targetProfileId = (rawTargetProfileId && isUuid(rawTargetProfileId)) ? rawTargetProfileId : "";
-    const { data: rawGuestbookComments = [], isLoading: isGuestbookLoading } = useGuestbookCommentsQuery(targetProfileId, !!targetProfileId);
+    const { data: rawGuestbookComments = [], isLoading: isGuestbookLoading } = useGuestbookCommentsQuery(
+        targetProfileId,
+        Boolean(targetProfileId) && activeTab === "guestbook"
+    );
     const createGuestbookMutation = useCreateGuestbookCommentMutation();
     const deleteGuestbookMutation = useDeleteGuestbookCommentMutation();
 
@@ -737,7 +747,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         if (!Array.isArray(rawGuestbookComments)) return [];
         return rawGuestbookComments.map((c) => {
             const authorName = c.author?.name || c.author?.username || c.authorName || c.authorUsername || "Gamer";
-            const authorAvatar = c.author?.avatarUrl || c.author?.avatar_url || c.author?.avatar || c.authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(c.authorId || c.id)}`;
+            const authorAvatar = c.author?.avatarUrl || c.author?.avatar_url || c.author?.avatar || c.authorAvatar || "";
             const isLiked = !!likedCommentsMap[c.id];
             const canDelete = isOwnProfile || (!!user?.id && (c.authorId === user.id || c.author?.id === user.id));
 
@@ -807,7 +817,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         ? (myProfileData?.id || user?.id)
         : (otherUserProfileData?.id || remoteProfile?.id);
     const libraryGamesUserId = (rawLibraryGamesUserId && isUuid(rawLibraryGamesUserId)) ? rawLibraryGamesUserId : "";
-    const { data: rawLibraryGames = [], isLoading: isLibraryGamesLoading } = useLibraryGamesQuery(libraryGamesUserId, !!libraryGamesUserId);
+    const isGamesOrOverviewTab = activeTab === "overview" || activeTab === "games";
+    const { data: rawLibraryGames = [], isLoading: isLibraryGamesLoading } = useLibraryGamesQuery(
+        libraryGamesUserId,
+        Boolean(libraryGamesUserId) && isGamesOrOverviewTab
+    );
     const createLibraryGameMutation = useCreateLibraryGameMutation();
     const deleteLibraryGameMutation = useDeleteLibraryGameMutation();
 
@@ -866,15 +880,11 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
         setTimeout(() => setToastState(null), 2500);
     };
 
-    const avatarUrl = (isOwnProfile && customAvatar) ? customAvatar : (identity.avatarUrl || (identity as Record<string, unknown>).avatar as string | undefined);
+    const avatarUrl = (isOwnProfile && customAvatar)
+        ? customAvatar
+        : (identity.avatarUrl || ((identity as unknown as Record<string, unknown>).avatar as string | undefined) || "");
 
-    const rankCfg = getRankConfigIfPresent((remoteProfile as Record<string, unknown>)?.rank ?? identity.rank);
-    const forumRankNode = rankCfg ? (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[6px] text-xs font-bold ${rankCfg.badgeBg} ${rankCfg.color}`}>
-            <FontAwesomeIcon icon={rankCfg.icon} />
-            <span>{getRankLabel(rankCfg, language)}</span>
-        </span>
-    ) : null;
+    const forumRankNode = null;
 
     if (isLoading) {
         return (
@@ -967,6 +977,8 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                 followingCount={friendsList.length}
                 postsCount={displayPosts.length}
                 communitiesCount={displayCommunities.length > 0 ? displayCommunities.length : COMMUNITY_REPUTATIONS.length}
+                equippedBadge={equippedBadge}
+                onOpenBadgeSelector={() => setIsBadgeSelectorOpen(true)}
                 t={t}
             />
 
@@ -1027,6 +1039,7 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         onIdentityChange={(next) => setIdentity((prev: ProfileIdentity) => ({ ...prev, ...next }))}
                         onSaveIdentity={triggerToast}
                         onNavigateToGames={() => handleTabChange("games")}
+                        onOpenBadgeSelector={() => setIsBadgeSelectorOpen(true)}
                         t={t}
                     />
                 )}
@@ -1050,6 +1063,10 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                         isLoading={isCommunitiesLoading}
                         t={t}
                     />
+                )}
+
+                {activeTab === "achievements" && (
+                    <AchievementsTab badges={badges} t={t} />
                 )}
 
                 {activeTab === "posts" && <PostsTab posts={displayPosts} isLoading={isPostsLoading} t={t} />}
@@ -1095,6 +1112,19 @@ export const UserProfile = ({ userId }: UserProfileProps) => {
                     />
                 )}
             </div>
+
+            {isBadgeSelectorOpen && (
+                <BadgeSelectorModal
+                    badges={badges}
+                    selectedBadgeId={selectedBadgeId}
+                    onSelect={(id) => {
+                        setSelectedBadgeId(id);
+                        setIsBadgeSelectorOpen(false);
+                    }}
+                    onClose={() => setIsBadgeSelectorOpen(false)}
+                    t={t}
+                />
+            )}
         </div>
     );
 };

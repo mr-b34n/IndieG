@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import type { ProfileTab } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShareNodes, faEllipsisV, faPen, faLink, faFlag } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ShareNetwork as faShareNodes, DotsThreeVertical as faEllipsisV, Pen as faPen, Link as faLink, Flag as faFlag } from "@phosphor-icons/react";
 import { useClickOutside } from "../hooks/useClickOutside";
 
 interface ProfileTabBarProps {
@@ -20,7 +20,6 @@ interface ProfileTabBarProps {
 export const ProfileTabBar = ({
     activeTab,
     onChange,
-    friendsCount,
     showBookmarks = true,
     isCustomizeMode = false,
     isOwnProfile = false,
@@ -33,6 +32,7 @@ export const ProfileTabBar = ({
         { id: "games", label: "Library" },
         { id: "posts", label: t("profile.tabs.posts") || "Posts" },
         { id: "communities", label: t("profile.tabs.communities") || "Communities" },
+        { id: "achievements", label: t("profile.tabs.achievements") || "Badges" },
         { id: "friends", label: t("profile.friendsWidgetTitle") || "Friends" },
         ...(showBookmarks ? [{ id: "bookmarks" as ProfileTab, label: t("common.bookmark") || "Bookmarks" }] : []),
         { id: "guestbook", label: t("profile.guestbookTitle") || "Guestbook" },

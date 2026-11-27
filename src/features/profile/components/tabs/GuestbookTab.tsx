@@ -1,6 +1,7 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faPaperPlane, faHeart, faTrash, faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { Pen as faPen, PaperPlaneRight as faPaperPlane, Heart as faHeart, Trash as faTrash, CircleNotch as faSpinner, Warning as faTriangleExclamation } from "@phosphor-icons/react";
 import type { GuestbookComment } from "../../types";
 
 interface GuestbookTabProps {
@@ -74,7 +75,12 @@ export const GuestbookTab = ({
                     const fromRight = idx % 2 === 1;
                     return (
                         <div key={c.id} className={`flex items-start gap-3 max-w-[92%] sm:max-w-[75%] ${fromRight ? "self-end flex-row-reverse" : "self-start"}`}>
-                            <img src={c.avatar} alt={c.author} className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5" />
+                            <UserAvatar
+                                src={c.avatar}
+                                name={c.author}
+                                className="w-10 h-10 mt-0.5"
+                                textClassName="text-sm"
+                            />
                             <div
                                 className={`flex flex-col gap-1.5 min-w-0 rounded-[12px] px-4 py-3 ${
                                     fromRight 

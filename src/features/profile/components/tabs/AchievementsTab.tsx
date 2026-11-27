@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faCheckCircle, faLock } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Trophy as faTrophy, CheckCircle as faCheckCircle, Lock as faLock } from "@phosphor-icons/react";
 import type { Badge } from "../../types";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
 
