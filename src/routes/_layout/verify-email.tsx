@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShieldHalved, faCheckCircle, faCircleXmark, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Shield as faShieldHalved, CheckCircle as faCheckCircle, XCircle as faCircleXmark, ArrowRight as faArrowRight } from "@phosphor-icons/react";
 import { useAuthStore } from "@/features/auth";
+import { authApi } from "@/shared/api";
+import { queryClient } from "@/shared/lib/queryClient";
+import { QUERY_KEYS } from "@/shared/api/useQueries";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 
@@ -12,14 +15,23 @@ export const Route = createFileRoute("/_layout/verify-email")({
 
 function VerifyEmailRoutePage() {
     const navigate = useNavigate();
-    const searchParams = useSearch({ from: "/_layout/verify-email" }) as { token?: string };
-    const { verifyEmail, user } = useAuthStore();
+    const searchParams = useSearch({ from: "/_layout/verify-email" }) as { token?: string; mode?: string };
+    const verifyEmail = useAuthStore((state) => state.verifyEmail);
+    const updateUser = useAuthStore((state) => state.updateUser);
+    const userEmail = useAuthStore((state) => state.user?.email);
+    const isUserVerified = useAuthStore((state) => state.user?.isVerified);
     const { t, language } = useTranslation();
-    useDocumentTitle(t("auth.verifyEmailTitle", { defaultValue: "Xác minh email" }));
+    const isEmailChangeMode = searchParams.mode === "email-change";
+    useDocumentTitle(
+        isEmailChangeMode
+            ? t("auth.verifyEmailChangeTitle", { defaultValue: "Xác nhận đổi email" })
+            : t("auth.verifyEmailTitle", { defaultValue: "Xác minh email" })
+    );
     const isVi = language === "vi";
 
     const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
     const [errorMsg, setErrorMsg] = useState("");
+    const [updatedEmail, setUpdatedEmail] = useState<string | null>(null);
 
     const token = searchParams.token?.trim();
     const isMountedRef = useRef(true);
@@ -39,19 +51,44 @@ function VerifyEmailRoutePage() {
             return;
         }
 
-        // If the current logged-in user is already verified
-        if (user?.isVerified) {
+        // If verifying registration email and current logged-in user is already verified
+        if (!isEmailChangeMode && isUserVerified) {
             setStatus("success");
             return;
         }
 
         // Prevent duplicate verification calls for the same token (e.g. React 18 StrictMode in dev)
-        if (requestedTokenRef.current === token) {
+        const requestKey = `${isEmailChangeMode ? "change" : "verify"}:${token}`;
+        if (requestedTokenRef.current === requestKey) {
             return;
         }
-        requestedTokenRef.current = token;
+        requestedTokenRef.current = requestKey;
 
         const doVerify = async () => {
+            if (isEmailChangeMode) {
+                try {
+                    const res = await authApi.verifyEmailChange(token);
+                    if (!isMountedRef.current) return;
+                    if (res?.email) {
+                        setUpdatedEmail(res.email);
+                        if (useAuthStore.getState().user) {
+                            updateUser({ email: res.email, isVerified: true });
+                        }
+                    }
+                    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
+                    setStatus("success");
+                } catch (err: unknown) {
+                    if (!isMountedRef.current) return;
+                    const message =
+                        err instanceof Error
+                            ? err.message
+                            : t("auth.verifyEmailInvalidToken", { defaultValue: "Token xác thực không hợp lệ hoặc đã hết hạn." });
+                    setStatus("error");
+                    setErrorMsg(message);
+                }
+                return;
+            }
+
             const res = await verifyEmail(token);
             if (!isMountedRef.current) return;
 
@@ -70,7 +107,7 @@ function VerifyEmailRoutePage() {
         };
 
         void doVerify();
-    }, [token, verifyEmail, user?.isVerified, t]);
+    }, [token, isEmailChangeMode, verifyEmail, updateUser, isUserVerified, t]);
 
     return (
         <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -98,13 +135,21 @@ function VerifyEmailRoutePage() {
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-text uppercase tracking-tight">
-                                {t("auth.verifyEmailSuccessTitle", { defaultValue: "Xác minh email thành công!" })}
+                                {isEmailChangeMode
+                                    ? t("auth.verifyEmailChangeSuccessTitle", { defaultValue: "Đổi email thành công!" })
+                                    : t("auth.verifyEmailSuccessTitle", { defaultValue: "Xác minh email thành công!" })}
                             </h2>
                             <p className="text-xs text-text-muted mt-1">
-                                {isVi ? (
-                                    <>Tài khoản <strong className="text-amber-400">{user?.email || "của bạn"}</strong> đã được mở khóa đầy đủ quyền truy cập.</>
+                                {isEmailChangeMode ? (
+                                    isVi ? (
+                                        <>Địa chỉ email mới <strong className="text-amber-400">{updatedEmail || userEmail || "của bạn"}</strong> đã được xác nhận và cập nhật.</>
+                                    ) : (
+                                        <>Your new email <strong className="text-amber-400">{updatedEmail || userEmail || ""}</strong> has been verified and updated.</>
+                                    )
+                                ) : isVi ? (
+                                    <>Tài khoản <strong className="text-amber-400">{userEmail || "của bạn"}</strong> đã được mở khóa đầy đủ quyền truy cập.</>
                                 ) : (
-                                    <>Account <strong className="text-amber-400">{user?.email || "yours"}</strong> has been unlocked with full access.</>
+                                    <>Account <strong className="text-amber-400">{userEmail || "yours"}</strong> has been unlocked with full access.</>
                                 )}
                             </p>
                         </div>
