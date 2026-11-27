@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faComments, faClockRotateLeft, faTag, faCalendarDays } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Chats as faComments, ClockCounterClockwise as faClockRotateLeft, CalendarDots as faCalendarDays } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useGamePatchNotesQuery } from "@/shared/api/useQueries";

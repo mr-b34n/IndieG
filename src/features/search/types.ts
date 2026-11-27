@@ -16,6 +16,7 @@ export interface SearchUser {
     game?: string | null;
     favoriteGame?: string | null;
     isFriend?: boolean;
+    isPending?: boolean;
     isOnline?: boolean;
     badge?: string;
 }

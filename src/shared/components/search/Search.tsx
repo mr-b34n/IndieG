@@ -1,27 +1,18 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faMagnifyingGlass,
-    faXmark,
-    faUsers,
-    faFileLines,
-    faArrowRight,
-    faHistory,
-    faTrash,
-    faUser,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { MagnifyingGlass as faMagnifyingGlass, X as faXmark, Users as faUsers, FileText as faFileLines, ArrowRight as faArrowRight, ClockCounterClockwise as faHistory, Trash as faTrash, User as faUser } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut.ts";
 import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 import { usePostsStore } from "@/features/post";
 import { useCommunitiesStore } from "@/features/community";
-import { useSquadStore } from "@/features/squad";
 import { performSearch } from "@/features/search";
 import { fetchSearchResults } from "@/features/search/api/searchApi";
 import { formatCompactNumber } from "@/features/community/constants";
 import { type SearchResults } from "@/features/search/types";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
 
 const RECENT_SEARCHES_KEY = "gamerhub_recent_searches";
 
@@ -69,10 +60,9 @@ export const Search = ({ autoFocus = false, onCloseMobile }: SearchProps = {}) =
         priority: 70,
     });
 
-    // Data stores
-    const { posts } = usePostsStore();
-    const { communities } = useCommunitiesStore();
-    const { squads } = useSquadStore();
+    // Data stores (atomic selectors)
+    const posts = usePostsStore((state) => state.posts);
+    const communities = useCommunitiesStore((state) => state.communities);
 
     const saveRecentSearch = (query: string) => {
         const clean = query.trim();
@@ -109,8 +99,8 @@ export const Search = ({ autoFocus = false, onCloseMobile }: SearchProps = {}) =
 
     // Immediate client search fallback
     const clientResults = useMemo(() => {
-        return performSearch(debouncedValue, posts, communities, squads);
-    }, [debouncedValue, posts, communities, squads]);
+        return performSearch(debouncedValue, posts, communities);
+    }, [debouncedValue, posts, communities]);
 
     // Live API search results
     const [liveResults, setLiveResults] = useState<SearchResults | null>(null);
@@ -165,7 +155,7 @@ export const Search = ({ autoFocus = false, onCloseMobile }: SearchProps = {}) =
 
         navigate({
             to: "/search",
-            search: { q: query, tab: "all" },
+            search: { q: query, tab: "all", type: "all", page: 1, size: 10 },
         });
     };
 
@@ -319,11 +309,11 @@ export const Search = ({ autoFocus = false, onCloseMobile }: SearchProps = {}) =
                                                             }}
                                                             className="flex items-center gap-3 px-4 py-2 hover:bg-surface-hover text-left transition-colors cursor-pointer"
                                                         >
-                                                            <img
+                                                            <UserAvatar
                                                                 src={u.avatar}
-                                                                alt={u.name}
-                                                                referrerPolicy="no-referrer"
-                                                                className="w-7 h-7 rounded-full object-cover shrink-0"
+                                                                name={u.name || u.username}
+                                                                className="w-7 h-7"
+                                                                textClassName="text-[11px]"
                                                             />
                                                             <div className="flex flex-col min-w-0">
                                                                 <span className="text-xs font-bold text-text truncate">

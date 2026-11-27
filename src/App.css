@@ -66,6 +66,12 @@
         display: none;
     }
 
+    /* Scroll Affordance Fade Mask for Overflow Navigation */
+    .scroll-fade-mask {
+        mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+    }
+
     .animate-fade-in {
         animation: fade-in 0.2s ease-out both;
     }
@@ -80,6 +86,196 @@
 
     .animate-slide-left {
         animation: slide-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .animate-progress-fill {
+        animation: progress-fill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .animate-button-shimmer {
+        animation: button-shimmer 1.8s ease-in-out infinite;
+    }
+
+    .animate-indeterminate-line {
+        animation: indeterminate-line 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Facebook-style Skeleton Shimmer Animation */
+    .skeleton-fb {
+        background: linear-gradient(
+            90deg,
+            var(--app-skeleton-base) 0%,
+            var(--app-skeleton-highlight) 35%,
+            var(--app-skeleton-base) 70%
+        );
+        background-size: 200% 100%;
+        animation: fb-shimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* Cyberpunk / Tactical Gaming Loading Utilities */
+    .animate-radar-sweep {
+        animation: radar-sweep 2.4s linear infinite;
+    }
+
+    .animate-sonar-pulse-1 {
+        animation: sonar-pulse 3s cubic-bezier(0.1, 0.4, 0.2, 1) infinite;
+    }
+
+    .animate-sonar-pulse-2 {
+        animation: sonar-pulse 3s cubic-bezier(0.1, 0.4, 0.2, 1) infinite;
+        animation-delay: 1.5s;
+    }
+
+    .animate-cyber-scan {
+        animation: cyber-scan 2.8s ease-in-out infinite;
+    }
+
+    .animate-eq-1 { animation: eq-1 0.8s ease-in-out infinite alternate; }
+    .animate-eq-2 { animation: eq-2 0.65s ease-in-out infinite alternate; }
+    .animate-eq-3 { animation: eq-3 0.95s ease-in-out infinite alternate; }
+    .animate-eq-4 { animation: eq-4 0.75s ease-in-out infinite alternate; }
+    .animate-eq-5 { animation: eq-5 0.85s ease-in-out infinite alternate; }
+
+    /* Cinematic Transition Utilities */
+    .animate-zoom-in {
+        animation: zoom-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .animate-slide-down {
+        animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .animate-slide-in-left {
+        animation: slide-in-left 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .animate-slide-in-right {
+        animation: slide-in-right 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .animate-warp-gate {
+        animation: warp-gate 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+}
+
+@keyframes zoom-in {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slide-down {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes warp-gate {
+    0% {
+        opacity: 0;
+        transform: scale(0.88);
+        filter: blur(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes indeterminate-line {
+    0% {
+        transform: translateX(-100%);
+        width: 35%;
+    }
+    50% {
+        transform: translateX(100%);
+        width: 65%;
+    }
+    100% {
+        transform: translateX(300%);
+        width: 35%;
+    }
+}
+
+@keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes sonar-pulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(3.2);
+        opacity: 0;
+    }
+}
+
+@keyframes cyber-scan {
+    0% { transform: translateY(-100%); opacity: 0; }
+    25% { opacity: 0.8; }
+    75% { opacity: 0.8; }
+    100% { transform: translateY(1000%); opacity: 0; }
+}
+
+@keyframes eq-1 {
+    0% { height: 4px; }
+    100% { height: 20px; }
+}
+@keyframes eq-2 {
+    0% { height: 16px; }
+    100% { height: 6px; }
+}
+@keyframes eq-3 {
+    0% { height: 8px; }
+    100% { height: 24px; }
+}
+@keyframes eq-4 {
+    0% { height: 22px; }
+    100% { height: 10px; }
+}
+@keyframes eq-5 {
+    0% { height: 6px; }
+    100% { height: 18px; }
+}
+
+@keyframes fb-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
     }
 }
 
@@ -107,6 +303,16 @@
 @keyframes slide-left {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
+}
+
+@keyframes progress-fill {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+@keyframes button-shimmer {
+    0% { transform: translateX(-150%); }
+    100% { transform: translateX(150%); }
 }
 
 @theme {
@@ -182,11 +388,19 @@
 
     --app-text: #111827;
     --app-text-muted: #4B5563;
-    --app-text-faint: #828C99;
+    --app-text-faint: #64748B;
     --app-text-disabled: #CBD2D9;
 
     --app-primary-soft: #E0EFFF;
     --app-primary-glow: rgba(22, 136, 232, 0.15);
+
+    --app-skeleton-base: #e4e6eb;
+    --app-skeleton-highlight: #f0f2f5;
+
+    /* High-contrast Theme Adaptations for Radar & Telemetry */
+    --radar-sweep-trail: conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 315deg, rgba(22, 136, 232, 0.05) 325deg, rgba(22, 136, 232, 0.20) 345deg, rgba(22, 136, 232, 0.40) 360deg);
+    --radar-needle-bg: linear-gradient(to top, transparent, #1688E8 60%, #005fb8 100%);
+    --radar-needle-glow: 0 0 8px rgba(22, 136, 232, 0.6);
 
     /* Direct variable fallbacks */
     --color-bg: #F4F6F8;
@@ -202,7 +416,7 @@
     --color-divider-secondary: #EDF1F5;
     --color-text: #111827;
     --color-text-muted: #4B5563;
-    --color-text-faint: #828C99;
+    --color-text-faint: #64748B;
     --color-text-disabled: #CBD2D9;
     --color-primary-soft: #E0EFFF;
     --color-primary-glow: rgba(22, 136, 232, 0.15);
@@ -228,11 +442,19 @@
 
     --app-text: #E8E9EA;
     --app-text-muted: #8B9097;
-    --app-text-faint: #5F646B;
+    --app-text-faint: #94A3B8;
     --app-text-disabled: #3d424a;
 
     --app-primary-soft: #0e2740;
     --app-primary-glow: rgba(22, 136, 232, 0.12);
+
+    --app-skeleton-base: rgba(255, 255, 255, 0.06);
+    --app-skeleton-highlight: rgba(255, 255, 255, 0.16);
+
+    /* High-contrast Theme Adaptations for Radar & Telemetry (Dark Mode) */
+    --radar-sweep-trail: conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 315deg, rgba(22, 136, 232, 0.03) 325deg, rgba(22, 136, 232, 0.12) 345deg, rgba(34, 211, 238, 0.25) 360deg);
+    --radar-needle-bg: linear-gradient(to top, transparent, rgba(34, 211, 238, 0.8) 60%, #67e8f9 100%);
+    --radar-needle-glow: 0 0 8px #22d3ee;
 
     /* Direct variable fallbacks */
     --color-bg: #000000;
@@ -249,7 +471,7 @@
     --color-divider-secondary: #16181B;
     --color-text: #E8E9EA;
     --color-text-muted: #8B9097;
-    --color-text-faint: #5F646B;
+    --color-text-faint: #94A3B8;
     --color-text-disabled: #3d424a;
     --color-primary-soft: #0e2740;
     --color-primary-glow: rgba(22, 136, 232, 0.12);

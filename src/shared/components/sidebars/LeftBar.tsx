@@ -1,34 +1,50 @@
-import { useState, useEffect, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
-import { 
-    Home, 
-    Gamepad2, 
-    Users, 
-    ChevronDown, 
-    ShieldCheck, 
-    Flag, 
-    ChevronRight
-} from "lucide-react";
+import {
+    House as Home,
+    GameController as Gamepad2,
+    Users,
+    UsersThree,
+    ChatCircleDots,
+    CaretDown as ChevronDown,
+    ShieldCheck,
+    Flag,
+    CaretRight as ChevronRight,
+} from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useCommunitiesStore } from "@/features/community/store/useCommunitiesStore";
 import { useAuthStore } from "@/features/auth";
+import { useMessagesStore } from "@/features/messages/store/useMessagesStore";
 import { useGameStore } from "@/features/game/store/useGameStore";
 import { type GameData } from "@/features/game/types";
 import { useCommunitiesQuery, useReportsQuery, useGamesQuery } from "@/shared/api/useQueries";
 import { extractReportList, isApiEnabled, type GameDto } from "@/shared/api";
 import { mapGameDtoToGameData } from "@/shared/api/types";
 import { cn } from "@/shared/utils/cn";
-import { LegalModal } from "@/shared/components/legal/LegalModal";
 import { type LegalDocType } from "@/shared/constants/legal";
+
+const LazyLegalModal = lazy(() =>
+    import("@/shared/components/legal/LegalModal").then((m) => ({ default: m.LegalModal }))
+);
 
 export const LeftBar = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
-    const { t, lang } = useTranslation();
-    const isVi = lang === "vi";
+    const { t } = useTranslation();
 
-    const user = useAuthStore((state) => state.user);
-    const isLoggedIn = Boolean(user);
+    const isLoggedIn = useAuthStore((state) => Boolean(state.user));
+    const isAdmin = useAuthStore((state) => {
+        const u = state.user;
+        if (!u) return false;
+        return (
+            u.role === "admin" ||
+            u.id === "usr_admin" ||
+            u.username === "IndieAdmin" ||
+            u.username === "LudonAdmin" ||
+            u.email === "admin@ludon.com" ||
+            u.email === "admin@indieg.com"
+        );
+    });
     const [legalModalOpen, setLegalModalOpen] = useState(false);
     const [activeLegalDoc, setActiveLegalDoc] = useState<LegalDocType>("terms");
 
@@ -101,15 +117,10 @@ export const LeftBar = () => {
     const isGameActive = pathname.startsWith("/game");
     const isGameHubActive = pathname === "/game";
     const isCommunityActive = pathname.startsWith("/community") && !pathname.includes("manage-");
-
-    const isAdmin = Boolean(
-        user?.role === "admin" ||
-        user?.id === "usr_admin" ||
-        user?.username === "IndieAdmin" ||
-        user?.username === "LudonAdmin" ||
-        user?.email === "admin@ludon.com" ||
-        user?.email === "admin@indieg.com"
-    );
+    const isSquadActive = pathname.startsWith("/squad");
+    const isMessagesActive = pathname.startsWith("/messages");
+    const isAdminActive = pathname.startsWith("/admin");
+    const unreadDmCount = useMessagesStore((state) => state.unreadCount);
 
     const { data: reportsData } = useReportsQuery(undefined, { enabled: isAdmin });
     const pendingReportsCount = useMemo(() => {
@@ -267,6 +278,43 @@ export const LeftBar = () => {
                         <Users className={cn("w-4 h-4 shrink-0", isCommunityActive ? "text-primary" : "text-text-muted")} />
                         <span className="flex-1 text-left">{t("common.community", { defaultValue: "Cộng đồng" })}</span>
                     </button>
+
+                    {/* SQUAD / LFG TAB */}
+                    <button
+                        type="button"
+                        onClick={() => navigate({ to: "/squad" })}
+                        className={cn(
+                            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer select-none",
+                            isSquadActive
+                                ? "bg-primary/10 text-primary font-bold shadow-xs"
+                                : "text-text-muted hover:text-text hover:bg-surface-hover/70"
+                        )}
+                    >
+                        <UsersThree className={cn("w-4 h-4 shrink-0", isSquadActive ? "text-primary" : "text-text-muted")} />
+                        <span className="flex-1 text-left">{t("common.squad", { defaultValue: "Tìm đội (LFG)" })}</span>
+                    </button>
+
+                    {/* MESSAGES TAB */}
+                    {isLoggedIn && (
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: "/messages" })}
+                            className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150 cursor-pointer select-none",
+                                isMessagesActive
+                                    ? "bg-primary/10 text-primary font-bold shadow-xs"
+                                    : "text-text-muted hover:text-text hover:bg-surface-hover/70"
+                            )}
+                        >
+                            <ChatCircleDots className={cn("w-4 h-4 shrink-0", isMessagesActive ? "text-primary" : "text-text-muted")} />
+                            <span className="flex-1 text-left">{t("common.messages", { defaultValue: "Tin nhắn" })}</span>
+                            {unreadDmCount > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-black">
+                                    {unreadDmCount > 99 ? "99+" : unreadDmCount}
+                                </span>
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 {/* 2. YOUR SHORTCUTS (LỐI TẮT CỦA BẠN - NO ICON IN HEADER) */}
@@ -341,19 +389,10 @@ export const LeftBar = () => {
 
                         <button
                             type="button"
-                            onClick={() => {
-                                const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
-                                    ? pathname.split("/")[2]
-                                    : "cs2-vietnam";
-                                navigate({
-                                    to: "/community/$communityId",
-                                    params: { communityId: targetId },
-                                    search: { nav: "manage-reports" },
-                                });
-                            }}
+                            onClick={() => navigate({ to: "/admin", search: { tab: "reports" } as Record<string, unknown> })}
                             className={cn(
                                 "w-full flex items-center justify-between py-2 px-3 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer",
-                                pathname.includes("manage-reports")
+                                isAdminActive
                                     ? "bg-rose-500/15 text-rose-400 font-bold shadow-xs"
                                     : "text-text-muted hover:text-text hover:bg-surface-hover/70"
                             )}
@@ -372,26 +411,17 @@ export const LeftBar = () => {
 
                         <button
                             type="button"
-                            onClick={() => {
-                                const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
-                                    ? pathname.split("/")[2]
-                                    : "cs2-vietnam";
-                                navigate({
-                                    to: "/community/$communityId",
-                                    params: { communityId: targetId },
-                                    search: { nav: "manage-moderation" },
-                                });
-                            }}
+                            onClick={() => navigate({ to: "/admin" })}
                             className={cn(
                                 "w-full flex items-center gap-2.5 py-2 px-3 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer",
-                                pathname.includes("manage-moderation")
+                                isAdminActive
                                     ? "bg-primary/15 text-primary font-bold shadow-xs"
                                     : "text-text-muted hover:text-text hover:bg-surface-hover/70"
                             )}
-                            title={t("common.moderationCenter", { defaultValue: "Trung tâm kiểm duyệt" })}
+                            title={t("common.adminDashboard", { defaultValue: "Bảng điều khiển quản trị" })}
                         >
                             <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
-                            <span className="truncate">{t("common.moderationHub", { defaultValue: "Trung tâm kiểm duyệt" })}</span>
+                            <span className="truncate">{t("common.adminDashboard", { defaultValue: "Bảng điều khiển Admin" })}</span>
                         </button>
                     </div>
                 )}
@@ -438,12 +468,16 @@ export const LeftBar = () => {
                 </div>
             </div>
 
-            {/* Legal Terms & Privacy Modal */}
-            <LegalModal
-                isOpen={legalModalOpen}
-                onClose={() => setLegalModalOpen(false)}
-                docType={activeLegalDoc}
-            />
+            {/* Legal Terms & Privacy Modal (lazy-loaded on click) */}
+            {legalModalOpen && (
+                <Suspense fallback={null}>
+                    <LazyLegalModal
+                        isOpen={legalModalOpen}
+                        onClose={() => setLegalModalOpen(false)}
+                        docType={activeLegalDoc}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };

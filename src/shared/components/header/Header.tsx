@@ -1,33 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useSidebarStore } from "../../store/useSidebarStore";
-import { useNotificationStore, NotificationDropdown, useNotificationPolling } from '@/features/notification';
+import {
+    useNotificationStore,
+    NotificationDropdown,
+    useNotificationSocket,
+} from '@/features/notification';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 import { Search } from '../search/Search';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faBell,
-    faBars,
-    faGamepad,
-    faUser,
-    faGear,
-    faRightFromBracket,
-    faChevronDown,
-    faShieldHalved,
-    faMagnifyingGlass,
-    faXmark,
-    faTriangleExclamation,
-    faEnvelope,
-} from "@fortawesome/free-solid-svg-icons";
-import { Sun, Moon, Monitor, Palette } from "lucide-react";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Bell as faBell, List as faBars, GameController as faGamepad, User as faUser, Gear as faGear, SignOut as faRightFromBracket, CaretDown as faChevronDown, Shield as faShieldHalved, MagnifyingGlass as faMagnifyingGlass, X as faXmark, Envelope as faEnvelope, ChatCircleDots } from "@phosphor-icons/react";
+import { Sun, Moon, Monitor, Palette } from "@phosphor-icons/react";
 import { useAuthStore } from '@/features/auth';
+import { useMessagesStore } from '@/features/messages/store/useMessagesStore';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getCurrentAuthor } from "@/features/post";
 import { useReportsQuery } from "@/shared/api/useQueries";
 import { extractReportList } from "@/shared/api";
 import { useMemo } from "react";
 import { LudonLogo } from "@/shared/components/logo/LudonLogo";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
 
 export const Header = () => {
     const { t } = useTranslation();
@@ -48,24 +41,30 @@ export const Header = () => {
     const { pathname } = useLocation();
     const hideSidebars = 
         pathname.startsWith('/settings') || 
+        pathname.startsWith('/messages') ||
+        pathname.startsWith('/admin') ||
         pathname.startsWith('/profile') || 
-        pathname.startsWith('/explore') || 
         (pathname.startsWith('/game') && pathname !== '/game') ||
         (pathname.startsWith('/community') && pathname !== '/community');
+
+    const unreadDmCount = useMessagesStore((state) => state.unreadCount);
 
     const isNotificationOpen = useNotificationStore((state) => state.isOpen ?? false);
     const setNotificationOpen = useNotificationStore((state) => state.setIsOpen);
     const toggleNotificationOpen = useNotificationStore((state) => state.toggleOpen);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [prevPathname, setPrevPathname] = useState(pathname);
+    if (prevPathname !== pathname) {
+        setPrevPathname(pathname);
+        if (isMobileSearchOpen) {
+            setIsMobileSearchOpen(false);
+        }
+    }
     const userMenuRef = useRef<HTMLDivElement>(null);
-    const notifications = useNotificationStore((state) => state.notifications);
-    const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-    // Close mobile search on navigation
-    useEffect(() => {
-        setIsMobileSearchOpen(false);
-    }, [pathname]);
+    const unreadCount = useNotificationStore((state) =>
+        state.notifications.reduce((acc, n) => (!n.isRead ? acc + 1 : acc), 0)
+    );
 
     useRegisterOverlay({
         id: "header-notifications",
@@ -81,7 +80,7 @@ export const Header = () => {
         priority: 50,
     });
 
-    useNotificationPolling(15000);
+    useNotificationSocket(user?.id);
 
     const displayName = user?.name || user?.username || getCurrentAuthor();
     const avatarUrl =
@@ -127,10 +126,14 @@ export const Header = () => {
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setShowUserMenu(false);
         logout();
-        navigate({ to: "/auth" });
+        try {
+            await navigate({ to: "/auth" });
+        } catch {
+            window.location.href = "/auth";
+        }
     };
 
     const handleLogoClick = () => {
@@ -272,6 +275,24 @@ export const Header = () => {
                             </div>
                         )}
 
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: "/messages" })}
+                            title={t('common.messages', { defaultValue: 'Tin nhắn' })}
+                            className={`relative w-9 h-9 flex items-center justify-center rounded-full bg-transparent transition-colors duration-150 cursor-pointer outline-none shrink-0 ${
+                                pathname.startsWith("/messages")
+                                    ? "text-primary bg-primary/10"
+                                    : "text-text-muted hover:text-text hover:bg-surface-hover"
+                            }`}
+                        >
+                            <ChatCircleDots className="size-4" />
+                            {unreadDmCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center">
+                                    {unreadDmCount > 9 ? "9+" : unreadDmCount}
+                                </span>
+                            )}
+                        </button>
+
                         <div className="relative shrink-0">
                             <button
                                 type="button"
@@ -304,20 +325,13 @@ export const Header = () => {
                                 }}
                                 className="flex items-center gap-1.5 p-1 pr-2 rounded-full bg-transparent hover:bg-surface-hover transition-colors cursor-pointer group outline-none"
                             >
-                                {avatarUrl ? (
-                                    <img
-                                        src={avatarUrl}
-                                        alt="User avatar"
-                                        className="w-8 h-8 rounded-full object-cover"
-                                        onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-xs font-bold text-primary uppercase select-none">
-                                        {(displayName || "G").replace(/^@/, "").charAt(0) || "G"}
-                                    </div>
-                                )}
+                                <UserAvatar
+                                    src={avatarUrl}
+                                    name={displayName}
+                                    alt={displayName}
+                                    className="w-8 h-8"
+                                    textClassName="text-xs"
+                                />
                                 <FontAwesomeIcon
                                     icon={faChevronDown}
                                     className={`text-[10px] text-text-muted group-hover:text-text transition-transform duration-200 ${
@@ -331,7 +345,7 @@ export const Header = () => {
                                 <div className="absolute right-0 mt-2 w-56 rounded-xl bg-surface border border-border/80 shadow-2xl py-2 z-[70] animate-dropdown">
                                     <div className="px-4 py-2.5 border-b border-border/40">
                                         <p className="font-bold text-xs text-text truncate">{displayName}</p>
-                                        <p className="text-[11px] text-text-muted truncate">{user?.email || "demo@ludon.com"}</p>
+                                        <p className="text-[11px] text-text-muted truncate">{user?.email || ""}</p>
                                     </div>
 
                                     <div className="py-1">
@@ -340,20 +354,13 @@ export const Header = () => {
                                                 type="button"
                                                 onClick={() => {
                                                     setShowUserMenu(false);
-                                                    const targetId = pathname.startsWith("/community/") && pathname.split("/")[2]
-                                                        ? pathname.split("/")[2]
-                                                        : "cs2-vietnam";
-                                                    navigate({
-                                                        to: "/community/$communityId",
-                                                        params: { communityId: targetId },
-                                                        search: { nav: "manage-reports" },
-                                                    });
+                                                    navigate({ to: "/admin" });
                                                 }}
                                                 className="w-full px-4 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center justify-between transition-colors cursor-pointer"
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
                                                     <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 text-rose-400 shrink-0" />
-                                                    <span className="truncate">{t('common.adminReports', { defaultValue: 'Quản trị & Báo cáo' })}</span>
+                                                    <span className="truncate">{t('common.adminDashboard', { defaultValue: 'Quản trị hệ thống' })}</span>
                                                 </div>
                                                 {pendingReportsCount > 0 && (
                                                     <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-mono font-bold">

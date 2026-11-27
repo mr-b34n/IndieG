@@ -1,11 +1,7 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faClock,
-    faUsers,
-    faCheck,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Clock as faClock, Users as faUsers, Check as faCheck } from "@phosphor-icons/react";
 import type { UpcomingEventTimelineItem } from "./CommunityHubRightRail";
 
 interface CommunityHubEventsViewProps {

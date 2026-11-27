@@ -1,8 +1,7 @@
 import { createLazyFileRoute, useNavigate, useRouter, Link } from '@tanstack/react-router'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CircleNotch as faSpinner, ArrowLeft as faArrowLeft } from "@phosphor-icons/react";
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
-import { useKeyboardShortcut } from '@/shared/hooks/useKeyboardShortcut.ts';
 import { CommentSection, getCurrentAuthor, Post, usePostsStore, useFeedNavigationStore, type PostData } from '@/features/post';
 import { usePostDetailQuery, useUpdatePostMutation, useDeletePostMutation } from '@/shared/api/useQueries';
 import { mapPostDtoToPostData } from '@/shared/api';

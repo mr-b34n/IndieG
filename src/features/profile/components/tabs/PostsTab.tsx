@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCommentDots, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ChatCircle as faCommentDots, CircleNotch as faSpinner } from "@phosphor-icons/react";
 import { Post, useFeedNavigationStore, type PostData } from "@/features/post";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 

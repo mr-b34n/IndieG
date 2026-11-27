@@ -1,29 +1,7 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faHouse,
-    faComments,
-    faBook,
-    faImages,
-    faCalendarDays,
-    faChevronLeft,
-    faChevronRight,
-    faUsers,
-    faLink,
-    faShieldHalved,
-    faFlag,
-    faGear,
-    faSliders,
-    faGavel,
-    faGamepad,
-    faArrowUpRightFromSquare,
-    faThumbtack,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-    faDiscord,
-    faSteam,
-    faFacebook,
-} from "@fortawesome/free-brands-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { House as faHouse, Images as faImages, CaretLeft as faChevronLeft, CaretRight as faChevronRight, Users as faUsers, Link as faLink, Shield as faShieldHalved, Flag as faFlag, Gear as faGear, SlidersHorizontal as faSliders, Gavel as faGavel, GameController as faGamepad, PushPin as faThumbtack } from "@phosphor-icons/react";
+import { DiscordBrandIcon as faDiscord, SteamBrandIcon as faSteam, FacebookBrandIcon as faFacebook } from "@/shared/components/ui/BrandIcons";
 import { useNavigate } from "@tanstack/react-router";
 
 interface CommunityHubSidebarProps {
@@ -59,9 +37,7 @@ export const CommunityHubSidebar = ({
     const primaryNavItems = [
         { id: "home", labelVi: "Trang chủ", labelEn: "Home", icon: faHouse },
         { id: "pinned", labelVi: "Đã ghim", labelEn: "Pinned", icon: faThumbtack },
-        { id: "guides", labelVi: "Hướng dẫn", labelEn: "Guides", icon: faBook },
         { id: "media", labelVi: "Media", labelEn: "Media", icon: faImages },
-        { id: "events", labelVi: "Sự kiện", labelEn: "Events", icon: faCalendarDays },
     ];
 
     // 2. Direct visible info & resources navigation (no generic more dropdown)

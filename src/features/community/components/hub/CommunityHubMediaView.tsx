@@ -1,15 +1,7 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faComment,
-} from "@fortawesome/free-regular-svg-icons";
-import {
-    faArrowUp,
-    faArrowDown,
-    faExpand,
-    faXmark,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Chat as faComment, ArrowUp as faArrowUp, ArrowDown as faArrowDown, ArrowsOut as faExpand, X as faXmark } from "@phosphor-icons/react";
 
 export interface MediaItem {
     id: string;

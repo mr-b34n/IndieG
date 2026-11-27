@@ -8,6 +8,7 @@ import {
 	notificationApiPlugin,
 	adminApiPlugin,
 } from "./vite/plugins/mock-api.ts";
+import { phosphorSolidPlugin } from "./vite/plugins/phosphor-solid.ts";
 
 const isMockApiEnabled = process.env.VITE_MOCK_API === "true";
 
@@ -22,10 +23,28 @@ export default defineConfig({
 				target: process.env.VITE_BACKEND_TARGET || "http://localhost:3636",
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, ""),
+				cookiePathRewrite: {
+					"/auth": "/",
+					"*": "/",
+				},
+			},
+			"/auth/refresh": {
+				target: process.env.VITE_BACKEND_TARGET || "http://localhost:3636",
+				changeOrigin: true,
+				cookiePathRewrite: {
+					"/auth": "/",
+					"*": "/",
+				},
+			},
+			"/socket.io": {
+				target: process.env.VITE_BACKEND_TARGET || "http://localhost:3636",
+				ws: true,
+				changeOrigin: true,
 			},
 		},
 	},
 	plugins: [
+		phosphorSolidPlugin(),
 		...(isMockApiEnabled
 			? [
 					searchApiPlugin(),
@@ -49,6 +68,11 @@ export default defineConfig({
 			"@/app": path.resolve(import.meta.dirname, "./src/app"),
 		},
 	},
+	optimizeDeps: {
+		rolldownOptions: {
+			plugins: [phosphorSolidPlugin()],
+		},
+	},
 	build: {
 		rollupOptions: {
 			output: {
@@ -56,15 +80,30 @@ export default defineConfig({
 					if (!id.includes("node_modules")) return;
 					if (
 						id.includes("node_modules/react/") ||
-						id.includes("node_modules/react-dom/")
+						id.includes("node_modules/react-dom/") ||
+						id.includes("node_modules/scheduler/")
 					)
 						return "vendor-react";
-					if (id.includes("node_modules/@tanstack/"))
+					if (
+						id.includes("node_modules/@tanstack/react-router") ||
+						id.includes("node_modules/@tanstack/router-core") ||
+						id.includes("node_modules/@tanstack/history")
+					)
 						return "vendor-router";
-					if (id.includes("node_modules/@fortawesome/"))
-						return "vendor-fontawesome";
-					if (id.includes("node_modules/lucide-react/"))
-						return "vendor-lucide";
+					if (
+						id.includes("node_modules/@tanstack/react-query") ||
+						id.includes("node_modules/@tanstack/query-core")
+					)
+						return "vendor-query";
+					if (
+						id.includes("node_modules/socket.io-client") ||
+						id.includes("node_modules/engine.io-client") ||
+						id.includes("node_modules/socket.io-parser") ||
+						id.includes("node_modules/engine.io-parser")
+					)
+						return "vendor-socket";
+					if (id.includes("node_modules/@phosphor-icons/react/"))
+						return "vendor-icons";
 					return "vendor";
 				},
 			},

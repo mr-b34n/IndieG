@@ -1,17 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faShieldHalved,
-    faArrowRight,
-    faGavel,
-    faTriangleExclamation,
-    faCheckCircle,
-    faFlag,
-    faUsers,
-    faGear,
-    faPlus,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ArrowRight as faArrowRight, Gavel as faGavel, Warning as faTriangleExclamation, Flag as faFlag, Users as faUsers, Gear as faGear } from "@phosphor-icons/react";
 import {
     useCommunityMembersQuery,
     usePendingMembersQuery,
@@ -35,7 +25,6 @@ interface CommunityManageOverviewProps {
 
 export const CommunityManageOverview = ({
     communityId,
-    communityName,
     onNavigate,
     isVi,
     userRole = "owner",
@@ -62,7 +51,11 @@ export const CommunityManageOverview = ({
     const postsCount = postsData
         ? Array.isArray(postsData)
             ? postsData.length
-            : (postsData as { items?: unknown[] }).items?.length || 0
+            : (postsData as { meta?: { total?: number } }).meta?.total ??
+              (postsData as { total?: number }).total ??
+              (postsData as { data?: unknown[] }).data?.length ??
+              (postsData as { items?: unknown[] }).items?.length ??
+              0
         : 0;
 
     const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";

@@ -23,14 +23,13 @@ const sizeConfig = {
 export const LudonLogoIcon: React.FC<{ className?: string }> = ({ className }) => {
     return (
         <svg
-            viewBox="0 0 1000 1000"
+            viewBox="0 0 1600 1600"
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
             className={cn("w-full h-full shrink-0 select-none", className)}
             aria-hidden="true"
         >
-            <polygon points="180.0,790.0 290.0,790.0 560.5,210.0 450.5,210.0" />
-            <polygon points="332.0,790.0 757.0,790.0 799.9,698.0 374.9,698.0" />
+            <path d="M664.8 96H1032.8L464 1504H96L664.8 96ZM679.7 1176H1504L1371.5 1504H547.2L679.7 1176Z" fill="currentColor" />
         </svg>
     );
 };

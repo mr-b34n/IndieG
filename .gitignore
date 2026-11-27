@@ -34,7 +34,9 @@ tests/e2e/artifacts/
 test-results/
 playwright-report/
 
-# Temporary patches and migration scripts
+# Workflow state
+.ag_workflow/state/
+
 *.patch
 *.diff
 tmp_tools/

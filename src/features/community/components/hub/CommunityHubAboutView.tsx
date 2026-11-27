@@ -1,20 +1,14 @@
+import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faShieldHalved,
-    faCircleInfo,
-    faFileLines,
-    faLink,
-    faGlobe,
-    faGamepad,
-    faArrowUpRightFromSquare,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Shield as faShieldHalved, Info as faCircleInfo, FileText as faFileLines, Link as faLink, Globe as faGlobe, GameController as faGamepad, ArrowSquareOut as faArrowUpRightFromSquare } from "@phosphor-icons/react";
 
 interface CommunityHubAboutViewProps {
     viewType: "rules" | "about" | "wiki" | "links";
     communityName: string;
     description: string;
+    customRules?: string;
     isVi: boolean;
     gameSlug?: string;
     gameName?: string;
@@ -24,6 +18,7 @@ export const CommunityHubAboutView = ({
     viewType,
     communityName,
     description,
+    customRules,
     isVi,
     gameSlug,
     gameName,
@@ -31,8 +26,7 @@ export const CommunityHubAboutView = ({
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-
-    const rules = [
+    const defaultRules = [
         {
             num: "01",
             titleVi: "Tôn trọng và lịch sự",
@@ -62,6 +56,25 @@ export const CommunityHubAboutView = ({
             descEn: "Mark spoilers properly and adhere to community rating guidelines.",
         },
     ];
+
+    const displayRules = useMemo(() => {
+        if (!customRules) return defaultRules;
+        try {
+            const parsed = JSON.parse(customRules);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed.map((item, idx) => ({
+                    num: String(idx + 1).padStart(2, "0"),
+                    titleVi: item.title || item.titleVi || `Quy tắc ${idx + 1}`,
+                    titleEn: item.title || item.titleEn || `Rule ${idx + 1}`,
+                    descVi: item.description || item.descVi || item.desc || "",
+                    descEn: item.description || item.descEn || item.desc || "",
+                }));
+            }
+        } catch {
+            // Fallback to default
+        }
+        return defaultRules;
+    }, [customRules]);
 
     const wikiArticles: Array<{ title: string; reads?: string; updated?: string }> = [];
 
@@ -114,7 +127,7 @@ export const CommunityHubAboutView = ({
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {rules.map((r) => (
+                    {displayRules.map((r) => (
                         <div key={r.num} className="p-4 rounded-[4px] bg-surface/70 border border-divider-primary/60 flex items-start gap-4">
                             <span className="font-mono font-black text-primary text-base shrink-0 pt-0.5">{r.num}</span>
                             <div className="flex flex-col gap-1">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faChevronLeft, faChevronRight, faMagnifyingGlassPlus, faMagnifyingGlassMinus, faRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { X as faXmark, CaretLeft as faChevronLeft, CaretRight as faChevronRight, MagnifyingGlassPlus as faMagnifyingGlassPlus, MagnifyingGlassMinus as faMagnifyingGlassMinus, ArrowClockwise as faRotateRight } from "@phosphor-icons/react";
 import { useRegisterOverlay } from "@/shared/utils/overlayManager";
 import { useHotkeys } from "@/shared/hooks/useHotkeys";
 

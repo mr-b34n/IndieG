@@ -1,6 +1,6 @@
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faAward, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { X as faXmark, Medal as faAward, CheckCircle as faCheckCircle } from "@phosphor-icons/react";
 import type { Badge } from "../types";
 import type { TranslateFn } from "@/shared/hooks/useTranslate";
 

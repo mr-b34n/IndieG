@@ -1,15 +1,11 @@
-import { useState } from "react";
+
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faStar as faStarSolid, faCrown, faUsers, faEye, faEyeSlash, faDesktop, faPlus, faUser, faBolt, faGamepad, faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
-import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Users as faUsers, Eye as faEye, EyeSlash as faEyeSlash, Monitor as faDesktop, User as faUser, Lightning as faBolt, GameController as faGamepad, CircleNotch as faSpinner } from "@phosphor-icons/react";
 import type { LibraryGame, ProfileIdentity, CommunityReputation, RecentActivityItem } from "../../types";
 import type { CommunityDto } from "@/shared/api/types";
 import { GEAR_CATEGORIES } from "../../constants";
 import { useTranslation, type TranslateFn } from "@/shared/hooks/useTranslate";
-import { DEFAULT_GAME_LOGO } from "@/shared/constants/images";
 import { BioEditor, BioRenderer, isBioEmpty, parseBio } from "../../bio";
 
 interface OverviewTabProps {
@@ -37,8 +33,8 @@ interface OverviewTabProps {
 
 export const OverviewTab = ({
     identity,
-    games = [],
-    isLoadingGames = false,
+    games: _games = [],
+    isLoadingGames: _isLoadingGames = false,
     reputations = [],
     communities = [],
     isLoadingCommunities = false,
@@ -50,7 +46,6 @@ export const OverviewTab = ({
     onToggleHideSection,
     onGearChange,
     onIdentityChange,
-    onNavigateToGames,
     t,
 }: OverviewTabProps) => {
     const navigate = useNavigate();
@@ -106,8 +101,7 @@ export const OverviewTab = ({
     };
 
     // Visibility flags
-    const showPlayerIdentity = isSectionVisible("playerIdentity");
-    const showGameMastery = false; // Tạm thời ẩn do chưa liên kết Steam/nhà cung cấp dữ liệu game
+    const showPlayerIdentity = isSectionVisible("playerIdentity"); // Tạm thời ẩn do chưa liên kết Steam/nhà cung cấp dữ liệu game
     const showRecentActivity = isSectionVisible("recentActivity");
     const showCommunityReputation = isSectionVisible("communityReputation");
     const showConnectedAccounts = isSectionVisible("connectedAccounts");
@@ -214,11 +208,11 @@ export const OverviewTab = ({
 
             {/* ── SECTION 2: COMMUNITIES & BATTLESTATION SETUP ── */}
             {(showCommunityReputation || (showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile))) && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
                     {/* Community Reputation Card */}
                     {showCommunityReputation && (
-                        <div className={(showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile)) ? "lg:col-span-7" : "lg:col-span-12"}>
-                            <div className={`w-full h-full bg-surface rounded-[14px] p-5 sm:p-6 flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
+                        <div className={`${(showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile)) ? "lg:col-span-7" : "lg:col-span-12"} self-start`}>
+                            <div className={`w-full h-fit bg-surface rounded-[14px] p-5 sm:p-6 flex flex-col gap-4 transition-all ${cardCustomStyle("communityReputation")}`}>
                                 <div className="flex items-center justify-between pb-2">
                                     <div className="flex items-center gap-2">
                                         <FontAwesomeIcon icon={faUsers} className="text-primary text-xs" />
@@ -282,8 +276,8 @@ export const OverviewTab = ({
 
                     {/* Battlestation Loadout Card */}
                     {showConnectedAccounts && (filledGear.length > 0 || isCustomizeMode || isOwnProfile) && (
-                        <div className={showCommunityReputation ? "lg:col-span-5" : "lg:col-span-12"}>
-                            <div className={`w-full h-full bg-surface rounded-[14px] p-5 sm:p-6 flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
+                        <div className={`${showCommunityReputation ? "lg:col-span-5" : "lg:col-span-12"} self-start`}>
+                            <div className={`w-full h-fit bg-surface rounded-[14px] p-5 sm:p-6 flex flex-col gap-4 transition-all ${cardCustomStyle("connectedAccounts")}`}>
                                 <div className="flex items-center justify-between pb-2">
                                     <div className="flex items-center gap-2">
                                         <FontAwesomeIcon icon={faDesktop} className="text-primary text-xs" />

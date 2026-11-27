@@ -1,18 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faBold,
-    faItalic,
-    faStrikethrough,
-    faAlignLeft,
-    faAlignCenter,
-    faAlignRight,
-    faFont,
-    faChevronDown,
-    faWandMagicSparkles,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { TextB as faBold, TextItalic as faItalic, TextStrikethrough as faStrikethrough, TextAlignLeft as faAlignLeft, TextAlignCenter as faAlignCenter, TextAlignRight as faAlignRight, TextT as faFont, CaretDown as faChevronDown, Sparkle as faWandMagicSparkles } from "@phosphor-icons/react";
 import type { BioDocument, BioFont, BioColor, BioAlign, BioPreset } from "./types";
+import { loadAllBioFonts } from "./fonts";
 import {
     BIO_FONTS,
     BIO_COLORS,
@@ -53,6 +44,17 @@ export const BioEditor: React.FC<BioEditorProps> = ({
     // Ref to prevent self-triggered prop updates from resetting DOM innerHTML
     const isSelfUpdatingRef = useRef(false);
 
+    // Load specialty bio fonts only when editor is opened
+    useEffect(() => {
+        loadAllBioFonts();
+    }, []);
+
+    // Refs
+    const containerRef = useRef<HTMLDivElement>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    const presetContainerRef = useRef<HTMLDivElement>(null);
+
     // Track external value changes during render
     const [prevValue, setPrevValue] = useState(value);
     if (value !== prevValue) {
@@ -68,12 +70,6 @@ export const BioEditor: React.FC<BioEditorProps> = ({
             }
         }
     }
-
-    // Refs
-    const containerRef = useRef<HTMLDivElement>(null);
-    const editorRef = useRef<HTMLDivElement>(null);
-    const toolbarRef = useRef<HTMLDivElement>(null);
-    const presetContainerRef = useRef<HTMLDivElement>(null);
 
     // Floating contextual toolbar state
     const [isToolbarOpen, setIsToolbarOpen] = useState(false);
@@ -545,8 +541,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                             }`}
                         >
                             <div
-                                className="w-3 h-3 rounded-full border border-white/20 shadow-xs"
-                                style={{ backgroundColor: activeColorMeta.badgeBg }}
+                                className={`w-3 h-3 rounded-full border border-white/20 shadow-xs ${activeColorMeta.bgClass}`}
                             />
                             <FontAwesomeIcon icon={faChevronDown} className="text-[8px] opacity-70" />
                         </button>
@@ -565,8 +560,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                                         }`}
                                     >
                                         <div
-                                            className="w-3 h-3 rounded-full shrink-0 border border-white/20"
-                                            style={{ backgroundColor: c.badgeBg }}
+                                            className={`w-3 h-3 rounded-full shrink-0 border border-white/20 ${c.bgClass}`}
                                         />
                                         <span className="truncate">{c.label}</span>
                                     </button>
@@ -675,7 +669,7 @@ export const BioEditor: React.FC<BioEditorProps> = ({
                                     onClick={() => handleApplyPreset(p)}
                                     className="px-2.5 py-1.5 text-left text-xs hover:bg-[#1E2533] transition-colors flex items-center gap-2 cursor-pointer group/btn"
                                 >
-                                    <span className="text-sm">{p.icon}</span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-inner text-primary shrink-0">{p.badge}</span>
                                     <div className="flex flex-col min-w-0">
                                         <span className="text-[#E1E4EA] group-hover/btn:text-white font-bold leading-tight truncate">
                                             {p.name}

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark, faSearchPlus, faCrop } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Check as faCheck, X as faXmark, MagnifyingGlassPlus as faSearchPlus, Crop as faCrop } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 const MIN_ZOOM = 1;

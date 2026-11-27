@@ -6,6 +6,7 @@ export interface AuthUser {
     avatar_url?: string;
     avatar?: string;
     avatarUrl?: string;
+    bio?: string | Record<string, unknown> | unknown[];
     user_metadata?: Record<string, unknown>;
     isVerified?: boolean;
     createdAt?: string;

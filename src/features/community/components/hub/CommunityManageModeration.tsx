@@ -1,27 +1,16 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState, useMemo } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faUserCheck,
-    faCheck,
-    faXmark,
-    faFlag,
-    faShieldHalved,
-    faClockRotateLeft,
-    faUserPlus,
-    faVolumeXmark,
-    faTrashCan,
-    faCircleCheck,
-    faTriangleExclamation,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { Check as faCheck, X as faXmark, UserPlus as faUserPlus, CheckCircle as faCircleCheck } from "@phosphor-icons/react";
 import {
     useCommunityMembersQuery,
     usePendingMembersQuery,
     useProfilesListQuery,
     useApproveJoinRequestMutation,
     useRejectJoinRequestMutation,
+    useChangeMemberRoleMutation,
     useReportsQuery,
-    useDeleteReportMutation,
     useCommunityModerationLogsQuery,
 } from "@/shared/api/useQueries";
 import { extractMemberList, extractReportList } from "@/shared/api";
@@ -81,14 +70,12 @@ interface CommunityManageModerationProps {
 
 export const CommunityManageModeration = ({
     communityId,
-    communityName,
     initialTab = "requests",
     isVi,
-    onNavigateRules,
     userRole = "owner",
 }: CommunityManageModerationProps) => {
     const { t } = useTranslation();
-    const [subTabOverride, setSubTabOverride] = useState<"queue" | "requests" | "moderators" | "history" | null>(null);
+    const [subTabOverride, setSubTabOverride] = useState<"queue" | "requests" | "reports" | "moderators" | "history" | null>(null);
     const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
 
     if (prevInitialTab !== initialTab) {
@@ -97,10 +84,6 @@ export const CommunityManageModeration = ({
     }
 
     const subTab = subTabOverride || initialTab;
-    const setSubTab = (tab: "requests" | "reports" | "moderators" | "history") => {
-        setSubTabOverride(tab);
-    };
-    const [reportFilter, setReportFilter] = useState<"all" | "pending" | "resolved" | "dismissed">("all");
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const isOwner = userRole === "owner" || userRole === "admin";
@@ -144,7 +127,7 @@ export const CommunityManageModeration = ({
             const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || (m.userId ? `Thành viên (${m.userId.slice(0, 6)})` : "Thành viên");
             const handleRaw = m.user?.username || m.user?.name || profile?.username || m.userId;
             const handle = handleRaw ? (String(handleRaw).startsWith("@") ? String(handleRaw) : `@${handleRaw}`) : `@${m.userId.slice(0, 6)}`;
-            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(String(handleRaw || m.userId))}`;
+            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || "";
 
             return {
                 id: m.userId,
@@ -180,8 +163,7 @@ export const CommunityManageModeration = ({
     };
 
     // 2. Reports Query & Mutations
-    const { data: reportsData, refetch: refetchReports } = useReportsQuery();
-    const deleteReportMutation = useDeleteReportMutation();
+    const { data: reportsData } = useReportsQuery();
 
     const reports: ReportItem[] = useMemo(() => {
         const items: ReportDto[] = extractReportList(reportsData);
@@ -222,82 +204,78 @@ export const CommunityManageModeration = ({
         });
     }, [reportsData, profilesMap, isVi]);
 
-    const handleResolveReport = async (id: string, actionDesc: string) => {
-        try {
-            await deleteReportMutation.mutateAsync(id);
-            refetchReports();
-            showToast(isVi ? `Đã giải quyết báo cáo (${actionDesc})` : `Report resolved (${actionDesc})`);
-        } catch {
-            showToast(t('hub.communitymanagemoderation_87'));
-        }
-    };
+    // 3. Moderators Team Query & Real Role Mutations
+    const { data: allMembersData, refetch: refetchMembers } = useCommunityMembersQuery(communityId || "");
+    const changeRoleMutation = useChangeMemberRoleMutation();
 
-    const handleDismissReport = async (id: string) => {
-        try {
-            await deleteReportMutation.mutateAsync(id);
-            refetchReports();
-            showToast(t('hub.communitymanagemoderation_88'));
-        } catch {
-            showToast(t('hub.communitymanagemoderation_89'));
-        }
-    };
-
-    // 3. Moderators Team Query
-    const { data: allMembersData } = useCommunityMembersQuery(communityId || "");
-    const [localPromotedMods, setLocalPromotedMods] = useState<ModeratorItem[]>([]);
+    const promotableMembers = useMemo(() => {
+        const items: CommunityMemberDto[] = extractMemberList(allMembersData);
+        return items
+            .filter((m) => m.role !== "owner" && m.role !== "moderator" && m.status !== "banned" && m.status !== "pending")
+            .map((m) => {
+                const profile = profilesMap.get(m.userId);
+                return {
+                    id: m.userId,
+                    name: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
+                    handle: m.user?.username ? `@${m.user.username}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
+                };
+            });
+    }, [allMembersData, profilesMap]);
 
     const moderators: ModeratorItem[] = useMemo(() => {
         const items: CommunityMemberDto[] = extractMemberList(allMembersData);
-        const staff = items.filter((m) => m.role === "owner" || m.role === "admin" || m.role === "moderator");
-        const mapped = staff.map((m) => {
+        const staff = items.filter((m) => m.role === "owner" || m.role === "moderator");
+        return staff.map((m) => {
             const profile = profilesMap.get(m.userId);
             return {
                 id: m.userId,
                 name: m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${m.userId.slice(0, 6)})`,
                 handle: m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@${m.userId.slice(0, 6)}`,
-                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || m.userId)}`,
-                role: (m.role === "owner" || m.role === "admin") ? ("Owner" as const) : ("Moderator" as const),
+                avatar: m.user?.avatar || m.user?.avatarUrl || profile?.avatar || "",
+                role: m.role === "owner" ? ("Owner" as const) : ("Moderator" as const),
                 assignedAt: m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : "2026",
                 actionsCount: 0,
             };
         });
-        return [...mapped, ...localPromotedMods.filter(l => !mapped.some(m => m.id === l.id))];
-    }, [allMembersData, localPromotedMods, profilesMap]);
+    }, [allMembersData, profilesMap]);
 
     const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
-    const [promoteCandidateHandle, setPromoteCandidateHandle] = useState("");
+    const [promoteCandidateId, setPromoteCandidateId] = useState("");
 
-    const handleDemoteModerator = (id: string, name: string) => {
+    const handleDemoteModerator = async (id: string, name: string) => {
         if (!isOwner) {
             showToast(t('hub.communitymanagemoderation_90'));
             return;
         }
+        if (!communityId) return;
         if (!window.confirm(isVi ? `Xác nhận gỡ quyền Điều hành viên của ${name}?` : `Demote ${name} from Moderator?`)) {
             return;
         }
-        setLocalPromotedMods((prev) => prev.filter((m) => m.id !== id));
-        showToast(isVi ? `Đã gỡ quyền Điều hành viên của ${name}.` : `Removed ${name} from Moderator team.`);
+        try {
+            await changeRoleMutation.mutateAsync({ communityId, memberId: id, role: "member" });
+            await refetchMembers();
+            showToast(isVi ? `Đã gỡ quyền Điều hành viên của ${name}.` : `Removed ${name} from Moderator team.`);
+        } catch {
+            showToast(isVi ? `Không thể gỡ quyền Điều hành viên của ${name}.` : `Failed to demote ${name}.`);
+        }
     };
 
-    const handlePromoteCandidate = () => {
+    const handlePromoteCandidate = async () => {
         if (!isOwner) {
             showToast(t('hub.communitymanagemoderation_91'));
             return;
         }
-        if (!promoteCandidateHandle.trim()) return;
-        const newMod: ModeratorItem = {
-            id: `mod-${Date.now()}`,
-            name: promoteCandidateHandle.replace("@", ""),
-            handle: promoteCandidateHandle.startsWith("@") ? promoteCandidateHandle : `@${promoteCandidateHandle}`,
-            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${promoteCandidateHandle}`,
-            role: "Moderator",
-            assignedAt: t('hub.communitymanagemoderation_92'),
-            actionsCount: 0,
-        };
-        setLocalPromotedMods((prev) => [...prev, newMod]);
-        setPromoteCandidateHandle("");
-        setIsPromoteModalOpen(false);
-        showToast(isVi ? `Đã thăng cấp ${newMod.name} làm Điều hành viên!` : `Promoted ${newMod.name} to Moderator.`);
+        if (!communityId || !promoteCandidateId) return;
+        const target = promotableMembers.find((m) => m.id === promoteCandidateId);
+        try {
+            await changeRoleMutation.mutateAsync({ communityId, memberId: promoteCandidateId, role: "moderator" });
+            await refetchMembers();
+            setPromoteCandidateId("");
+            setIsPromoteModalOpen(false);
+            showToast(isVi ? `Đã thăng cấp ${target?.name || "thành viên"} làm Điều hành viên!` : `Promoted ${target?.name || "member"} to Moderator.`);
+        } catch {
+            showToast(isVi ? "Không thể thăng cấp Điều hành viên." : "Failed to promote moderator.");
+        }
     };
 
     // 4. Moderation History Audit Log (from /communities/:id/members/moderation-logs)
@@ -315,7 +293,6 @@ export const CommunityManageModeration = ({
     }, [logsResponse]);
 
     const pendingRequestsCount = joinRequests.filter((r) => r.status === "pending").length;
-    const pendingReportsCount = reports.filter((r) => r.status === "pending").length;
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in text-text select-none">
@@ -477,10 +454,11 @@ export const CommunityManageModeration = ({
                                     className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
                                 >
                                     <div className="flex items-start gap-3 min-w-0">
-                                        <img
+                                        <UserAvatar
                                             src={req.avatar}
-                                            alt={req.username}
-                                            className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
+                                            name={req.username || req.handle}
+                                            className="w-9 h-9"
+                                            textClassName="text-xs"
                                         />
                                         <div className="flex flex-col min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
@@ -580,10 +558,11 @@ export const CommunityManageModeration = ({
                                     className="p-3.5 flex items-center justify-between gap-3 hover:bg-surface-hover/30 transition-colors"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <img
+                                        <UserAvatar
                                             src={mod.avatar}
-                                            alt={mod.name}
-                                            className="w-9 h-9 rounded-[4px] object-cover bg-surface shrink-0"
+                                            name={mod.name || mod.handle}
+                                            className="w-9 h-9"
+                                            textClassName="text-xs"
                                         />
                                         <div className="flex flex-col min-w-0">
                                             <div className="flex items-center gap-2">
@@ -643,17 +622,27 @@ export const CommunityManageModeration = ({
                                 {t('hub.communitymanagemoderation_125')}
                             </p>
                             <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    value={promoteCandidateHandle}
-                                    onChange={(e) => setPromoteCandidateHandle(e.target.value)}
-                                    placeholder="@username"
+                                <select
+                                    value={promoteCandidateId}
+                                    onChange={(e) => setPromoteCandidateId(e.target.value)}
                                     className="flex-1 h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
-                                />
+                                >
+                                    <option value="">
+                                        {promotableMembers.length === 0
+                                            ? (isVi ? "Không có thành viên nào để thăng cấp" : "No eligible members")
+                                            : (isVi ? "-- Chọn thành viên --" : "-- Select member --")}
+                                    </option>
+                                    {promotableMembers.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.name} ({m.handle})
+                                        </option>
+                                    ))}
+                                </select>
                                 <button
                                     type="button"
+                                    disabled={!promoteCandidateId || changeRoleMutation.isPending}
                                     onClick={handlePromoteCandidate}
-                                    className="px-3.5 h-8 rounded-[4px] bg-primary text-xs font-bold text-white hover:bg-primary/90 cursor-pointer"
+                                    className="px-3.5 h-8 rounded-[4px] bg-primary text-xs font-bold text-white hover:bg-primary/90 disabled:opacity-50 cursor-pointer"
                                 >
                                     {t('hub.communitymanagemoderation_126')}
                                 </button>

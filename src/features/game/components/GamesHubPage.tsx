@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { GameController as Gamepad2 } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useDocumentTitle } from "@/shared/hooks/useDocumentTitle";
 import { useGameStore } from "../store/useGameStore";
@@ -7,6 +8,7 @@ import { useGamesQuery } from "@/shared/api/useQueries";
 import { mapGameDtoToGameData } from "@/shared/api/types";
 import { type GameData } from "../types";
 import { GameCard } from "./GameCard";
+import { GameGridSkeleton } from "./GameCardSkeleton";
 
 export const GamesHubPage: React.FC = () => {
     const { t } = useTranslation();
@@ -17,28 +19,37 @@ export const GamesHubPage: React.FC = () => {
     const storeGames = useGameStore((state) => state.games);
 
     // Fetch live games from API
-    const { data: apiGamesData } = useGamesQuery({ limit: 50 });
+    const { data: apiGamesData, isLoading } = useGamesQuery({ limit: 50 });
 
-    // Merged games list with rich fallback coverage
     const allGames: GameData[] = useMemo(() => {
         const remoteList = Array.isArray(apiGamesData)
             ? apiGamesData
             : (apiGamesData as { items?: unknown[] })?.items || [];
 
         if (remoteList.length > 0) {
-            const mapped = remoteList.map((item) => mapGameDtoToGameData(item));
-            const map = new Map<string, GameData>();
-            INITIAL_GAMES.forEach((g) => map.set(g.slug.toLowerCase(), g));
-            mapped.forEach((g) => {
-                const existing = map.get(g.slug.toLowerCase());
-                map.set(g.slug.toLowerCase(), { ...existing, ...g });
-            });
-            return Array.from(map.values());
+            return remoteList.map((item) => mapGameDtoToGameData(item as Record<string, unknown>));
         }
 
         if (storeGames && storeGames.length > 0) return storeGames;
         return INITIAL_GAMES;
     }, [apiGamesData, storeGames]);
+
+    if (isLoading && allGames.length === 0) {
+        return <GameGridSkeleton count={6} />;
+    }
+
+    if (allGames.length === 0) {
+        // Border-free empty state (no border lines)
+        return (
+            <div className="w-full bg-surface-inner/40 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3 my-4">
+                <Gamepad2 className="w-10 h-10 text-text-faint" />
+                <h4 className="text-sm font-bold text-text">{t("game.noGamesFound", { defaultValue: "Chưa có trò chơi nào" })}</h4>
+                <p className="text-xs text-text-muted max-w-sm">
+                    {t("game.noGamesFoundDesc", { defaultValue: "Hiện tại hệ thống chưa có dữ liệu trò chơi." })}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full pb-16 animate-fade-in">

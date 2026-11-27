@@ -1,19 +1,7 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faExternalLinkAlt,
-    faCheck,
-    faCalendarAlt,
-    faCode,
-    faGamepad,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-    faWindows,
-    faApple,
-    faLinux,
-    faPlaystation,
-    faXbox,
-} from "@fortawesome/free-brands-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ArrowSquareOut as faExternalLinkAlt, Check as faCheck, Calendar as faCalendarAlt, Code as faCode, GameController as faGamepad } from "@phosphor-icons/react";
+import { WindowsBrandIcon as faWindows, AppleBrandIcon as faApple, LinuxBrandIcon as faLinux, PlaystationBrandIcon as faPlaystation, XboxBrandIcon as faXbox } from "@/shared/components/ui/BrandIcons";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type GameData } from "../types";

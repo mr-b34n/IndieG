@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { useThemeStore } from "@/shared/store/useThemeStore";
 import { LEGAL_DOCS, type LegalDocType } from "@/shared/constants/legal";
 

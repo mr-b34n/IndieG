@@ -1,224 +1,165 @@
-# 🎮 Ludon - Nền Tảng Mạng Xã Hội, Thảo Luận & Khám Phá Game Đỉnh Cao
+# 🎮 Ludon Frontend
 
 ![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![TypeScript 6](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite 8](https://img.shields.io/badge/Vite-8.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.3-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TanStack Router](https://img.shields.io/badge/TanStack_Router-v1-FF4154?style=for-the-badge&logo=react&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-v5-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-v5-43853D?style=for-the-badge&logo=react&logoColor=white)
 
-**Ludon** là một nền tảng mạng xã hội và trung tâm kết nối cộng đồng game thủ hiện đại, kết hợp giữa phong cách mạng xã hội (Social Feed) và diễn đàn game chuyên sâu (Gaming Hub). Ứng dụng mang đến trải nghiệm toàn diện cho game thủ: từ thảo luận chiến thuật, chia sẻ khoảnh khắc, tìm kiếm tổ đội leo rank (LFG - Looking For Group), khám phá kho game & nhà phát triển indie Việt Nam, đến việc phô diễn cá tính chiến binh và góc máy **Gaming Gear** cực chất.
+Giao diện ứng dụng web cho nền tảng mạng xã hội & cộng đồng game thủ **Ludon**, xây dựng trên kiến trúc **Feature-Sliced** với React 19, TypeScript, TanStack Router/Query, Zustand và Tailwind CSS v4, tối ưu dung lượng bundle và RAM tiêu thụ trên trình duyệt.
 
 ---
 
-## 🌟 Tổng Quan Các Tính Năng Chi Tiết
+## 📋 Danh Mục Tính Năng
 
-### 📰 1. Bảng Tin & Đăng Bài Viết (Feed & Create Post)
-* **Trình soạn thảo bài viết đa năng (Rich Post Editor)**:
-  * Đặt tiêu đề bài viết (tối thiểu 6 ký tự, tối đa 200 ký tự).
-  * Hỗ trợ định dạng văn bản, cú pháp Markdown và gắn thẻ `@tag` người dùng.
-  * Đính kèm đa phương tiện: Hình ảnh, Video, Tệp tin, GIF và bộ chọn biểu tượng cảm xúc (Emoji Picker).
-  * Lựa chọn đăng tải theo từng **Cộng đồng (Community Selector)** cụ thể.
-  * Thiết lập quyền riêng tư: Công khai, Thành viên, hoặc Tắt bình luận.
-* **Bộ lọc nguồn cấp bài viết (Smart Feed Tabs)**:
-  * **Xu hướng (Trending)**: Các bài viết nhận nhiều tương tác nhất.
-  * **Mới nhất (Latest)**: Cập nhật bài viết theo thứ tự thời gian thực.
-  * **Thảo luận (Discussions)**: Chủ đề hỏi đáp, chia sẻ ý kiến.
-  * **Hướng dẫn (Guides)**: Bài viết kinh nghiệm, mẹo chơi game.
-  * **Tin tức (News)**: Thông tin sự kiện và cập nhật ngành game.
-* **Tương tác bài viết**:
-  * Like / Thả tim, Chia sẻ (Copy link bài viết), Đánh dấu (Bookmark).
-  * Ghim bài viết quan trọng (Pin Post) dành cho tác giả.
-  * Chỉnh sửa bài viết (Edit Post Modal) và Xóa bài viết.
-  * Báo cáo vi phạm bài viết với lý do cụ thể.
+### 1. Xác thực & Quản lý phiên (`auth`)
+- Giao diện đăng nhập, đăng ký, kiểm tra độ mạnh mật khẩu theo tiêu chuẩn.
+- Quy trình xác thực email (`/verify-email`), **xác nhận đổi email** (`/verify-email?mode=email-change&token=...`), banner nhắc xác thực cho tài khoản chưa kích hoạt (`UnverifiedBanner`, `VerifyNoticeModal`).
+- Quên mật khẩu và đặt lại mật khẩu (`/reset-password`).
+- Tự động giải mã hạn JWT, hàng đợi làm mới token đồng thời (concurrent refresh queue) và khử trùng lặp request trong API client trung tâm.
 
----
+### 2. Bảng tin & Bài viết (`feed`, `post`)
+- **Bảng tin tối ưu hiệu năng**: thanh chuyển nhanh cộng đồng (`CommunityDrawerModal`), sắp xếp bài viết (`Trending`, `Latest`), phân trang vô hạn (giới hạn trang trong bộ nhớ TanStack Query) và CSS `content-visibility: auto` cho danh sách bài viết dài.
+- **Trình soạn thảo bài viết (`CreatePostModal` — lazy-loaded)**: hỗ trợ tiêu đề, định dạng Markdown, thẻ `#tag`, chọn cộng đồng, tùy chọn bật/tắt bình luận, tự động nén ảnh WebP bằng Canvas và tải trực tiếp lên Cloudflare R2.
+- **Lưu nháp cục bộ theo tài khoản (`draftStorage.ts`)**: tự động lưu nháp bài viết và bình luận/phản hồi vào `localStorage` của trình duyệt theo từng `userId`.
+- **Tương tác bài viết (`Post`, `CommentSection`)**: Upvote / Downvote (optimistic update), chia sẻ liên kết, đánh dấu (Bookmark), ghim / khóa bài viết, chỉnh sửa / xóa bài viết, xem ảnh toàn màn hình (`Lightbox`), bình luận lồng nhau đa cấp kèm **đính kèm ảnh tải lên R2** và **autocomplete `@mention` + liên kết `@username`** trong cả bài viết lẫn bình luận.
 
-### 💬 2. Hệ Thống Bình Luận Phân Cấp (Threaded Comments & Replies)
-* **Bình luận lồng nhau đa cấp (Multi-level Nested Replies)**: Trả lời trực tiếp vào bình luận chính hoặc phản hồi của người khác.
-* **Đính kèm hình ảnh trong bình luận**: Hỗ trợ tải lên ảnh minh họa kèm tính năng cắt/xem trước trực quan.
-* **Tính năng dành cho chủ bài viết**: Ghim bình luận tâm đắc lên đầu (Pin Comment).
-* **Kiểm tra độ dài nội dung (Validation Guards)**:
-  * Ràng buộc độ dài tối thiểu 6 ký tự (hoặc có đính kèm ảnh) và tối đa 1000 ký tự.
-  * Cảnh báo trực quan bằng biểu tượng cảnh báo và thông báo lỗi đa ngôn ngữ.
-* **Sắp xếp bình luận**: Lựa chọn hiển thị theo **Bình luận hàng đầu (Top comments)** hoặc **Mới nhất (Newest first)**.
-* **Chỉnh sửa & Xóa bình luận**: Cập nhật nhanh chóng nội dung đã đăng.
+### 3. Diễn đàn Cộng đồng (`community`)
+- Duyệt và tìm kiếm danh sách cộng đồng, tạo mới (`CreateCommunityModal`) và chỉnh sửa thông tin cộng đồng (`EditCommunityModal`).
+- Trang chi tiết cộng đồng (`/community/$communityId`): nguồn cấp bài viết, mục bài ghim, thư viện media, danh sách thành viên và trang liên kết/giới thiệu.
+- Phân hệ quản trị cộng đồng kết nối API thật: tổng quan (`CommunityManageOverview`), quản lý thành viên & duyệt đơn gia nhập (`CommunityManageMembers`), thăng cấp / gỡ quyền Moderator & kiểm duyệt kick/mute/ban (`CommunityManageModeration`), quản lý nội quy (`CommunityManageRules`), xử lý báo cáo (`CommunityManageReports`) và cài đặt cộng đồng (cập nhật Logo 1:1 & Cover 16:9 bằng `ImageCropperModal` lên R2) + chuyển quyền sở hữu / xóa cộng đồng (`CommunityManageSettings`).
 
----
+### 4. Trung tâm Dữ liệu Game (`game`)
+- Trang khám phá game (`/game`) với bộ lọc thể loại, game nổi bật, phổ biến, gần đây và đồng bộ tìm kiếm từ Steam.
+- Trang chi tiết tựa game (`/game/$gameSlug`): tổng quan thông tin & cấu hình yêu cầu (`GameOverviewTab`), nhật ký cập nhật (`GamePatchNotesTab`) và thảo luận liên quan (`GameDiscussionsTab`).
+- Quản lý tủ game cá nhân tích hợp ngay trên trang hồ sơ người dùng.
 
-### 🌐 3. Diễn Đàn Cộng Đồng (Communities Hub)
-* **Khám phá theo danh mục**: FPS, MOBA, RPG, Indie Games, Esports, Console, Mobile...
-* **Tạo cộng đồng mới (Create Community Modal)**:
-  * Tùy chọn tên cộng đồng (tối thiểu 3 ký tự) và mô tả mục tiêu (tối thiểu 6 ký tự).
-  * Chọn biểu tượng/preset huy hiệu đặc trưng và ảnh bìa cộng đồng.
-* **Trang chi tiết cộng đồng**:
-  * Hiển thị thông tin banner, số lượng thành viên, nội quy cộng đồng.
-  * Nút Tham gia / Rời cộng đồng (Join/Leave).
-  * Nguồn cấp bài viết riêng biệt dành riêng cho từng cộng đồng.
-  * Danh sách quản trị viên và thành viên tích cực.
+### 5. Hồ sơ Game thủ, Bạn bè, Đã lưu & Lưu bút (`profile`, `bookmark`)
+- Trang hồ sơ cá nhân (`/profile/$userId`) với các tab: Tổng quan, Bài viết, Cộng đồng, Tủ game, Đã lưu (Bookmarks), Bạn bè và Lưu bút.
+- Chỉnh sửa thông tin cá nhân (`EditProfileModal`), kiểm tra `@username` khả dụng theo thời gian thực và công cụ cắt ảnh đại diện / ảnh bìa (`ImageCropperModal`).
+- **Avatar chữ cái đầu đồng bộ (`UserAvatar`)**: tự động hiển thị hình tròn chữ cái đầu (chuẩn Unicode tiếng Việt) ở mọi nơi trên web khi tài khoản chưa có avatar hoặc ảnh tải lỗi.
+- **Rich Bio Editor**: soạn thảo tiểu sử đa phông chữ, căn lề, màu chữ và định dạng trực quan.
+- **Gaming Gear Showcase**: cấu hình và trưng bày góc máy & thiết bị gaming.
+- **Bạn bè & Lưu bút**: gửi / chấp nhận / từ chối / hủy kết bạn, chặn người dùng và viết / xóa lời nhắn lưu bút.
 
----
+### 6. Tìm kiếm Toàn cục (`search`)
+- Hộp tìm kiếm nhanh trên thanh điều hướng và trang kết quả chi tiết (`/search`) hỗ trợ lọc theo **Bài viết**, **Cộng đồng**, **Người dùng** và **Tựa game**.
 
-### ⚔️ 4. Ghép Đội & Tìm Bạn Chơi Game (Squad & LFG - Looking For Group)
-* **Sảnh tìm kiếm Squad thông minh**:
-  * Lọc theo tựa game yêu thích (CS2, Valorant, Liên Minh Huyền Thoại, PUBG, GTA V, Apex Legends...).
-  * Lọc theo **Bậc Rank**: Đồng, Bạc, Vàng, Bạch Kim, Kim Cương, Cao Thủ / Thách Đấu.
-  * Lọc theo **Vai trò (Role)**: Sniper, Duelist, Support, Tanker, IGL, Entry Fragger.
-  * Lọc theo **Chế độ chơi**: Tryhard leo rank nghiêm túc, Casual giải trí, Custom phòng.
-* **Tạo phòng Squad mới**:
-  * Tùy chỉnh số lượng thành viên cần tuyển, cấp bậc yêu cầu, ngôn ngữ giao tiếp.
-  * Đặt link kênh Voice Chat (Discord / In-game voice).
-* **Phòng chờ Squad trực tiếp**: Quản lý thành viên trong phòng, trạng thái sẵn sàng (Ready check) và kết nối nhanh.
+### 7. Trung tâm Thông báo (`notification`)
+- Nhận thông báo thời gian thực qua **Socket.IO** (`useNotificationSocket`, lazy-import chỉ khi đã đăng nhập) kèm cơ chế dự phòng polling (`useNotificationPolling`).
+- Dropdown thông báo trực quan: hiển thị số chưa đọc, đánh dấu đã đọc từng mục hoặc tất cả và xóa thông báo.
 
----
+### 8. Báo cáo Vi phạm (`report`)
+- Hộp thoại báo cáo vi phạm (`ReportModal`) gửi trực tiếp tới Backend API kèm phản hồi trạng thái lỗi/thành công rõ ràng.
 
-### 🕹️ 5. Trung Tâm Khám Phá & Tủ Game (Game Hub & Library)
-* **Khám phá game & Spotlight Indie Việt**:
-  * Khu vực **Vietnamese Indie Spotlight**: Giới thiệu và tôn vinh các tựa game và studio sáng tạo đến từ Việt Nam.
-  * Xem danh sách game thịnh hành, game mới ra mắt.
-* **Chi tiết tựa game chuyên sâu**:
-  * Tổng quan, nhà phát hành, ngày phát hành, thể loại, đánh giá từ người chơi.
-  * **Yêu cầu cấu hình hệ thống**: Chi tiết Cấu hình tối thiểu (Minimum Specs) và Cấu hình đề nghị (Recommended Specs).
-  * **Nhật ký cập nhật & Patch Notes**: Lịch sử phiên bản, thông báo bản vá lỗi (Hotfix), sự kiện (Event), bản cập nhật lớn (Major Update).
-  * **Hướng dẫn & Thảo luận**: Các bài viết chia sẻ bí kíp, mẹo vượt ải cho từng tựa game.
-  * **Danh sách Thành tựu (Achievements)**: Bộ sưu tập cúp và huy hiệu trong game.
+### 9. Cài đặt, Phản hồi, Giao diện, Đa ngôn ngữ & Phím tắt (`settings`, `shared`)
+- Trang cài đặt (`/settings`) gồm **6 tab** đồng bộ 100% với Backend: Giao diện (`Light` / `Dark` / `System`) & Ngôn ngữ (**Tiếng Việt** / **English**, lazy-load gói `en`), Game yêu thích (`quickAccessSlugs` & `followedGameSlugs`), Tài khoản & Bảo mật (Xác thực email, **Đổi Email có xác thực**, Đổi mật khẩu, Quản lý phiên thiết bị, Tạm ngưng / Xóa tài khoản), Quyền riêng tư & Danh sách chặn, Thông báo, và **Báo lỗi & Đóng góp ý tưởng** (kết nối `FeedbackModule` kèm lịch sử phản hồi).
+- Bảng tra cứu phím tắt toàn cục (`ShortcutsCheatsheetModal`) và hỗ trợ responsive Desktop / Tablet / Mobile.
+
+### 10. Trực tuyến & Nhắn tin 1-1 (`messages`)
+- Trang nhắn tin 2 cột (`/messages`) kết nối REST + Socket.IO realtime (`dm:new`, `dm:read`, `presence:update`), tìm kiếm người chơi để mở hội thoại mới, bộ đếm chưa đọc trên Header & LeftBar và tích hợp trạng thái online thật + nút nhắn nhanh tại `RightBar`.
+
+### 11. Tìm đội / Squad LFG (`squad`)
+- Trang Tìm đội (`/squad`): duyệt/lọc phòng theo game, khu vực, trạng thái; tạo phòng mới; tham gia, rời đội, kick thành viên, đóng/mở phòng và nhắn tin trực tiếp với đội trưởng.
+
+### 12. Bảng điều khiển Quản trị (`admin`)
+- Trang quản trị toàn cục (`/admin`, phân quyền `ADMIN`) với 5 tab: Báo cáo vi phạm, Phản hồi & Bug, Người dùng, Cộng đồng và Phát thông báo hệ thống.
+
+### 13. Tính năng định hướng tương lai
+> *Đánh giá & Cẩm nang Game (Reviews/Guides), Trang Khám phá & Sự kiện Cộng đồng, Huy hiệu & Thành tựu, OAuth2 & Bảo mật 2 lớp (2FA), Cổng Nhà phát triển.*
 
 ---
 
-### 👤 6. Hồ Sơ Game Thủ Cá Nhân Hóa (Gamer Profile & Battlestation)
-* **Bộ nhận diện cá nhân (Identity & Badges)**:
-  * Ảnh đại diện tùy chỉnh (hỗ trợ công cụ Crop ảnh chuyên nghiệp).
-  * Ảnh bìa điện ảnh (Cinematic Cover Banner) phong cách Cyberpunk/Gaming.
-  * Danh hiệu & Thẻ khung Avatar (Badges Selector & Frame).
-  * Tiểu sử cá nhân, Điểm uy tín cộng đồng (Reputation Score), Ngày tham gia, Khu vực/Server.
-  * Liên kết tài khoản mạng xã hội & gaming: Discord, Steam, Riot Games, Epic Games, Twitch, YouTube.
-* **🖥️ Battlestation & Gaming Gear Showcase (Góc máy & Vũ khí gaming)**:
-  * Trưng bày cấu hình PC & phụ kiện thực tế: **CPU, GPU, Màn hình, Chuột, Bàn phím cơ, Lót chuột, Tai nghe, DAC/Soundcard**.
-* **📊 Thống kê E-Sports & Tủ game cá nhân**:
-  * Số giờ chơi, Tỷ lệ thắng (Win Rate), Chỉ số K/D, Tỷ lệ MVP.
-  * Danh sách game đang chơi và thành tích đạt được.
-* **📖 Sổ Lưu Bút Trang Cá Nhân (Guestbook)**:
-  * Bạn bè và người ghé thăm có thể để lại lời nhắn, lời chúc mừng hoặc nhận xét thân thiện (GG).
-  * Tích hợp kiểm tra độ dài tối thiểu và các thao tác tương tác (Thích, Xóa lời nhắn).
-* **🤝 Quản lý Bạn bè (Friends System)**:
-  * Gửi lời mời kết bạn, danh sách lời mời đang chờ (Pending Requests).
-  * Chấp nhận, từ chối, hủy kết bạn và chặn người dùng (Block User) dễ dàng.
+## 🛠️ Công Nghệ Sử Dụng
+
+| Nhóm | Công nghệ / Thư viện |
+| :--- | :--- |
+| **Core** | React 19 (`^19.2.6`), TypeScript 6 (`^6.0.3`), Vite 8 (`^8.0.12`) |
+| **Routing & Data** | TanStack Router v1 (`@tanstack/react-router`), TanStack Query v5 (`@tanstack/react-query`) |
+| **State** | Zustand v5 (`zustand`) |
+| **Styling & UI** | Tailwind CSS v4 (`@tailwindcss/vite`), `class-variance-authority`, `clsx`, `tailwind-merge` |
+| **Icons & Fonts** | `@phosphor-icons/react` (Solid, kèm Vite plugin [phosphor-solid.ts](./vite/plugins/phosphor-solid.ts) cắt bỏ weight thừa), `@fontsource/*` (`cinzel`, `jetbrains-mono`, `merriweather`, `press-start-2p`, `unifrakturmaguntia`) |
+| **Realtime** | Socket.IO Client (`socket.io-client` — lazy-loaded) |
+| **Testing & Lint** | Vitest v5, Playwright, ESLint 10 |
 
 ---
 
-### 🔍 7. Tìm Kiếm Toàn Cục (Global Search)
-* **Hộp thoại tìm kiếm tức thì**:
-  * Tìm kiếm tổng hợp theo từ khóa xuyên suốt Bài viết, Cộng đồng, Người dùng, Tựa game và Squad.
-  * Lọc kết quả theo danh mục rõ ràng.
-  * Lưu lại lịch sử tìm kiếm gần đây để truy cập nhanh.
-
----
-
-### 🔔 8. Trung Tâm Thông Báo Thời Gian Thực (Notification Center)
-* Nhận thông báo tức thì khi:
-  * Có người tương tác (Thích, Bình luận, Trả lời bình luận của bạn).
-  * Có người nhắc tên bạn trong bài viết hoặc bình luận (`@username`).
-  * Nhận được lời mời kết bạn hoặc lời mời tham gia Squad.
-  * Thông báo hệ thống và sự kiện cộng đồng.
-* Bộ lọc thông báo (Tất cả, Đề cập, Tương tác, Hệ thống) và tính năng Đánh dấu đã đọc tất cả.
-
----
-
-### 📌 9. Bộ Sưu Tập Lưu Trữ (Bookmarks)
-* Quản lý danh sách các bài viết, cẩm nang, mẹo chơi game đã lưu.
-* Tìm kiếm và phân loại nhanh các bài viết đã bookmark.
-
----
-
-### 🛡️ 10. Báo Cáo Vi Phạm & An Toàn Cộng Đồng (Report System)
-* Báo cáo nội dung bài viết, bình luận hoặc người dùng có hành vi không phù hợp.
-* Danh mục lý do vi phạm chi tiết: Spam/Quảng cáo, Ngôn từ thù ghét, Quấy rối/Bắt nạt, Nội dung nhạy cảm, Vi phạm bản quyền, Khác.
-* Nhập mô tả chi tiết kèm kiểm tra độ dài tối thiểu để ban quản trị xử lý chính xác.
-
----
-
-### ⚙️ 11. Cài Đặt Tài Khoản & Bảo Mật (Account Settings)
-* **Tài khoản & Xác thực Email (Email Verification)**:
-  * Trạng thái tài khoản (Đã xác thực / Chưa xác thực).
-  * Gửi mã OTP xác thực email, đổi mật khẩu và đổi địa chỉ email an toàn.
-  * Quản lý các phiên đăng nhập thiết bị (Active Sessions).
-* **Tùy chỉnh Thông báo**: Bật/tắt thông báo cho từng loại hoạt động (Bình luận, Lượt thích, Tag, Squad).
-* **Quyền riêng tư & Hiển thị**: Ẩn/hiện tủ game, góc máy gaming gear và nhận tin nhắn.
-
----
-
-### 🌗 12. Giao Diện Người Dùng & Đa Ngôn Ngữ (UI/UX & Localization)
-* **Hỗ trợ 2 ngôn ngữ hoàn chỉnh**: Chuyển đổi linh hoạt giữa **Tiếng Việt 🇻🇳** và **English 🇬🇧** với đầy đủ bản dịch trên toàn bộ giao diện và thông báo lỗi.
-* **Chế độ Sáng / Tối (Dark & Light Theme)**: Tối ưu màu sắc chuẩn gaming, sắc sảo và dịu mắt.
-* **Responsive 100%**: Hoạt động mượt mà trên mọi kích thước màn hình từ Desktop, Tablet đến Smartphone.
-* **[DEV] Mock Auth Switcher**: Tích hợp công cụ chuyển đổi nhanh tài khoản giả lập ngay trên Header để thuận tiện kiểm thử toàn bộ tính năng.
-
----
-
-## 🛠️ Công Nghệ & Thư Viện Sử Dụng
-
-| Lớp kiến trúc | Công nghệ / Thư viện | Mô tả |
-| :--- | :--- | :--- |
-| **Framework** | [React 19](https://react.dev/) | Phiên bản React mới nhất với hiệu năng tối ưu |
-| **Ngôn ngữ** | [TypeScript 5](https://www.typescriptlang.org/) | Đảm bảo tính chặt chẽ về kiểu dữ liệu (Type-safe) |
-| **Build Tool** | [Vite 8](https://vitejs.dev/) | Trình đóng gói hiện đại, tốc độ khởi động và HMR cực nhanh |
-| **Routing** | [TanStack Router v1](https://tanstack.com/router) | Hệ thống định tuyến kiểu dữ liệu an toàn, file-based routing |
-| **State Management** | [Zustand v5](https://zustand-demo.pmnd.rs/) | Quản lý state toàn cục nhẹ nhàng (Auth, Feed, Theme, i18n, Notification...) |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Framework tiện ích CSS thế hệ mới tích hợp trực tiếp qua Vite |
-| **Iconography** | [FontAwesome Icons v7](https://fontawesome.com/) | Hệ thống biểu tượng phong phú, chuẩn nét |
-| **Utilities** | `emoji-picker-react`, `zxcvbn`, `date-fns` | Bộ chọn Emoji, đánh giá mật khẩu, định dạng thời gian |
-
----
-
-## 📁 Cấu Trúc Thư Mục Dự Án
+## 📁 Cấu Trúc Thư Mục
 
 ```text
 src/
-├── app/                  # Khởi tạo App & cấu hình Router
-├── assets/               # Hình ảnh, logo, tài nguyên tĩnh
-├── features/             # Các mô-đun tính năng độc lập
-│   ├── auth/             # Xác thực, đăng nhập/đăng ký, quản lý phiên
-│   ├── bookmark/         # Quản lý bài viết đã lưu
-│   ├── community/        # Diễn đàn cộng đồng, tạo & quản lý group
-│   ├── explore/          # Trang khám phá, tin tức & Spotlight Indie
-│   ├── feed/             # Nguồn cấp bài viết, khung tạo bài viết
-│   ├── game/             # Tủ game, chi tiết game, patch notes
-│   ├── notification/     # Trung tâm thông báo
-│   ├── post/             # Chi tiết bài viết, tương tác, bình luận
-│   ├── profile/          # Trang cá nhân, Gaming Gear, bạn bè, lưu bút
-│   ├── report/           # Hệ thống báo cáo vi phạm nội dung
+├── assets/               # Logo và tài nguyên hình ảnh tĩnh (WebP tối ưu)
+├── features/             # 14 module tính năng độc lập
+│   ├── admin/            # Bảng điều khiển quản trị toàn cục (Reports, Feedback, Users, Communities, Announcements)
+│   ├── auth/             # Đăng nhập, đăng ký, xác thực email, store auth
+│   ├── bookmark/         # Danh sách bài viết đã lưu (tích hợp trong Profile)
+│   ├── community/        # Cộng đồng, hub chi tiết và bộ quản trị cộng đồng
+│   ├── feed/             # Bảng tin, trình soạn thảo bài viết
+│   ├── game/             # Trung tâm dữ liệu game, patch notes, thảo luận
+│   ├── messages/         # Nhắn tin 1-1 realtime & trạng thái Online (Presence store)
+│   ├── notification/     # Thông báo realtime Socket.IO + polling
+│   ├── post/             # Chi tiết bài viết, vote, bình luận, ảnh R2, @mention, nháp localStorage
+│   ├── profile/          # Hồ sơ game thủ, rich bio, gear, bạn bè, lưu bút
+│   ├── report/           # Gửi báo cáo vi phạm
 │   ├── search/           # Tìm kiếm toàn cục
-│   └── squad/            # Tìm tổ đội leo rank (LFG)
-├── routes/               # Các trang và router file-based của TanStack Router
-├── shared/               # Component dùng chung, Layout, Hooks, Locales (i18n)
-│   ├── components/       # Header, Sidebar, BottomNav, Modal base...
-│   ├── hooks/            # useTranslate, useTheme, useDebounce...
-│   └── locales/          # File đa ngôn ngữ (vi.ts, en.ts)
-└── types/                # Global TypeScript definitions
+│   ├── settings/         # Cài đặt tài khoản, đổi email, phiên, giao diện, quyền riêng tư, phản hồi
+│   └── squad/            # Tìm đội / Ghép phòng chơi game (LFG)
+├── routes/               # File-based routing của TanStack Router
+├── shared/               # Thành phần dùng chung toàn ứng dụng
+│   ├── api/              # HTTP client, types, TanStack Query hooks
+│   ├── components/       # Header, Sidebars, UserAvatar, Icon, BrandIcons, Modals
+│   ├── config/           # Đọc biến môi trường
+│   ├── hooks/            # Hotkeys, Theme, Translate, Debounce, Title
+│   ├── lib/              # Cấu hình QueryClient (gcTime, maxPages)
+│   ├── locales/          # Từ điển đa ngôn ngữ (vi.ts mặc định, en.ts lazy-load)
+│   ├── services/         # Dịch vụ upload ảnh lên Cloudflare R2
+│   ├── store/            # Theme, Toast, Sidebar, Shortcuts, PageTransition
+│   └── utils/            # cn(), image-processor, overlayManager, formatTimeAgo
+├── App.css               # Design tokens & cấu hình Tailwind CSS v4 (@theme)
+├── App.tsx
+└── main.tsx
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Khởi Chạy
+## ⚙️ Biến Môi Trường
 
-### 1. Cài đặt các gói phụ thuộc
+Sao chép file mẫu trước khi chạy:
 ```bash
-npm install
+cp .env.example .env
 ```
 
-### 2. Chạy môi trường phát triển (Development)
-```bash
-npm run dev
-```
-Mở trình duyệt và truy cập vào: **`http://localhost:3000`**
-
-### 3. Đóng gói cho Production
-```bash
-npm run build
-npm run preview
-```
+| Biến | Mô tả | Mặc định |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | URL gốc gọi Backend API (`/api` để proxy qua Vite dev server) | `/api` |
+| `VITE_R2_PUBLIC_URL` | URL công khai của Cloudflare R2 / CDN hiển thị media | — |
+| `VITE_MOCK_API` | Chế độ mock cục bộ khi phát triển độc lập (`true` / `false`) | `false` |
 
 ---
 
-*Phát triển với trọn vẹn đam mê dành cho cộng đồng Game Thủ Việt Nam & Quốc Tế 🎮.*
+## 🚀 Hướng Dẫn Khởi Chạy & Kiểm Thử
 
+```bash
+# Cài đặt dependencies
+pnpm install
+
+# Chạy môi trường phát triển (http://localhost:3000)
+pnpm dev
+
+# Kiểm tra TypeScript & build production
+pnpm build
+
+# Xem trước bản build production
+pnpm preview
+
+# Kiểm tra lint
+pnpm lint
+
+# Chạy unit tests (Vitest)
+pnpm test
+
+# Chạy E2E tests (Playwright)
+pnpm test:e2e
+```

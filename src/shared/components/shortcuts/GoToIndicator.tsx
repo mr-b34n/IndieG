@@ -1,7 +1,7 @@
 import { useShortcutsStore } from "@/shared/store/useShortcutsStore";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCompass } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Compass as faCompass } from "@phosphor-icons/react";
 
 const DESTINATIONS = [
     { key: "F", vi: "Feed", en: "Feed" },

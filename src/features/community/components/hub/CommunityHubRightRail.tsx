@@ -1,15 +1,6 @@
 import { useState, useMemo } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faArrowRight,
-    faCircle,
-    faArrowUpRightFromSquare,
-    faGamepad,
-    faStar,
-    faChevronDown,
-    faChevronUp,
-} from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "@tanstack/react-router";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ArrowRight as faArrowRight, Circle as faCircle, CaretDown as faChevronDown, CaretUp as faChevronUp } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
 
@@ -66,7 +57,6 @@ export const CommunityHubRightRail = ({
     description,
     membersCount,
     onlineCount,
-    contributors,
     onNavigateNav,
     isVi,
     isManageView,
@@ -74,13 +64,9 @@ export const CommunityHubRightRail = ({
     pendingCount,
     reportsCount,
     modsCount,
-    gameSlug,
-    gameName,
-    gameData,
     rules,
 }: CommunityHubRightRailProps) => {
     const { t } = useTranslation();
-    const navigate = useNavigate();
 
     const isAdminOrMod = userRole === "owner" || userRole === "admin" || userRole === "moderator";
 

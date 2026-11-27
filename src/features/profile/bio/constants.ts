@@ -1,9 +1,5 @@
 import type { BioFont, BioColor, BioAlign, BioPreset } from "./types";
-import {
-    faAlignLeft,
-    faAlignCenter,
-    faAlignRight,
-} from "@fortawesome/free-solid-svg-icons";
+import { TextAlignLeft as faAlignLeft, TextAlignCenter as faAlignCenter, TextAlignRight as faAlignRight } from "@phosphor-icons/react";
 
 export const MAX_BIO_CHAR_LIMIT = 300;
 

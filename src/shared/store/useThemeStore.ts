@@ -37,6 +37,10 @@ const applyThemeToDOM = (theme: Theme) => {
     }
     root.setAttribute('data-theme', theme);
     root.style.colorScheme = theme;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+        themeMeta.setAttribute('content', theme === 'dark' ? '#0B0D0F' : '#F4F6F8');
+    }
 };
 
 const getInitialMode = (): ThemeMode => {
@@ -119,6 +123,6 @@ if (typeof window !== 'undefined' && window.matchMedia) {
         mediaQuery.addEventListener('change', handleSystemThemeChange);
     } else if ('addListener' in mediaQuery) {
         // Fallback for older browsers
-        (mediaQuery as any).addListener(handleSystemThemeChange);
+        (mediaQuery as MediaQueryList).addListener(handleSystemThemeChange);
     }
 }

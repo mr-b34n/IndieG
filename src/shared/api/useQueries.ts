@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import {
     postsApi,
     profilesApi,
@@ -10,8 +10,6 @@ import {
     usersApi,
     votesApi,
     gamesApi,
-    gameGuidesApi,
-    gameReviewsApi,
     gamePatchNotesApi,
     guestbookCommentsApi,
     bookmarksApi,
@@ -20,6 +18,8 @@ import {
     searchApi,
     notificationsApi,
     isApiEnabled,
+    extractPostList,
+    type GetCommunitiesParams,
 } from "./index";
 import type {
     CreateCommunityDto,
@@ -38,12 +38,6 @@ import type {
     CreateGameDto,
     UpdateGameDto,
     GetGamesParams,
-    CreateGameGuideDto,
-    UpdateGameGuideDto,
-    GetGameGuidesParams,
-    CreateGameReviewDto,
-    UpdateGameReviewDto,
-    GetGameReviewsParams,
     CreateGamePatchNoteDto,
     UpdateGamePatchNoteDto,
     GetGamePatchNotesParams,
@@ -60,7 +54,6 @@ import type {
     SearchParams,
     VoteType,
     UpdateUserSettingsDto,
-    UserSettingsDto,
     AuthResendVerificationDto,
 } from "./types";
 
@@ -77,6 +70,8 @@ export const QUERY_KEYS = {
 
     // Posts
     posts: (params?: Record<string, unknown>) => ["posts", params || {}] as const,
+    postsTrending: (params?: Record<string, unknown>) => ["posts", "trending", params || {}] as const,
+    postsTrendingTags: (params?: Record<string, unknown>) => ["posts", "tags", "trending", params || {}] as const,
     postsFeed: (params?: Record<string, unknown>) => ["posts", "feed", params || {}] as const,
     postById: (id: string) => ["posts", "detail", id] as const,
 
@@ -121,15 +116,6 @@ export const QUERY_KEYS = {
     steamSearch: (q: string) => ["games", "steam", "search", q] as const,
     externalGameData: (appid: number | string) => ["games", String(appid), "external"] as const,
 
-    // Game Guides
-    gameGuides: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "guides", params || {}] as const,
-    gameGuideById: (appid: number | string, id: string) => ["games", String(appid), "guides", "detail", id] as const,
-
-    // Game Reviews
-    gameReviews: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "reviews", params || {}] as const,
-    gameReviewById: (appid: number | string, id: string) => ["games", String(appid), "reviews", "detail", id] as const,
-    gameReviewMe: (appid: number | string) => ["games", String(appid), "reviews", "me"] as const,
-
     // Game Patch Notes
     gamePatchNotes: (appid: number | string, params?: Record<string, unknown>) => ["games", String(appid), "patch-notes", params || {}] as const,
     gamePatchNoteById: (appid: number | string, id: string) => ["games", String(appid), "patch-notes", "detail", id] as const,
@@ -148,6 +134,7 @@ export const QUERY_KEYS = {
 
     // Friendships
     friends: ["friendships", "friends"] as const,
+    userFriends: (userId: string) => ["friendships", "friends", userId] as const,
     friendRequestsIncoming: ["friendships", "requests", "incoming"] as const,
     friendRequestsOutgoing: ["friendships", "requests", "outgoing"] as const,
     friendshipsBlocked: ["friendships", "blocked"] as const,
@@ -170,12 +157,78 @@ export function usePostsQuery(params?: {
     title?: string;
     content?: string;
     tags?: string[];
+    sortBy?: string;
     page?: number;
     limit?: number;
-}) {
+}, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: QUERY_KEYS.posts(params),
         queryFn: () => postsApi.getAll(params),
+        enabled: options?.enabled ?? true,
+    });
+}
+
+export function useInfinitePostsQuery(
+    params?: {
+        authorId?: string;
+        communityId?: string;
+        title?: string;
+        content?: string;
+        tags?: string[];
+        sortBy?: string;
+        limit?: number;
+    },
+    options?: { enabled?: boolean }
+) {
+    const limit = params?.limit ?? 15;
+    return useInfiniteQuery({
+        queryKey: ["posts", "infinite", params || {}],
+        queryFn: ({ pageParam = 1 }) =>
+            postsApi.getAll({
+                ...params,
+                page: pageParam as number,
+                limit,
+            }),
+        initialPageParam: 1,
+        maxPages: 12,
+        getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+            if (lastPage && typeof lastPage === "object" && "meta" in lastPage && lastPage.meta) {
+                const meta = (lastPage as { meta?: { page?: number; totalPages?: number } }).meta;
+                if (typeof meta?.page === "number" && typeof meta?.totalPages === "number") {
+                    return meta.page < meta.totalPages ? meta.page + 1 : undefined;
+                }
+            }
+            const items = extractPostList(lastPage);
+            if (items.length < limit) {
+                return undefined;
+            }
+            return (typeof lastPageParam === "number" ? lastPageParam : 1) + 1;
+        },
+        enabled: options?.enabled ?? true,
+    });
+}
+
+export function useTrendingPostsQuery(
+    params?: { limit?: number; days?: number },
+    options?: { enabled?: boolean }
+) {
+    return useQuery({
+        queryKey: QUERY_KEYS.postsTrending(params),
+        queryFn: () => postsApi.getTrending(params),
+        enabled: options?.enabled ?? true,
+        staleTime: 60 * 1000,
+    });
+}
+
+export function useTrendingTagsQuery(
+    params?: { limit?: number },
+    options?: { enabled?: boolean }
+) {
+    return useQuery({
+        queryKey: QUERY_KEYS.postsTrendingTags(params),
+        queryFn: () => postsApi.getTrendingTags(params),
+        enabled: options?.enabled ?? true,
+        staleTime: 3 * 60 * 1000,
     });
 }
 
@@ -223,11 +276,12 @@ export function useDeletePostMutation() {
 // -------------------------------------------------------------
 // 2. Hooks for Profiles
 // -------------------------------------------------------------
-export function useMyProfileQuery(enabled = true, userId?: string) {
+export function useMyProfileQuery(enabled = true, _userId?: string) {
     return useQuery({
-        queryKey: userId ? (["profiles", "me", userId] as const) : QUERY_KEYS.myProfile,
+        queryKey: QUERY_KEYS.myProfile,
         queryFn: () => profilesApi.getMyProfile(),
         enabled,
+        staleTime: 1000 * 60 * 15, // 15 mins cache
     });
 }
 
@@ -236,7 +290,7 @@ export function useUserProfileQuery(username: string) {
     return useQuery({
         queryKey: QUERY_KEYS.profileByUsername(clean || username),
         queryFn: () => profilesApi.getUserByUsername(username),
-        enabled: Boolean(clean) && clean !== "me" && clean !== "demo",
+        enabled: Boolean(clean) && clean !== "me",
     });
 }
 
@@ -273,7 +327,7 @@ export function useUpdateProfileMutation() {
 // -------------------------------------------------------------
 export function useCommunitiesQuery(params?: GetCommunitiesParams, options?: { enabled?: boolean }) {
     return useQuery({
-        queryKey: QUERY_KEYS.communities(params),
+        queryKey: QUERY_KEYS.communities(params as unknown as Record<string, unknown> | undefined),
         queryFn: () => communitiesApi.getAll(params),
         ...options,
     });
@@ -306,7 +360,7 @@ export function useSearchCommunitiesQuery(params?: {
 }) {
     return useQuery({
         queryKey: QUERY_KEYS.communitySearch(params),
-        queryFn: () => communitiesApi.search(params),
+        queryFn: () => communitiesApi.getAll(params),
     });
 }
 
@@ -430,18 +484,19 @@ export function usePendingMembersQuery(communityId: string, params?: GetCommunit
     });
 }
 
-export function useCommunityMemberMeQuery(communityId: string) {
+export function useCommunityMemberMeQuery(communityId: string, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: QUERY_KEYS.communityMemberMe(communityId),
         queryFn: () => communityMembersApi.me(communityId),
-        enabled: Boolean(communityId),
+        enabled: (options?.enabled ?? true) && Boolean(communityId),
+        staleTime: 1000 * 60 * 5, // 5 mins cache
     });
 }
 
 export function useSearchCommunityMembersQuery(communityId: string, params: SearchCommunityMembersParams) {
     const keyword = params.keyword.trim();
     return useQuery({
-        queryKey: QUERY_KEYS.communityMembersSearch(communityId, keyword, params),
+        queryKey: QUERY_KEYS.communityMembersSearch(communityId, keyword, params as unknown as Record<string, unknown>),
         queryFn: () => communityMembersApi.search(communityId, params),
         enabled: Boolean(communityId) && keyword.length >= 3,
     });
@@ -650,10 +705,12 @@ export function useUsersListQuery() {
     });
 }
 
-export function useUserSessionsQuery(type?: "active" | "history") {
+export function useUserSessionsQuery(type?: "active" | "history", options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: type ? [...QUERY_KEYS.userSessions, type] : QUERY_KEYS.userSessions,
-        queryFn: () => usersApi.getSessions(type),
+        queryFn: () => usersApi.getSessions(),
+        enabled: options?.enabled ?? true,
+        staleTime: 1000 * 60 * 5, // 5 mins cache
     });
 }
 
@@ -694,6 +751,7 @@ export function useUserSettingsQuery(options?: { enabled?: boolean }) {
         queryKey: QUERY_KEYS.userSettings,
         queryFn: () => usersApi.getSettings(),
         enabled: options?.enabled ?? true,
+        staleTime: 1000 * 60 * 10, // 10 mins cache
     });
 }
 
@@ -879,137 +937,7 @@ export function useDeleteGameMutation() {
 }
 
 // -------------------------------------------------------------
-// 9. Hooks for Game Guides (/games/{appid}/guides/*)
-// -------------------------------------------------------------
-export function useGameGuidesQuery(appid: number | string, params?: GetGameGuidesParams) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gameGuides(appid, params as Record<string, unknown>),
-        queryFn: () => gameGuidesApi.getAll(appid, params),
-        enabled: Boolean(appid),
-    });
-}
-
-export function useGameGuideDetailQuery(appid: number | string, id: string) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gameGuideById(appid, id),
-        queryFn: () => gameGuidesApi.getById(appid, id),
-        enabled: Boolean(appid && id),
-    });
-}
-
-export function useCreateGameGuideMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, dto }: { appid: number | string; dto: CreateGameGuideDto }) =>
-            gameGuidesApi.create(appid, dto),
-        onSuccess: (_data, { appid }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
-        },
-    });
-}
-
-export function useUpdateGameGuideMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id, dto }: { appid: number | string; id: string; dto: UpdateGameGuideDto }) =>
-            gameGuidesApi.update(appid, id, dto),
-        onSuccess: (_data, { appid, id }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuideById(appid, id) });
-        },
-    });
-}
-
-export function useDeleteGameGuideMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
-            gameGuidesApi.delete(appid, id),
-        onSuccess: (_data, { appid }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
-        },
-    });
-}
-
-export function useLikeGameGuideMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
-            gameGuidesApi.like(appid, id),
-        onSuccess: (_data, { appid, id }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuides(appid) });
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameGuideById(appid, id) });
-        },
-    });
-}
-
-// -------------------------------------------------------------
-// 10. Hooks for Game Reviews (/games/{appid}/reviews/*)
-// -------------------------------------------------------------
-export function useGameReviewsQuery(appid: number | string, params?: GetGameReviewsParams) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gameReviews(appid, params as Record<string, unknown>),
-        queryFn: () => gameReviewsApi.getAll(appid, params),
-        enabled: Boolean(appid),
-    });
-}
-
-export function useGameReviewDetailQuery(appid: number | string, id: string) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gameReviewById(appid, id),
-        queryFn: () => gameReviewsApi.getById(appid, id),
-        enabled: Boolean(appid && id),
-    });
-}
-
-export function useCreateGameReviewMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, dto }: { appid: number | string; dto: CreateGameReviewDto }) =>
-            gameReviewsApi.create(appid, dto),
-        onSuccess: (_data, { appid }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
-        },
-    });
-}
-
-export function useUpdateGameReviewMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id, dto }: { appid: number | string; id: string; dto: UpdateGameReviewDto }) =>
-            gameReviewsApi.update(appid, id, dto),
-        onSuccess: (_data, { appid, id }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviewById(appid, id) });
-        },
-    });
-}
-
-export function useDeleteGameReviewMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
-            gameReviewsApi.delete(appid, id),
-        onSuccess: (_data, { appid }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
-        },
-    });
-}
-
-export function useLikeGameReviewMutation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ appid, id }: { appid: number | string; id: string }) =>
-            gameReviewsApi.like(appid, id),
-        onSuccess: (_data, { appid, id }) => {
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviews(appid) });
-            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.gameReviewById(appid, id) });
-        },
-    });
-}
-
-// -------------------------------------------------------------
-// 11. Hooks for Game Patch Notes (/games/{appid}/patch-notes/*)
+// 9. Hooks for Game Patch Notes (/games/{appid}/patch-notes/*)
 // -------------------------------------------------------------
 export function useGamePatchNotesQuery(appid: number | string, params?: GetGamePatchNotesParams) {
     return useQuery({
@@ -1112,7 +1040,7 @@ export function useUpdateGuestbookCommentMutation() {
 export function useBookmarksQuery(params?: GetBookmarksParams, enabled = true) {
     return useQuery({
         queryKey: QUERY_KEYS.bookmarks(params as Record<string, unknown>),
-        queryFn: () => bookmarksApi.getAll(params),
+        queryFn: () => bookmarksApi.getAll(),
         enabled,
     });
 }
@@ -1207,10 +1135,10 @@ export function useDeleteLibraryGameMutation() {
 // -------------------------------------------------------------
 // 13. Hooks for Friendships
 // -------------------------------------------------------------
-export function useFriendsQuery(enabled = true) {
+export function useFriendsQuery(enabled = true, userId?: string) {
     return useQuery({
-        queryKey: QUERY_KEYS.friends,
-        queryFn: () => friendshipsApi.getFriends(),
+        queryKey: userId ? QUERY_KEYS.userFriends(userId) : QUERY_KEYS.friends,
+        queryFn: () => friendshipsApi.getFriends(userId),
         enabled,
     });
 }
@@ -1369,16 +1297,16 @@ export function useKickCommunityMemberMutation(communityId?: string) {
 
 export function useCommunityBannedMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
     return useQuery({
-        queryKey: QUERY_KEYS.communityBannedMembers(communityId, params),
-        queryFn: () => communityMembersApi.getBannedMembers(communityId, params),
+        queryKey: QUERY_KEYS.communityBannedMembers(communityId, params as unknown as Record<string, unknown> | undefined),
+        queryFn: () => communityMembersApi.getBannedMembers(communityId),
         enabled: !!communityId,
     });
 }
 
 export function useCommunityMutedMembersQuery(communityId: string, params?: GetCommunityMembersParams) {
     return useQuery({
-        queryKey: QUERY_KEYS.communityMutedMembers(communityId, params),
-        queryFn: () => communityMembersApi.getMutedMembers(communityId, params),
+        queryKey: QUERY_KEYS.communityMutedMembers(communityId, params as unknown as Record<string, unknown> | undefined),
+        queryFn: () => communityMembersApi.getMutedMembers(communityId),
         enabled: !!communityId,
     });
 }
@@ -1434,16 +1362,8 @@ export function useUnblockTargetUserMutation() {
 }
 
 // -------------------------------------------------------------
-// 14. Extended Games & Reviews Hooks
+// 14. Extended Games Hooks
 // -------------------------------------------------------------
-export function useMyGameReviewQuery(appid: number | string, options?: { enabled?: boolean }) {
-    return useQuery({
-        queryKey: QUERY_KEYS.gameReviewMe(appid),
-        queryFn: () => gameReviewsApi.getMyReview(appid),
-        enabled: (options?.enabled ?? true) && !!appid,
-    });
-}
-
 export function useLatestGamePatchNoteQuery(appid: number | string, options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: QUERY_KEYS.gamePatchNoteLatest(appid),
@@ -1490,10 +1410,10 @@ export function useNotificationsQuery(params?: { userId?: string; page?: number;
     });
 }
 
-export function useNotificationUnreadCountQuery(userId?: string) {
+export function useNotificationUnreadCountQuery(_userId?: string) {
     return useQuery({
         queryKey: QUERY_KEYS.notificationsUnreadCount,
-        queryFn: () => notificationsApi.getUnreadCount(userId),
+        queryFn: () => notificationsApi.getUnreadCount(),
         refetchInterval: 30_000,
     });
 }
@@ -1511,7 +1431,7 @@ export function useMarkNotificationReadMutation() {
 export function useMarkAllNotificationsReadMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (userId?: string) => notificationsApi.markAllAsRead(userId),
+        mutationFn: (_userId?: string) => notificationsApi.markAllAsRead(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
         },
@@ -1643,8 +1563,6 @@ export {
     usersApi,
     votesApi,
     gamesApi,
-    gameGuidesApi,
-    gameReviewsApi,
     gamePatchNotesApi,
     guestbookCommentsApi,
     bookmarksApi,

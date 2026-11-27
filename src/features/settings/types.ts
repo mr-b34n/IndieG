@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { LucideIcon } from 'lucide-react';
+import type { Icon as LucideIcon } from '@phosphor-icons/react';
 
 export type SettingsTab =
     | "general"
@@ -34,13 +34,6 @@ export interface BlockedUser {
     avatar: string;
     blockedAt: string;
     reason: string;
-}
-
-export interface ToggleSwitchProps {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    disabled?: boolean;
-    ariaLabel?: string;
 }
 
 export interface ParsedSessionInfo {

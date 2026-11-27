@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "@tanstack/react-router";
 
 interface MarkdownContentProps {
     content: string;
@@ -176,7 +177,11 @@ export function parseInlineMarkdown(text: string, keyPrefix = "inline"): React.R
                 );
                 break;
             case "link": {
-                const url = match.extra || "#";
+                const rawUrl = (match.extra || "#").trim();
+                const SAFE_PROTOCOL_REGEX = /^(https?:\/\/|mailto:|\/)/i;
+                const isSafe = SAFE_PROTOCOL_REGEX.test(rawUrl);
+                const url = isSafe ? rawUrl : "#";
+
                 nodes.push(
                     <a
                         key={key}
@@ -184,7 +189,7 @@ export function parseInlineMarkdown(text: string, keyPrefix = "inline"): React.R
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => {
-                            if (url === "https://" || url === "#" || url === "http://") {
+                            if (!isSafe || url === "https://" || url === "#" || url === "http://") {
                                 e.preventDefault();
                             }
                             e.stopPropagation();
@@ -198,13 +203,15 @@ export function parseInlineMarkdown(text: string, keyPrefix = "inline"): React.R
             }
             case "mention":
                 nodes.push(
-                    <span
+                    <Link
                         key={key}
+                        to="/profile/$userId"
+                        params={{ userId: match.text }}
                         className="text-primary font-semibold hover:underline cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {match.text}
-                    </span>
+                    </Link>
                 );
                 break;
             case "hashtag":

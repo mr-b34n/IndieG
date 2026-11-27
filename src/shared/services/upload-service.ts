@@ -176,7 +176,7 @@ export function getStoragePublicBaseUrl(): string {
         (import.meta.env.VITE_R2_PUBLIC_URL as string | undefined) ||
         (import.meta.env.VITE_STORAGE_PUBLIC_URL as string | undefined) ||
         (import.meta.env.VITE_CDN_BASE_URL as string | undefined) ||
-        (typeof window !== 'undefined' ? localStorage.getItem('indieg_r2_public_url') || localStorage.getItem('r2_public_url') : null);
+        (typeof window !== 'undefined' ? localStorage.getItem('ludon_r2_public_url') || localStorage.getItem('indieg_r2_public_url') || localStorage.getItem('r2_public_url') : null);
 
     if (envUrl && envUrl.trim()) {
         return envUrl.trim().replace(/\/+$/, '');
@@ -260,10 +260,27 @@ export async function confirmUploadWithBackend(
         confirmPath = '/profiles/me';
         method = 'PATCH';
         bodyData = { coverUrl: publicUrl };
+    } else if (type === 'comment' || type === 'community-logo' || type === 'community-cover') {
+        // Return the public URL directly so the caller attaches it to comment/community mutations.
+        return {
+            fileKey: fileKeyOrUrl,
+            imageUrl: publicUrl,
+            url: publicUrl,
+        };
     } else {
-        confirmPath = `/posts/${postId}/images`;
-        method = 'POST';
-        bodyData = { fileKey: fileKeyOrUrl, imageUrl: publicUrl };
+        // For post images, if postId is provided, update the post via PATCH /posts/:id.
+        // Otherwise, simply return the public URL to be attached into CreatePostDto.
+        if (postId) {
+            confirmPath = `/posts/${postId}`;
+            method = 'PATCH';
+            bodyData = { images: [publicUrl] };
+        } else {
+            return {
+                fileKey: fileKeyOrUrl,
+                imageUrl: publicUrl,
+                url: publicUrl,
+            };
+        }
     }
 
     console.group(`[Storage Pipeline] 📝 Bước 4: Cập nhật Database: ${method} ${confirmPath}`);
@@ -278,7 +295,7 @@ export async function confirmUploadWithBackend(
             body: bodyData,
         });
         console.log('[Storage Pipeline] 🎉 Backend xác nhận thành công:', confirmData);
-        return confirmData;
+        return { fileKey: fileKeyOrUrl, ...confirmData };
     } catch (confError: unknown) {
         console.error('[Storage Pipeline] ❌ Lỗi xác nhận cập nhật với Backend:', confError);
         const errDetails = confError instanceof Error ? confError.message : String(confError);
@@ -304,13 +321,8 @@ export async function uploadImageToR2({
 }: UploadOptions): Promise<UploadImageResult> {
     const token = customToken || getStoredToken();
     if (!token) {
-        console.warn('[Storage Pipeline] ⚠️ Không tìm thấy JWT token trong localStorage (indieg_access_token / access_token)');
+        console.warn('[Storage Pipeline] ⚠️ Không tìm thấy JWT token trong localStorage (ludon_access_token / access_token)');
     }
-
-    if (type === 'post' && !postId) {
-        throw new Error('Thiếu postId khi upload ảnh cho bài viết.');
-    }
-
 
     // BƯỚC 1: Xin Presigned URL từ NestJS Backend
     const presigned = await requestPresignedUrl(
@@ -361,7 +373,7 @@ export async function uploadImageToR2({
         ...confirmData,
         avatarUrl: type === 'avatar' ? publicUrl : (confirmData.avatarUrl as string),
         coverUrl: type === 'cover' ? publicUrl : (confirmData.coverUrl as string),
-        imageUrl: type === 'post' ? publicUrl : (confirmData.imageUrl as string),
+        imageUrl: (type === 'post' || type === 'comment' || type === 'community-logo' || type === 'community-cover') ? publicUrl : (confirmData.imageUrl as string),
         url: publicUrl,
         fileKey: presigned.fileKey,
         width: processed.width,

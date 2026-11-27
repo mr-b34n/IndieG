@@ -1,16 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faChevronRight,
-    faMagnifyingGlass,
-    faXmark,
-    faChevronDown,
-    faGamepad,
-    faThumbtack,
-} from '@fortawesome/free-solid-svg-icons';
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CaretRight as faChevronRight, MagnifyingGlass as faMagnifyingGlass, X as faXmark, CaretDown as faChevronDown, GameController as faGamepad, PushPin as faThumbtack } from "@phosphor-icons/react";
 import { useCommunitiesStore } from '@/features/community';
-import { INITIAL_COMMUNITIES } from '@/features/community/constants';
 import { useGameStore } from '@/features/game';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useAuthStore } from '@/features/auth';
@@ -18,7 +10,7 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import { useQueryClient } from '@tanstack/react-query';
 import {
     useCommunityDetailQuery,
-    usePostsQuery,
+    useInfinitePostsQuery,
     useCreatePostMutation,
     useProfilesListQuery,
     useCommunityMemberMeQuery,
@@ -78,7 +70,7 @@ function mapPostDtoToCommunityFeedPost(dto: PostDto): CommunityFeedPost {
 
     const authorName = dto.user?.name || dto.user?.displayName || dto.user?.username || (dto.authorId ? `User_${dto.authorId.slice(0, 5)}` : "Thành viên");
     const authorHandle = dto.user?.username ? `@${dto.user.username}` : dto.user?.name ? `@${dto.user.name}` : (dto.authorId ? `@user_${dto.authorId.slice(0, 5)}` : "@member");
-    const authorAvatar = dto.user?.avatar || dto.user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(dto.user?.username || dto.user?.name || dto.authorId || dto.id)}`;
+    const authorAvatar = dto.user?.avatar || dto.user?.avatarUrl || "";
 
     return {
         id: String(dto.id),
@@ -126,7 +118,16 @@ export function CommunityDetailPage() {
 
     // TanStack Query for Community Detail & Posts & Profiles
     const { data: communityDto } = useCommunityDetailQuery(communityId);
-    const { data: remotePostsData } = usePostsQuery({ communityId });
+    const resolvedCommunityQueryId = communityDto?.id || communityId;
+    const {
+        data: infinitePostsData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfinitePostsQuery(
+        resolvedCommunityQueryId ? { communityId: String(resolvedCommunityQueryId) } : undefined,
+        { enabled: Boolean(resolvedCommunityQueryId) }
+    );
     const { data: profilesData } = useProfilesListQuery({ limit: 6 });
     const createPostMutation = useCreatePostMutation();
 
@@ -145,41 +146,12 @@ export function CommunityDetailPage() {
             (c) =>
                 c.id.toString().toLowerCase() === target ||
                 (c.slug && c.slug.toLowerCase() === target) ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
-                (target === "cs2" && c.id === "cs2-vietnam") ||
-                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
-                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
-                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
-                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
-                (target === "valorant" && c.id === "valorant-vietnam") ||
-                (target === "minecraft" && c.id === "minecraft-vietnam") ||
-                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
-                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
-                (target === "genshin" && c.id === "genshin-impact-vn") ||
-                (target === "apex" && c.id === "apex-legends-vn")
+                (c.gameSlug && c.gameSlug.toLowerCase() === target)
         );
         if (found) return found;
         if (communityDto) {
             return mapCommunityDtoToCommunityData(communityDto);
         }
-        const initialFound = INITIAL_COMMUNITIES.find(
-            (c) =>
-                c.id.toString().toLowerCase() === target ||
-                (c.slug && c.slug.toLowerCase() === target) ||
-                (c.gameSlug && c.gameSlug.toLowerCase() === target) ||
-                (target === "cs2" && c.id === "cs2-vietnam") ||
-                (target === "raft" && (c.id === "indie-games-vietnam" || c.gameSlug === "raft")) ||
-                (target === "elden-ring" && c.id === "elden-ring-vietnam") ||
-                (target === "wukong" && c.id === "black-myth-wukong-vn") ||
-                (target === "cyberpunk" && c.id === "cyberpunk-2077-vn") ||
-                (target === "valorant" && c.id === "valorant-vietnam") ||
-                (target === "minecraft" && c.id === "minecraft-vietnam") ||
-                (target === "rdr2" && c.id === "red-dead-redemption-vn") ||
-                ((target === "monster-hunter" || target === "mhwilds" || target === "wilds") && c.id === "monster-hunter-wilds-vn") ||
-                (target === "genshin" && c.id === "genshin-impact-vn") ||
-                (target === "apex" && c.id === "apex-legends-vn")
-        );
-        if (initialFound) return initialFound;
         return {
             id: communityId,
             name: communityId.charAt(0).toUpperCase() + communityId.slice(1),
@@ -251,9 +223,61 @@ export function CommunityDetailPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showCommunitySwitcher, setShowCommunitySwitcher] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const communitySwitcherRef = useRef<HTMLDivElement>(null);
+
+    // Lock background scroll when switcher is open, and prevent scroll chaining when hovering/scrolling dropdown
+    useEffect(() => {
+        if (!showCommunitySwitcher) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            const dropdown = communitySwitcherRef.current;
+            if (dropdown && dropdown.contains(e.target as Node)) {
+                // User is scrolling inside the switcher dropdown:
+                // Allow internal scrolling, but stop scroll chaining when hitting boundaries
+                const isUp = e.deltaY < 0;
+                const isDown = e.deltaY > 0;
+                const atTop = dropdown.scrollTop <= 0;
+                const atBottom = dropdown.scrollTop + dropdown.clientHeight >= dropdown.scrollHeight - 1;
+
+                if ((isUp && atTop) || (isDown && atBottom)) {
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            // Mouse is outside the switcher dropdown (e.g. over backdrop): completely prevent background scroll
+            e.preventDefault();
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            const dropdown = communitySwitcherRef.current;
+            if (dropdown && dropdown.contains(e.target as Node)) {
+                return;
+            }
+            e.preventDefault();
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setShowCommunitySwitcher(false);
+            }
+        };
+
+        window.addEventListener("wheel", handleWheel, { passive: false });
+        window.addEventListener("touchmove", handleTouchMove, { passive: false });
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("wheel", handleWheel);
+            window.removeEventListener("touchmove", handleTouchMove);
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [showCommunitySwitcher]);
 
     // Fetch current user membership in community (GET /communities/{id}/members/me)
-    const { data: meMembershipData } = useCommunityMemberMeQuery(String(community.id));
+    const { data: meMembershipData } = useCommunityMemberMeQuery(String(community.id), {
+        enabled: Boolean(community.id) && Boolean(user),
+    });
 
     // Fetch real list of community members (GET /communities/{id}/members)
     const { data: membersQueryData } = useCommunityMembersQuery(String(community.id));
@@ -330,9 +354,9 @@ export function CommunityDetailPage() {
 
         const rawProfiles = Array.isArray(profilesData)
             ? (profilesData as UserProfileDto[])
-            : (profilesData as { items?: UserProfileDto[]; data?: UserProfileDto[] })?.items ||
-              (profilesData as { data?: UserProfileDto[] })?.data ||
-              [];
+            : ((profilesData as unknown as { items?: UserProfileDto[]; data?: UserProfileDto[] } | undefined)?.items ||
+              (profilesData as unknown as { data?: UserProfileDto[] } | undefined)?.data ||
+              []);
         const profilesMap = new Map<string, UserProfileDto>();
         rawProfiles.forEach((p) => {
             if (p.id) profilesMap.set(p.id, p);
@@ -372,7 +396,7 @@ export function CommunityDetailPage() {
                 m.user?.avatar ||
                 m.user?.avatarUrl ||
                 profile?.avatarUrl ||
-                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(String(handleRaw))}`;
+                "";
 
             return {
                 id: m.userId || `m-${idx}`,
@@ -414,7 +438,7 @@ export function CommunityDetailPage() {
             id: p.id || `c-${idx}`,
             name: p.displayName || p.username || "Thành viên",
             handle: `@${p.username || "member"}`,
-            avatar: p.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.username || idx}`,
+            avatar: p.avatarUrl || "",
             points: typeof (p as unknown as Record<string, unknown>).points === "number" ? ((p as unknown as Record<string, unknown>).points as number) : 0,
         }));
     }, [realMembersList, profilesData]);
@@ -432,7 +456,7 @@ export function CommunityDetailPage() {
 
     // API + Local posts
     const allFeedPosts = useMemo<CommunityFeedPost[]>(() => {
-        const rawList = extractPostList(remotePostsData);
+        const rawList = (infinitePostsData?.pages || []).flatMap((page) => extractPostList(page));
         const mappedRemote = rawList.map(mapPostDtoToCommunityFeedPost);
 
         const mappedStorePosts: CommunityFeedPost[] = storePosts
@@ -444,7 +468,7 @@ export function CommunityDetailPage() {
                 content: p.content || "",
                 authorName: typeof p.author === "string" ? p.author : (p.author?.name || p.author?.username || "Thành viên"),
                 authorHandle: typeof p.author === "string" ? `@${p.author}` : (p.author?.username ? `@${p.author.username}` : "@member"),
-                authorAvatar: p.authorAvatar || (typeof p.author !== "string" ? p.author?.avatarUrl || p.author?.avatar : "") || DEFAULT_AVATAR,
+                authorAvatar: p.authorAvatar || (typeof p.author !== "string" ? p.author?.avatarUrl || p.author?.avatar : "") || "",
                 authorRank: "Member",
                 isPinned: !!p.pinned,
                 createdAt: p.timeAgo || "Vừa xong",
@@ -475,7 +499,7 @@ export function CommunityDetailPage() {
             }
         });
         return merged;
-    }, [remotePostsData, userCreatedPosts, storePosts, community.id, communityId]);
+    }, [infinitePostsData?.pages, userCreatedPosts, storePosts, community.id, communityId]);
 
     // Dedicated Pinned Posts Tab data
     const pinnedFeedPosts = useMemo(() => {
@@ -595,7 +619,7 @@ export function CommunityDetailPage() {
             content,
             authorName: user?.username || "You",
             authorHandle: user?.username ? `@${user.username}` : "@current_user",
-            authorAvatar: user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=currentuser",
+            authorAvatar: user?.avatarUrl || user?.avatar_url || "",
             authorRank: "Active Member",
             createdAt: "Just now",
             repliesCount: 0,
@@ -685,8 +709,11 @@ export function CommunityDetailPage() {
                                     className="fixed inset-0 z-40"
                                     onClick={() => setShowCommunitySwitcher(false)}
                                 />
-                                <div className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto">
-                                    {INITIAL_COMMUNITIES.map((c, idx) => (
+                                <div
+                                    ref={communitySwitcherRef}
+                                    className="absolute left-0 top-full mt-1.5 w-52 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 p-1 flex flex-col gap-0.5 max-h-60 overflow-y-auto overscroll-contain"
+                                >
+                                    {communities.map((c, idx) => (
                                         <button
                                             key={`${c.id}-${idx}`}
                                             type="button"
@@ -907,7 +934,9 @@ export function CommunityDetailPage() {
                         />
                     ) : activeNav === "manage-rules" ? (
                         <CommunityManageRules
+                            communityId={String(community.id)}
                             communityName={community.name}
+                            initialRules={Array.isArray(community.rules) ? JSON.stringify(community.rules) : community.rules}
                             isVi={isVi}
                         />
                     ) : activeNav === "manage-settings" ? (
@@ -916,6 +945,12 @@ export function CommunityDetailPage() {
                             communityName={community.name}
                             communityDescription={community.description}
                             communitySlug={String(community.slug || community.id)}
+                            communityTags={community.tags}
+                            communityPrivacy={community.privacy}
+                            communityLogo={community.logo}
+                            communityBackdrop={community.backdrop}
+                            membersCount={displayMembersCount}
+                            gameName={gameData?.name || community.gameName}
                             userRole={userRole}
                             isVi={isVi}
                             onNavigateRules={() => handleNavChange("manage-rules")}
@@ -962,6 +997,7 @@ export function CommunityDetailPage() {
                             viewType={activeNav as "rules" | "about" | "wiki" | "links"}
                             communityName={community.name}
                             description={community.description}
+                            customRules={Array.isArray(community.rules) ? JSON.stringify(community.rules) : community.rules}
                             isVi={isVi}
                             gameSlug={resolvedGameSlug}
                             gameName={gameData?.name || community.gameName}
@@ -985,6 +1021,9 @@ export function CommunityDetailPage() {
                                 communityId={String(community.id)}
                                 communityName={community.name}
                                 isVi={isVi}
+                                hasNextPage={hasNextPage}
+                                isFetchingNextPage={isFetchingNextPage}
+                                onLoadMore={() => void fetchNextPage()}
                             />
                         </>
                     )}

@@ -1,13 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-    faXmark, 
-    faMagnifyingGlass, 
-    faUsers, 
-    faClockRotateLeft,
-    faArrowRight,
-    faCheck
-} from "@fortawesome/free-solid-svg-icons";
+import { X, MagnifyingGlass as Search, Users, ClockCounterClockwise as History, ArrowRight, Check } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { type CommunityData } from "@/features/community";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -106,7 +98,7 @@ export const CommunityDrawerModal = ({
                             onClick={handleClose}
                             className="text-text-faint hover:text-text p-1 cursor-pointer transition-colors"
                         >
-                            <FontAwesomeIcon icon={faXmark} className="text-sm" />
+                            <X className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -114,7 +106,7 @@ export const CommunityDrawerModal = ({
                 {/* Search Bar */}
                 <div className="px-5 py-3 border-b border-divider-secondary bg-surface-hover/10">
                     <div className="relative flex items-center">
-                        <FontAwesomeIcon icon={faMagnifyingGlass} className="absolute left-3 text-text-faint text-xs" />
+                        <Search className="w-3.5 h-3.5 absolute left-3 text-text-faint" />
                         <input
                             ref={inputRef}
                             type="text"
@@ -129,7 +121,7 @@ export const CommunityDrawerModal = ({
                                 onClick={() => setSearchQuery("")}
                                 className="absolute right-2.5 text-text-faint hover:text-text p-1 cursor-pointer text-xs"
                             >
-                                <FontAwesomeIcon icon={faXmark} />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
@@ -153,7 +145,7 @@ export const CommunityDrawerModal = ({
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-xs text-primary ring-1 ring-divider-primary">
-                                    <FontAwesomeIcon icon={faUsers} />
+                                    <Users className="w-4 h-4" />
                                 </div>
                                 <div className="flex flex-col text-left">
                                     <span className="font-bold text-xs uppercase tracking-wide">
@@ -165,7 +157,7 @@ export const CommunityDrawerModal = ({
                                 </div>
                             </div>
                             {activeCommunityId === null && (
-                                <FontAwesomeIcon icon={faCheck} className="text-primary text-sm mr-1" />
+                                <Check className="w-4 h-4 text-primary mr-1 shrink-0" />
                             )}
                         </button>
                     </div>
@@ -174,7 +166,7 @@ export const CommunityDrawerModal = ({
                     {!searchQuery && recentCommunities.length > 0 && (
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-text-faint">
-                                <FontAwesomeIcon icon={faClockRotateLeft} className="text-[9px]" />
+                                <History className="w-3 h-3" />
                                 <span>{t('common.recent', { defaultValue: 'Recent' })}</span>
                             </div>
 
@@ -217,7 +209,7 @@ export const CommunityDrawerModal = ({
                                                 </div>
                                             </div>
                                             {isSelected && (
-                                                <FontAwesomeIcon icon={faCheck} className="text-primary text-xs shrink-0 ml-2" />
+                                                <Check className="w-3.5 h-3.5 text-primary shrink-0 ml-2" />
                                             )}
                                         </button>
                                     );
@@ -276,7 +268,7 @@ export const CommunityDrawerModal = ({
                                                 </div>
                                             </div>
                                             {isSelected && (
-                                                <FontAwesomeIcon icon={faCheck} className="text-primary text-xs shrink-0 ml-2" />
+                                                <Check className="w-3.5 h-3.5 text-primary shrink-0 ml-2" />
                                             )}
                                         </button>
                                     );
@@ -297,7 +289,7 @@ export const CommunityDrawerModal = ({
                         className="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1.5"
                     >
                         <span>{t('feed.manageCommunities', { defaultValue: 'Manage all communities' })}</span>
-                        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                     </button>
 
                     <button

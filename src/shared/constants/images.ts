@@ -1,4 +1,4 @@
-import login3dGear from "../../assets/images/login_3d_gaming_gear_1785929924900.jpg";
+import login3dGear from "../../assets/images/login_3d_gaming_gear.webp";
 
 export const LOGIN_3D_GEAR = login3dGear;
 

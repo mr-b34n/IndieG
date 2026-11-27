@@ -1,22 +1,8 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSearch,
-    faEllipsisVertical,
-    faUserCheck,
-    faVolumeXmark,
-    faVolumeHigh,
-    faBan,
-    faUnlock,
-    faCrown,
-    faShieldHalved,
-    faUser,
-    faTriangleExclamation,
-    faCircleCheck,
-    faXmark,
-    faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { MagnifyingGlass as faSearch, DotsThreeVertical as faEllipsisVertical, UserCheck as faUserCheck, SpeakerSlash as faVolumeXmark, SpeakerHigh as faVolumeHigh, Prohibit as faBan, LockOpen as faUnlock, Crown as faCrown, Shield as faShieldHalved, User as faUser, Warning as faTriangleExclamation, CheckCircle as faCircleCheck, X as faXmark, CircleNotch as faSpinner } from "@phosphor-icons/react";
 import {
     useCommunityMembersQuery,
     usePendingMembersQuery,
@@ -145,7 +131,7 @@ export const CommunityManageMembers = ({
 
             const username = m.user?.name || m.user?.displayName || m.user?.username || profile?.name || `Thành viên (${uid.slice(0, 6)})`;
             const handle = m.user?.username ? `@${m.user.username}` : m.user?.name ? `@${m.user.name}` : profile?.username ? `@${profile.username}` : `@member_${uid.slice(0, 6)}`;
-            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(m.user?.username || m.user?.name || uid)}`;
+            const avatar = m.user?.avatarUrl || m.user?.avatar || profile?.avatar || "";
             const joinedDate = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString("vi-VN") : (t('hub.communitymanagemembers_43'));
             const activitySummary = m.mutedUntil
                 ? (isVi ? `Bị tắt tiếng đến ${new Date(m.mutedUntil).toLocaleTimeString()}` : `Muted until ${new Date(m.mutedUntil).toLocaleTimeString()}`)
@@ -512,17 +498,18 @@ export const CommunityManageMembers = ({
 
                             return (
                                 <tr
-                                    key={`${member.id || member.userId}-${idx}`}
+                                    key={`${member.id}-${idx}`}
                                     className="hover:bg-surface-hover/40 transition-colors group"
                                 >
                                     {/* Avatar & Username */}
                                     <td className="py-3 pl-2 pr-4 min-w-[180px]">
                                         <div className="flex items-center gap-2.5">
                                             <div className="relative shrink-0">
-                                                <img
+                                                <UserAvatar
                                                     src={member.avatar}
-                                                    alt={member.username}
-                                                    className="w-8 h-8 rounded-[4px] object-cover bg-surface"
+                                                    name={member.username || member.handle}
+                                                    className="w-8 h-8"
+                                                    textClassName="text-xs"
                                                 />
                                                 {member.isOnline && (
                                                     <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-surface" />

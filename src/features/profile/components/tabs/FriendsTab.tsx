@@ -1,10 +1,8 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faUsers, faUserPlus, faSearch, faUserCheck, faChevronDown,
-    faUserXmark, faBan, faClock, faCheck, faXmark, faSpinner, faPaperPlane
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { Users as faUsers, UserPlus as faUserPlus, MagnifyingGlass as faSearch, UserCheck as faUserCheck, CaretDown as faChevronDown, UserMinus as faUserXmark, Prohibit as faBan, Check as faCheck, X as faXmark, CircleNotch as faSpinner, PaperPlaneRight as faPaperPlane } from "@phosphor-icons/react";
 import { useClickOutside } from "../../hooks/useClickOutside";
 import type { FriendEntry, FriendRequest } from "../../types";
 export interface FriendsTabProps {
@@ -26,36 +24,21 @@ export interface FriendsTabProps {
 const FriendAvatar = ({
     src,
     name,
-    className = "w-12 h-12 sm:w-14 sm:h-14 rounded-full",
+    className = "w-12 h-12 sm:w-14 sm:h-14",
     textClassName = "text-lg font-bold",
 }: {
     src?: string | null;
     name: string;
     className?: string;
     textClassName?: string;
-}) => {
-    const [imgError, setImgError] = useState(false);
-    const initial = (name || "G").replace(/^@/, "").charAt(0).toUpperCase() || "G";
-
-    if (!src || imgError) {
-        return (
-            <div
-                className={`${className} bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 uppercase select-none ${textClassName}`}
-            >
-                {initial}
-            </div>
-        );
-    }
-
-    return (
-        <img
-            src={src}
-            alt={name}
-            className={`${className} object-cover bg-surface-hover shrink-0`}
-            onError={() => setImgError(true)}
-        />
-    );
-};
+}) => (
+    <UserAvatar
+        src={src}
+        name={name}
+        className={className}
+        textClassName={textClassName}
+    />
+);
 
 const FriendCardMenu = ({
     isFriend, onUnfriend, onBlock, t,

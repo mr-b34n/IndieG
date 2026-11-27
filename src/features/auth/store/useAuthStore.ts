@@ -3,12 +3,15 @@ import { type AuthState, type AuthUser } from "../types";
 import { authApi, profilesApi, usersApi } from "@/shared/api";
 import { performTokenRefresh, isTokenExpired, getTokenExp } from "@/shared/api/client";
 import { queryClient } from "@/shared/lib/queryClient";
+import { QUERY_KEYS } from "@/shared/api/useQueries";
 import { useThemeStore } from "@/shared/store/useThemeStore";
 
 export * from "../types";
 
-const ACCESS_TOKEN_KEY = "indieg_access_token";
-const REFRESH_TOKEN_KEY = "indieg_refresh_token";
+const ACCESS_TOKEN_KEY = "ludon_access_token";
+const REFRESH_TOKEN_KEY = "ludon_refresh_token";
+const LEGACY_ACCESS_TOKEN_KEY = "indieg_access_token";
+const LEGACY_REFRESH_TOKEN_KEY = "indieg_refresh_token";
 
 let hasSetupAuthListeners = false;
 let initAuthPromise: Promise<void> | null = null;
@@ -74,10 +77,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!currentUser) return;
         const hasChange = Object.entries(partial).some(([key, val]) => {
             if (val === undefined) return false;
-            return (currentUser as Record<string, unknown>)[key] !== val;
+            return (currentUser as unknown as Record<string, unknown>)[key] !== val;
         });
         if (hasChange) {
             set({ user: { ...currentUser, ...partial } });
+            queryClient.setQueryData(QUERY_KEYS.myProfile, (prev: unknown) => {
+                if (!prev || typeof prev !== "object") return prev;
+                return {
+                    ...prev,
+                    ...(partial.name ? { name: partial.name } : {}),
+                    ...(partial.username ? { username: partial.username } : {}),
+                    ...(partial.avatarUrl || partial.avatar_url ? { avatarUrl: partial.avatarUrl || partial.avatar_url } : {}),
+                    ...(partial.isVerified !== undefined ? { isVerified: partial.isVerified, isEmailVerified: partial.isVerified } : {}),
+                };
+            });
         }
     },
 
@@ -94,7 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         if (!hasSetupAuthListeners) {
             hasSetupAuthListeners = true;
-            window.addEventListener("indieg:token-refreshed", (e: Event) => {
+            const handleTokenRefreshed = (e: Event) => {
                 const customEv = e as CustomEvent<{ accessToken: string; refreshToken?: string }>;
                 if (customEv.detail?.accessToken) {
                     set({
@@ -103,8 +116,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     });
                     scheduleTokenRefresh(customEv.detail.accessToken);
                 }
-            });
-            window.addEventListener("indieg:session-expired", () => {
+            };
+            window.addEventListener("ludon:token-refreshed", handleTokenRefreshed);
+            window.addEventListener("indieg:token-refreshed", handleTokenRefreshed);
+
+            const handleSessionExpired = () => {
                 clearTokenRefreshTimer();
                 try {
                     queryClient.clear();
@@ -112,8 +128,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     // Ignore
                 }
                 set({ user: null, accessToken: null, refreshToken: null, customAvatar: null, loading: false });
+                window.dispatchEvent(new CustomEvent("ludon:auth-cleared"));
                 window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
-            });
+            };
+            window.addEventListener("ludon:session-expired", handleSessionExpired);
+            window.addEventListener("indieg:session-expired", handleSessionExpired);
 
             // Automatically check and refresh token when user switches back to this browser tab
             document.addEventListener("visibilitychange", () => {
@@ -128,13 +147,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         initAuthPromise = (async () => {
             try {
-                const savedToken = localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
-                const savedRefreshToken =
-                    localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem("refresh_token");
+                let savedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+                if (!savedToken) {
+                    savedToken = localStorage.getItem(LEGACY_ACCESS_TOKEN_KEY) || localStorage.getItem("access_token");
+                    if (savedToken) {
+                        localStorage.setItem(ACCESS_TOKEN_KEY, savedToken);
+                    }
+                }
+                let savedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+                if (!savedRefreshToken) {
+                    savedRefreshToken = localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY) || localStorage.getItem("refresh_token");
+                    if (savedRefreshToken) {
+                        localStorage.setItem(REFRESH_TOKEN_KEY, savedRefreshToken);
+                    }
+                }
 
                 // Clean up any legacy user data stored in localStorage
                 try {
                     localStorage.removeItem("indieg_auth_user");
+                    localStorage.removeItem("ludon_auth_user");
                     localStorage.removeItem("user_custom_avatar");
                 } catch {
                     // Ignore storage error
@@ -150,7 +181,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         if (refreshed) {
                             activeToken = refreshed;
                         }
-                    } else if (!activeToken && savedRefreshToken) {
+                    } else if (!activeToken) {
                         const refreshed = await performTokenRefresh();
                         if (refreshed) {
                             activeToken = refreshed;
@@ -163,6 +194,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         try {
                             const profile = await profilesApi.getMyProfile();
                             if (profile && profile.id) {
+                                queryClient.setQueryData(QUERY_KEYS.myProfile, profile);
                                 userObj = {
                                     id: profile.id,
                                     email: (profile as { email?: string }).email || tokenEmail || `${profile.username || "user"}@ludon.com`,
@@ -186,6 +218,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                                     try {
                                         const profile = await profilesApi.getMyProfile();
                                         if (profile && profile.id) {
+                                            queryClient.setQueryData(QUERY_KEYS.myProfile, profile);
                                             userObj = {
                                                 id: profile.id,
                                                 email: (profile as { email?: string }).email || refreshedTokenEmail || `${profile.username || "user"}@ludon.com`,
@@ -249,6 +282,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             // Ignore
         }
 
+        // Seed fresh profile into TanStack Query cache for instant access
+        if (userData && userData.id) {
+            queryClient.setQueryData(QUERY_KEYS.myProfile, {
+                id: userData.id,
+                name: userData.name,
+                username: userData.username,
+                avatarUrl: userData.avatarUrl || userData.avatar_url,
+                email: userData.email,
+                role: userData.role,
+                isVerified: userData.isVerified,
+                createdAt: userData.createdAt,
+            });
+        }
+
         if (typeof window !== "undefined") {
             localStorage.setItem(ACCESS_TOKEN_KEY, token);
             localStorage.setItem("access_token", token);
@@ -257,11 +304,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 localStorage.setItem("refresh_token", refToken);
             }
             // Ensure no user account information is stored in localStorage
+            localStorage.removeItem("ludon_auth_user");
             localStorage.removeItem("indieg_auth_user");
             localStorage.removeItem("user_custom_avatar");
             localStorage.removeItem("profile_hidden_sections_me");
 
             // Dispatch global event for other stores to reset prior state
+            window.dispatchEvent(new CustomEvent("ludon:auth-cleared"));
             window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
         }
 
@@ -280,7 +329,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     logout: () => {
         clearTokenRefreshTimer();
-        void authApi.logout().catch(() => {});
+        const { refreshToken, accessToken } = get();
+        void authApi.logout(refreshToken, accessToken).catch(() => {});
 
         // 1. Clear TanStack Query Cache completely to wipe all profile, posts, communities, bookmarks, friends caches
         try {
@@ -293,12 +343,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (typeof window !== "undefined") {
             try {
                 localStorage.removeItem(ACCESS_TOKEN_KEY);
+                localStorage.removeItem(LEGACY_ACCESS_TOKEN_KEY);
                 localStorage.removeItem("access_token");
                 localStorage.removeItem(REFRESH_TOKEN_KEY);
+                localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY);
                 localStorage.removeItem("refresh_token");
+                localStorage.removeItem("ludon_auth_user");
                 localStorage.removeItem("indieg_auth_user");
                 localStorage.removeItem("user_custom_avatar");
-                localStorage.removeItem("ludon_access_token");
+                localStorage.removeItem("ludon_recent_communities");
                 localStorage.removeItem("indieg_recent_communities");
 
                 // Remove all profile hidden sections and draft keys
@@ -307,6 +360,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     const k = localStorage.key(i);
                     if (k && (
                         k.startsWith("profile_hidden_sections_") ||
+                        k.startsWith("ludon-") ||
                         k.startsWith("indieg-") ||
                         k.startsWith("draft_") ||
                         k.startsWith("user_")
@@ -320,12 +374,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             try {
+                sessionStorage.removeItem("ludon_session_expired");
                 sessionStorage.removeItem("indieg_session_expired");
             } catch {
                 // Ignore storage errors
             }
 
             // 3. Dispatch global event for other stores to clean up in-memory data
+            window.dispatchEvent(new CustomEvent("ludon:auth-cleared"));
             window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
         }
 
@@ -492,3 +548,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 }));
+
+if (typeof window !== "undefined") {
+    (window as unknown as { __authStore?: typeof useAuthStore }).__authStore = useAuthStore;
+}

@@ -1,9 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CircleNotch as faSpinner } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useGameStore } from "../store/useGameStore";
 import { usePostsStore } from "@/features/post";
@@ -13,8 +11,6 @@ import { useAuthStore } from "@/features/auth";
 import {
     useGameDetailBySlugQuery,
     useUnifiedGameDetailQuery,
-    useGameGuidesQuery,
-    useGameReviewsQuery,
     useGamePatchNotesQuery,
     useGamesQuery,
 } from "@/shared/api/useQueries";
@@ -24,8 +20,6 @@ import { type GameData, type GameTabType } from "../types";
 import { GameHero } from "./GameHero";
 import { GameTabs } from "./GameTabs";
 import { GameOverviewTab } from "./GameOverviewTab";
-import { GameGuidesTab } from "./GameGuidesTab";
-import { GameReviewsTab } from "./GameReviewsTab";
 import { GamePatchNotesTab } from "./GamePatchNotesTab";
 import { GameDiscussionsTab } from "./GameDiscussionsTab";
 import { GameSidebar } from "./GameSidebar";
@@ -39,7 +33,7 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     const navigate = useNavigate();
     const isVietnamese = lang === "vi";
 
-    const cleanSlug = (slug || "counter-strike-2").trim().toLowerCase();
+    const cleanSlug = (slug || "").trim().toLowerCase();
     const isNumericSlug = /^\d+$/.test(cleanSlug);
 
     // 1. Resolve numeric AppID if known or passed directly
@@ -58,16 +52,8 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
     const { data: unifiedData, isLoading: isUnifiedLoading } = useUnifiedGameDetailQuery(effectiveAppid);
 
     // 4. Fetch counts for sub-tabs
-    const { data: guidesData } = useGameGuidesQuery(effectiveAppid || 0, { limit: 1 });
-    const { data: reviewsData } = useGameReviewsQuery(effectiveAppid || 0, { limit: 1 });
     const { data: patchNotesData } = useGamePatchNotesQuery(effectiveAppid || 0, { limit: 1 });
 
-    const guidesCount = Array.isArray(guidesData)
-        ? guidesData.length
-        : (guidesData as any)?.total || 0;
-    const reviewsCount = Array.isArray(reviewsData)
-        ? reviewsData.length
-        : (reviewsData as any)?.total || 0;
     const patchNotesCount = Array.isArray(patchNotesData)
         ? patchNotesData.length
         : (patchNotesData as any)?.total || 0;
@@ -181,17 +167,6 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
         }).slice(0, 10);
     }, [allPosts, game, resolvedCommunityId]);
 
-    // Transform remote guides for overview highlights
-    const guidesList = useMemo(() => {
-        const rawList = Array.isArray(guidesData)
-            ? guidesData
-            : (guidesData as any)?.data || (guidesData as any)?.items || [];
-        if (rawList.length > 0) {
-            return rawList.map((g: any) => mapGameGuideDtoToGameGuide(g));
-        }
-        return game.guides || [];
-    }, [guidesData, game.guides]);
-
     // Related games for overview tab (filtered by genre, excluding current game)
     const { data: allGamesData } = useGamesQuery({ limit: 12 });
     const relatedGames = useMemo(() => {
@@ -248,8 +223,6 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 counts={{
-                    guides: guidesCount,
-                    reviews: reviewsCount,
                     updates: patchNotesCount,
                     discussions: relatedPosts.length,
                 }}
@@ -263,7 +236,6 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                         <GameOverviewTab
                             game={game}
                             relatedPosts={relatedPosts}
-                            relatedGuides={guidesList}
                             relatedGames={relatedGames}
                             onViewCommunity={
                                 resolvedCommunityId
@@ -272,14 +244,6 @@ export const GameDetail = ({ slug }: GameDetailProps) => {
                             }
                             onNavigateToTab={setActiveTab}
                         />
-                    )}
-
-                    {activeTab === "guides" && (
-                        <GameGuidesTab game={game} gameAppid={effectiveAppid || 0} />
-                    )}
-
-                    {activeTab === "reviews" && (
-                        <GameReviewsTab game={game} gameAppid={effectiveAppid || 0} />
                     )}
 
                     {activeTab === "updates" && (

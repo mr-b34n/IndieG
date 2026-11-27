@@ -229,12 +229,14 @@ export const useCommunitiesStore = create<CommunitiesState>((set, get) => ({
 }));
 
 if (typeof window !== "undefined") {
-    window.addEventListener("indieg:auth-cleared", () => {
+    const handleAuthCleared = () => {
         useCommunitiesStore.setState({
             communities: INITIAL_COMMUNITIES.filter((c) => !isGenericTestCommunity(c)),
             joinedCommunityIds: INITIAL_COMMUNITIES.filter((c) => c.joined && !isGenericTestCommunity(c)).map((c) => String(c.id)),
             isLoading: false,
             error: null,
         });
-    });
+    };
+    window.addEventListener("ludon:auth-cleared", handleAuthCleared);
+    window.addEventListener("indieg:auth-cleared", handleAuthCleared);
 }

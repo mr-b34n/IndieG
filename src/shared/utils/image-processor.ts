@@ -1,4 +1,10 @@
-export type UploadType = 'avatar' | 'cover' | 'post';
+export type UploadType =
+    | 'avatar'
+    | 'cover'
+    | 'post'
+    | 'comment'
+    | 'community-logo'
+    | 'community-cover';
 
 export interface ProcessedImageResult {
     blob: Blob;
@@ -8,14 +14,17 @@ export interface ProcessedImageResult {
 
 /**
  * Upload size limits (in bytes) per policy:
- * - Avatar: 5 MB
- * - Cover: 10 MB
+ * - Avatar / Comment / Community Logo: 5 MB
+ * - Cover / Community Cover: 10 MB
  * - Post: 15 MB
  */
 export const MAX_IMAGE_SIZES: Record<UploadType, number> = {
-    avatar: 5 * 1024 * 1024,  // 5 MB
-    cover: 10 * 1024 * 1024,  // 10 MB
-    post: 15 * 1024 * 1024,   // 15 MB
+    avatar: 5 * 1024 * 1024,             // 5 MB
+    cover: 10 * 1024 * 1024,             // 10 MB
+    post: 15 * 1024 * 1024,              // 15 MB
+    comment: 5 * 1024 * 1024,            // 5 MB
+    'community-logo': 5 * 1024 * 1024,   // 5 MB
+    'community-cover': 10 * 1024 * 1024, // 10 MB
 };
 
 export const ALLOWED_IMAGE_MIMES = [
@@ -84,30 +93,31 @@ export async function processImagePipeline(
             let targetHeight = height;
             let quality = 0.8;
 
-            // [RULE 12] AVATAR: 256x256, Square Center Crop, WebP Q85
-            if (type === 'avatar') {
+            // [RULE 12] AVATAR / COMMUNITY LOGO: 256x256, Square Center Crop, WebP Q85
+            if (type === 'avatar' || type === 'community-logo') {
                 targetWidth = 256;
                 targetHeight = 256;
                 quality = 0.85;
-            } 
-            // [RULE 13] COVER: Max width 1920px, giữ tỷ lệ, Không Upscale, WebP Q85
-            else if (type === 'cover') {
+            }
+            // [RULE 13] COVER / COMMUNITY COVER: Max width 1920px, giữ tỷ lệ, Không Upscale, WebP Q85
+            else if (type === 'cover' || type === 'community-cover') {
                 quality = 0.85;
                 if (width > 1920) {
                     targetWidth = 1920;
                     targetHeight = Math.round((height * 1920) / width);
                 }
-            } 
-            // [RULE 14] POST IMAGE: Max 1600x1600, giữ tỷ lệ, Không Upscale, WebP Q80
-            else if (type === 'post') {
+            }
+            // [RULE 14] POST / COMMENT IMAGE: Max 1600x1600 (1200x1200 cho comment), giữ tỷ lệ, WebP Q80
+            else if (type === 'post' || type === 'comment') {
                 quality = 0.8;
-                if (width > 1600 || height > 1600) {
+                const maxDim = type === 'comment' ? 1200 : 1600;
+                if (width > maxDim || height > maxDim) {
                     if (width > height) {
-                        targetWidth = 1600;
-                        targetHeight = Math.round((height * 1600) / width);
+                        targetWidth = maxDim;
+                        targetHeight = Math.round((height * maxDim) / width);
                     } else {
-                        targetHeight = 1600;
-                        targetWidth = Math.round((width * 1600) / height);
+                        targetHeight = maxDim;
+                        targetWidth = Math.round((width * maxDim) / height);
                     }
                 }
             }
@@ -127,7 +137,7 @@ export async function processImagePipeline(
             ctx.imageSmoothingQuality = 'high';
 
             // 5. Render theo từng Policy
-            if (type === 'avatar') {
+            if (type === 'avatar' || type === 'community-logo') {
                 // Square Center Crop cho Avatar
                 const minDimension = Math.min(width, height);
                 const sourceX = (width - minDimension) / 2;

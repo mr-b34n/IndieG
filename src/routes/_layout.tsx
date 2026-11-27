@@ -1,23 +1,49 @@
 // src/routes/_layout.tsx
 import { createFileRoute, Outlet, useLocation } from '@tanstack/react-router'
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Header } from '@/shared/components/header/Header'
 import { LeftBar } from '@/shared/components/sidebars/LeftBar'
 import { RightBar } from '@/shared/components/sidebars/RightBar'
 import { useSidebarStore } from '@/shared/store/useSidebarStore'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faXmark } from '@fortawesome/free-solid-svg-icons'
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { X as faXmark } from "@phosphor-icons/react";
 import { useTranslation } from '@/shared/hooks/useTranslate'
-import { CreatePostModal } from '@/features/feed/components/CreatePostBox';
 import { useGlobalShortcuts } from '@/shared/hooks/useGlobalShortcuts';
-import { ShortcutsCheatsheetModal } from '@/shared/components/shortcuts/ShortcutsCheatsheetModal';
 import { GoToIndicator } from '@/shared/components/shortcuts/GoToIndicator';
 import { useRegisterOverlay } from '@/shared/utils/overlayManager';
-import { useAuthStore, VerifyNoticeModal } from '@/features/auth';
+import { useAuthStore } from '@/features/auth';
 import { useCommunitiesStore } from '@/features/community';
-import { useCommunitiesQuery } from '@/shared/api/useQueries';
+import { useGameStore } from '@/features/game';
+import { useCommunitiesQuery, useUserSettingsQuery } from '@/shared/api/useQueries';
+import { useCreatePostModalStore } from '@/features/feed/store/useCreatePostModalStore';
+import { useShortcutsStore } from '@/shared/store/useShortcutsStore';
+import { BackendWakeBanner } from '@/shared/components/ui/BackendWakeBanner';
 
+const LazyCreatePostModal = lazy(() =>
+    import('@/features/feed/components/create-post/CreatePostModal').then((m) => ({ default: m.CreatePostModal }))
+);
+const LazyShortcutsCheatsheetModal = lazy(() =>
+    import('@/shared/components/shortcuts/ShortcutsCheatsheetModal').then((m) => ({ default: m.ShortcutsCheatsheetModal }))
+);
+const LazyVerifyNoticeModal = lazy(() =>
+    import('@/features/auth/components/VerifyNoticeModal').then((m) => ({ default: m.VerifyNoticeModal }))
+);
+
+const MAX_SCROLL_HISTORY = 30
 const scrollPositions = new Map<string, number>()
+
+function saveScrollPosition(key: string, top: number) {
+    if (scrollPositions.has(key)) {
+        scrollPositions.delete(key)
+    }
+    scrollPositions.set(key, top)
+    if (scrollPositions.size > MAX_SCROLL_HISTORY) {
+        const oldestKey = scrollPositions.keys().next().value
+        if (oldestKey !== undefined) {
+            scrollPositions.delete(oldestKey)
+        }
+    }
+}
 
 export const Route = createFileRoute('/_layout')({
     component: MainLayout,
@@ -31,9 +57,10 @@ function MainLayout() {
     // 2. Ref trỏ đến container chứa thanh cuộn
     const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-    const user = useAuthStore((state) => state.user)
-    const isLoggedIn = Boolean(user)
+    const isLoggedIn = useAuthStore((state) => Boolean(state.user))
     const syncJoinedCommunities = useCommunitiesStore((state) => state.syncJoinedCommunities)
+    const setFollowedSlugs = useGameStore((state) => state.setFollowedSlugs)
+    const setQuickAccessSlugs = useGameStore((state) => state.setQuickAccessSlugs)
 
     // Synchronize joined communities globally whenever user is logged in
     const { data: rawJoinedData } = useCommunitiesQuery(
@@ -41,11 +68,24 @@ function MainLayout() {
         { enabled: isLoggedIn }
     )
 
+    // Synchronize followed & quick-access games from backend user settings
+    const { data: mySettings } = useUserSettingsQuery({ enabled: isLoggedIn })
+
     useEffect(() => {
         if (rawJoinedData) {
             syncJoinedCommunities(rawJoinedData)
         }
     }, [rawJoinedData, syncJoinedCommunities])
+
+    useEffect(() => {
+        if (!mySettings) return
+        if (Array.isArray(mySettings.followedGameSlugs)) {
+            setFollowedSlugs(mySettings.followedGameSlugs)
+        }
+        if (Array.isArray(mySettings.quickAccessSlugs) && mySettings.quickAccessSlugs.length > 0) {
+            setQuickAccessSlugs(mySettings.quickAccessSlugs)
+        }
+    }, [mySettings, setFollowedSlugs, setQuickAccessSlugs])
 
     const isLeftOpen = useSidebarStore((state) => state.isLeftOpen)
     const isRightOpen = useSidebarStore((state) => state.isRightOpen)
@@ -54,6 +94,8 @@ function MainLayout() {
 
     const hideSidebars = 
         pathname.startsWith('/settings') || 
+        pathname.startsWith('/messages') ||
+        pathname.startsWith('/admin') ||
         pathname.startsWith('/profile') || 
         (pathname.startsWith('/game') && pathname !== '/game') ||
         (pathname.startsWith('/community') && pathname !== '/community')
@@ -82,8 +124,7 @@ function MainLayout() {
 
         const handleScroll = () => {
             if (!isTransitioningRef.current && pathnameRef.current === pathname) {
-                scrollPositions.set(pathname, container.scrollTop);
-                sessionStorage.setItem('scroll_pos_' + pathname, String(container.scrollTop));
+                saveScrollPosition(pathname, container.scrollTop);
             }
         };
 
@@ -186,13 +227,30 @@ function MainLayout() {
         priority: 80,
     });
 
+    const isCreatePostOpen = useCreatePostModalStore((s) => s.isOpen);
+    const isCheatsheetOpen = useShortcutsStore((s) => s.isCheatsheetOpen);
+    const isVerifyModalOpen = useAuthStore((s) => s.isVerifyModalOpen);
+
     return (
         <div className="flex flex-col relative w-full h-screen overflow-hidden bg-bg text-text">
             <Header />
-            <CreatePostModal />
-            <ShortcutsCheatsheetModal />
+            {isCreatePostOpen && (
+                <Suspense fallback={null}>
+                    <LazyCreatePostModal />
+                </Suspense>
+            )}
+            {isCheatsheetOpen && (
+                <Suspense fallback={null}>
+                    <LazyShortcutsCheatsheetModal />
+                </Suspense>
+            )}
             <GoToIndicator />
-            <VerifyNoticeModal />
+            <BackendWakeBanner />
+            {isVerifyModalOpen && (
+                <Suspense fallback={null}>
+                    <LazyVerifyNoticeModal />
+                </Suspense>
+            )}
 
             {/* Mobile Left Sidebar */}
             {!hideSidebars && isLeftOpen && (

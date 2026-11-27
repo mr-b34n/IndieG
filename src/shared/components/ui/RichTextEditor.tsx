@@ -1,21 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faBold,
-    faItalic,
-    faStrikethrough,
-    faListUl,
-    faListOl,
-    faQuoteLeft,
-    faLink,
-    faImage,
-    faCode,
-    faRotateLeft,
-    faRotateRight,
-    faEraser,
-    faChevronDown,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { TextB as faBold, TextItalic as faItalic, TextStrikethrough as faStrikethrough, ListBullets as faListUl, ListNumbers as faListOl, Quotes as faQuoteLeft, Link as faLink, Image as faImage, Code as faCode, Eraser as faEraser, CaretDown as faChevronDown } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { getActiveMentionQuery } from "./mentionUtils";
+import {
+    MentionSuggestionsPopover,
+    useMentionCandidates,
+    type MentionCandidate,
+} from "./MentionSuggestionsPopover";
 
 /**
  * Converts HTML from contentEditable into clean Markdown for storage & display.
@@ -241,6 +233,51 @@ export const RichTextEditor = ({
     const [currentBlock, setCurrentBlock] = useState<string>("p");
     const [showHeadingMenu, setShowHeadingMenu] = useState(false);
 
+    // @mention autocomplete state
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+    const [mentionActiveIdx, setMentionActiveIdx] = useState(0);
+    const mentionNodeRef = useRef<{ node: Text; startOffset: number; endOffset: number } | null>(null);
+    const { candidates: mentionCandidates, loading: mentionLoading } = useMentionCandidates(mentionQuery);
+
+    useEffect(() => {
+        setMentionActiveIdx(0);
+    }, [mentionQuery, mentionCandidates.length]);
+
+    const detectMentionAtCaret = useCallback(() => {
+        if (!editorRef.current || typeof window === "undefined") return;
+        const selection = window.getSelection();
+        if (!selection || !selection.isCollapsed || selection.rangeCount === 0) {
+            setMentionQuery(null);
+            mentionNodeRef.current = null;
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        if (!editorRef.current.contains(range.startContainer)) {
+            setMentionQuery(null);
+            mentionNodeRef.current = null;
+            return;
+        }
+        if (range.startContainer.nodeType !== Node.TEXT_NODE) {
+            setMentionQuery(null);
+            mentionNodeRef.current = null;
+            return;
+        }
+        const textNode = range.startContainer as Text;
+        const textContent = textNode.textContent || "";
+        const active = getActiveMentionQuery(textContent, range.startOffset);
+        if (active) {
+            mentionNodeRef.current = {
+                node: textNode,
+                startOffset: active.startIndex,
+                endOffset: active.endIndex,
+            };
+            setMentionQuery(active.query);
+        } else {
+            mentionNodeRef.current = null;
+            setMentionQuery(null);
+        }
+    }, []);
+
     // Initialize & sync HTML content from Markdown value
     useEffect(() => {
         if (!editorRef.current) return;
@@ -309,6 +346,61 @@ export const RichTextEditor = ({
         lastValueRef.current = md;
         onChange(md);
         updateActiveFormats();
+        detectMentionAtCaret();
+    };
+
+    const handleSelectMention = (candidate: MentionCandidate) => {
+        const info = mentionNodeRef.current;
+        if (!info || !editorRef.current) return;
+        const { node, startOffset, endOffset } = info;
+        const currentText = node.textContent || "";
+        const before = currentText.slice(0, startOffset);
+        const after = currentText.slice(endOffset);
+        const trailingSpace = after.startsWith(" ") ? "" : " ";
+        const inserted = `@${candidate.username}${trailingSpace}`;
+        node.textContent = `${before}${inserted}${after}`;
+
+        const nextCaret = before.length + inserted.length;
+        const selection = window.getSelection();
+        if (selection) {
+            const newRange = document.createRange();
+            newRange.setStart(node, Math.min(nextCaret, node.textContent.length));
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
+
+        mentionNodeRef.current = null;
+        setMentionQuery(null);
+        handleInput();
+    };
+
+    const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (mentionQuery !== null && mentionCandidates.length > 0) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setMentionActiveIdx((prev) => (prev + 1) % mentionCandidates.length);
+                return;
+            }
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setMentionActiveIdx((prev) => (prev - 1 + mentionCandidates.length) % mentionCandidates.length);
+                return;
+            }
+            if (e.key === "Enter" || e.key === "Tab") {
+                e.preventDefault();
+                const chosen = mentionCandidates[mentionActiveIdx] || mentionCandidates[0];
+                if (chosen) handleSelectMention(chosen);
+                return;
+            }
+            if (e.key === "Escape") {
+                e.preventDefault();
+                setMentionQuery(null);
+                mentionNodeRef.current = null;
+                return;
+            }
+        }
+        onKeyDown?.(e);
     };
 
     const execCommand = (cmd: string, val: string | undefined = undefined) => {
@@ -585,39 +677,59 @@ export const RichTextEditor = ({
             </div>
 
             {/* ================= 2. DIRECT IN-PLACE WYSIWYG CANVAS ================= */}
-            <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="off"
-                onInput={handleInput}
-                onKeyUp={updateActiveFormats}
-                onMouseUp={updateActiveFormats}
-                onKeyDown={onKeyDown}
-                data-placeholder={placeholder}
-                style={{ minHeight }}
-                className={`
-                    rich-text-editor-canvas
-                    w-full flex-1 max-h-[420px] overflow-y-auto
-                    ${isSeamless ? "p-0 pt-3 pb-3 text-[15px] sm:text-base" : "p-3.5 text-sm"}
-                    bg-transparent
-                    focus:outline-none
-                    text-text leading-relaxed select-text
-                    empty:before:content-[attr(data-placeholder)] empty:before:text-text-faint/40 empty:before:pointer-events-none empty:before:italic
-                    [&_h1]:text-2xl [&_h1]:font-black [&_h1]:text-text [&_h1]:my-2
-                    [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-text [&_h2]:my-1.5
-                    [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-text [&_h3]:my-1
-                    [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3.5 [&_blockquote]:my-2.5 [&_blockquote]:italic [&_blockquote]:text-text-muted
-                    [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-1
-                    [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-1
-                    [&_li]:pl-1
-                    [&_code]:font-mono [&_code]:bg-white/[0.06] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-primary [&_code]:text-xs
-                    [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary-hover
-                    [&_p]:my-1.5
-                `}
-            />
+            <div className="relative flex-1 flex flex-col">
+                <MentionSuggestionsPopover
+                    query={mentionQuery}
+                    candidates={mentionCandidates}
+                    loading={mentionLoading}
+                    activeIndex={mentionActiveIdx}
+                    onSelect={handleSelectMention}
+                    onHoverIndex={setMentionActiveIdx}
+                    position="below"
+                />
+                <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    onInput={handleInput}
+                    onKeyUp={() => {
+                        updateActiveFormats();
+                        detectMentionAtCaret();
+                    }}
+                    onMouseUp={() => {
+                        updateActiveFormats();
+                        detectMentionAtCaret();
+                    }}
+                    onBlur={() => {
+                        window.setTimeout(() => setMentionQuery(null), 150);
+                    }}
+                    onKeyDown={handleEditorKeyDown}
+                    data-placeholder={placeholder}
+                    style={{ minHeight }}
+                    className={`
+                        rich-text-editor-canvas
+                        w-full flex-1 max-h-[420px] overflow-y-auto
+                        ${isSeamless ? "p-0 pt-3 pb-3 text-[15px] sm:text-base" : "p-3.5 text-sm"}
+                        bg-transparent
+                        focus:outline-none
+                        text-text leading-relaxed select-text
+                        empty:before:content-[attr(data-placeholder)] empty:before:text-text-faint/40 empty:before:pointer-events-none empty:before:italic
+                        [&_h1]:text-2xl [&_h1]:font-black [&_h1]:text-text [&_h1]:my-2
+                        [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-text [&_h2]:my-1.5
+                        [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-text [&_h3]:my-1
+                        [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3.5 [&_blockquote]:my-2.5 [&_blockquote]:italic [&_blockquote]:text-text-muted
+                        [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ul]:space-y-1
+                        [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_ol]:space-y-1
+                        [&_li]:pl-1
+                        [&_code]:font-mono [&_code]:bg-white/[0.06] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-primary [&_code]:text-xs
+                        [&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary-hover
+                        [&_p]:my-1.5
+                    `}
+                />
+            </div>
         </div>
     );
 };

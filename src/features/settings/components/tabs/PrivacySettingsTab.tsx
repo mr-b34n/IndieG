@@ -3,13 +3,16 @@ import {
     Users,
     Lock,
     Eye,
-    CheckCircle2,
-    UserX,
+    CheckCircle as CheckCircle2,
+    UserMinus as UserX,
     UserCheck,
-} from 'lucide-react';
+    Chat as MessageSquare,
+    At as AtSign,
+} from '@phosphor-icons/react';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { Switch } from '@/shared/components/ui/switch';
 import { Button } from '@/shared/components/ui/button';
+import { UserAvatar } from '@/shared/components/ui/UserAvatar';
 import { cn } from '@/shared/utils/cn';
 import type { BlockedUser } from '../../types';
 
@@ -17,6 +20,8 @@ interface PrivacySettings {
     profileVisibility: "public" | "friends" | "private";
     onlineStatus: boolean;
     gameLibraryVisibility: "public" | "friends" | "private";
+    allowMessages?: boolean;
+    allowMentions?: boolean;
 }
 
 interface PrivacySettingsTabProps {
@@ -163,6 +168,57 @@ export function PrivacySettingsTab({
                 />
             </div>
 
+            {/* Direct Messages & Mentions Permissions */}
+            <div className="space-y-3.5">
+                <div className="p-4 sm:p-5 rounded-2xl bg-surface-inner shadow-sm flex items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                        <div className="size-9 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <MessageSquare className="size-4.5" />
+                        </div>
+                        <div className="min-w-0 space-y-1">
+                            <span className="text-xs font-bold text-text block">
+                                {t('settings.privacy.allowMessages', { defaultValue: 'Cho phép nhận tin nhắn trực tiếp' })}
+                            </span>
+                            <p className="text-[11px] text-text-muted leading-relaxed">
+                                {t('settings.privacy.allowMessagesDesc', { defaultValue: 'Cho phép các thành viên khác gửi tin nhắn riêng cho bạn' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <Switch
+                        checked={privacy.allowMessages ?? true}
+                        onCheckedChange={(checked) =>
+                            onUpdatePrivacy({ ...privacy, allowMessages: checked })
+                        }
+                        aria-label={t('settings.privacy.allowMessages', { defaultValue: 'Cho phép nhận tin nhắn trực tiếp' })}
+                    />
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-surface-inner shadow-sm flex items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                        <div className="size-9 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                            <AtSign className="size-4.5" />
+                        </div>
+                        <div className="min-w-0 space-y-1">
+                            <span className="text-xs font-bold text-text block">
+                                {t('settings.privacy.allowMentions', { defaultValue: 'Cho phép nhắc tên (@Mentions)' })}
+                            </span>
+                            <p className="text-[11px] text-text-muted leading-relaxed">
+                                {t('settings.privacy.allowMentionsDesc', { defaultValue: 'Cho phép người khác gắn thẻ tài khoản của bạn trong bài viết và thảo luận' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <Switch
+                        checked={privacy.allowMentions ?? true}
+                        onCheckedChange={(checked) =>
+                            onUpdatePrivacy({ ...privacy, allowMentions: checked })
+                        }
+                        aria-label={t('settings.privacy.allowMentions', { defaultValue: 'Cho phép nhắc tên (@Mentions)' })}
+                    />
+                </div>
+            </div>
+
             {/* Blocked Users Section - Seamlessly integrated at the footer of Privacy */}
             <div className="p-5 sm:p-6 rounded-2xl bg-surface-inner space-y-4 shadow-sm">
                 <div className="flex items-center justify-between flex-wrap gap-2">
@@ -191,10 +247,11 @@ export function PrivacySettingsTab({
                                 className="p-3.5 rounded-xl bg-surface hover:bg-surface-hover flex items-center justify-between gap-3 shadow-xs transition-colors"
                             >
                                 <div className="flex items-center gap-3.5 min-w-0">
-                                    <img
+                                    <UserAvatar
                                         src={user.avatar}
-                                        alt={user.name}
-                                        className="size-10 rounded-full object-cover shrink-0 shadow-xs"
+                                        name={user.name || user.username}
+                                        className="size-10 shadow-xs"
+                                        textClassName="text-sm"
                                     />
                                     <div className="min-w-0">
                                         <div className="font-bold text-xs text-text truncate">

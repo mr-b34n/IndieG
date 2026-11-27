@@ -1,30 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faPlus,
-    faCheck,
-    faStar,
-    faBullhorn,
-    faGamepad,
-    faGlobe,
-    faBell,
-    faBellSlash,
-    faEllipsis,
-    faChevronDown,
-    faRightFromBracket,
-    faShareNodes,
-    faFlag,
-    faLink,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Plus as faPlus, Check as faCheck, Star as faStar, Megaphone as faBullhorn, GameController as faGamepad, Globe as faGlobe, Bell as faBell, BellSlash as faBellSlash, DotsThree as faEllipsis, CaretDown as faChevronDown, SignOut as faRightFromBracket, ShareNetwork as faShareNodes, Flag as faFlag, Link as faLink } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "@/shared/hooks/useTranslate";
 import { formatCompactNumber } from "../../constants";
 
 interface CommunityHubHeaderProps {
     name: string;
     description?: string;
     coverUrl: string;
-    iconUrl: string;
+    iconUrl?: string;
     membersCount?: number;
     onlineCount?: number;
     isJoined: boolean;
@@ -44,20 +28,16 @@ export const CommunityHubHeader = ({
     name,
     description,
     coverUrl,
-    iconUrl,
     membersCount = 0,
     onlineCount = 1,
     isJoined,
     onToggleJoin,
-    onStartDiscussion,
-    isLocked,
     announcement,
     featured,
     isVi,
     gameSlug,
     gameName,
 }: CommunityHubHeaderProps) => {
-    const { t } = useTranslation();
     const navigate = useNavigate();
 
     // Menu States
@@ -142,32 +122,38 @@ export const CommunityHubHeader = ({
                 </div>
             )}
 
-            {/* 1. ATMOSPHERIC COVER BANNER (Tumblr & Reddit Hybrid) */}
-            <div className="relative w-full h-44 sm:h-52 rounded-2xl overflow-hidden border border-border/60 bg-surface-inner shadow-sm group">
+            {/* 1. CINEMATIC COVER BANNER (Full-width Game Key-Art) */}
+            <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-2xl overflow-hidden border border-border/60 bg-surface-inner shadow-sm group">
                 <img
                     src={coverUrl}
                     alt={name}
-                    className="w-full h-full object-cover brightness-[0.88] saturate-[1.1]"
+                    className="w-full h-full object-cover brightness-[0.9] saturate-[1.1]"
                 />
                 {/* Multi-layered cinematic gradients */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/40 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/35 pointer-events-none" />
 
-                {/* Tumblr-style Top Metadata Pills inside Banner */}
+                {/* Top Metadata Pills inside Banner */}
                 <div className="absolute top-3 left-3 sm:top-3.5 sm:left-4 z-10 flex items-center gap-2 flex-wrap">
                     {/* Public status pill */}
                     <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-white/95 text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
                         <FontAwesomeIcon icon={faGlobe} className="text-[10px] text-white/80" />
                         <span>{isVi ? "Công khai" : "Public"}</span>
                     </div>
+
+                    {/* Official Game Hub Pill */}
+                    <div className="px-2.5 py-1 rounded-full bg-primary/20 backdrop-blur-md border border-primary/40 text-primary-light text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
+                        <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
+                        <span>{isVi ? "Official Hub" : "Official Hub"}</span>
+                    </div>
                 </div>
 
-                {/* Optional linked Game Page badge in top-right */}
+                {/* Optional Top-Right Shortcut to Game */}
                 {gameSlug && (
                     <div className="absolute top-3 right-3 sm:top-3.5 sm:right-4 z-10">
                         <button
                             type="button"
                             onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
-                            className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 border border-white/20 text-white text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
+                            className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 border border-white/20 text-white text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
                             title={isVi ? `Xem trang game ${gameName || ""}` : `View ${gameName || ""} game`}
                         >
                             <FontAwesomeIcon icon={faGamepad} className="text-[10px] text-primary" />
@@ -177,43 +163,64 @@ export const CommunityHubHeader = ({
                 )}
             </div>
 
-            {/* 2. COMMUNITY IDENTITY & REDDIT/FB ACTION BAR */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3.5 px-2 sm:px-3 pt-0">
-                {/* Left: Avatar overlapping banner + Name & Subtitle */}
-                <div className="flex items-start gap-3.5 sm:gap-4 min-w-0 flex-1">
-                    {/* Overlapping Avatar */}
-                    <div className="-mt-8 sm:-mt-10 relative shrink-0">
-                        <img
-                            src={iconUrl || coverUrl}
-                            alt={name}
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover bg-surface border-4 border-bg shadow-xl"
-                            onError={(e) => {
-                                if (coverUrl && e.currentTarget.src !== coverUrl) {
-                                    e.currentTarget.src = coverUrl;
-                                }
-                            }}
-                        />
+            {/* 2. COMMUNITY IDENTITY & ACTIONS (Avatar removed - Facebook/Steam Style) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1 sm:px-2 pt-1 pb-1">
+                {/* Left: Community Title, Badges & Meta Stats */}
+                <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-text uppercase leading-tight truncate">
+                            {name}
+                        </h1>
+
+                        {featured && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono font-bold text-[9px] tracking-wider uppercase flex items-center gap-1 shrink-0">
+                                <FontAwesomeIcon icon={faStar} className="text-[8px]" />
+                                <span>FEATURED</span>
+                            </span>
+                        )}
                     </div>
 
-                    {/* Community Title & Tagline */}
-                    <div className="flex flex-col min-w-0 flex-1 pt-0.5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h1 className="text-lg sm:text-xl font-black tracking-tight text-text uppercase leading-tight truncate">
-                                {name}
-                            </h1>
-
-                            {featured && (
-                                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono font-bold text-[9px] tracking-wider uppercase flex items-center gap-1 shrink-0">
-                                    <FontAwesomeIcon icon={faStar} className="text-[8px]" />
-                                    <span>FEATURED</span>
+                    {/* Meta Stats: Members + Online count */}
+                    <div className="flex items-center gap-2 sm:gap-2.5 text-xs text-text-muted mt-1.5 flex-wrap font-medium">
+                        <span>{formatCompactNumber(membersCount)} {isVi ? "thành viên" : "members"}</span>
+                        <span className="text-border-strong">•</span>
+                        <span className="flex items-center gap-1.5 text-emerald-500 font-semibold">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            {formatCompactNumber(onlineCount)} {isVi ? "trực tuyến" : "online"}
+                        </span>
+                        {gameName && (
+                            <>
+                                <span className="text-border-strong hidden sm:inline">•</span>
+                                <span className="hidden sm:inline-flex items-center gap-1 text-text-faint">
+                                    <FontAwesomeIcon icon={faGamepad} className="text-[10px]" />
+                                    <span>{gameName}</span>
                                 </span>
-                            )}
-                        </div>
+                            </>
+                        )}
                     </div>
+
+                    {/* Optional Tagline / Description */}
+                    {description && (
+                        <p className="text-xs text-text-muted/90 mt-1 line-clamp-2 max-w-3xl leading-relaxed">
+                            {description}
+                        </p>
+                    )}
                 </div>
 
-                {/* Right: Actions Cluster (FB Joined Dropdown + Options) */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-end flex-wrap pb-1">
+                {/* Right: Actions Cluster (Trang Game + Join/Joined + More options) */}
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center flex-wrap">
+                    {/* Dual CTA: Direct Button to Game Page */}
+                    {gameSlug && (
+                        <button
+                            type="button"
+                            onClick={() => navigate({ to: `/game/${gameSlug}` as string })}
+                            className="h-9 px-3.5 rounded-full text-xs font-semibold bg-surface-inner hover:bg-surface-hover text-text border border-border/80 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                            title={isVi ? `Đi đến trang game ${gameName || ""}` : `Go to ${gameName || ""} page`}
+                        >
+                            <FontAwesomeIcon icon={faGamepad} className="text-xs text-primary" />
+                            <span>{isVi ? "Trang Game" : "Game Page"}</span>
+                        </button>
+                    )}
                     {/* Joined State with Facebook-style Dropdown Menu */}
                     <div className="relative" ref={joinedMenuRef}>
                         {isJoined ? (

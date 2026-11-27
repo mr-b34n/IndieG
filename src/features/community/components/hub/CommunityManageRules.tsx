@@ -1,17 +1,8 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faArrowUp,
-    faArrowDown,
-    faPenToSquare,
-    faTrashCan,
-    faPlus,
-    faCheck,
-    faXmark,
-    faCircleCheck,
-    faCircleInfo,
-} from "@fortawesome/free-solid-svg-icons";
+import { useState, useEffect } from "react";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { ArrowUp as faArrowUp, ArrowDown as faArrowDown, NotePencil as faPenToSquare, Trash as faTrashCan, Plus as faPlus, Check as faCheck, X as faXmark, CheckCircle as faCircleCheck, Info as faCircleInfo, FloppyDisk as faFloppyDisk, CircleNotch as faSpinner } from "@phosphor-icons/react";
+import { useUpdateCommunityMutation } from "@/shared/api/useQueries";
 
 export interface CommunityRule {
     id: string;
@@ -20,42 +11,72 @@ export interface CommunityRule {
 }
 
 interface CommunityManageRulesProps {
+    communityId?: string;
     communityName: string;
+    initialRules?: string;
     isVi: boolean;
 }
 
 export const CommunityManageRules = ({
+    communityId,
     communityName,
+    initialRules,
     isVi,
 }: CommunityManageRulesProps) => {
     const { t } = useTranslation();
-    const [rules, setRules] = useState<CommunityRule[]>([
-        {
-            id: "rule-1",
-            title: t('hub.communitymanagerules_170'),
-            description: t('hub.communitymanagerules_171'),
-        },
-        {
-            id: "rule-2",
-            title: t('hub.communitymanagerules_172'),
-            description: t('hub.communitymanagerules_173'),
-        },
-        {
-            id: "rule-3",
-            title: t('hub.communitymanagerules_174'),
-            description: t('hub.communitymanagerules_175'),
-        },
-        {
-            id: "rule-4",
-            title: t('hub.communitymanagerules_176'),
-            description: t('hub.communitymanagerules_177'),
-        },
-        {
-            id: "rule-5",
-            title: t('hub.communitymanagerules_178'),
-            description: t('hub.communitymanagerules_179'),
-        },
-    ]);
+    const updateCommunityMutation = useUpdateCommunityMutation();
+
+    const parseInitialRules = (): CommunityRule[] => {
+        if (initialRules) {
+            try {
+                const parsed = JSON.parse(initialRules);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed.map((item, idx) => ({
+                        id: item.id || `rule-${idx + 1}`,
+                        title: item.title || item.titleVi || `Rule ${idx + 1}`,
+                        description: item.description || item.descVi || item.desc || "",
+                    }));
+                }
+            } catch {
+                // If it's plain text, treat as single rule or line-separated
+            }
+        }
+        return [
+            {
+                id: "rule-1",
+                title: t('hub.communitymanagerules_170'),
+                description: t('hub.communitymanagerules_171'),
+            },
+            {
+                id: "rule-2",
+                title: t('hub.communitymanagerules_172'),
+                description: t('hub.communitymanagerules_173'),
+            },
+            {
+                id: "rule-3",
+                title: t('hub.communitymanagerules_174'),
+                description: t('hub.communitymanagerules_175'),
+            },
+            {
+                id: "rule-4",
+                title: t('hub.communitymanagerules_176'),
+                description: t('hub.communitymanagerules_177'),
+            },
+            {
+                id: "rule-5",
+                title: t('hub.communitymanagerules_178'),
+                description: t('hub.communitymanagerules_179'),
+            },
+        ];
+    };
+
+    const [rules, setRules] = useState<CommunityRule[]>(parseInitialRules);
+
+    useEffect(() => {
+        if (initialRules) {
+            setRules(parseInitialRules());
+        }
+    }, [initialRules]);
 
     // Inline edit state
     const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
@@ -72,6 +93,19 @@ export const CommunityManageRules = ({
     const showToast = (msg: string) => {
         setToastMessage(msg);
         setTimeout(() => setToastMessage(null), 3000);
+    };
+
+    const handlePersistRules = async (rulesToSave: CommunityRule[]) => {
+        if (!communityId) return;
+        try {
+            await updateCommunityMutation.mutateAsync({
+                id: communityId,
+                data: { rules: JSON.stringify(rulesToSave) },
+            });
+            showToast(isVi ? "Đã lưu quy tắc cộng đồng thành công!" : "Community rules saved successfully!");
+        } catch {
+            showToast(isVi ? "Lỗi khi lưu quy tắc cộng đồng." : "Failed to save community rules.");
+        }
     };
 
     // Reorder Handlers
@@ -180,19 +214,31 @@ export const CommunityManageRules = ({
                     </p>
                 </div>
 
-                {!isAddingNew && (
+                <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        onClick={() => {
-                            setIsAddingNew(true);
-                            setEditingRuleId(null);
-                        }}
-                        className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                        onClick={() => handlePersistRules(rules)}
+                        disabled={updateCommunityMutation.isPending}
+                        className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                        title={isVi ? "Lưu tất cả thay đổi vào cơ sở dữ liệu" : "Save all changes to database"}
                     >
-                        <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                        <span>{t('hub.communitymanagerules_185')}</span>
+                        <FontAwesomeIcon icon={updateCommunityMutation.isPending ? faSpinner : faFloppyDisk} className={`text-xs ${updateCommunityMutation.isPending ? "animate-spin" : ""}`} />
+                        <span>{isVi ? "Lưu quy tắc" : "Save Rules"}</span>
                     </button>
-                )}
+                    {!isAddingNew && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsAddingNew(true);
+                                setEditingRuleId(null);
+                            }}
+                            className="px-3 py-1.5 rounded-[4px] bg-surface-hover hover:bg-surface-hover/80 text-xs font-bold text-text flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                            <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                            <span>{t('hub.communitymanagerules_185')}</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* ORDERED RULES LIST (Inline Editing, Reorder Up/Down, Delete) */}

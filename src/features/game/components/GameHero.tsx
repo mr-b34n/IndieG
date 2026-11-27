@@ -1,14 +1,7 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSteam } from "@fortawesome/free-brands-svg-icons";
-import {
-    faBookmark,
-    faCheck,
-    faThumbsUp,
-    faArrowUpRightFromSquare,
-    faClock,
-    faUsers,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { BookmarkSimple as faBookmark, Check as faCheck, ThumbsUp as faThumbsUp, ArrowSquareOut as faArrowUpRightFromSquare, Clock as faClock, Users as faUsers } from "@phosphor-icons/react";
+import { SteamBrandIcon as faSteam } from "@/shared/components/ui/BrandIcons";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { type GameData } from "../types";
 

@@ -1,4 +1,4 @@
-import { faCompass, faFire, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { Compass as faCompass, Fire as faFire, Stack as faLayerGroup } from "@phosphor-icons/react";
 import { type CommunityData, type CommunityTabKey } from "./types";
 
 export const TAG_CLASSES = [

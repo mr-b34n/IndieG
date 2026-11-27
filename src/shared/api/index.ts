@@ -11,8 +11,18 @@ import {
     type UpdateProfileDto,
     type CheckUsernameResponseDto,
     type UserSessionDto,
-    type UserSessionsResponseDto,
     type ChangePasswordDto,
+    type ChangeEmailDto,
+    type FeedbackType,
+    type FeedbackStatus,
+    type CreateFeedbackDto,
+    type FeedbackDto,
+    type ConversationDto,
+    type DirectMessageDto,
+    type SquadDto,
+    type SquadStatus,
+    type CreateSquadDto,
+    type SystemAnnouncementDto,
     type CommunityDto,
     type CreateCommunityDto,
     type UpdateCommunityDto,
@@ -36,14 +46,6 @@ import {
     type CreateGameDto,
     type UpdateGameDto,
     type GetGamesParams,
-    type GameGuideDto,
-    type CreateGameGuideDto,
-    type UpdateGameGuideDto,
-    type GetGameGuidesParams,
-    type GameReviewDto,
-    type CreateGameReviewDto,
-    type UpdateGameReviewDto,
-    type GetGameReviewsParams,
     type GamePatchNoteDto,
     type CreateGamePatchNoteDto,
     type UpdateGamePatchNoteDto,
@@ -77,7 +79,6 @@ import {
     type GetReportsParams,
     type SearchParams,
     type CommunityStatsDto,
-    type CommunityModerationLogDto,
     type CommunityModerationLogsResponseDto,
     type UserSettingsDto,
     type UpdateUserSettingsDto,
@@ -299,8 +300,35 @@ export const authApi = {
     login: (data: AuthLoginDto) =>
         apiRequest<AuthLoginResponse>("/auth/login", { method: "POST", body: data }),
 
-    logout: () =>
-        apiRequest<{ message?: string }>("/auth/logout", { method: "POST" }),
+    logout: (explicitRefreshToken?: string | null, explicitAccessToken?: string | null) => {
+        const savedRefreshToken =
+            explicitRefreshToken ||
+            (typeof window !== "undefined"
+                ? localStorage.getItem("ludon_refresh_token") ||
+                  localStorage.getItem("indieg_refresh_token") ||
+                  localStorage.getItem("refresh_token")
+                : null);
+        const savedAccessToken =
+            explicitAccessToken ||
+            (typeof window !== "undefined"
+                ? localStorage.getItem("ludon_access_token") ||
+                  localStorage.getItem("indieg_access_token") ||
+                  localStorage.getItem("access_token")
+                : null);
+
+        const headers: Record<string, string> = {};
+        if (savedRefreshToken) {
+            headers["x-refresh-token"] = savedRefreshToken;
+        }
+
+        return apiRequest<{ message?: string }>("/auth/logout", {
+            method: "POST",
+            headers,
+            body: savedRefreshToken ? { refreshToken: savedRefreshToken } : undefined,
+            token: savedAccessToken || undefined,
+            skipAuthRefresh: true,
+        });
+    },
 
     me: () =>
         apiRequest<UserProfileDto>("/auth/me", { method: "GET" }),
@@ -309,7 +337,25 @@ export const authApi = {
         apiRequest<AuthLoginResponse>("/auth/google", { method: "POST", body: data }),
 
     changePassword: (data: ChangePasswordDto) =>
-        apiRequest<{ message?: string }>("/auth/change-password", { method: "POST", body: data }),
+        apiRequest<{ message?: string }>("/auth/change-password", { method: "PATCH", body: data }),
+
+    requestEmailChange: (data: ChangeEmailDto) =>
+        apiRequest<{ message?: string; pendingEmail?: string }>("/auth/change-email", { method: "PATCH", body: data }),
+
+    cancelEmailChange: () =>
+        apiRequest<{ message?: string }>("/auth/change-email", { method: "DELETE" }),
+
+    verifyEmailChange: (token: string) =>
+        apiRequest<{ message?: string; email?: string }>("/auth/verify-email-change", { method: "GET", params: { token } }),
+
+    getSessions: () =>
+        apiRequest<UserSessionDto[]>("/auth/sessions", { method: "GET" }),
+
+    revokeSession: (sessionId: string) =>
+        apiRequest<{ message?: string }>(`/auth/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" }),
+
+    revokeAllSessions: () =>
+        apiRequest<{ message?: string }>("/auth/sessions", { method: "DELETE" }),
 
     forgotPassword: (data: AuthForgotPasswordDto) =>
         apiRequest<{ message?: string }>("/auth/forgot-password", { method: "POST", body: data }),
@@ -337,25 +383,29 @@ export const usersApi = {
     getById: (id: string) =>
         apiRequest<UserProfileDto>(`/users/${encodeURIComponent(id)}`, { method: "GET" }),
 
-    getSessions: (type?: "active" | "history") =>
-        apiRequest<UserSessionDto[] | UserSessionsResponseDto>("/users/sessions", {
+    getSessions: () =>
+        apiRequest<UserSessionDto[]>("/auth/sessions", {
             method: "GET",
-            params: type ? { type } : undefined,
         }),
 
     revokeSession: async (sessionId: string) => {
-        try {
-            return await apiRequest<{ message?: string }>(`/users/revoke-session/${encodeURIComponent(sessionId)}`, { method: "PATCH" });
-        } catch {
-            return await apiRequest<{ message?: string }>(`/users/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
-        }
+        return await apiRequest<{ message?: string }>(`/auth/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
     },
 
     revokeAllSessions: () =>
-        apiRequest<{ message?: string }>("/users/sessions", { method: "DELETE" }),
+        apiRequest<{ message?: string }>("/auth/sessions", { method: "DELETE" }),
 
     changePassword: (data: ChangePasswordDto) =>
-        apiRequest<{ message?: string }>("/users/change-password", { method: "PATCH", body: data }),
+        apiRequest<{ message?: string }>("/auth/change-password", { method: "PATCH", body: data }),
+
+    requestEmailChange: (data: ChangeEmailDto) =>
+        apiRequest<{ message?: string; pendingEmail?: string }>("/auth/change-email", { method: "PATCH", body: data }),
+
+    cancelEmailChange: () =>
+        apiRequest<{ message?: string }>("/auth/change-email", { method: "DELETE" }),
+
+    verifyEmailChange: (token: string) =>
+        apiRequest<{ message?: string; email?: string }>("/auth/verify-email-change", { method: "GET", params: { token } }),
 
     deleteAccount: () =>
         apiRequest<{ message?: string }>("/users/me", { method: "DELETE" }),
@@ -445,8 +495,11 @@ export const profilesApi = {
     deleteUser: (id: string) =>
         apiRequest<void>(`/profiles/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
-    toggleArchived: () =>
-        apiRequest<{ message?: string; archived?: boolean }>("/profiles/archived", { method: "PATCH" }),
+    toggleArchived: (status: boolean = true) =>
+        apiRequest<{ message?: string; archived?: boolean }>("/profiles/archived", {
+            method: "PATCH",
+            body: { status },
+        }),
 
     checkUsername: (username: string) =>
         apiRequest<CheckUsernameResponseDto>("/profiles/check-username", {
@@ -678,13 +731,26 @@ export const postsApi = {
         title?: string;
         content?: string;
         tags?: string[];
+        sortBy?: string;
         page?: number;
         limit?: number;
     }) =>
-        apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts", {
-                method: "GET",
-                params: sanitizePaginationParams(params, 50),
-            }),
+        apiRequest<PostDto[] | { data?: PostDto[]; items?: PostDto[]; total?: number }>("/posts", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
+
+    getTrending: (params?: { limit?: number; days?: number }) =>
+        apiRequest<PostDto[]>("/posts/trending", {
+            method: "GET",
+            params: params ? sanitizePaginationParams(params, 20) : undefined,
+        }),
+
+    getTrendingTags: (params?: { limit?: number }) =>
+        apiRequest<Array<{ id: string; name: string; count: number; isHot: boolean }>>("/posts/tags/trending", {
+            method: "GET",
+            params: params ? sanitizePaginationParams(params, 30) : undefined,
+        }),
 
     getFeed: (params?: { page?: number; limit?: number; tab?: string }) =>
         apiRequest<PostDto[] | { items: PostDto[]; total?: number }>("/posts/feed", {
@@ -867,7 +933,7 @@ export const votesApi = {
         apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(`/votes/post/${encodeURIComponent(String(postId))}`, { method: "GET" }),
 
     getMyPostVote: (postId: string | number) =>
-        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/post/${encodeURIComponent(String(postId))}/me`, { method: "GET" }),
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/post/${encodeURIComponent(String(postId))}`, { method: "GET" }),
 
     votePost: (postId: string | number, voteType: VoteType = 1) =>
         apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(`/votes/post/${encodeURIComponent(String(postId))}`, { method: "POST", body: { voteType } }),
@@ -885,7 +951,7 @@ export const votesApi = {
         apiRequest<VoteDto | { hasVoted?: boolean; score?: number }>(`/votes/comment/${encodeURIComponent(String(commentId))}`, { method: "GET" }),
 
     getMyCommentVote: (commentId: string | number) =>
-        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/comment/${encodeURIComponent(String(commentId))}/me`, { method: "GET" }),
+        apiRequest<{ hasVoted?: boolean; voteType?: VoteType | 0; score?: number }>(`/votes/comment/${encodeURIComponent(String(commentId))}`, { method: "GET" }),
 
     voteComment: (commentId: string | number, voteType: VoteType = 1) =>
         apiRequest<{ message?: string; success?: boolean; score?: number; voteType?: VoteType }>(`/votes/comment/${encodeURIComponent(String(commentId))}`, { method: "POST", body: { voteType } }),
@@ -960,65 +1026,7 @@ export const gamesApi = {
 };
 
 // =========================================================================
-// 11. GAME GUIDES SERVICES (/games/{appid}/guides/*)
-// =========================================================================
-export const gameGuidesApi = {
-    getAll: (appid: number | string, params?: GetGameGuidesParams) =>
-        apiRequest<GameGuideDto[] | { items: GameGuideDto[]; total?: number }>(`/games/${encodeURIComponent(String(appid))}/guides`, { method: "GET", params: sanitizePaginationParams(params, 50) }),
-
-    create: (appid: number | string, data: CreateGameGuideDto) =>
-        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides`, { method: "POST", body: data }),
-
-    getById: (appid: number | string, id: string) =>
-        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "GET" }),
-
-    update: (appid: number | string, id: string, data: UpdateGameGuideDto) =>
-        apiRequest<GameGuideDto>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
-
-    delete: (appid: number | string, id: string) =>
-        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}`, { method: "DELETE" }),
-
-    like: (appid: number | string, id: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`, { method: "PATCH" }),
-
-    unlike: (appid: number | string, id: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/like`, { method: "DELETE" }),
-
-    recordView: (appid: number | string, id: string) =>
-        apiRequest<{ success?: boolean; views?: number }>(`/games/${encodeURIComponent(String(appid))}/guides/${encodeURIComponent(id)}/view`, { method: "POST" }),
-};
-
-// =========================================================================
-// 12. GAME REVIEWS SERVICES (/games/{appid}/reviews/*)
-// =========================================================================
-export const gameReviewsApi = {
-    getAll: (appid: number | string, params?: GetGameReviewsParams) =>
-        apiRequest<GameReviewDto[] | { items: GameReviewDto[]; total?: number }>(`/games/${encodeURIComponent(String(appid))}/reviews`, { method: "GET", params: sanitizePaginationParams(params, 50) }),
-
-    create: (appid: number | string, data: CreateGameReviewDto) =>
-        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews`, { method: "POST", body: data }),
-
-    getById: (appid: number | string, id: string) =>
-        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "GET" }),
-
-    getMyReview: (appid: number | string) =>
-        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/me`, { method: "GET" }),
-
-    update: (appid: number | string, id: string, data: UpdateGameReviewDto) =>
-        apiRequest<GameReviewDto>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "PATCH", body: data }),
-
-    delete: (appid: number | string, id: string) =>
-        apiRequest<void>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}`, { method: "DELETE" }),
-
-    like: (appid: number | string, id: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`, { method: "PATCH" }),
-
-    unlike: (appid: number | string, id: string) =>
-        apiRequest<{ message?: string; success?: boolean }>(`/games/${encodeURIComponent(String(appid))}/reviews/${encodeURIComponent(id)}/like`, { method: "DELETE" }),
-};
-
-// =========================================================================
-// 13. GAME PATCH NOTES SERVICES (/games/{appid}/patch-notes/*)
+// 11. GAME PATCH NOTES SERVICES (/games/{appid}/patch-notes/*)
 // =========================================================================
 export const gamePatchNotesApi = {
     getAll: (appid: number | string, params?: GetGamePatchNotesParams) =>
@@ -1096,7 +1104,10 @@ export const libraryGamesApi = {
     getMyLibrary: () => {
         let userId: string | undefined;
         if (typeof window !== "undefined") {
-            const token = localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token");
+            const token =
+                localStorage.getItem("ludon_access_token") ||
+                localStorage.getItem("indieg_access_token") ||
+                localStorage.getItem("access_token");
             if (token) {
                 try {
                     const parts = token.split(".");
@@ -1164,8 +1175,11 @@ export const friendshipsApi = {
     checkStatus: (targetUserId: string) =>
         apiRequest<FriendshipStatusDto>(`/friendships/status/${encodeURIComponent(targetUserId)}`, { method: "GET" }),
 
-    getFriends: () =>
-        apiRequest<UserProfileDto[]>("/friendships/friends", { method: "GET" }),
+    getFriends: (userId?: string) =>
+        apiRequest<FriendshipDto[]>("/friendships/friends", {
+            method: "GET",
+            params: userId ? { userId } : undefined,
+        }),
 
     getIncomingRequests: () =>
         apiRequest<FriendshipDto[]>("/friendships/requests/incoming", { method: "GET" }),
@@ -1221,7 +1235,15 @@ export const notificationsApi = {
 
     getUnreadCount: () =>
         apiRequest<{ count: number }>("/notifications/unread-count", { method: "GET" }),
+
+    createSystemAnnouncement: (data: SystemAnnouncementDto) =>
+        apiRequest<{ success: boolean; deliveredCount: number }>("/notifications/system-announcement", {
+            method: "POST",
+            body: data,
+        }),
 };
+
+import { uploadImageToR2, type UploadOptions } from "../services/upload-service";
 
 // =========================================================================
 // 20. STORAGE SERVICES (/storage/*)
@@ -1237,6 +1259,123 @@ export const storageApi = {
         apiRequest<{ message?: string; success?: boolean; url?: string }>("/storage/confirm", { method: "POST", body: data }),
 
     uploadImageToR2: (options: UploadOptions) => uploadImageToR2(options),
+};
+
+// =========================================================================
+// 21. FEEDBACK SERVICES (/feedback/*)
+// =========================================================================
+export const feedbackApi = {
+    create: (data: CreateFeedbackDto) =>
+        apiRequest<FeedbackDto>("/feedback", { method: "POST", body: data }),
+
+    getMine: (params?: { page?: number; limit?: number }) =>
+        apiRequest<{ data: FeedbackDto[]; meta: ApiPaginationMeta }>("/feedback/me", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
+
+    getAll: (params?: { page?: number; limit?: number; type?: FeedbackType; status?: FeedbackStatus }) =>
+        apiRequest<{ data: FeedbackDto[]; meta: ApiPaginationMeta }>("/feedback", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
+
+    updateStatus: (id: string, data: { status: FeedbackStatus; adminNote?: string }) =>
+        apiRequest<FeedbackDto>(`/feedback/${encodeURIComponent(id)}/status`, {
+            method: "PATCH",
+            body: data,
+        }),
+};
+
+// =========================================================================
+// 22. DIRECT MESSAGES & PRESENCE SERVICES (/messages/*)
+// =========================================================================
+export const messagesApi = {
+    getConversations: () =>
+        apiRequest<ConversationDto[]>("/messages/conversations", { method: "GET" }),
+
+    getOrCreateConversation: (targetUserId: string) =>
+        apiRequest<ConversationDto>("/messages/conversations", {
+            method: "POST",
+            body: { targetUserId },
+        }),
+
+    getMessages: (conversationId: string, params?: { page?: number; limit?: number }) =>
+        apiRequest<{ data: DirectMessageDto[]; meta: ApiPaginationMeta }>(
+            `/messages/conversations/${encodeURIComponent(conversationId)}`,
+            { method: "GET", params: sanitizePaginationParams(params, 50) }
+        ),
+
+    sendMessage: (conversationId: string, content: string) =>
+        apiRequest<DirectMessageDto>(
+            `/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
+            { method: "POST", body: { content } }
+        ),
+
+    markAsRead: (conversationId: string) =>
+        apiRequest<{ success: boolean }>(
+            `/messages/conversations/${encodeURIComponent(conversationId)}/read`,
+            { method: "PATCH" }
+        ),
+
+    getUnreadCount: () =>
+        apiRequest<{ count: number }>("/messages/unread-count", { method: "GET" }),
+
+    getPresence: (userIds: string[]) =>
+        apiRequest<{ onlineUserIds: string[] }>("/messages/presence", {
+            method: "GET",
+            params: { userIds: userIds.join(",") },
+        }),
+};
+
+// =========================================================================
+// 23. SQUAD / LFG SERVICES (/squads/*)
+// =========================================================================
+export const squadsApi = {
+    getAll: (params?: {
+        page?: number;
+        limit?: number;
+        game?: string;
+        region?: string;
+        q?: string;
+        status?: SquadStatus;
+    }) =>
+        apiRequest<{ data: SquadDto[]; meta: ApiPaginationMeta }>("/squads", {
+            method: "GET",
+            params: sanitizePaginationParams(params, 50),
+        }),
+
+    getMine: () =>
+        apiRequest<SquadDto[]>("/squads/me", { method: "GET" }),
+
+    create: (data: CreateSquadDto) =>
+        apiRequest<SquadDto>("/squads", { method: "POST", body: data }),
+
+    join: (id: string) =>
+        apiRequest<SquadDto>(`/squads/${encodeURIComponent(id)}/join`, { method: "POST" }),
+
+    leave: (id: string) =>
+        apiRequest<{ success: boolean; closed: boolean; squad?: SquadDto }>(
+            `/squads/${encodeURIComponent(id)}/leave`,
+            { method: "POST" }
+        ),
+
+    kickMember: (id: string, targetUserId: string) =>
+        apiRequest<SquadDto>(
+            `/squads/${encodeURIComponent(id)}/members/${encodeURIComponent(targetUserId)}`,
+            { method: "DELETE" }
+        ),
+
+    updateStatus: (id: string, status: SquadStatus) =>
+        apiRequest<SquadDto>(`/squads/${encodeURIComponent(id)}/status`, {
+            method: "PATCH",
+            body: { status },
+        }),
+
+    remove: (id: string) =>
+        apiRequest<{ success: boolean }>(`/squads/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+        }),
 };
 
 export {

@@ -1,19 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faHeart,
-    faComment,
-    faUserPlus,
-    faBell,
-    faBullhorn,
-    faCheckDouble,
-    faTrash,
-    faXmark,
-    faCircle,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar, isRealAvatarUrl } from "@/shared/components/ui/UserAvatar";
+import { Heart as faHeart, Chat as faComment, At as faAt, UserPlus as faUserPlus, Bell as faBell, Megaphone as faBullhorn, Checks as faCheckDouble, Trash as faTrash, X as faXmark, Circle as faCircle } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useNotificationStore } from "../store/useNotificationStore";
+import { notificationApi } from "../api/notificationApi";
 import type { NotificationItem, NotificationType } from "../types";
 
 interface NotificationDropdownProps {
@@ -27,9 +19,6 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
     const navigate = useNavigate();
 
     const notifications = useNotificationStore((state) => state.notifications);
-    const markAsRead = useNotificationStore((state) => state.markAsRead);
-    const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
-    const deleteNotification = useNotificationStore((state) => state.deleteNotification);
     const clearAll = useNotificationStore((state) => state.clearAll);
 
     const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -49,7 +38,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
     const handleItemClick = (item: NotificationItem) => {
         if (!item.isRead) {
-            markAsRead(item.id);
+            void notificationApi.markAsRead(item.id);
         }
         if (item.link) {
             if (item.link.startsWith("/")) {
@@ -66,7 +55,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
             case "like":
                 return <div className="w-7 h-7 rounded-full bg-like/15 text-like flex items-center justify-center text-xs shrink-0"><FontAwesomeIcon icon={faHeart} /></div>;
             case "comment":
+            case "reply":
                 return <div className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs shrink-0"><FontAwesomeIcon icon={faComment} /></div>;
+            case "mention":
+                return <div className="w-7 h-7 rounded-full bg-sky-500/15 text-sky-400 flex items-center justify-center text-xs shrink-0"><FontAwesomeIcon icon={faAt} /></div>;
             case "follow":
                 return <div className="w-7 h-7 rounded-full bg-accent-500/15 text-accent-500 flex items-center justify-center text-xs shrink-0"><FontAwesomeIcon icon={faUserPlus} /></div>;
             case "system":
@@ -93,7 +85,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                 <div className="flex items-center gap-1">
                     {unreadCount > 0 && (
                         <button
-                            onClick={() => markAllAsRead()}
+                            onClick={() => void notificationApi.markAllAsRead()}
                             title={t('notification.markAllRead')}
                             className="p-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                         >
@@ -154,18 +146,24 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                             }`}
                         >
                             <div className="relative shrink-0">
-                                {item.avatarUrl ? (
-                                    <img
-                                        src={item.avatarUrl}
-                                        alt="avatar"
-                                        className="w-10 h-10 rounded-full object-cover ring-1 ring-border"
-                                    />
+                                {item.type === "system" && !isRealAvatarUrl(item.avatarUrl) ? (
+                                    <div className="w-10 h-10 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center text-sm shrink-0">
+                                        <FontAwesomeIcon icon={faBullhorn} />
+                                    </div>
                                 ) : (
-                                    getIconForType(item.type)
+                                    <>
+                                        <UserAvatar
+                                            src={item.avatarUrl}
+                                            name={item.title}
+                                            alt={item.title}
+                                            className="w-10 h-10 ring-1 ring-border"
+                                            textClassName="text-sm"
+                                        />
+                                        <div className="absolute -bottom-1 -right-1">
+                                            {getIconForType(item.type)}
+                                        </div>
+                                    </>
                                 )}
-                                <div className="absolute -bottom-1 -right-1">
-                                    {getIconForType(item.type)}
-                                </div>
                             </div>
 
                             <div className="flex-1 min-w-0 pr-4">
@@ -189,7 +187,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        deleteNotification(item.id);
+                                        void notificationApi.deleteNotification(item.id);
                                     }}
                                     title={t('notification.deleteTitle')}
                                     className="opacity-0 group-hover:opacity-100 p-1 text-text-faint hover:text-like transition-opacity text-xs cursor-pointer"
@@ -205,7 +203,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
             {notifications.length > 0 && (
                 <div className="p-2 border-t border-border bg-surface-hover/30 flex justify-between items-center text-xs">
                     <button
-                        onClick={clearAll}
+                        onClick={() => {
+                            clearAll();
+                            void notificationApi.clearReadNotifications();
+                        }}
                         className="text-text-faint hover:text-like transition-colors px-2 py-1 rounded cursor-pointer"
                     >
                         {t('notification.deleteAll')}

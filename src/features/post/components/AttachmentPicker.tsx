@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFile, faImage, faPaperclip, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { File as faFile, Image as faImage, Paperclip as faPaperclip, X as faXmark } from "@phosphor-icons/react";
 import { createAttachmentFromFile, revokeAttachmentUrl, type EditableAttachment } from "../helpers/postAttachments";
 import { FILE_ACCEPT, formatFileSize, IMAGE_ACCEPT, MAX_ATTACHMENT_SIZE, MAX_FILES, MAX_IMAGES, validateAttachment } from "../helpers/postAttachmentLimits";
 

@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import type { BioDocument } from "./types";
 import { parseBio, isBioEmpty, getBioFontClass, getBioColorClass } from "./utils";
+import { loadBioFontsForDocument } from "./fonts";
 
 interface BioRendererProps {
     bio?: string | BioDocument | null;
@@ -19,6 +20,10 @@ export const BioRenderer: React.FC<BioRendererProps> = ({
         }
         return parseBio(typeof bio === "string" ? bio : undefined);
     }, [bio]);
+
+    useEffect(() => {
+        loadBioFontsForDocument(document);
+    }, [document]);
 
     if (isBioEmpty(document)) {
         return (

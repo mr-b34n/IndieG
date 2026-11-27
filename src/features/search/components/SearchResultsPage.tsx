@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretUp, faCaretDown } from "@fortawesome/free-solid-svg-icons";
-import { faComment } from "@fortawesome/free-regular-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { CaretUp as faCaretUp, CaretDown as faCaretDown, Chat as faComment } from "@phosphor-icons/react";
 import {
     Check,
     Plus,
     UserCheck,
     UserPlus,
     Clock,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { usePostsStore } from "@/features/post";
@@ -55,10 +55,11 @@ export const SearchResultsPage = () => {
 
     const [, startTransition] = useTransition();
 
-    // Data stores for client fallback context
-    const { posts } = usePostsStore();
-    const { toggleJoinCommunity } = useCommunitiesStore();
-    const { followedSlugs, toggleFollowGame } = useGameStore();
+    // Data stores for client fallback context (atomic selectors)
+    const posts = usePostsStore((state) => state.posts);
+    const toggleJoinCommunity = useCommunitiesStore((state) => state.toggleJoinCommunity);
+    const followedSlugs = useGameStore((state) => state.followedSlugs);
+    const toggleFollowGame = useGameStore((state) => state.toggleFollowGame);
     const requireVerifiedEmail = useAuthStore((state) => state.requireVerifiedEmail);
 
     // Local state for friends management in user search results
@@ -175,10 +176,11 @@ export const SearchResultsPage = () => {
 
     const handleTabChange = useCallback(
         (type: SearchTabCategory) => {
+            const normalized = normalizeTabCategory(type);
             startTransition(() => {
                 navigate({
                     to: "/search",
-                    search: { q: initialQuery, type, page: 1 },
+                    search: { q: initialQuery, tab: normalized, type: normalized, page: 1, size: 10 },
                 });
             });
         },
@@ -197,7 +199,7 @@ export const SearchResultsPage = () => {
         startTransition(() => {
             navigate({
                 to: "/search",
-                search: { q: initialQuery, type: activeTab, page: newPage },
+                search: { q: initialQuery, tab: activeTab, type: activeTab, page: newPage, size: 10 },
             });
         });
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -364,7 +366,7 @@ export const SearchResultsPage = () => {
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="w-14 h-9 sm:w-16 sm:h-10 rounded-lg overflow-hidden shrink-0 bg-surface-inner">
                                                         <img
-                                                            src={game.coverUrl || game.headerImage}
+                                                            src={game.headerImage || game.bannerUrl || game.capsuleImage || game.logoUrl || DEFAULT_GAME_LOGO}
                                                             alt={game.name}
                                                             referrerPolicy="no-referrer"
                                                             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-200"
@@ -380,16 +382,15 @@ export const SearchResultsPage = () => {
                                                             {game.name}
                                                         </h3>
                                                         <div className="flex items-center gap-2 text-[11px] text-text-faint truncate">
-                                                            {game.steamRating && <span>{game.steamRating}% tích cực</span>}
-                                                            {game.steamRating && <span>·</span>}
-                                                            {game.genre && <span>{game.genre}</span>}
-                                                            {game.genre && <span>·</span>}
-                                                            <span>
-                                                                {t("search.followers", {
-                                                                    count: formatCompactNumber(game.followersCount),
-                                                                    defaultValue: `${formatCompactNumber(game.followersCount)} theo dõi`,
-                                                                })}
-                                                            </span>
+                                                            {(game.genres?.length || game.genre?.length) ? (
+                                                                <span>{(game.genres || game.genre || []).slice(0, 2).join(", ")}</span>
+                                                            ) : null}
+                                                            {game.releaseDate && (
+                                                                <>
+                                                                    {(game.genres?.length || game.genre?.length) ? <span>·</span> : null}
+                                                                    <span>{game.releaseDate}</span>
+                                                                </>
+                                                            )}
                                                             {game.developer && (
                                                                 <>
                                                                     <span className="hidden sm:inline">·</span>
@@ -475,12 +476,12 @@ export const SearchResultsPage = () => {
                                                     <div className="flex items-center gap-1.5 text-[11px] text-text-faint truncate">
                                                         <span>
                                                             {t("search.members", {
-                                                                count: formatCompactNumber(comm.membersCount),
-                                                                defaultValue: `${formatCompactNumber(comm.membersCount)} thành viên`,
+                                                                count: formatCompactNumber(comm.membersCount ?? comm.members),
+                                                                defaultValue: `${formatCompactNumber(comm.membersCount ?? comm.members)} thành viên`,
                                                             })}
                                                         </span>
-                                                        {comm.gameCategory && <span>·</span>}
-                                                        {comm.gameCategory && <span>{comm.gameCategory}</span>}
+                                                        {comm.category && <span>·</span>}
+                                                        {comm.category && <span>{comm.category}</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -493,14 +494,14 @@ export const SearchResultsPage = () => {
                                                     toggleJoinCommunity(comm.id);
                                                 }}
                                                 className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
-                                                    comm.isJoined
+                                                    comm.joined
                                                         ? "bg-surface-inner text-text-muted hover:text-rose-400"
                                                         : "bg-surface-inner hover:bg-surface-hover text-text"
                                                 }`}
                                             >
-                                                {comm.isJoined ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                                                {comm.joined ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                                                 <span className="hidden sm:inline">
-                                                    {comm.isJoined ? t("community.joinedButton", { defaultValue: "Đã tham gia" }) : t("community.join", { defaultValue: "Tham gia" })}
+                                                    {comm.joined ? t("community.joinedButton", { defaultValue: "Đã tham gia" }) : t("community.join", { defaultValue: "Tham gia" })}
                                                 </span>
                                             </button>
                                         </div>
@@ -540,13 +541,12 @@ export const SearchResultsPage = () => {
                                                 className="group flex items-center justify-between p-3 rounded-xl bg-surface hover:bg-surface-hover transition-colors cursor-pointer"
                                             >
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 bg-surface-inner">
-                                                        <img
+                                                    <div className="relative w-10 h-10 shrink-0">
+                                                        <UserAvatar
                                                             src={user.avatarUrl || user.avatar}
-                                                            alt={user.name}
-                                                            referrerPolicy="no-referrer"
-                                                            className="w-full h-full object-cover"
-                                                            loading="lazy"
+                                                            name={user.name || user.username}
+                                                            className="w-10 h-10"
+                                                            textClassName="text-sm"
                                                         />
                                                         {user.isOnline && (
                                                             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />
@@ -647,15 +647,12 @@ export const SearchResultsPage = () => {
                                             >
                                                 <div className="flex items-center justify-between text-xs">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-surface-inner shrink-0">
-                                                            <img
-                                                                src={authorAvatar}
-                                                                alt={authorName}
-                                                                referrerPolicy="no-referrer"
-                                                                className="w-full h-full object-cover"
-                                                                loading="lazy"
-                                                            />
-                                                        </div>
+                                                        <UserAvatar
+                                                            src={authorAvatar}
+                                                            name={authorName}
+                                                            className="w-6 h-6"
+                                                            textClassName="text-[10px]"
+                                                        />
                                                         <span className="font-semibold text-text truncate">
                                                             {authorName}
                                                         </span>
@@ -668,7 +665,7 @@ export const SearchResultsPage = () => {
                                                             </>
                                                         )}
                                                     </div>
-                                                    <span className="text-[11px] text-text-faint">{post.createdAt || post.timeAgo}</span>
+                                                    <span className="text-[11px] text-text-faint">{post.timeAgo}</span>
                                                 </div>
 
                                                 {post.title && (

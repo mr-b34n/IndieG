@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEnvelopeCircleCheck, faRightToBracket, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { EnvelopeOpen as faEnvelopeCircleCheck, SignIn as faRightToBracket } from "@phosphor-icons/react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "@/shared/store/useThemeStore";
 import { AppModal } from "@/shared/components/ui/AppModal";

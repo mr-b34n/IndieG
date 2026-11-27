@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faChevronLeft,
-    faChevronRight,
-    faExpand,
-    faMicrochip,
-    faDesktop,
-    faMemory,
-    faHdd,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CaretLeft as faChevronLeft, CaretRight as faChevronRight, ArrowsOut as faExpand, Cpu as faMicrochip, Monitor as faDesktop, Memory as faMemory, HardDrive as faHdd } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { Lightbox } from "@/shared/components/ui/Lightbox";
@@ -17,7 +9,6 @@ import { type GameData, type GameScreenshotItem, type GameTabType } from "../typ
 interface GameOverviewTabProps {
     game: GameData;
     relatedPosts?: any[];
-    relatedGuides?: any[];
     relatedGames?: GameData[];
     onViewCommunity?: () => void;
     onNavigateToTab?: (tab: GameTabType) => void;

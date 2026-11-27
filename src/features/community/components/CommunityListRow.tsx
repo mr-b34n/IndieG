@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Lock, Sparkles, Check, Plus, Gamepad2 } from "lucide-react";
+import { Lock, Sparkle as Sparkles, Check, Plus, GameController as Gamepad2 } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CommunityData } from "../types";

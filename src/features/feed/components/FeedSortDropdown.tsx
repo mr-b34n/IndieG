@@ -1,13 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-    faChevronDown, 
-    faCheck, 
-    faFire, 
-    faClock, 
-    faComments,
-    faArrowDownWideShort
-} from "@fortawesome/free-solid-svg-icons";
+import { CaretDown as ChevronDown, Check, Fire as Flame, Clock } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 export type FeedSortOption = "latest" | "popular" | "discussed";
@@ -32,12 +24,13 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const options: { id: FeedSortOption; labelKey: string; defaultLabel: string; icon: typeof faClock }[] = [
-        { id: "popular", labelKey: "feed.sortPopular", defaultLabel: "Hot", icon: faFire },
-        { id: "latest", labelKey: "feed.sortLatest", defaultLabel: "Newest", icon: faClock },
+    const options: { id: FeedSortOption; labelKey: string; defaultLabel: string; icon: typeof Clock }[] = [
+        { id: "popular", labelKey: "feed.sortPopular", defaultLabel: "Hot", icon: Flame },
+        { id: "latest", labelKey: "feed.sortLatest", defaultLabel: "Newest", icon: Clock },
     ];
 
     const currentOption = options.find((o) => o.id === value) || options[0];
+    const CurrentIcon = currentOption.icon;
 
     return (
         <div className="relative inline-block text-left" ref={containerRef}>
@@ -47,10 +40,10 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
                 onClick={() => setIsOpen((prev) => !prev)}
                 className="flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors cursor-pointer whitespace-nowrap"
             >
+                <CurrentIcon className="w-3.5 h-3.5 text-primary" />
                 <span>{t(currentOption.labelKey, { defaultValue: currentOption.defaultLabel })}</span>
-                <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className={`text-[10px] transition-transform duration-200 ${
+                <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
                         isOpen ? "rotate-180" : ""
                     }`}
                 />
@@ -61,6 +54,7 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
                 <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-divider-primary rounded-[6px] shadow-2xl z-50 overflow-hidden animate-fade-in p-1 flex flex-col gap-0.5">
                     {options.map((opt) => {
                         const isSelected = opt.id === value;
+                        const OptIcon = opt.icon;
                         return (
                             <button
                                 key={opt.id}
@@ -76,11 +70,11 @@ export const FeedSortDropdown = ({ value, onChange }: FeedSortDropdownProps) => 
                                 }`}
                             >
                                 <div className="flex items-center gap-2">
-                                    <FontAwesomeIcon icon={opt.icon} className="text-[11px] opacity-70" />
+                                    <OptIcon className="w-3.5 h-3.5 opacity-70" />
                                     <span>{t(opt.labelKey, { defaultValue: opt.defaultLabel })}</span>
                                 </div>
                                 {isSelected && (
-                                    <FontAwesomeIcon icon={faCheck} className="text-primary text-[10px] shrink-0" />
+                                    <Check className="w-3.5 h-3.5 text-primary shrink-0" />
                                 )}
                             </button>
                         );

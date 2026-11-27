@@ -7,10 +7,12 @@ export interface PostActions {
     pin: () => void;
 }
 
+// Non-reactive registry so mounting/unmounting <Post /> cards never triggers global Zustand re-renders
+const actionsRegistry = new Map<string, PostActions>();
+
 interface FeedNavigationState {
     focusedPostId: string | number | null;
     postIds: (string | number)[];
-    actionsMap: Record<string, PostActions>;
 
     setFocusedPostId: (id: string | number | null) => void;
     registerPostIds: (ids: (string | number)[]) => void;
@@ -28,31 +30,21 @@ interface FeedNavigationState {
 export const useFeedNavigationStore = create<FeedNavigationState>((set, get) => ({
     focusedPostId: null,
     postIds: [],
-    actionsMap: {},
 
     setFocusedPostId: (id) => set({ focusedPostId: id }),
 
     registerPostIds: (ids) => {
         set({ postIds: ids });
-        const current = get().focusedPostId;
-        // If current focused post is not in list, leave it or reset if empty
-        if (current && !ids.some((id) => String(id) === String(current))) {
-            // Keep current or set to null
-        }
     },
 
     registerPostActions: (id, actions) => {
         const key = String(id);
-        set((state) => ({
-            actionsMap: { ...state.actionsMap, [key]: actions },
-        }));
+        actionsRegistry.set(key, actions);
 
         return () => {
-            set((state) => {
-                const next = { ...state.actionsMap };
-                delete next[key];
-                return { actionsMap: next };
-            });
+            if (actionsRegistry.get(key) === actions) {
+                actionsRegistry.delete(key);
+            }
         };
     },
 
@@ -103,32 +95,35 @@ export const useFeedNavigationStore = create<FeedNavigationState>((set, get) => 
     },
 
     triggerUpvote: () => {
-        const { focusedPostId, actionsMap } = get();
+        const { focusedPostId } = get();
         if (!focusedPostId) return;
-        actionsMap[String(focusedPostId)]?.upvote();
+        actionsRegistry.get(String(focusedPostId))?.upvote();
     },
 
     triggerDownvote: () => {
-        const { focusedPostId, actionsMap } = get();
+        const { focusedPostId } = get();
         if (!focusedPostId) return;
-        actionsMap[String(focusedPostId)]?.downvote();
+        actionsRegistry.get(String(focusedPostId))?.downvote();
     },
 
     triggerBookmark: () => {
-        const { focusedPostId, actionsMap } = get();
+        const { focusedPostId } = get();
         if (!focusedPostId) return;
-        actionsMap[String(focusedPostId)]?.bookmark();
+        actionsRegistry.get(String(focusedPostId))?.bookmark();
     },
 
     triggerPin: () => {
-        const { focusedPostId, actionsMap } = get();
+        const { focusedPostId } = get();
         if (!focusedPostId) return;
-        actionsMap[String(focusedPostId)]?.pin();
+        actionsRegistry.get(String(focusedPostId))?.pin();
     },
 }));
 
 if (typeof window !== "undefined") {
-    window.addEventListener("indieg:auth-cleared", () => {
-        useFeedNavigationStore.setState({ focusedPostId: null, postIds: [], actionsMap: {} });
-    });
+    const handleAuthCleared = () => {
+        actionsRegistry.clear();
+        useFeedNavigationStore.setState({ focusedPostId: null, postIds: [] });
+    };
+    window.addEventListener("ludon:auth-cleared", handleAuthCleared);
+    window.addEventListener("indieg:auth-cleared", handleAuthCleared);
 }
