@@ -17,7 +17,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             isRead: notificationData.isRead ?? false,
             createdAt: notificationData.createdAt || new Date().toISOString(),
             title: notificationData.title || getTitleForType(notificationData.type),
-            avatarUrl: notificationData.avatarUrl || getAvatarForType(notificationData.type),
+            avatarUrl: notificationData.avatarUrl,
             link: notificationData.link || getLinkForType(notificationData.type, notificationData.referenceId),
         };
 
@@ -65,9 +65,12 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 }));
 
 if (typeof window !== "undefined") {
-    window.addEventListener("indieg:auth-cleared", () => {
+    (window as unknown as { __notificationStore?: typeof useNotificationStore }).__notificationStore = useNotificationStore;
+    const handleAuthCleared = () => {
         useNotificationStore.setState({ notifications: [], isOpen: false });
-    });
+    };
+    window.addEventListener("ludon:auth-cleared", handleAuthCleared);
+    window.addEventListener("indieg:auth-cleared", handleAuthCleared);
 }
 
 function getTitleForType(type: string): string {
@@ -84,20 +87,6 @@ function getTitleForType(type: string): string {
             return "Bạn vừa được nhắc đến";
         default:
             return "Thông báo mới";
-    }
-}
-
-function getAvatarForType(type: string): string {
-    switch (type) {
-        case "comment":
-        case "reply":
-            return "https://api.dicebear.com/7.x/avataaars/svg?seed=Commenter";
-        case "like":
-            return "https://api.dicebear.com/7.x/avataaars/svg?seed=Liker";
-        case "community":
-            return "https://api.dicebear.com/7.x/identicon/svg?seed=Community";
-        default:
-            return "https://api.dicebear.com/7.x/bottts/svg?seed=System";
     }
 }
 
