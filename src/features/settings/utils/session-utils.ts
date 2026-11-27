@@ -1,21 +1,6 @@
-import {
-    faGlobe,
-    faGamepad,
-    faLaptopCode,
-    faMobileScreen,
-} from '@fortawesome/free-solid-svg-icons';
-import {
-    faChrome,
-    faFirefoxBrowser,
-    faSafari,
-    faEdge,
-    faOpera,
-    faApple,
-    faWindows,
-    faLinux,
-    faAndroid,
-} from '@fortawesome/free-brands-svg-icons';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { type AppIconComponent as IconDefinition } from "@/shared/components/ui/Icon";
+import { Globe as faGlobe, GameController as faGamepad, Laptop as faLaptopCode, DeviceMobile as faMobileScreen } from "@phosphor-icons/react";
+import { ChromeBrandIcon as faChrome, FirefoxBrandIcon as faFirefoxBrowser, SafariBrandIcon as faSafari, EdgeBrandIcon as faEdge, OperaBrandIcon as faOpera, AppleBrandIcon as faApple, WindowsBrandIcon as faWindows, LinuxBrandIcon as faLinux, AndroidBrandIcon as faAndroid } from "@/shared/components/ui/BrandIcons";
 import type { UserSessionDto } from '@/shared/api/types';
 
 export function parseSessionDeviceInfo(
@@ -27,6 +12,7 @@ export function parseSessionDeviceInfo(
     os: string;
     device: string;
     isMobile: boolean;
+    deviceType: 'desktop' | 'mobile' | 'tablet' | 'browser';
     browserIcon: IconDefinition;
     osIcon: IconDefinition;
     icon: IconDefinition;
@@ -232,8 +218,10 @@ export function formatSessionDateOnly(dateStr?: string | null): string {
 export function getCurrentSessionTokenId(): string | null {
     if (typeof window === 'undefined') return null;
     const token =
+        localStorage.getItem('ludon_refresh_token') ||
         localStorage.getItem('indieg_refresh_token') ||
         localStorage.getItem('refresh_token') ||
+        localStorage.getItem('ludon_access_token') ||
         localStorage.getItem('indieg_access_token') ||
         localStorage.getItem('access_token');
     if (!token) return null;

@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react';
+import { CaretRight as ChevronRight } from '@phosphor-icons/react';
 import type { NavTabItem, SettingsTab } from '../types';
 import { cn } from '@/shared/utils/cn';
 

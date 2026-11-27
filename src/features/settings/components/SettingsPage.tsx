@@ -2,28 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
     Palette,
-    Gamepad2,
+    GameController as Gamepad2,
     Bell,
     Shield,
     ShieldCheck,
-    MessageSquarePlus,
-} from 'lucide-react';
+    ChatCircleDots,
+} from '@phosphor-icons/react';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useGameStore } from '@/features/game';
 import { useAuthStore, checkPasswordRequirements } from '@/features/auth';
-import { authApi, profilesApi, usersApi } from '@/shared/api';
+import { authApi, feedbackApi, profilesApi, usersApi } from '@/shared/api';
+import { queryClient } from '@/shared/lib/queryClient';
 import {
+    QUERY_KEYS,
     useUserSessionsQuery,
     useRevokeSessionMutation,
     useRevokeAllSessionsMutation,
     useUserSettingsQuery,
     useUpdateUserSettingsMutation,
+    useBlockedUsersQuery,
+    useUnblockTargetUserMutation,
 } from '@/shared/api/useQueries';
-import type { UserSettingsTheme } from '@/shared/api/types';
+import type { FeedbackDto, UserSettingsTheme } from '@/shared/api/types';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle';
 import type { SettingsTab, BlockedUser, NavTabItem } from '../types';
 import { VALID_SETTINGS_TABS } from '../types';
+import { isDangerConfirmationValid } from '../utils/danger-modal-utils';
 import { SettingsSidebar } from './SettingsSidebar';
 import { GeneralSettingsTab } from './tabs/GeneralSettingsTab';
 import { QuickAccessSettingsTab } from './tabs/QuickAccessSettingsTab';
@@ -38,8 +43,11 @@ export function SettingsPage() {
     const { t } = useTranslation();
     useDocumentTitle(t('common.settings', { defaultValue: 'Cài đặt' }));
 
-    const authStore = useAuthStore();
-    const isLoggedIn = !!authStore.user;
+    const user = useAuthStore((state) => state.user);
+    const authLoading = useAuthStore((state) => state.loading);
+    const logout = useAuthStore((state) => state.logout);
+    const updateUser = useAuthStore((state) => state.updateUser);
+    const isLoggedIn = !!user;
 
     const rawTab = searchParams?.tab as string | undefined;
 
@@ -54,7 +62,7 @@ export function SettingsPage() {
     }
 
     const activeTab: SettingsTab =
-        !authStore.loading && !isLoggedIn && resolvedTab !== "general" && resolvedTab !== "feedback"
+        !authLoading && !isLoggedIn && resolvedTab !== "general" && resolvedTab !== "feedback"
             ? "general"
             : resolvedTab;
 
@@ -66,7 +74,10 @@ export function SettingsPage() {
         });
     };
 
-    const { data: remoteSessions, isLoading: sessionsLoading } = useUserSessionsQuery();
+    const { data: remoteSessions, isLoading: sessionsLoading } = useUserSessionsQuery(
+        undefined,
+        { enabled: activeTab === "account" }
+    );
     const revokeSessionMutation = useRevokeSessionMutation();
     const revokeAllSessionsMutation = useRevokeAllSessionsMutation();
     const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
@@ -118,12 +129,16 @@ export function SettingsPage() {
         profileVisibility: "public" | "friends" | "private";
         onlineStatus: boolean;
         gameLibraryVisibility: "public" | "friends" | "private";
+        allowMessages: boolean;
+        allowMentions: boolean;
     }>>({});
 
     const privacy = {
         profileVisibility: localPrivacyOverrides.profileVisibility ?? (userSettings?.privacy?.profileVisibility === "community" ? "friends" : (userSettings?.privacy?.profileVisibility || "public")) as "public" | "friends" | "private",
         onlineStatus: localPrivacyOverrides.onlineStatus ?? (userSettings?.privacy?.onlineStatus ?? true),
         gameLibraryVisibility: localPrivacyOverrides.gameLibraryVisibility ?? ("public" as const),
+        allowMessages: localPrivacyOverrides.allowMessages ?? (userSettings?.privacy?.allowMessages ?? true),
+        allowMentions: localPrivacyOverrides.allowMentions ?? (userSettings?.privacy?.allowMentions ?? true),
     };
 
     // 3. Notifications Settings (state derived with local overrides)
@@ -133,17 +148,21 @@ export function SettingsPage() {
         likes: boolean;
         mentions: boolean;
         communityActivity: boolean;
+        email: boolean;
+        push: boolean;
     }>>({});
 
     const notifications = {
         comments: localNotificationOverrides.comments ?? (userSettings?.notifications?.comment ?? true),
         replies: localNotificationOverrides.replies ?? (userSettings?.notifications?.reply ?? true),
-        likes: localNotificationOverrides.likes ?? true,
+        likes: localNotificationOverrides.likes ?? (userSettings?.notifications?.like ?? true),
         mentions: localNotificationOverrides.mentions ?? (userSettings?.notifications?.mention ?? true),
         communityActivity: localNotificationOverrides.communityActivity ?? (userSettings?.notifications?.community ?? false),
+        email: localNotificationOverrides.email ?? (userSettings?.notifications?.email ?? true),
+        push: localNotificationOverrides.push ?? (userSettings?.notifications?.push ?? true),
     };
 
-    // Sync remote theme/language to Zustand store on load
+    // Sync remote theme/language/quickAccessSlugs to Zustand store on load
     useEffect(() => {
         if (!userSettings) return;
 
@@ -156,7 +175,14 @@ export function SettingsPage() {
                 useThemeStore.getState().setLanguage(userSettings.language);
             }
         }
-    }, [userSettings]);
+        if (userSettings.quickAccessSlugs && Array.isArray(userSettings.quickAccessSlugs) && userSettings.quickAccessSlugs.length > 0) {
+            const currentSlugs = useGameStore.getState().quickAccessSlugs;
+            if (JSON.stringify(currentSlugs) !== JSON.stringify(userSettings.quickAccessSlugs)) {
+                setQuickAccessSlugs(userSettings.quickAccessSlugs);
+                setTempSelectedSlugs(userSettings.quickAccessSlugs);
+            }
+        }
+    }, [userSettings, setQuickAccessSlugs]);
 
     const handleUpdateTheme = (mode: 'auto' | 'dark' | 'light') => {
         setThemeMode(mode);
@@ -170,39 +196,91 @@ export function SettingsPage() {
         updateSettingsMutation.mutate({ language: nextLang });
     };
 
-    const handleUpdatePrivacy = (newPrivacy: typeof privacy) => {
-        setLocalPrivacyOverrides(newPrivacy);
+    const handleUpdatePrivacy = (newPrivacy: {
+        profileVisibility: "public" | "friends" | "private";
+        onlineStatus: boolean;
+        gameLibraryVisibility: "public" | "friends" | "private";
+        allowMessages?: boolean;
+        allowMentions?: boolean;
+    }) => {
+        const merged = {
+            ...privacy,
+            ...newPrivacy,
+            allowMessages: newPrivacy.allowMessages ?? privacy.allowMessages,
+            allowMentions: newPrivacy.allowMentions ?? privacy.allowMentions,
+        };
+        setLocalPrivacyOverrides(merged);
         updateSettingsMutation.mutate({
             privacy: {
-                profileVisibility: newPrivacy.profileVisibility === "friends" ? "community" : newPrivacy.profileVisibility,
-                onlineStatus: newPrivacy.onlineStatus,
+                profileVisibility: merged.profileVisibility === "friends" ? "community" : merged.profileVisibility,
+                onlineStatus: merged.onlineStatus,
+                allowMessages: merged.allowMessages,
+                allowMentions: merged.allowMentions,
             },
         });
     };
 
-    const handleUpdateNotifications = (newNotifications: typeof notifications) => {
-        setLocalNotificationOverrides(newNotifications);
+    const handleUpdateNotifications = (newNotifications: {
+        comments: boolean;
+        replies: boolean;
+        likes: boolean;
+        mentions: boolean;
+        communityActivity: boolean;
+        email?: boolean;
+        push?: boolean;
+    }) => {
+        const merged = {
+            ...notifications,
+            ...newNotifications,
+            email: newNotifications.email ?? notifications.email,
+            push: newNotifications.push ?? notifications.push,
+        };
+        setLocalNotificationOverrides(merged);
         updateSettingsMutation.mutate({
             notifications: {
-                comment: newNotifications.comments,
-                reply: newNotifications.replies,
-                mention: newNotifications.mentions,
-                community: newNotifications.communityActivity,
+                comment: merged.comments,
+                reply: merged.replies,
+                like: merged.likes,
+                mention: merged.mentions,
+                community: merged.communityActivity,
+                email: merged.email,
+                push: merged.push,
             },
         });
     };
 
-    const isEmailVerified = authStore.user?.isVerified || false;
+    const isEmailVerified = user?.isVerified || false;
     const [emailPendingVerify, setEmailPendingVerify] = useState(false);
     const [isSendingVerifyEmail, setIsSendingVerifyEmail] = useState(false);
     const [isCheckingVerify, setIsCheckingVerify] = useState(false);
-    const [customEmailOverride, setCustomEmailOverride] = useState<string | null>(null);
+    const [pendingNewEmail, setPendingNewEmail] = useState<string | null>(null);
+    const [isChangingEmail, setIsChangingEmail] = useState(false);
+    const [isCancellingEmailChange, setIsCancellingEmailChange] = useState(false);
     const [newEmail, setNewEmail] = useState("");
     const [emailPasswordConfirm, setEmailPasswordConfirm] = useState("");
     const [emailSuccessMsg, setEmailSuccessMsg] = useState<string | null>(null);
     const [emailErrorMsg, setEmailErrorMsg] = useState<string | null>(null);
 
-    const displayEmail = customEmailOverride || authStore.user?.email || "";
+    const displayEmail = user?.email || "";
+
+    // Load pendingEmail status from /auth/me when entering Account tab
+    useEffect(() => {
+        if (!isLoggedIn || activeTab !== "account") return;
+        let cancelled = false;
+        authApi
+            .me()
+            .then((me) => {
+                if (cancelled) return;
+                const pending = (me as unknown as { pendingEmail?: string | null })?.pendingEmail;
+                setPendingNewEmail(pending || null);
+            })
+            .catch(() => {
+                // Non-critical
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isLoggedIn, activeTab]);
 
     const [changePwdState, setChangePwdState] = useState({
         currentPassword: "",
@@ -213,8 +291,28 @@ export function SettingsPage() {
     const [changePwdError, setChangePwdError] = useState<string | null>(null);
     const [changePwdSuccess, setChangePwdSuccess] = useState<string | null>(null);
 
-    // Blocked Users (integrated into Privacy tab)
-    const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+    // Blocked Users (integrated into Privacy tab via real API)
+    const { data: rawBlockedData } = useBlockedUsersQuery(isLoggedIn);
+    const unblockMutation = useUnblockTargetUserMutation();
+
+    const blockedUsers: BlockedUser[] = React.useMemo(() => {
+        if (!rawBlockedData || !Array.isArray(rawBlockedData)) return [];
+        return rawBlockedData.map((item) => {
+            const target = item.blockedUser || item.user;
+            const targetId = target?.id || item.addresseeId || item.id;
+            const name = target?.displayName || target?.name || target?.username || 'Người dùng';
+            const username = target?.username || 'unknown';
+            const avatar = target?.avatarUrl || target?.avatar || "";
+            return {
+                id: targetId,
+                name,
+                username,
+                avatar,
+                blockedAt: item.createdAt || new Date().toISOString(),
+                reason: '',
+            };
+        });
+    }, [rawBlockedData]);
 
     // Feedback
     const [feedbackType, setFeedbackType] = useState<"bug" | "idea">("bug");
@@ -222,6 +320,31 @@ export function SettingsPage() {
     const [feedbackDescription, setFeedbackDescription] = useState("");
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
     const [isFeedbackSuccess, setIsFeedbackSuccess] = useState(false);
+    const [feedbackError, setFeedbackError] = useState<string | null>(null);
+    const [myFeedbacks, setMyFeedbacks] = useState<FeedbackDto[]>([]);
+    const [isLoadingMyFeedbacks, setIsLoadingMyFeedbacks] = useState(false);
+
+    useEffect(() => {
+        if (!isLoggedIn || activeTab !== "feedback") return;
+        let cancelled = false;
+        setIsLoadingMyFeedbacks(true);
+        feedbackApi
+            .getMine({ page: 1, limit: 20 })
+            .then((res) => {
+                if (!cancelled && Array.isArray(res?.data)) {
+                    setMyFeedbacks(res.data);
+                }
+            })
+            .catch(() => {
+                // Non-critical
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingMyFeedbacks(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isLoggedIn, activeTab]);
 
     // Danger Zone Modals (integrated into Account tab)
     const [dangerModal, setDangerModal] = useState<{
@@ -233,6 +356,7 @@ export function SettingsPage() {
 
     const handleSaveQuickAccess = () => {
         setQuickAccessSlugs(tempSelectedSlugs);
+        updateSettingsMutation.mutate({ quickAccessSlugs: tempSelectedSlugs });
         setSaveQuickAccessSuccess(true);
         setTimeout(() => setSaveQuickAccessSuccess(false), 2500);
     };
@@ -292,29 +416,69 @@ export function SettingsPage() {
         }
     };
 
-    const handleChangeEmailSubmit = (e: React.FormEvent) => {
+    const handleChangeEmailSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newEmail.includes("@")) {
-            setEmailSuccessMsg(t('settings.account.invalidEmailMsg', { defaultValue: 'Vui lòng nhập địa chỉ email hợp lệ!' }));
+        setEmailErrorMsg(null);
+        setEmailSuccessMsg(null);
+
+        const trimmedEmail = newEmail.trim().toLowerCase();
+        if (!trimmedEmail || !trimmedEmail.includes("@")) {
+            setEmailErrorMsg(t('settings.account.invalidEmailMsg', { defaultValue: 'Vui lòng nhập địa chỉ email hợp lệ!' }));
             return;
         }
         if (!emailPasswordConfirm) {
-            setEmailSuccessMsg(t('settings.account.requireCurrentPasswordMsg', { defaultValue: 'Vui lòng nhập mật khẩu hiện tại để xác nhận đổi email!' }));
+            setEmailErrorMsg(t('settings.account.requireCurrentPasswordMsg', { defaultValue: 'Vui lòng nhập mật khẩu hiện tại để xác nhận đổi email!' }));
             return;
         }
-        setCustomEmailOverride(newEmail);
-        authStore.updateUser({ email: newEmail, isVerified: false });
-        if (authStore.user?.isVerified) {
-            authStore.toggleVerifyEmailStatus();
+
+        setIsChangingEmail(true);
+        try {
+            const res = await authApi.requestEmailChange({
+                newEmail: trimmedEmail,
+                currentPassword: emailPasswordConfirm,
+            });
+            setPendingNewEmail(res?.pendingEmail || trimmedEmail);
+            setNewEmail("");
+            setEmailPasswordConfirm("");
+            setEmailSuccessMsg(
+                t('settings.account.updateEmailSuccessMsg', {
+                    defaultValue: 'Đã gửi liên kết xác nhận đến email mới! Vui lòng kiểm tra hộp thư để hoàn tất thay đổi.',
+                })
+            );
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : t('settings.account.updateEmailErrorMsg', { defaultValue: 'Không thể yêu cầu đổi email. Vui lòng kiểm tra lại mật khẩu hoặc địa chỉ email.' });
+            setEmailErrorMsg(message);
+        } finally {
+            setIsChangingEmail(false);
         }
-        setNewEmail("");
-        setEmailPasswordConfirm("");
-        setEmailSuccessMsg(t('settings.account.updateEmailSuccessMsg', { defaultValue: 'Đã cập nhật email thành công! Vui lòng kiểm tra hòm thư để xác thực.' }));
-        setTimeout(() => setEmailSuccessMsg(null), 4000);
+    };
+
+    const handleCancelEmailChange = async () => {
+        setIsCancellingEmailChange(true);
+        setEmailErrorMsg(null);
+        setEmailSuccessMsg(null);
+        try {
+            await authApi.cancelEmailChange();
+            setPendingNewEmail(null);
+            setEmailSuccessMsg(
+                t('settings.account.cancelEmailChangeSuccess', { defaultValue: 'Đã hủy yêu cầu đổi địa chỉ email.' })
+            );
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : t('settings.account.cancelEmailChangeError', { defaultValue: 'Không thể hủy yêu cầu đổi email.' });
+            setEmailErrorMsg(message);
+        } finally {
+            setIsCancellingEmailChange(false);
+        }
     };
 
     const handleSendVerificationEmail = async () => {
-        const emailToSend = (displayEmail || authStore.user?.email || "").trim();
+        const emailToSend = (displayEmail || user?.email || "").trim();
         if (!emailToSend) {
             setEmailErrorMsg(t('settings.account.emailNotFound', { defaultValue: 'Không tìm thấy địa chỉ email.' }));
             return;
@@ -346,10 +510,13 @@ export function SettingsPage() {
         setEmailErrorMsg(null);
         try {
             const profile = await profilesApi.getMyProfile();
+            if (profile) {
+                queryClient.setQueryData(QUERY_KEYS.myProfile, profile);
+            }
             const verified = Boolean(profile?.isVerified || (profile as { isEmailVerified?: boolean })?.isEmailVerified);
             if (verified) {
-                if (authStore.user) {
-                    authStore.updateUser({ isVerified: true });
+                if (user) {
+                    updateUser({ isVerified: true });
                 }
                 setEmailPendingVerify(false);
                 setEmailSuccessMsg(t('settings.account.verifySuccessMsg', { defaultValue: 'Email của bạn đã được xác minh thành công!' }));
@@ -364,41 +531,91 @@ export function SettingsPage() {
         }
     };
 
-    const handleUnblockUser = (userId: string) => {
-        setBlockedUsers(blockedUsers.filter((u) => u.id !== userId));
+    const handleUnblockUser = async (userId: string) => {
+        try {
+            await unblockMutation.mutateAsync(userId);
+        } catch (err) {
+            console.error("Failed to unblock user:", err);
+        }
     };
 
-    const handleSubmitFeedback = (e: React.FormEvent) => {
+    const handleSubmitFeedback = async (e: React.FormEvent) => {
         e.preventDefault();
+        setFeedbackError(null);
+        setIsFeedbackSuccess(false);
+
+        const title = feedbackTitle.trim();
+        const description = feedbackDescription.trim();
+        if (title.length < 4) {
+            setFeedbackError(t('settings.feedback.titleTooShort', { defaultValue: 'Tiêu đề cần ít nhất 4 ký tự.' }));
+            return;
+        }
+        if (description.length < 10) {
+            setFeedbackError(t('settings.feedback.descTooShort', { defaultValue: 'Nội dung mô tả cần ít nhất 10 ký tự.' }));
+            return;
+        }
+
         setIsSubmittingFeedback(true);
-        setTimeout(() => {
-            setIsSubmittingFeedback(false);
+        try {
+            const created = await feedbackApi.create({
+                type: feedbackType,
+                title,
+                description,
+            });
             setIsFeedbackSuccess(true);
-            setTimeout(() => {
-                setIsFeedbackSuccess(false);
-                setFeedbackTitle("");
-                setFeedbackDescription("");
-            }, 3000);
-        }, 600);
+            setFeedbackTitle("");
+            setFeedbackDescription("");
+            if (isLoggedIn && created) {
+                setMyFeedbacks((prev) => [created, ...prev]);
+            }
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : t('settings.feedback.submitError', { defaultValue: 'Không thể gửi phản hồi lúc này. Vui lòng thử lại sau.' });
+            setFeedbackError(message);
+        } finally {
+            setIsSubmittingFeedback(false);
+        }
     };
 
-    const handleConfirmDangerAction = () => {
+    const [, setDangerLoading] = useState(false);
+
+    const handleConfirmDangerAction = async () => {
         if (dangerModal.type === "deactivate") {
-            if (dangerModal.confirmText.trim().toUpperCase() !== "TAM NGUNG") {
-                setDangerAlertMsg(t('settings.danger.deactivateMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "TAM NGUNG"!' }));
+            if (!isDangerConfirmationValid("deactivate", dangerModal.confirmText)) {
+                setDangerAlertMsg(t('settings.danger.deactivateMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "TAM NGUNG" hoặc "DEACTIVATE"!' }));
                 return;
             }
-            alert(t('settings.danger.deactivateSuccessAlert', { defaultValue: 'Tài khoản của bạn đã được tạm ngưng thành công.' }));
-            setDangerModal({ open: false, type: null, confirmText: "" });
-            setDangerAlertMsg(null);
+            try {
+                setDangerLoading(true);
+                await profilesApi.toggleArchived(true);
+                setDangerModal({ open: false, type: null, confirmText: "" });
+                setDangerAlertMsg(null);
+                await logout();
+                navigate({ to: "/auth" });
+            } catch (err: unknown) {
+                setDangerAlertMsg((err as { message?: string })?.message || "Không thể tạm ngưng tài khoản. Vui lòng thử lại.");
+            } finally {
+                setDangerLoading(false);
+            }
         } else if (dangerModal.type === "delete") {
-            if (dangerModal.confirmText.trim().toUpperCase() !== "XOA TAI KHOAN") {
-                setDangerAlertMsg(t('settings.danger.deleteMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "XOA TAI KHOAN"!' }));
+            if (!isDangerConfirmationValid("delete", dangerModal.confirmText)) {
+                setDangerAlertMsg(t('settings.danger.deleteMatchError', { defaultValue: 'Vui lòng gõ chính xác cụm từ "XOA TAI KHOAN" hoặc "DELETE ACCOUNT"!' }));
                 return;
             }
-            alert(t('settings.danger.deleteSuccessAlert', { defaultValue: 'Tài khoản của bạn đã được xóa vĩnh viễn.' }));
-            setDangerModal({ open: false, type: null, confirmText: "" });
-            setDangerAlertMsg(null);
+            try {
+                setDangerLoading(true);
+                await profilesApi.deleteMe();
+                setDangerModal({ open: false, type: null, confirmText: "" });
+                setDangerAlertMsg(null);
+                await logout();
+                navigate({ to: "/auth" });
+            } catch (err: unknown) {
+                setDangerAlertMsg((err as { message?: string })?.message || "Không thể xóa tài khoản. Vui lòng thử lại.");
+            } finally {
+                setDangerLoading(false);
+            }
         }
     };
 
@@ -439,8 +656,8 @@ export function SettingsPage() {
         {
             id: "feedback",
             label: t('settings.tabs.feedback', { defaultValue: "Báo lỗi & Đóng góp" }),
-            icon: MessageSquarePlus,
-            desc: t('settings.tabs.feedbackDesc', { defaultValue: "Gửi ý kiến phản hồi" }),
+            icon: ChatCircleDots,
+            desc: t('settings.tabs.feedbackDesc', { defaultValue: "Gửi lỗi hoặc ý tưởng cải tiến" }),
         },
     ];
 
@@ -502,10 +719,13 @@ export function SettingsPage() {
                             isSendingVerifyEmail={isSendingVerifyEmail}
                             isCheckingVerify={isCheckingVerify}
                             displayEmail={displayEmail}
-                            authLoading={authStore.loading}
-                            authUserId={authStore.user?.id}
+                            authLoading={authLoading}
+                            authUserId={user?.id}
                             emailSuccessMsg={emailSuccessMsg}
                             emailErrorMsg={emailErrorMsg}
+                            pendingNewEmail={pendingNewEmail}
+                            isChangingEmail={isChangingEmail}
+                            isCancellingEmailChange={isCancellingEmailChange}
                             newEmail={newEmail}
                             emailPasswordConfirm={emailPasswordConfirm}
                             onNewEmailChange={setNewEmail}
@@ -513,6 +733,7 @@ export function SettingsPage() {
                             onConfirmVerification={handleConfirmVerification}
                             onSendVerificationEmail={handleSendVerificationEmail}
                             onChangeEmailSubmit={handleChangeEmailSubmit}
+                            onCancelEmailChange={handleCancelEmailChange}
                             changePwdState={changePwdState}
                             changePwdLoading={changePwdLoading}
                             changePwdError={changePwdError}
@@ -560,6 +781,9 @@ export function SettingsPage() {
                             feedbackDescription={feedbackDescription}
                             isSubmittingFeedback={isSubmittingFeedback}
                             isFeedbackSuccess={isFeedbackSuccess}
+                            feedbackError={feedbackError}
+                            myFeedbacks={myFeedbacks}
+                            isLoadingMyFeedbacks={isLoadingMyFeedbacks}
                             onFeedbackTypeChange={setFeedbackType}
                             onFeedbackTitleChange={setFeedbackTitle}
                             onFeedbackDescriptionChange={setFeedbackDescription}

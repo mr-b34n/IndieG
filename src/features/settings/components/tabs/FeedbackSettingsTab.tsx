@@ -1,14 +1,17 @@
 import React from 'react';
 import {
     Bug,
-    Sparkles,
-    CheckCircle2,
-    Loader2,
-    Send,
-} from 'lucide-react';
+    Sparkle as Sparkles,
+    CheckCircle as CheckCircle2,
+    WarningCircle as AlertCircle,
+    CircleNotch as Loader2,
+    PaperPlaneRight as Send,
+    Clock,
+} from '@phosphor-icons/react';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
+import type { FeedbackDto } from '@/shared/api/types';
 
 interface FeedbackSettingsTabProps {
     feedbackType: "bug" | "idea";
@@ -16,6 +19,9 @@ interface FeedbackSettingsTabProps {
     feedbackDescription: string;
     isSubmittingFeedback: boolean;
     isFeedbackSuccess: boolean;
+    feedbackError?: string | null;
+    myFeedbacks?: FeedbackDto[];
+    isLoadingMyFeedbacks?: boolean;
     onFeedbackTypeChange: (type: "bug" | "idea") => void;
     onFeedbackTitleChange: (val: string) => void;
     onFeedbackDescriptionChange: (val: string) => void;
@@ -28,12 +34,35 @@ export function FeedbackSettingsTab({
     feedbackDescription,
     isSubmittingFeedback,
     isFeedbackSuccess,
+    feedbackError,
+    myFeedbacks = [],
+    isLoadingMyFeedbacks = false,
     onFeedbackTypeChange,
     onFeedbackTitleChange,
     onFeedbackDescriptionChange,
     onSubmitFeedback,
 }: FeedbackSettingsTabProps) {
     const { t } = useTranslation();
+
+    const getStatusBadge = (status: FeedbackDto["status"]) => {
+        switch (status) {
+            case "resolved":
+                return {
+                    label: t('settings.feedback.statusResolved', { defaultValue: 'Đã xử lý' }),
+                    className: 'bg-emerald-500/15 text-emerald-400',
+                };
+            case "reviewed":
+                return {
+                    label: t('settings.feedback.statusReviewed', { defaultValue: 'Đang xem xét' }),
+                    className: 'bg-amber-500/15 text-amber-400',
+                };
+            default:
+                return {
+                    label: t('settings.feedback.statusOpen', { defaultValue: 'Đã tiếp nhận' }),
+                    className: 'bg-primary/15 text-primary',
+                };
+        }
+    };
 
     return (
         <div className="space-y-8 animate-tab-enter">
@@ -47,6 +76,14 @@ export function FeedbackSettingsTab({
                             {t('settings.feedback.successMsg', { defaultValue: 'Cảm ơn bạn! Đội ngũ phát triển đã tiếp nhận và sẽ xem xét ý kiến của bạn.' })}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Error Notification */}
+            {feedbackError && (
+                <div className="p-4 bg-rose-500/10 text-rose-400 rounded-2xl text-xs font-bold flex items-center gap-3 animate-fade-in shadow-xs">
+                    <AlertCircle className="size-5 shrink-0" />
+                    <span>{feedbackError}</span>
                 </div>
             )}
 
@@ -164,7 +201,7 @@ export function FeedbackSettingsTab({
                 {/* Submit button */}
                 <Button
                     type="submit"
-                    disabled={isSubmittingFeedback || !feedbackTitle.trim() || !feedbackDescription.trim()}
+                    disabled={isSubmittingFeedback || feedbackTitle.trim().length < 4 || feedbackDescription.trim().length < 10}
                     className="w-full sm:w-auto px-6 py-2.5 font-bold shadow-md shadow-primary/25 bg-primary hover:bg-primary-hover text-white"
                 >
                     {isSubmittingFeedback ? (
@@ -180,6 +217,68 @@ export function FeedbackSettingsTab({
                     )}
                 </Button>
             </form>
+
+            {/* User's Submitted Feedback History */}
+            {(isLoadingMyFeedbacks || myFeedbacks.length > 0) && (
+                <div className="pt-6 border-t border-border/50 max-w-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-text">
+                            {t('settings.feedback.historyTitle', { defaultValue: 'Phản hồi đã gửi của bạn' })} ({myFeedbacks.length})
+                        </h3>
+                        {isLoadingMyFeedbacks && <Loader2 className="size-3.5 animate-spin text-primary" />}
+                    </div>
+
+                    <div className="space-y-2.5">
+                        {myFeedbacks.map((fb) => {
+                            const badge = getStatusBadge(fb.status);
+                            return (
+                                <div
+                                    key={fb.id}
+                                    className="p-4 rounded-2xl bg-surface-inner space-y-1.5 shadow-xs"
+                                >
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span
+                                                className={cn(
+                                                    "px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase shrink-0",
+                                                    fb.type === "bug"
+                                                        ? "bg-rose-500/15 text-rose-400"
+                                                        : "bg-primary/15 text-primary"
+                                                )}
+                                            >
+                                                {fb.type === "bug" ? "Bug" : "Idea"}
+                                            </span>
+                                            <span className="text-xs font-bold text-text truncate">
+                                                {fb.title}
+                                            </span>
+                                        </div>
+
+                                        <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0", badge.className)}>
+                                            {badge.label}
+                                        </span>
+                                    </div>
+
+                                    <p className="text-[11px] text-text-muted leading-relaxed line-clamp-2">
+                                        {fb.description}
+                                    </p>
+
+                                    {fb.adminNote && (
+                                        <div className="mt-1.5 p-2.5 rounded-xl bg-surface text-[11px] text-text-muted">
+                                            <span className="font-bold text-primary">BQT: </span>
+                                            {fb.adminNote}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-1 text-[10px] text-text-faint pt-0.5">
+                                        <Clock className="size-3" />
+                                        <span>{new Date(fb.createdAt).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

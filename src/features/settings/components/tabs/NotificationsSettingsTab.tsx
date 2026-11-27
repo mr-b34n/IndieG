@@ -1,12 +1,14 @@
 import {
-    MessageSquare,
-    CornerDownRight,
+    Chat as MessageSquare,
+    ArrowElbowDownRight as CornerDownRight,
     Heart,
-    AtSign,
+    At as AtSign,
     Users,
-    CheckCheck,
-    BellOff,
-} from 'lucide-react';
+    Checks as CheckCheck,
+    BellSlash as BellOff,
+    Envelope as Mail,
+    Bell,
+} from '@phosphor-icons/react';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { Switch } from '@/shared/components/ui/switch';
 import { Button } from '@/shared/components/ui/button';
@@ -17,6 +19,8 @@ interface NotificationSettings {
     likes: boolean;
     mentions: boolean;
     communityActivity: boolean;
+    email?: boolean;
+    push?: boolean;
 }
 
 interface NotificationsSettingsTabProps {
@@ -81,6 +85,8 @@ export function NotificationsSettingsTab({
             likes: targetState,
             mentions: targetState,
             communityActivity: targetState,
+            email: targetState,
+            push: targetState,
         });
     };
 
@@ -200,6 +206,68 @@ export function NotificationsSettingsTab({
                             </div>
                         );
                     })}
+                </div>
+            </div>
+
+            {/* Delivery Channels Group */}
+            <div className="space-y-3">
+                <div>
+                    <h3 className="text-xs font-extrabold text-text uppercase tracking-wider">
+                        {t('settings.notifications.deliverySection', { defaultValue: 'Kênh nhận thông báo' })}
+                    </h3>
+                    <p className="text-xs text-text-muted mt-0.5">
+                        {t('settings.notifications.deliverySectionDesc', { defaultValue: 'Lựa chọn các kênh bạn muốn Ludon gửi thông báo đến' })}
+                    </p>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-surface-inner/80 hover:bg-surface-hover flex items-center justify-between gap-4 transition-colors shadow-xs">
+                        <div className="flex items-start gap-3.5 min-w-0">
+                            <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-xs bg-indigo-500/15 text-indigo-400">
+                                <Mail className="size-4.5" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-xs font-bold text-text">
+                                    {t('settings.notifications.emailChannel', { defaultValue: 'Thông báo qua Email' })}
+                                </div>
+                                <div className="text-[11px] text-text-muted mt-0.5">
+                                    {t('settings.notifications.emailChannelDesc', { defaultValue: 'Nhận thư thông báo định kỳ vào hòm thư điện tử đã đăng ký' })}
+                                </div>
+                            </div>
+                        </div>
+
+                        <Switch
+                            checked={notifications.email ?? true}
+                            onCheckedChange={(val) =>
+                                onUpdateNotifications({ ...notifications, email: val })
+                            }
+                            aria-label={t('settings.notifications.emailChannel', { defaultValue: 'Thông báo qua Email' })}
+                        />
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-surface-inner/80 hover:bg-surface-hover flex items-center justify-between gap-4 transition-colors shadow-xs">
+                        <div className="flex items-start gap-3.5 min-w-0">
+                            <div className="size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-xs bg-amber-500/15 text-amber-400">
+                                <Bell className="size-4.5" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-xs font-bold text-text">
+                                    {t('settings.notifications.pushChannel', { defaultValue: 'Thông báo đẩy trình duyệt' })}
+                                </div>
+                                <div className="text-[11px] text-text-muted mt-0.5">
+                                    {t('settings.notifications.pushChannelDesc', { defaultValue: 'Hiển thị thông báo tức thì trên thiết bị khi có hoạt động mới' })}
+                                </div>
+                            </div>
+                        </div>
+
+                        <Switch
+                            checked={notifications.push ?? true}
+                            onCheckedChange={(val) =>
+                                onUpdateNotifications({ ...notifications, push: val })
+                            }
+                            aria-label={t('settings.notifications.pushChannel', { defaultValue: 'Thông báo đẩy trình duyệt' })}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

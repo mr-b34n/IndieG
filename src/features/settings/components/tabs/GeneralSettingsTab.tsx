@@ -2,8 +2,8 @@ import {
     Monitor,
     Moon,
     Sun,
-    CheckCircle2,
-} from 'lucide-react';
+    CheckCircle as CheckCircle2,
+} from '@phosphor-icons/react';
 import { useTranslation } from '@/shared/hooks/useTranslate';
 import { cn } from '@/shared/utils/cn';
 

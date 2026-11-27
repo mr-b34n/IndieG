@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import {
-    CheckCircle2,
+    CheckCircle as CheckCircle2,
     ArrowLeft,
     ArrowRight,
-    Trash2,
+    Trash as Trash2,
     Plus,
-    Search,
-    Pin,
-} from 'lucide-react';
+    MagnifyingGlass as Search,
+    PushPin as Pin,
+} from '@phosphor-icons/react';
 import { useGameStore } from '@/features/game';
 import { useGamesQuery } from '@/shared/api/useQueries';
 import { mapGameDtoToGameData } from '@/shared/api/types';
@@ -38,15 +38,14 @@ export function QuickAccessSettingsTab({
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
 
-    const storeGames = useGameStore((state) => state.games);
     const { data: apiGamesData } = useGamesQuery({ limit: 50 });
-
-    const allGames: GameData[] = useMemo(() => {
+    const storeGames = useGameStore((state) => state.games);
+    const allGames = useMemo<GameData[]>(() => {
         const remoteList = Array.isArray(apiGamesData)
             ? apiGamesData
             : (apiGamesData as { items?: unknown[] })?.items || [];
         if (remoteList.length > 0) {
-            return remoteList.map((g) => mapGameDtoToGameData(g));
+            return remoteList.map((item) => mapGameDtoToGameData(item as Record<string, unknown>));
         }
         if (storeGames && storeGames.length > 0) return storeGames;
         return [];

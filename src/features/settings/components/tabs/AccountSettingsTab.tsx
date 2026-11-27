@@ -1,32 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import {
-    CheckCircle2,
-    AlertCircle,
+    CheckCircle as CheckCircle2,
+    WarningCircle as AlertCircle,
     Clock,
-    Mail,
-    KeyRound,
+    Envelope as Mail,
+    Key as KeyRound,
     Laptop,
-    Smartphone,
-    Tablet,
+    DeviceMobile as Smartphone,
+    DeviceTablet as Tablet,
     Globe,
     Eye,
-    EyeOff,
+    EyeSlash as EyeOff,
     Copy,
     Check,
-    Loader2,
-    LogOut,
-    AlertTriangle,
+    CircleNotch as Loader2,
+    SignOut as LogOut,
+    Warning as AlertTriangle,
     UserMinus,
-    Trash2,
-    ShieldAlert,
-} from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faApple,
-    faWindows,
-    faLinux,
-    faAndroid,
-} from '@fortawesome/free-brands-svg-icons';
+    Trash as Trash2,
+    ShieldWarning as ShieldAlert,
+} from '@phosphor-icons/react';
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { AppleBrandIcon as faApple, WindowsBrandIcon as faWindows, LinuxBrandIcon as faLinux, AndroidBrandIcon as faAndroid } from "@/shared/components/ui/BrandIcons";
 import { PasswordRequirements } from '@/features/auth';
 import type { UserSessionDto, UserSessionsResponseDto } from '@/shared/api/types';
 import { useTranslation } from '@/shared/hooks/useTranslate';
@@ -39,6 +34,10 @@ import {
     formatSessionDateOnly,
     getCurrentSessionTokenId,
 } from '../../utils/session-utils';
+import {
+    isDangerConfirmationValid,
+    getExpectedConfirmationPhrase,
+} from '../../utils/danger-modal-utils';
 
 interface DangerModalState {
     open: boolean;
@@ -56,6 +55,9 @@ interface AccountSettingsTabProps {
     authUserId?: string;
     emailSuccessMsg: string | null;
     emailErrorMsg: string | null;
+    pendingNewEmail?: string | null;
+    isChangingEmail?: boolean;
+    isCancellingEmailChange?: boolean;
     newEmail: string;
     emailPasswordConfirm: string;
     onNewEmailChange: (val: string) => void;
@@ -63,6 +65,7 @@ interface AccountSettingsTabProps {
     onConfirmVerification: () => void;
     onSendVerificationEmail: () => void;
     onChangeEmailSubmit: (e: React.FormEvent) => void;
+    onCancelEmailChange?: () => void;
     changePwdState: { currentPassword: string; newPassword: string; confirmPassword: string };
     changePwdLoading: boolean;
     changePwdError: string | null;
@@ -163,6 +166,9 @@ export function AccountSettingsTab({
     authUserId,
     emailSuccessMsg,
     emailErrorMsg,
+    pendingNewEmail,
+    isChangingEmail = false,
+    isCancellingEmailChange = false,
     newEmail,
     emailPasswordConfirm,
     onNewEmailChange,
@@ -170,6 +176,7 @@ export function AccountSettingsTab({
     onConfirmVerification,
     onSendVerificationEmail,
     onChangeEmailSubmit,
+    onCancelEmailChange,
     changePwdState,
     changePwdLoading,
     changePwdError,
@@ -189,18 +196,19 @@ export function AccountSettingsTab({
     onConfirmTextChange,
     onConfirmDangerAction,
 }: AccountSettingsTabProps) {
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [copiedEmail, setCopiedEmail] = useState(false);
     const [mountTime] = useState(() => Date.now());
 
     // Password visibility state
+    const [showEmailConfirmPwd, setShowEmailConfirmPwd] = useState(false);
     const [showCurrentPwd, setShowCurrentPwd] = useState(false);
     const [showNewPwd, setShowNewPwd] = useState(false);
     const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
     const isDeactivate = dangerModal.type === "deactivate";
-    const requiredPhrase = isDeactivate ? "TAM NGUNG" : "XOA TAI KHOAN";
-    const isPhraseValid = dangerModal.confirmText.trim().toUpperCase() === requiredPhrase;
+    const requiredPhrase = getExpectedConfirmationPhrase(dangerModal.type, language);
+    const isPhraseValid = isDangerConfirmationValid(dangerModal.type, dangerModal.confirmText);
 
     const handleCopyEmail = () => {
         if (!displayEmail) return;
@@ -417,51 +425,100 @@ export function AccountSettingsTab({
                         )}
                     </div>
 
-                    {/* Change Email Directly Visible Form */}
-                    <form onSubmit={onChangeEmailSubmit} className="space-y-3 pt-2 border-t border-border/50">
-                        <div className="text-xs font-bold text-text-muted">
-                            {t('settings.account.changeEmailTitle', { defaultValue: 'Đổi địa chỉ Email' })}
+                    {/* Change Email Form (Verified via new email confirmation link) */}
+                    <div className="pt-3 border-t border-border/50 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-extrabold uppercase tracking-wider text-text">
+                                {t('settings.account.changeEmailTitle', { defaultValue: 'Đổi địa chỉ Email' })}
+                            </span>
                         </div>
 
-                        <div className="space-y-2.5">
+                        {pendingNewEmail && (
+                            <div className="p-3 rounded-xl bg-primary/10 border border-primary/25 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="text-[11px] text-text leading-relaxed">
+                                        <span className="font-bold text-primary block">
+                                            {t('settings.account.pendingEmailChangeTitle', { defaultValue: 'Đang chờ xác nhận email mới' })}
+                                        </span>
+                                        <span className="text-text-muted">
+                                            {t('settings.account.pendingEmailChangeDesc', {
+                                                email: pendingNewEmail,
+                                                defaultValue: `Đã gửi liên kết xác nhận đến ${pendingNewEmail}. Vui lòng kiểm tra hộp thư để hoàn tất.`,
+                                            })}
+                                        </span>
+                                    </div>
+                                    {onCancelEmailChange && (
+                                        <Button
+                                            type="button"
+                                            size="xs"
+                                            variant="secondary"
+                                            disabled={isCancellingEmailChange}
+                                            onClick={onCancelEmailChange}
+                                            className="shrink-0 text-[10px] font-bold"
+                                        >
+                                            {isCancellingEmailChange && <Loader2 className="size-3 animate-spin" />}
+                                            <span>{t('common.cancel', { defaultValue: 'Hủy' })}</span>
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <form onSubmit={onChangeEmailSubmit} className="space-y-2.5">
                             <div>
                                 <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                                    {t('settings.account.newEmailLabel', { defaultValue: 'Email mới' })}
+                                    {t('settings.account.newEmailLabel', { defaultValue: 'Địa chỉ Email mới' })}
                                 </label>
                                 <input
                                     type="email"
                                     required
                                     value={newEmail}
                                     onChange={(e) => onNewEmailChange(e.target.value)}
-                                    placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'Nhập email mới...' })}
+                                    placeholder={t('settings.account.newEmailPlaceholder', { defaultValue: 'example@domain.com' })}
                                     className="w-full bg-surface rounded-xl px-3.5 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
                                 />
                             </div>
 
                             <div>
                                 <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                                    {t('settings.account.confirmCurrentPasswordLabel', { defaultValue: 'Mật khẩu hiện tại để xác nhận' })}
+                                    {t('settings.account.confirmWithPasswordLabel', { defaultValue: 'Mật khẩu hiện tại để xác nhận' })}
                                 </label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={emailPasswordConfirm}
-                                    onChange={(e) => onEmailPasswordConfirmChange(e.target.value)}
-                                    placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Mật khẩu hiện tại...' })}
-                                    className="w-full bg-surface rounded-xl px-3.5 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showEmailConfirmPwd ? "text" : "password"}
+                                        required
+                                        value={emailPasswordConfirm}
+                                        onChange={(e) => onEmailPasswordConfirmChange(e.target.value)}
+                                        placeholder={t('settings.account.currentPasswordPlaceholder', { defaultValue: 'Nhập mật khẩu hiện tại...' })}
+                                        className="w-full bg-surface rounded-xl pl-3.5 pr-9 py-2 text-xs text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEmailConfirmPwd(!showEmailConfirmPwd)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer"
+                                    >
+                                        {showEmailConfirmPwd ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <Button
-                            type="submit"
-                            size="sm"
-                            disabled={!newEmail.trim() || !emailPasswordConfirm}
-                            className="w-full mt-1 bg-primary hover:bg-primary-hover text-white font-bold shadow-md shadow-primary/20"
-                        >
-                            {t('settings.account.updateEmailBtn', { defaultValue: 'Cập nhật Email' })}
-                        </Button>
-                    </form>
+                            <Button
+                                type="submit"
+                                size="sm"
+                                disabled={isChangingEmail || !newEmail.trim() || !emailPasswordConfirm}
+                                className="w-full bg-primary hover:bg-primary-hover text-white font-bold shadow-sm"
+                            >
+                                {isChangingEmail ? (
+                                    <>
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                        <span>{t('settings.account.sendingEmailChange', { defaultValue: 'Đang gửi xác nhận...' })}</span>
+                                    </>
+                                ) : (
+                                    <span>{t('settings.account.changeEmailBtn', { defaultValue: 'Gửi liên kết xác nhận đổi Email' })}</span>
+                                )}
+                            </Button>
+                        </form>
+                    </div>
                 </div>
 
                 {/* 2. Password Management Card */}
