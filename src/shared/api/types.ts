@@ -1,7 +1,7 @@
 /**
  * OpenAPI 3.0 TypeScript definitions & UI Mappers for Ludon Backend Services
  */
-import { DEFAULT_GAME_LOGO, DEFAULT_BG, DEFAULT_AVATAR } from "@/shared/constants/images";
+import { DEFAULT_GAME_LOGO, DEFAULT_BG } from "@/shared/constants/images";
 
 export interface AuthRegisterDto {
     email: string;
@@ -43,7 +43,9 @@ export interface UserProfileDto {
     id: string;
     username: string;
     name: string;
+    displayName?: string;
     avatarUrl?: string;
+    avatar?: string;
     customAvatar?: string;
     coverUrl?: string;
     bio?: string | Record<string, unknown> | unknown[];
@@ -102,6 +104,110 @@ export interface ChangePasswordDto {
     newPassword: string;
 }
 
+export interface ChangeEmailDto {
+    newEmail: string;
+    currentPassword: string;
+}
+
+export type FeedbackType = "bug" | "idea";
+export type FeedbackStatus = "open" | "reviewed" | "resolved";
+
+export interface CreateFeedbackDto {
+    type: FeedbackType;
+    title: string;
+    description: string;
+}
+
+export interface FeedbackDto {
+    id: string;
+    userId?: string | null;
+    type: FeedbackType;
+    title: string;
+    description: string;
+    status: FeedbackStatus;
+    adminNote?: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PeerProfileSummaryDto {
+    id: string;
+    username: string;
+    name: string;
+    avatarUrl?: string | null;
+}
+
+export interface DirectMessageDto {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    recipientId: string;
+    content: string;
+    readAt?: string | null;
+    createdAt: string;
+}
+
+export interface ConversationDto {
+    id: string;
+    lastMessageAt: string;
+    createdAt: string;
+    peer: PeerProfileSummaryDto;
+    isOnline: boolean;
+    lastMessage: DirectMessageDto | null;
+    unreadCount: number;
+}
+
+export type SquadStatus = "open" | "full" | "closed";
+
+export interface SquadMemberDto {
+    userId: string;
+    role: "leader" | "member";
+    joinedAt: string;
+    username: string;
+    name: string;
+    avatarUrl?: string | null;
+    rank?: string | null;
+}
+
+export interface SquadDto {
+    id: string;
+    leaderId: string;
+    leader: PeerProfileSummaryDto;
+    gameSlug?: string | null;
+    gameName: string;
+    title: string;
+    description?: string | null;
+    region: string;
+    rankRequirement?: string | null;
+    micRequired: boolean;
+    maxMembers: number;
+    memberCount: number;
+    status: SquadStatus;
+    isJoined: boolean;
+    isLeader: boolean;
+    members: SquadMemberDto[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateSquadDto {
+    gameSlug?: string;
+    gameName: string;
+    title: string;
+    description?: string;
+    region?: string;
+    rankRequirement?: string;
+    micRequired?: boolean;
+    maxMembers?: number;
+}
+
+export interface SystemAnnouncementDto {
+    title: string;
+    content: string;
+    recipientId?: string;
+    link?: string;
+}
+
 export type UserSettingsTheme = "system" | "light" | "dark";
 export type UserSettingsLanguage = "vi" | "en";
 export type UserSettingsProfileVisibility = "public" | "community" | "private";
@@ -112,6 +218,7 @@ export interface UserSettingsNotificationDto {
     push?: boolean;
     comment?: boolean;
     reply?: boolean;
+    like?: boolean;
     mention?: boolean;
     community?: boolean;
 }
@@ -137,6 +244,8 @@ export interface UserSettingsDto {
     notifications?: UserSettingsNotificationDto;
     privacy?: UserSettingsPrivacyDto;
     content?: UserSettingsContentDto;
+    quickAccessSlugs?: string[];
+    followedGameSlugs?: string[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -147,6 +256,8 @@ export interface UpdateUserSettingsDto {
     notifications?: UserSettingsNotificationDto;
     privacy?: UserSettingsPrivacyDto;
     content?: UserSettingsContentDto;
+    quickAccessSlugs?: string[];
+    followedGameSlugs?: string[];
 }
 
 export interface CommunityDto {
@@ -155,6 +266,7 @@ export interface CommunityDto {
     slug?: string;
     logo?: string;
     backdrop?: string;
+    banner?: string;
     category?: string;
     description?: string;
     onlineNow?: number;
@@ -180,6 +292,7 @@ export interface CreateCommunityDto {
     rules?: string;
     logo?: string;
     backdrop?: string;
+    banner?: string;
     category?: string;
     description?: string;
     tags?: string[];
@@ -189,6 +302,7 @@ export interface UpdateCommunityDto {
     name?: string;
     logo?: string;
     backdrop?: string;
+    banner?: string;
     category?: string;
     description?: string;
     tags?: string[];
@@ -341,6 +455,7 @@ export interface PostDto {
     updatedAt: string;
     deletedAt?: string | null;
     currentUserVoteType?: number | null;
+    isBookmarked?: boolean;
 }
 
 export interface CreatePostDto {
@@ -407,6 +522,8 @@ export interface CommentEntity {
     repliesCount?: number;
     pinned?: boolean;
     image?: string;
+    imageUrl?: string | null;
+    userVote?: number | null;
 }
 
 export interface RootCommentsMeta {
@@ -436,6 +553,7 @@ export interface CreateCommentDto {
     postId: string;
     parentId?: string | null;
     content: string;
+    imageUrl?: string;
 }
 
 export interface UpdateCommentDto {
@@ -674,110 +792,6 @@ export interface GetGamesParams {
 }
 
 // -------------------------------------------------------------
-// Game Guides Types (/games/{appid}/guides/*)
-// -------------------------------------------------------------
-export type GuideCategory = "tactics" | "builds" | "secrets" | "general";
-export type GuideSort = "newest" | "oldest" | "most_liked" | "most_viewed";
-
-export interface GameGuideDto {
-    id: string;
-    appid: number;
-    title?: string;
-    titleVi?: string;
-    rank?: string;
-    category?: GuideCategory;
-    content: string;
-    contentVi?: string;
-    authorId?: string;
-    author?: {
-        id?: string;
-        username?: string;
-        name?: string;
-        avatarUrl?: string;
-    };
-    likes?: number;
-    views?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    [key: string]: unknown;
-}
-
-export interface CreateGameGuideDto {
-    title?: string;
-    titleVi?: string;
-    rank?: string;
-    category?: GuideCategory;
-    content: string;
-    contentVi?: string;
-}
-
-export interface UpdateGameGuideDto {
-    title?: string;
-    titleVi?: string;
-    rank?: string;
-    category?: GuideCategory;
-    content?: string;
-    contentVi?: string;
-}
-
-export interface GetGameGuidesParams {
-    category?: GuideCategory;
-    authorId?: string;
-    sort?: GuideSort;
-    page?: number;
-    limit?: number;
-}
-
-// -------------------------------------------------------------
-// Game Reviews Types (/games/{appid}/reviews/*)
-// -------------------------------------------------------------
-export type ReviewSort = "newest" | "oldest" | "most_liked" | "highest_rating" | "lowest_rating";
-
-export interface GameReviewDto {
-    id: string;
-    appid: number;
-    rating: number;
-    hoursPlayed?: string;
-    content?: string;
-    contentVi?: string;
-    recommended?: boolean;
-    authorId?: string;
-    author?: {
-        id?: string;
-        username?: string;
-        name?: string;
-        avatarUrl?: string;
-    };
-    likes?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    [key: string]: unknown;
-}
-
-export interface CreateGameReviewDto {
-    rating: number;
-    hoursPlayed?: string;
-    content?: string;
-    contentVi?: string;
-    recommended?: boolean;
-}
-
-export interface UpdateGameReviewDto {
-    rating?: number;
-    hoursPlayed?: string;
-    content?: string;
-    contentVi?: string;
-    recommended?: boolean;
-}
-
-export interface GetGameReviewsParams {
-    recommended?: boolean;
-    sort?: ReviewSort;
-    page?: number;
-    limit?: number;
-}
-
-// -------------------------------------------------------------
 // Game Patch Notes Types (/games/{appid}/patch-notes/*)
 // -------------------------------------------------------------
 export type PatchNoteType = "major" | "patch" | "hotfix" | "event";
@@ -838,11 +852,22 @@ export function mapPostDtoToPostData(rawInput: PostDto, authorName = "Gamer", au
         ? (rawInput as { data: PostDto }).data
         : rawInput;
     const rawAuthor = (dto as { author?: unknown }).author;
-    const userObj = dto.user || (typeof rawAuthor === "object" && rawAuthor !== null ? (rawAuthor as { id?: string; username?: string; name?: string; displayName?: string; avatar?: string; avatarUrl?: string; avatar_url?: string; handle?: string }) : null) || (dto as { authorInfo?: { id?: string; username?: string; name?: string; avatar?: string } }).authorInfo;
+    const userObj = (dto.user ||
+        (typeof rawAuthor === "object" && rawAuthor !== null ? rawAuthor : null) ||
+        (dto as { authorInfo?: unknown }).authorInfo) as {
+        id?: string;
+        username?: string;
+        name?: string;
+        displayName?: string;
+        avatar?: string;
+        avatarUrl?: string;
+        avatar_url?: string;
+        handle?: string;
+    } | null;
 
     const resolvedName = userObj?.name || userObj?.displayName || userObj?.username || (typeof rawAuthor === "string" ? rawAuthor : authorName) || "Gamer";
     const resolvedUsername = userObj?.username || userObj?.handle || (dto as { username?: string }).username;
-    const resolvedAvatar = userObj?.avatar || userObj?.avatarUrl || userObj?.avatar_url || authorAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(resolvedUsername || resolvedName || dto.authorId || dto.id)}`;
+    const resolvedAvatar = userObj?.avatar || userObj?.avatarUrl || userObj?.avatar_url || authorAvatar || "";
 
     const upvotes = dto.upvotes ?? dto.likes ?? 0;
     const downvotes = dto.downvotes ?? 0;
@@ -884,6 +909,9 @@ export function mapPostDtoToPostData(rawInput: PostDto, authorName = "Gamer", au
         allowComments: dto.allowComments ?? true,
         currentUserVoteType: typeof dto.currentUserVoteType === "number" ? dto.currentUserVoteType : 0,
         timeAgo: dto.createdAt ? new Date(dto.createdAt).toLocaleDateString("vi-VN") : "Vừa xong",
+        timestamp: dto.createdAt ? new Date(dto.createdAt).getTime() : Date.now(),
+        createdAt: dto.createdAt,
+        isBookmarked: dto.isBookmarked ?? false,
         privacy: "public" as const,
     };
 }
@@ -891,7 +919,7 @@ export function mapPostDtoToPostData(rawInput: PostDto, authorName = "Gamer", au
 export const mapPostDtoToPost = mapPostDtoToPostData;
 
 export function mapCommunityDtoToCommunityData(dto: CommunityDto) {
-    const raw = dto as Record<string, unknown>;
+    const raw = dto as unknown as Record<string, unknown>;
     const resolvedBackdrop = dto.backdrop || (raw.bannerUrl as string) || (raw.coverUrl as string) || (raw.banner as string) || (raw.headerImg as string) || (raw.header as string) || DEFAULT_BG;
     // Fallback avatar/logo to header image / backdrop if logo/avatar is not specified
     const resolvedLogo = dto.logo || (raw.avatarUrl as string) || (raw.avatar as string) || (raw.icon as string) || (raw.logoUrl as string) || (raw.headerImg as string) || (raw.header as string) || resolvedBackdrop || DEFAULT_GAME_LOGO;
@@ -1099,80 +1127,8 @@ export function mapGameDtoToGameData(dto: GameDto | UnifiedGameDetailDto | Recor
         screenshots,
         screenshotItems,
         isFree: Boolean(raw.isFree),
-        guides: Array.isArray(raw.guides) ? (raw.guides as import("@/features/game/types").GameGuide[]) : [],
-        reviews: Array.isArray(raw.reviews) ? (raw.reviews as import("@/features/game/types").GameReview[]) : [],
         patchNotes: Array.isArray(raw.patchNotes) ? (raw.patchNotes as import("@/features/game/types").GamePatchNote[]) : [],
         systemReqs: (raw.systemReqs as import("@/features/game/types").GameSystemReqs) || undefined,
-    };
-}
-
-export function mapGameGuideDtoToGameGuide(dto: GameGuideDto | Record<string, unknown>): import("@/features/game/types").GameGuide {
-    const raw = dto as Record<string, unknown>;
-    const authorObj = (raw.author && typeof raw.author === "object" ? raw.author : {}) as Record<string, unknown>;
-    const authorName = (authorObj.name as string) || (authorObj.username as string) || (raw.author as string) || "Gamer";
-    const authorAvatar = (authorObj.avatarUrl as string) || (raw.authorAvatar as string) || DEFAULT_AVATAR;
-    const authorUsername = (authorObj.username as string) || undefined;
-
-    let date = "Vừa xong";
-    if (raw.createdAt) {
-        try {
-            date = new Date(raw.createdAt as string).toLocaleDateString("vi-VN");
-        } catch {
-            date = String(raw.createdAt);
-        }
-    } else if (raw.date) {
-        date = String(raw.date);
-    }
-
-    return {
-        id: String(raw.id || `guide-${Date.now()}`),
-        title: (raw.title as string) || (raw.titleVi as string) || "Hướng dẫn Game",
-        titleVi: (raw.titleVi as string) || undefined,
-        author: authorName,
-        authorAvatar,
-        authorUsername,
-        authorId: (raw.authorId as string) || (authorObj.id as string) || undefined,
-        rank: (raw.rank as string) || (authorObj.rank as string) || undefined,
-        category: ((raw.category as string)?.toLowerCase() as any) || "general",
-        content: (raw.content as string) || "",
-        contentVi: (raw.contentVi as string) || undefined,
-        likes: typeof raw.likes === "number" ? raw.likes : 0,
-        views: typeof raw.views === "number" ? raw.views : 0,
-        date,
-    };
-}
-
-export function mapGameReviewDtoToGameReview(dto: GameReviewDto | Record<string, unknown>): import("@/features/game/types").GameReview {
-    const raw = dto as Record<string, unknown>;
-    const authorObj = (raw.author && typeof raw.author === "object" ? raw.author : {}) as Record<string, unknown>;
-    const authorName = (authorObj.name as string) || (authorObj.username as string) || (raw.author as string) || "Gamer";
-    const authorAvatar = (authorObj.avatarUrl as string) || (raw.authorAvatar as string) || DEFAULT_AVATAR;
-    const authorUsername = (authorObj.username as string) || undefined;
-
-    let date = "Vừa xong";
-    if (raw.createdAt) {
-        try {
-            date = new Date(raw.createdAt as string).toLocaleDateString("vi-VN");
-        } catch {
-            date = String(raw.createdAt);
-        }
-    } else if (raw.date) {
-        date = String(raw.date);
-    }
-
-    return {
-        id: String(raw.id || `rev-${Date.now()}`),
-        author: authorName,
-        authorAvatar,
-        authorUsername,
-        authorId: (raw.authorId as string) || (authorObj.id as string) || undefined,
-        rating: typeof raw.rating === "number" ? raw.rating : 8,
-        hoursPlayed: (raw.hoursPlayed as string) || "12 giờ",
-        content: (raw.content as string) || (raw.contentVi as string) || "",
-        contentVi: (raw.contentVi as string) || undefined,
-        recommended: raw.recommended !== false,
-        likes: typeof raw.likes === "number" ? raw.likes : 0,
-        date,
     };
 }
 
@@ -1208,7 +1164,7 @@ export function mapUserProfileDtoToSearchUser(dto: UserProfileDto | Record<strin
     const username = (raw.username as string) || "gamer";
     const formattedUsername = username.startsWith("@") ? username : `@${username}`;
     const bioText = typeof raw.bio === "string" ? raw.bio : "";
-    const resolvedAvatar = (raw.avatarUrl as string) || (raw.avatar as string) || DEFAULT_AVATAR;
+    const resolvedAvatar = (raw.avatarUrl as string) || (raw.avatar as string) || "";
     const status = (raw.status === "in-game" ? "in-game" : raw.status === "online" ? "online" : "offline") as "online" | "in-game" | "offline";
     const isOnline = Boolean(raw.isOnline ?? (status === "online" || status === "in-game"));
     return {
@@ -1339,6 +1295,8 @@ export interface FriendshipDto {
     addresseeId?: string;
     status?: "pending" | "accepted" | "blocked";
     user?: UserProfileDto;
+    friend?: UserProfileDto;
+    blockedUser?: UserProfileDto;
     requester?: UserProfileDto;
     addressee?: UserProfileDto;
     createdAt?: string;

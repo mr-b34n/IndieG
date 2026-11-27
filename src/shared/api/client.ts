@@ -18,7 +18,9 @@ export const isLocalhost = (host?: string | null): boolean => {
 
 export const getApiBaseUrl = (): string => {
     if (typeof window !== "undefined") {
-        const customUrl = localStorage.getItem("indieg_custom_api_url");
+        const customUrl =
+            localStorage.getItem("ludon_custom_api_url") ||
+            localStorage.getItem("indieg_custom_api_url");
         if (customUrl && customUrl.trim()) {
             const trimmed = customUrl.trim().replace(/\/+$/, "");
             if (trimmed && trimmed !== "/" && trimmed !== "//") {
@@ -74,8 +76,8 @@ export const isApiEnabled = (): boolean => {
         baseUrl.includes("://0.0.0.0");
 
     if (isLocal) {
-        // Chỉ cho phép nếu người dùng chủ động set indieg_custom_api_url trong localStorage để test
-        return Boolean(localStorage.getItem("indieg_custom_api_url"));
+        // Chỉ cho phép nếu người dùng chủ động set ludon_custom_api_url / indieg_custom_api_url trong localStorage để test
+        return Boolean(localStorage.getItem("ludon_custom_api_url") || localStorage.getItem("indieg_custom_api_url"));
     }
 
     return true;
@@ -143,19 +145,22 @@ export function handleSessionExpired(): void {
 
     try {
         // Dynamically import queryClient or clear caches safely
+        localStorage.removeItem("ludon_access_token");
         localStorage.removeItem("indieg_access_token");
         localStorage.removeItem("access_token");
+        localStorage.removeItem("ludon_refresh_token");
         localStorage.removeItem("indieg_refresh_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("ludon_auth_user");
         localStorage.removeItem("indieg_auth_user");
         localStorage.removeItem("user_custom_avatar");
-        localStorage.removeItem("ludon_access_token");
+        localStorage.removeItem("ludon_recent_communities");
         localStorage.removeItem("indieg_recent_communities");
 
         const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
-            if (k && (k.startsWith("profile_hidden_sections_") || k.startsWith("indieg-") || k.startsWith("draft_") || k.startsWith("user_"))) {
+            if (k && (k.startsWith("profile_hidden_sections_") || k.startsWith("ludon-") || k.startsWith("indieg-") || k.startsWith("draft_") || k.startsWith("user_"))) {
                 keysToRemove.push(k);
             }
         }
@@ -164,8 +169,11 @@ export function handleSessionExpired(): void {
         // Ignore storage errors
     }
 
+    sessionStorage.setItem("ludon_session_expired", "1");
     sessionStorage.setItem("indieg_session_expired", "1");
+    window.dispatchEvent(new CustomEvent("ludon:session-expired"));
     window.dispatchEvent(new CustomEvent("indieg:session-expired"));
+    window.dispatchEvent(new CustomEvent("ludon:auth-cleared"));
     window.dispatchEvent(new CustomEvent("indieg:auth-cleared"));
 
     if (!window.location.pathname.startsWith("/auth")) {
@@ -220,12 +228,8 @@ export async function performTokenRefresh(explicitRefreshToken?: string | null):
             const savedRefreshToken =
                 explicitRefreshToken ||
                 (typeof window !== "undefined"
-                    ? localStorage.getItem("indieg_refresh_token") || localStorage.getItem("refresh_token")
+                    ? localStorage.getItem("ludon_refresh_token") || localStorage.getItem("indieg_refresh_token") || localStorage.getItem("refresh_token")
                     : null);
-            const savedAccessToken =
-                typeof window !== "undefined"
-                    ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
-                    : null;
 
             const headers: Record<string, string> = {
                 Accept: "application/json",
@@ -234,9 +238,6 @@ export async function performTokenRefresh(explicitRefreshToken?: string | null):
 
             if (savedRefreshToken) {
                 headers["x-refresh-token"] = savedRefreshToken;
-                headers["Authorization"] = `Bearer ${savedRefreshToken}`;
-            } else if (savedAccessToken) {
-                headers["Authorization"] = `Bearer ${savedAccessToken}`;
             }
 
             const bodyPayload = savedRefreshToken
@@ -247,12 +248,29 @@ export async function performTokenRefresh(explicitRefreshToken?: string | null):
                   })
                 : JSON.stringify({});
 
-            const res = await fetch(refreshUrl, {
+            let res = await fetch(refreshUrl, {
                 method: "POST",
                 headers,
                 body: bodyPayload,
                 credentials: "include",
             });
+
+            // If primary refreshUrl failed, try /auth/refresh directly in case cookie was scoped to /auth
+            if (!res.ok && (res.status === 401 || res.status === 404)) {
+                try {
+                    const directRes = await fetch("/auth/refresh", {
+                        method: "POST",
+                        headers,
+                        body: bodyPayload,
+                        credentials: "include",
+                    });
+                    if (directRes.ok) {
+                        res = directRes;
+                    }
+                } catch {
+                    // Ignore fallback network error
+                }
+            }
 
             if (!res.ok) {
                 return null;
@@ -279,12 +297,19 @@ export async function performTokenRefresh(explicitRefreshToken?: string | null):
                 (dataObj.refresh_token as string);
 
             if (newToken && typeof window !== "undefined") {
+                localStorage.setItem("ludon_access_token", newToken);
                 localStorage.setItem("indieg_access_token", newToken);
                 localStorage.setItem("access_token", newToken);
                 if (newRefreshToken) {
+                    localStorage.setItem("ludon_refresh_token", newRefreshToken);
                     localStorage.setItem("indieg_refresh_token", newRefreshToken);
                     localStorage.setItem("refresh_token", newRefreshToken);
                 }
+                window.dispatchEvent(
+                    new CustomEvent("ludon:token-refreshed", {
+                        detail: { accessToken: newToken, refreshToken: newRefreshToken },
+                    })
+                );
                 window.dispatchEvent(
                     new CustomEvent("indieg:token-refreshed", {
                         detail: { accessToken: newToken, refreshToken: newRefreshToken },
@@ -330,6 +355,32 @@ export function buildQueryString(params?: ApiQueryParams | null): string {
 // In-flight GET request deduplication to prevent duplicate concurrent network requests
 const inFlightGetRequests = new Map<string, Promise<unknown>>();
 
+// Track slow requests (>3.5s) to inform users during Render Free cold starts
+let slowRequestCount = 0;
+const COLD_START_HINT_MS = 3500;
+
+function trackRequestColdStart(): () => void {
+    if (typeof window === "undefined") return () => {};
+    let markedSlow = false;
+    const timer = window.setTimeout(() => {
+        markedSlow = true;
+        slowRequestCount += 1;
+        if (slowRequestCount === 1) {
+            window.dispatchEvent(new CustomEvent("ludon:backend-waking"));
+        }
+    }, COLD_START_HINT_MS);
+
+    return () => {
+        window.clearTimeout(timer);
+        if (markedSlow) {
+            slowRequestCount = Math.max(0, slowRequestCount - 1);
+            if (slowRequestCount === 0) {
+                window.dispatchEvent(new CustomEvent("ludon:backend-ready"));
+            }
+        }
+    };
+}
+
 /**
  * Universal API Request Function
  */
@@ -347,7 +398,7 @@ export async function apiRequest<T = unknown>(
     let token =
         explicitToken ||
         (typeof window !== "undefined" &&
-            (localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token"))) ||
+            (localStorage.getItem("ludon_access_token") || localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token"))) ||
         null;
 
     const cleanEndpoint = endpoint.replace(/^\/+/, "").replace(/\/+/g, "/");
@@ -408,12 +459,18 @@ export async function apiRequest<T = unknown>(
     }
 
     const executeRequest = async (): Promise<T> => {
-        const response = await fetch(url, {
-            ...customOptions,
-            headers,
-            body: serializedBody,
-            credentials: "include", // Supports refresh_token cookies
-        });
+        const stopColdStartTracker = trackRequestColdStart();
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                ...customOptions,
+                headers,
+                body: serializedBody,
+                credentials: "include", // Supports refresh_token cookies
+            });
+        } finally {
+            stopColdStartTracker();
+        }
 
         if (!response.ok) {
             let errorData: Record<string, unknown> | null = null;
@@ -438,9 +495,19 @@ export async function apiRequest<T = unknown>(
 
             // Handle 401 Unauthorized token refresh & expiration flow
             if (response.status === 401) {
+                const hadToken = typeof window !== "undefined" && Boolean(
+                    localStorage.getItem("ludon_access_token") ||
+                    localStorage.getItem("indieg_access_token") ||
+                    localStorage.getItem("access_token") ||
+                    localStorage.getItem("ludon_refresh_token") ||
+                    localStorage.getItem("indieg_refresh_token")
+                );
+
                 // If refresh endpoint itself failed with 401 or request was already retried:
                 if (isRefreshEndpoint || _retry) {
-                    handleSessionExpired();
+                    if (hadToken) {
+                        handleSessionExpired();
+                    }
                     throw new ApiError(errorMessage, response.status, errorData);
                 }
 
@@ -449,36 +516,26 @@ export async function apiRequest<T = unknown>(
                     throw new ApiError(errorMessage, response.status, errorData);
                 }
 
-                // If user has a real token or refresh token, attempt token refresh
-                const savedRefreshToken =
-                    typeof window !== "undefined"
-                        ? localStorage.getItem("indieg_refresh_token") || localStorage.getItem("refresh_token")
-                        : null;
-                const activeToken =
-                    token ||
-                    (typeof window !== "undefined"
-                        ? localStorage.getItem("indieg_access_token") || localStorage.getItem("access_token")
-                        : null);
+                // Attempt token refresh via stored refresh token or HttpOnly cookie
+                const refreshedToken = await performTokenRefresh();
 
-                if (activeToken || savedRefreshToken) {
-                    const refreshedToken = await performTokenRefresh();
-
-                    if (refreshedToken) {
-                        const retriedHeaders = {
-                            ...(customHeaders as Record<string, string>),
-                            Authorization: `Bearer ${refreshedToken}`,
-                        };
-                        return apiRequest<T>(endpoint, {
-                            ...options,
-                            headers: retriedHeaders,
-                            token: refreshedToken,
-                            _retry: true,
-                        });
-                    } else {
-                        // Refresh token also failed/expired -> redirect to login with session expired alert
+                if (refreshedToken) {
+                    const retriedHeaders = {
+                        ...(customHeaders as Record<string, string>),
+                        Authorization: `Bearer ${refreshedToken}`,
+                    };
+                    return apiRequest<T>(endpoint, {
+                        ...options,
+                        headers: retriedHeaders,
+                        token: refreshedToken,
+                        _retry: true,
+                    });
+                } else {
+                    // Refresh token also failed/expired -> redirect to login with session expired alert
+                    if (hadToken) {
                         handleSessionExpired();
-                        throw new ApiError(errorMessage, response.status, errorData);
                     }
+                    throw new ApiError(errorMessage, response.status, errorData);
                 }
             }
 
