@@ -9,15 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
-import { Route as LayoutExploreRouteImport } from './routes/_layout/explore'
+import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutMessagesRouteImport } from './routes/_layout/messages'
 import { Route as LayoutSearchRouteImport } from './routes/_layout/search'
+import { Route as LayoutSquadRouteImport } from './routes/_layout/squad'
 import { Route as LayoutVerifyEmailRouteImport } from './routes/_layout/verify-email'
-import { Route as AuthenticatedDeveloperIndexRouteImport } from './routes/_authenticated/developer/index'
-import { Route as LayoutBookmarkIndexRouteImport } from './routes/_layout/bookmark/index'
 import { Route as LayoutCommunityIndexRouteImport } from './routes/_layout/community/index'
 import { Route as LayoutCommunityCommunityIdRouteImport } from './routes/_layout/community/$communityId'
 import { Route as LayoutGameIndexRouteImport } from './routes/_layout/game/index'
@@ -26,12 +26,7 @@ import { Route as LayoutPostPostIdRouteImport } from './routes/_layout/post/$pos
 import { Route as LayoutProfileIndexRouteImport } from './routes/_layout/profile/index'
 import { Route as LayoutProfileUserIdRouteImport } from './routes/_layout/profile/$userId'
 import { Route as LayoutSettingsIndexRouteImport } from './routes/_layout/settings/index'
-import { Route as LayoutSquadIndexRouteImport } from './routes/_layout/squad/index'
 
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -41,18 +36,26 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/auth.lazy').then((d) => d.Route))
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutExploreRoute = LayoutExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
+const LayoutAdminRoute = LayoutAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => LayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_layout/explore.lazy').then((d) => d.Route),
-)
+} as any)
+const LayoutMessagesRoute = LayoutMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutSearchRoute = LayoutSearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -60,29 +63,23 @@ const LayoutSearchRoute = LayoutSearchRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_layout/search.lazy').then((d) => d.Route),
 )
+const LayoutSquadRoute = LayoutSquadRouteImport.update({
+  id: '/squad',
+  path: '/squad',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutVerifyEmailRoute = LayoutVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => LayoutRoute,
 } as any)
-const AuthenticatedDeveloperIndexRoute =
-  AuthenticatedDeveloperIndexRouteImport.update({
-    id: '/developer/',
-    path: '/developer/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const LayoutBookmarkIndexRoute = LayoutBookmarkIndexRouteImport.update({
-  id: '/bookmark/',
-  path: '/bookmark/',
-  getParentRoute: () => LayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_layout/bookmark/index.lazy').then((d) => d.Route),
-)
 const LayoutCommunityIndexRoute = LayoutCommunityIndexRouteImport.update({
   id: '/community/',
   path: '/community/',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/community/index.lazy').then((d) => d.Route),
+)
 const LayoutCommunityCommunityIdRoute =
   LayoutCommunityCommunityIdRouteImport.update({
     id: '/community/$communityId',
@@ -95,7 +92,9 @@ const LayoutGameIndexRoute = LayoutGameIndexRouteImport.update({
   id: '/game/',
   path: '/game/',
   getParentRoute: () => LayoutRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_layout/game/index.lazy').then((d) => d.Route),
+)
 const LayoutGameGameSlugRoute = LayoutGameGameSlugRouteImport.update({
   id: '/game/$gameSlug',
   path: '/game/$gameSlug',
@@ -129,145 +128,129 @@ const LayoutSettingsIndexRoute = LayoutSettingsIndexRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_layout/settings/index.lazy').then((d) => d.Route),
 )
-const LayoutSquadIndexRoute = LayoutSquadIndexRouteImport.update({
-  id: '/squad/',
-  path: '/squad/',
-  getParentRoute: () => LayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_layout/squad/index.lazy').then((d) => d.Route),
-)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
-  '/explore': typeof LayoutExploreRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof LayoutAdminRoute
+  '/messages': typeof LayoutMessagesRoute
   '/search': typeof LayoutSearchRoute
+  '/squad': typeof LayoutSquadRoute
   '/verify-email': typeof LayoutVerifyEmailRoute
   '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
   '/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/developer/': typeof AuthenticatedDeveloperIndexRoute
-  '/bookmark/': typeof LayoutBookmarkIndexRoute
   '/community/': typeof LayoutCommunityIndexRoute
   '/game/': typeof LayoutGameIndexRoute
   '/profile/': typeof LayoutProfileIndexRoute
   '/settings/': typeof LayoutSettingsIndexRoute
-  '/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof LayoutIndexRoute
   '/auth': typeof AuthRoute
-  '/explore': typeof LayoutExploreRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof LayoutAdminRoute
+  '/messages': typeof LayoutMessagesRoute
   '/search': typeof LayoutSearchRoute
+  '/squad': typeof LayoutSquadRoute
   '/verify-email': typeof LayoutVerifyEmailRoute
+  '/': typeof LayoutIndexRoute
   '/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/post/$postId': typeof LayoutPostPostIdRoute
   '/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/developer': typeof AuthenticatedDeveloperIndexRoute
-  '/bookmark': typeof LayoutBookmarkIndexRoute
   '/community': typeof LayoutCommunityIndexRoute
   '/game': typeof LayoutGameIndexRoute
   '/profile': typeof LayoutProfileIndexRoute
   '/settings': typeof LayoutSettingsIndexRoute
-  '/squad': typeof LayoutSquadIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_layout': typeof LayoutRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_layout/explore': typeof LayoutExploreRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/messages': typeof LayoutMessagesRoute
   '/_layout/search': typeof LayoutSearchRoute
+  '/_layout/squad': typeof LayoutSquadRoute
   '/_layout/verify-email': typeof LayoutVerifyEmailRoute
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/community/$communityId': typeof LayoutCommunityCommunityIdRoute
   '/_layout/game/$gameSlug': typeof LayoutGameGameSlugRoute
   '/_layout/post/$postId': typeof LayoutPostPostIdRoute
   '/_layout/profile/$userId': typeof LayoutProfileUserIdRoute
-  '/_authenticated/developer/': typeof AuthenticatedDeveloperIndexRoute
-  '/_layout/bookmark/': typeof LayoutBookmarkIndexRoute
   '/_layout/community/': typeof LayoutCommunityIndexRoute
   '/_layout/game/': typeof LayoutGameIndexRoute
   '/_layout/profile/': typeof LayoutProfileIndexRoute
   '/_layout/settings/': typeof LayoutSettingsIndexRoute
-  '/_layout/squad/': typeof LayoutSquadIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
-    | '/explore'
+    | '/reset-password'
+    | '/admin'
+    | '/messages'
     | '/search'
+    | '/squad'
     | '/verify-email'
     | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/profile/$userId'
-    | '/developer/'
-    | '/bookmark/'
     | '/community/'
     | '/game/'
     | '/profile/'
     | '/settings/'
-    | '/squad/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/auth'
-    | '/explore'
+    | '/reset-password'
+    | '/admin'
+    | '/messages'
     | '/search'
+    | '/squad'
     | '/verify-email'
+    | '/'
     | '/community/$communityId'
     | '/game/$gameSlug'
     | '/post/$postId'
     | '/profile/$userId'
-    | '/developer'
-    | '/bookmark'
     | '/community'
     | '/game'
     | '/profile'
     | '/settings'
-    | '/squad'
   id:
     | '__root__'
-    | '/_authenticated'
     | '/_layout'
     | '/auth'
-    | '/_layout/explore'
+    | '/reset-password'
+    | '/_layout/admin'
+    | '/_layout/messages'
     | '/_layout/search'
+    | '/_layout/squad'
     | '/_layout/verify-email'
     | '/_layout/'
     | '/_layout/community/$communityId'
     | '/_layout/game/$gameSlug'
     | '/_layout/post/$postId'
     | '/_layout/profile/$userId'
-    | '/_authenticated/developer/'
-    | '/_layout/bookmark/'
     | '/_layout/community/'
     | '/_layout/game/'
     | '/_layout/profile/'
     | '/_layout/settings/'
-    | '/_layout/squad/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LayoutRoute: typeof LayoutRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_layout': {
       id: '/_layout'
       path: ''
@@ -282,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout/': {
       id: '/_layout/'
       path: '/'
@@ -289,11 +279,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/explore': {
-      id: '/_layout/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof LayoutExploreRouteImport
+    '/_layout/admin': {
+      id: '/_layout/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof LayoutAdminRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/messages': {
+      id: '/_layout/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof LayoutMessagesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/search': {
@@ -303,25 +300,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSearchRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/squad': {
+      id: '/_layout/squad'
+      path: '/squad'
+      fullPath: '/squad'
+      preLoaderRoute: typeof LayoutSquadRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/verify-email': {
       id: '/_layout/verify-email'
       path: '/verify-email'
       fullPath: '/verify-email'
       preLoaderRoute: typeof LayoutVerifyEmailRouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_authenticated/developer/': {
-      id: '/_authenticated/developer/'
-      path: '/developer'
-      fullPath: '/developer/'
-      preLoaderRoute: typeof AuthenticatedDeveloperIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_layout/bookmark/': {
-      id: '/_layout/bookmark/'
-      path: '/bookmark'
-      fullPath: '/bookmark/'
-      preLoaderRoute: typeof LayoutBookmarkIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/community/': {
@@ -380,69 +370,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/squad/': {
-      id: '/_layout/squad/'
-      path: '/squad'
-      fullPath: '/squad/'
-      preLoaderRoute: typeof LayoutSquadIndexRouteImport
-      parentRoute: typeof LayoutRoute
-    }
   }
 }
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedDeveloperIndexRoute: typeof AuthenticatedDeveloperIndexRoute
-}
-
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedDeveloperIndexRoute: AuthenticatedDeveloperIndexRoute,
-}
-
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
-
 interface LayoutRouteChildren {
-  LayoutExploreRoute: typeof LayoutExploreRoute
+  LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutMessagesRoute: typeof LayoutMessagesRoute
   LayoutSearchRoute: typeof LayoutSearchRoute
+  LayoutSquadRoute: typeof LayoutSquadRoute
   LayoutVerifyEmailRoute: typeof LayoutVerifyEmailRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutCommunityCommunityIdRoute: typeof LayoutCommunityCommunityIdRoute
   LayoutGameGameSlugRoute: typeof LayoutGameGameSlugRoute
   LayoutPostPostIdRoute: typeof LayoutPostPostIdRoute
   LayoutProfileUserIdRoute: typeof LayoutProfileUserIdRoute
-  LayoutBookmarkIndexRoute: typeof LayoutBookmarkIndexRoute
   LayoutCommunityIndexRoute: typeof LayoutCommunityIndexRoute
   LayoutGameIndexRoute: typeof LayoutGameIndexRoute
   LayoutProfileIndexRoute: typeof LayoutProfileIndexRoute
   LayoutSettingsIndexRoute: typeof LayoutSettingsIndexRoute
-  LayoutSquadIndexRoute: typeof LayoutSquadIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
-  LayoutExploreRoute: LayoutExploreRoute,
+  LayoutAdminRoute: LayoutAdminRoute,
+  LayoutMessagesRoute: LayoutMessagesRoute,
   LayoutSearchRoute: LayoutSearchRoute,
+  LayoutSquadRoute: LayoutSquadRoute,
   LayoutVerifyEmailRoute: LayoutVerifyEmailRoute,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutCommunityCommunityIdRoute: LayoutCommunityCommunityIdRoute,
   LayoutGameGameSlugRoute: LayoutGameGameSlugRoute,
   LayoutPostPostIdRoute: LayoutPostPostIdRoute,
   LayoutProfileUserIdRoute: LayoutProfileUserIdRoute,
-  LayoutBookmarkIndexRoute: LayoutBookmarkIndexRoute,
   LayoutCommunityIndexRoute: LayoutCommunityIndexRoute,
   LayoutGameIndexRoute: LayoutGameIndexRoute,
   LayoutProfileIndexRoute: LayoutProfileIndexRoute,
   LayoutSettingsIndexRoute: LayoutSettingsIndexRoute,
-  LayoutSquadIndexRoute: LayoutSquadIndexRoute,
 }
 
 const LayoutRouteWithChildren =
   LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LayoutRoute: LayoutRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
