@@ -27,7 +27,10 @@ export interface CommunityData {
     gameName?: string;
     gameId?: string;
     tags: string[];
+    tag?: string;
+    privacy?: string;
     joined: boolean;
+    isJoined?: boolean;
     featured?: boolean;
     isLocked?: boolean;
     autoApprovePosts?: boolean;

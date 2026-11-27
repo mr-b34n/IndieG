@@ -1,12 +1,7 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faPen,
-    faXmark,
-    faImages,
-    faLink,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Pen as faPen, X as faXmark, Images as faImages, Link as faLink } from "@phosphor-icons/react";
 import { useAuthStore } from "@/features/auth";
 import type { PostType } from "./CommunityHubFeed";
 

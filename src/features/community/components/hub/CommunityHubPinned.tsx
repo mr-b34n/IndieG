@@ -1,5 +1,5 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faThumbtack, faComment, faArrowUp } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { PushPin as faThumbtack, Chat as faComment, ArrowUp as faArrowUp } from "@phosphor-icons/react";
 import { formatCompactNumber } from "../../constants";
 
 export interface PinnedThreadItem {

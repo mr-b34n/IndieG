@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Gamepad2, RotateCcw } from "lucide-react";
+import { GameController as Gamepad2, ArrowCounterClockwise as RotateCcw } from "@phosphor-icons/react";
 import { useCommunitiesStore } from "../store/useCommunitiesStore";
 import type { CommunityTabKey } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
@@ -22,7 +22,11 @@ export const CommunityList = () => {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
         try {
-            return (localStorage.getItem("indieg_community_view_mode") as "grid" | "list") || "grid";
+            return (
+                (localStorage.getItem("ludon_community_view_mode") as "grid" | "list") ||
+                (localStorage.getItem("indieg_community_view_mode") as "grid" | "list") ||
+                "grid"
+            );
         } catch {
             return "grid";
         }
@@ -62,11 +66,12 @@ export const CommunityList = () => {
     }, [rawCommunitiesData, mergeCommunities, activeTab]);
 
     const isLoading = isQueryLoading || storeLoading;
+    const showSkeleton = isLoading && communities.length === 0;
 
     const handleViewModeChange = (mode: "grid" | "list") => {
         setViewMode(mode);
         try {
-            localStorage.setItem("indieg_community_view_mode", mode);
+            localStorage.setItem("ludon_community_view_mode", mode);
         } catch {
             // Ignore storage error
         }
@@ -151,12 +156,12 @@ export const CommunityList = () => {
             />
 
             {/* Directory Content: Grid / List / Skeletons / Empty State */}
-            {isLoading && communities.length === 0 ? (
+            {showSkeleton ? (
                 <div className="w-full">
                     {viewMode === "grid" ? (
-                        <CommunityGridSkeleton count={6} />
+                        <CommunityGridSkeleton count={3} />
                     ) : (
-                        <CommunityListSkeleton count={6} />
+                        <CommunityListSkeleton count={3} />
                     )}
                 </div>
             ) : filtered.length > 0 ? (

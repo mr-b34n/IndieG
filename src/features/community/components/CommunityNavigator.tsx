@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import {
-    ChevronDown,
+    CaretDown as ChevronDown,
     Check,
     SlidersHorizontal,
-    LayoutGrid,
-    List,
-} from "lucide-react";
+    SquaresFour as LayoutGrid,
+    ListBullets as List,
+} from "@phosphor-icons/react";
 import type { CommunityTabKey } from "../types";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 

@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { CaretDown as faChevronDown, Check as faCheck } from "@phosphor-icons/react";
+import { CircleNotch as Loader2, CheckCircle as CheckCircle2 } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { Post, type PostData, usePostsStore, getCurrentAuthor, type UserRank } from "@/features/post";
-import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { Post, type PostData, usePostsStore, getCurrentAuthor } from "@/features/post";
 
 export type PostType = "discussion" | "question" | "guide" | "showcase" | "poll" | "event";
 
@@ -51,15 +51,9 @@ export interface CommunityHubFeedProps {
     communityId?: string;
     communityName?: string;
     isVi: boolean;
-}
-
-function parseUserRank(rank?: string): UserRank | undefined {
-    if (!rank) return undefined;
-    const lower = rank.toLowerCase();
-    if (["rookie", "veteran", "pro", "elite", "master", "grandmaster", "legend", "immortal"].includes(lower)) {
-        return lower as UserRank;
-    }
-    return "veteran";
+    hasNextPage?: boolean;
+    isFetchingNextPage?: boolean;
+    onLoadMore?: () => void;
 }
 
 function mapFeedPostToPostData(
@@ -78,7 +72,6 @@ function mapFeedPostToPostData(
             username: p.authorHandle ? p.authorHandle.replace(/^@/, "") : p.authorName,
             avatar: p.authorAvatar,
             avatarUrl: p.authorAvatar,
-            rank: parseUserRank(p.authorRank),
         },
         authorAvatar: p.authorAvatar,
         title: p.title,
@@ -104,23 +97,42 @@ function mapFeedPostToPostData(
 
 export const CommunityHubFeed = ({
     posts,
-    activeFilter,
-    onFilterChange,
     sortMode,
     onSortChange,
-    onPostClick,
     communityId,
     communityName,
     isVi,
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore,
 }: CommunityHubFeedProps) => {
     const { t } = useTranslation();
-    const user = useAuthStore((state) => state.user);
-    const currentAuthor = getCurrentAuthor(user);
+    const currentAuthor = getCurrentAuthor();
     const deletePost = usePostsStore((state) => state.deletePost);
     const updatePost = usePostsStore((state) => state.updatePost);
 
     const [isSortOpen, setIsSortOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+
+    // Infinite Scroll IntersectionObserver
+    useEffect(() => {
+        if (!hasNextPage || isFetchingNextPage || !onLoadMore) return;
+        const el = sentinelRef.current;
+        if (!el) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    onLoadMore();
+                }
+            },
+            { rootMargin: "300px 0px", threshold: 0.1 }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -217,6 +229,30 @@ export const CommunityHubFeed = ({
                             </div>
                         );
                     })}
+                    {/* Infinite Scroll Sentinel / Load More */}
+                    <div ref={sentinelRef} className="w-full py-4 flex flex-col items-center justify-center gap-2">
+                        {isFetchingNextPage && (
+                            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-primary animate-pulse">
+                                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                                <span>{t('feed.loadingMore', { defaultValue: "Loading more posts..." })}</span>
+                            </div>
+                        )}
+                        {!isFetchingNextPage && hasNextPage && onLoadMore && (
+                            <button
+                                type="button"
+                                onClick={() => onLoadMore()}
+                                className="px-4 py-1.5 text-xs font-bold text-text-muted hover:text-text bg-surface-hover hover:bg-surface-hover/80 rounded transition-colors cursor-pointer"
+                            >
+                                {t('feed.loadMore', { defaultValue: "Tải thêm bài viết" })}
+                            </button>
+                        )}
+                        {!hasNextPage && posts.length > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-text-faint py-3 font-medium">
+                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                                <span>{t('feed.allLoaded', { defaultValue: "You're all caught up ✨" })}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

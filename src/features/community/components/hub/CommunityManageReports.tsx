@@ -1,15 +1,11 @@
 
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useMemo, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faFlag,
-    faXmark,
-    faMicrophoneSlash,
-    faTrashCan,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Flag as faFlag, X as faXmark, MicrophoneSlash as faMicrophoneSlash, Trash as faTrashCan } from "@phosphor-icons/react";
 import { useReportsQuery, useProfilesListQuery } from "@/shared/api/useQueries";
-import { extractReportList } from "@/shared/api";
+import { extractReportList, reportsApi } from "@/shared/api";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ReportItem {
     id: string;
@@ -34,13 +30,33 @@ interface CommunityManageReportsProps {
 
 export const CommunityManageReports = ({
     communityId,
-    communityName,
     isVi,
-    onNavigateRules,
-    userRole = "owner",
 }: CommunityManageReportsProps) => {
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
     const [reportFilter, setReportFilter] = useState<"all" | "pending" | "resolved" | "dismissed">("all");
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+    const handleResolve = async (
+        reportId: string,
+        status: "resolved" | "dismissed",
+        note: string,
+        action?: "none" | "warning" | "content_removed" | "user_banned" | "no_action"
+    ) => {
+        try {
+            setActionLoadingId(reportId);
+            await reportsApi.resolve(reportId, {
+                status,
+                moderatorNote: note,
+                moderationAction: action,
+            });
+            await queryClient.invalidateQueries({ queryKey: ["reports"] });
+        } catch (err) {
+            console.error("Failed to resolve report:", err);
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
 
     const { data: reportsData } = useReportsQuery();
 
@@ -190,14 +206,29 @@ export const CommunityManageReports = ({
 
                                     {report.status === "pending" && (
                                         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-divider-primary/20">
-                                            <button className="text-xs font-bold text-text-muted hover:text-text transition-colors cursor-pointer flex items-center gap-1.5">
-                                                <FontAwesomeIcon icon={faXmark} /> Dismiss
+                                            <button
+                                                type="button"
+                                                disabled={actionLoadingId === report.id}
+                                                onClick={() => handleResolve(report.id, "dismissed", isVi ? "Báo cáo bị bỏ qua bởi điều hành viên" : "Dismissed by community moderation", "no_action")}
+                                                className="text-xs font-bold text-text-muted hover:text-text transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                <FontAwesomeIcon icon={faXmark} /> {isVi ? "Bỏ qua" : "Dismiss"}
                                             </button>
-                                            <button className="text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors cursor-pointer flex items-center gap-1.5 ml-2">
-                                                <FontAwesomeIcon icon={faMicrophoneSlash} /> Mute Author
+                                            <button
+                                                type="button"
+                                                disabled={actionLoadingId === report.id}
+                                                onClick={() => handleResolve(report.id, "resolved", isVi ? "Cảnh báo / tắt tiếng tác giả" : "Author muted / warned", "warning")}
+                                                className="text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors cursor-pointer flex items-center gap-1.5 ml-2 disabled:opacity-50"
+                                            >
+                                                <FontAwesomeIcon icon={faMicrophoneSlash} /> {isVi ? "Cảnh báo" : "Mute Author"}
                                             </button>
-                                            <button className="text-xs font-bold text-rose-500 hover:text-rose-400 transition-colors cursor-pointer flex items-center gap-1.5 ml-auto">
-                                                <FontAwesomeIcon icon={faTrashCan} /> Remove Content
+                                            <button
+                                                type="button"
+                                                disabled={actionLoadingId === report.id}
+                                                onClick={() => handleResolve(report.id, "resolved", isVi ? "Đã gỡ bỏ nội dung vi phạm" : "Content removed by moderator", "content_removed")}
+                                                className="text-xs font-bold text-rose-500 hover:text-rose-400 transition-colors cursor-pointer flex items-center gap-1.5 ml-auto disabled:opacity-50"
+                                            >
+                                                <FontAwesomeIcon icon={faTrashCan} /> {isVi ? "Gỡ nội dung" : "Remove Content"}
                                             </button>
                                         </div>
                                     )}

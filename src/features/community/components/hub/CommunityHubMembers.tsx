@@ -1,14 +1,11 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useState, useMemo } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faSearch,
-    faUsers,
-    faCrown,
-    faShieldHalved,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import { MagnifyingGlass as faSearch, Users as faUsers, Crown as faCrown, Shield as faShieldHalved } from "@phosphor-icons/react";
 import { useCommunityMembersQuery, useProfilesListQuery } from "@/shared/api/useQueries";
 import { extractMemberList } from "@/shared/api";
+import type { ContributorItem } from "./CommunityHubRightRail";
 
 interface MemberItem {
     id: string;
@@ -56,7 +53,6 @@ interface GenericMemberObj {
 
 export const CommunityHubMembers = ({
     communityId,
-    isVi,
 }: CommunityHubMembersProps) => {
     const { t } = useTranslation();
     const [subTab, setSubTab] = useState<"all" | "staff">("all");
@@ -129,10 +125,11 @@ export const CommunityHubMembers = ({
                 m.avatar ||
                 m.avatarUrl ||
                 profile?.avatar ||
-                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(handleRaw)}`;
+                "";
 
-            const joinedDate = m.joinedAt || m.createdAt
-                ? new Date(m.joinedAt || m.createdAt).toLocaleDateString("vi-VN")
+            const rawJoinDate = m.joinedAt || m.createdAt;
+            const joinedDate = rawJoinDate
+                ? new Date(rawJoinDate).toLocaleDateString("vi-VN")
                 : "2026";
 
             return {
@@ -259,15 +256,16 @@ export const CommunityHubMembers = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {filteredMembers.map((member, idx) => (
                             <div
-                                key={`${member.id || member.userId}-${idx}`}
+                                key={`${member.id}-${idx}`}
                                 className="p-3 rounded-[4px] bg-surface/70 border border-divider-primary/60 hover:border-divider-primary transition-all flex items-center justify-between gap-3"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="relative">
-                                        <img
+                                        <UserAvatar
                                             src={member.avatar}
-                                            alt={member.name}
-                                            className="w-10 h-10 rounded-full object-cover border border-divider-primary shrink-0"
+                                            name={member.name || member.handle}
+                                            className="w-10 h-10 border border-divider-primary"
+                                            textClassName="text-sm"
                                         />
                                         {member.isOnline && (
                                             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface" />

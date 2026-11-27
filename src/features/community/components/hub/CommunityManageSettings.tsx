@@ -1,129 +1,260 @@
 import { useTranslation } from "@/shared/hooks/useTranslate";
-import { useState } from "react";
-import { DEFAULT_AVATAR, DEFAULT_BG } from "@/shared/constants/images";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
-    faLock,
-    faUnlock,
-    faUserCheck,
-    faTriangleExclamation,
-    faTrashCan,
-    faKey,
-    faCheck,
-    faXmark,
-    faCircleCheck,
-    faEyeSlash,
-    faEye,
-    faCrown,
-} from "@fortawesome/free-solid-svg-icons";
+    useCommunityMembersQuery,
+    useDeleteCommunityMutation,
+    useTransferCommunityOwnershipMutation,
+    useUpdateCommunityMutation,
+} from "@/shared/api/useQueries";
+import { extractMemberList } from "@/shared/api";
+import { uploadImageToR2 } from "@/shared/services/upload-service";
+import { ImageCropperModal } from "@/shared/components/ui/ImageCropperModal";
+import { DEFAULT_BG, DEFAULT_GAME_LOGO } from "@/shared/constants/images";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import {
+    Lock as faLock,
+    LockOpen as faUnlock,
+    UserCheck as faUserCheck,
+    Warning as faTriangleExclamation,
+    Trash as faTrashCan,
+    Check as faCheck,
+    X as faXmark,
+    CheckCircle as faCircleCheck,
+    Crown as faCrown,
+    Camera as faCamera,
+} from "@phosphor-icons/react";
+
+type BackendCommunityPrivacy = "public" | "private" | "invite_only";
 
 interface CommunityManageSettingsProps {
+    communityId?: string;
     communityName: string;
     communityDescription?: string;
     communitySlug?: string;
+    communityTags?: string[];
+    communityPrivacy?: string;
+    communityLogo?: string;
+    communityBackdrop?: string;
+    membersCount?: number;
     gameName?: string;
     isVi: boolean;
-    onUpdateCommunityInfo?: (name: string, desc: string) => void;
+    userRole?: string;
     onNavigateRules?: () => void;
 }
 
+function normalizePrivacy(raw?: string): BackendCommunityPrivacy {
+    const val = (raw || "").toLowerCase();
+    if (val === "private" || val === "approval") return "private";
+    if (val === "invite_only" || val === "restricted") return "invite_only";
+    return "public";
+}
+
 export const CommunityManageSettings = ({
+    communityId,
     communityName,
-    communityDescription = "Cộng đồng những người chơi sinh tồn, thiết kế và phiêu lưu trên đại dương trong tựa game Raft. Cùng chia sẻ kinh nghiệm, bản vẽ và tìm đồng đội!",
-    communitySlug = "raft",
-    gameName = "Raft",
+    communityDescription = "",
+    communitySlug = "",
+    communityTags = [],
+    communityPrivacy = "public",
+    communityLogo = "",
+    communityBackdrop = "",
+    membersCount = 0,
+    gameName = "",
     isVi,
-    onUpdateCommunityInfo,
     onNavigateRules,
 }: CommunityManageSettingsProps) => {
     const { t } = useTranslation();
-    // 1. GENERAL SECTION STATE
+    const navigate = useNavigate();
+    const updateCommunityMutation = useUpdateCommunityMutation();
+    const deleteCommunityMutation = useDeleteCommunityMutation();
+    const transferOwnershipMutation = useTransferCommunityOwnershipMutation();
+
+    // 1. REAL PERSISTED SETTINGS STATE
     const [name, setName] = useState(communityName);
     const [description, setDescription] = useState(communityDescription);
-    const [game, setGame] = useState(gameName);
-    const [avatarUrl] = useState(DEFAULT_AVATAR);
-    const [coverUrl] = useState(DEFAULT_BG);
+    const [tagsInput, setTagsInput] = useState(communityTags.join(", "));
+    const [privacy, setPrivacy] = useState<BackendCommunityPrivacy>(
+        normalizePrivacy(communityPrivacy)
+    );
+    const [logoPreview, setLogoPreview] = useState(communityLogo);
+    const [backdropPreview, setBackdropPreview] = useState(communityBackdrop);
+    const [cropTarget, setCropTarget] = useState<{
+        kind: "logo" | "backdrop";
+        rawSrc: string;
+    } | null>(null);
+    const [isUploadingMedia, setIsUploadingMedia] = useState<"logo" | "backdrop" | null>(null);
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
 
-    // 2. DISCOVERY SECTION STATE
-    const [tags, setTags] = useState("survival, building, ocean, multiplayer, co-op");
-    const [searchVisibility, setSearchVisibility] = useState<"visible" | "hidden">("visible");
+    const handleSelectMediaFile = (kind: "logo" | "backdrop", file?: File | null) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === "string") {
+                setCropTarget({ kind, rawSrc: reader.result });
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
-    // 3. MEMBERSHIP & PRIVACY SECTION STATE (Prompt exact options & 1-sentence explanations)
-    const [membershipPrivacy, setMembershipPrivacy] = useState<"open" | "approval" | "restricted">("approval");
-    const [requirePlaytimeProof, setRequirePlaytimeProof] = useState(true);
+    const handleSaveCroppedMedia = async (croppedDataUrl: string) => {
+        if (!cropTarget || !communityId) return;
+        const kind = cropTarget.kind;
+        setCropTarget(null);
+        setIsUploadingMedia(kind);
+        try {
+            const res = await fetch(croppedDataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], `${kind}.webp`, { type: blob.type || "image/webp" });
+            const uploaded = await uploadImageToR2({
+                file,
+                type: kind === "logo" ? "community-logo" : "community-cover",
+                postId: communityId,
+            });
+            const uploadedUrl = uploaded.imageUrl || uploaded.url;
+            if (!uploadedUrl) throw new Error("Upload did not return a public URL");
 
-    // 4. CONTENT SETTINGS STATE
-    const [allowedPostTypes, setAllowedPostTypes] = useState({
-        discussions: true,
-        guides: true,
-        media: true,
-        events: true,
-        polls: true,
-    });
-    const [maxMediaSizeMB, setMaxMediaSizeMB] = useState(25);
-    const [allowVideoUploads, setAllowVideoUploads] = useState(true);
-    const [autoEmbedLinks, setAutoEmbedLinks] = useState(true);
+            await updateCommunityMutation.mutateAsync({
+                id: communityId,
+                data: kind === "logo" ? { logo: uploadedUrl } : { backdrop: uploadedUrl },
+            });
+            if (kind === "logo") {
+                setLogoPreview(uploadedUrl);
+            } else {
+                setBackdropPreview(uploadedUrl);
+            }
+            showToast(
+                kind === "logo"
+                    ? (isVi ? "Đã cập nhật logo cộng đồng!" : "Community logo updated!")
+                    : (isVi ? "Đã cập nhật ảnh bìa cộng đồng!" : "Community cover updated!")
+            );
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : (isVi ? "Tải ảnh lên thất bại." : "Failed to upload image.");
+            showToast(msg, true);
+        } finally {
+            setIsUploadingMedia(null);
+        }
+    };
 
-    // 5. MODERATION SETTINGS STATE
-    const [minAccountAgeDays, setMinAccountAgeDays] = useState(3);
-    const [autoFlagThreshold, setAutoFlagThreshold] = useState(3);
-    const [allowModsPinPosts, setAllowModsPinPosts] = useState(true);
+    // Real eligible members for ownership transfer
+    const { data: membersData } = useCommunityMembersQuery(communityId || "");
+    const transferCandidates = useMemo(() => {
+        const items = extractMemberList(membersData);
+        return items
+            .filter((m) => m.role !== "owner" && m.status !== "banned" && m.status !== "pending")
+            .map((m) => ({
+                id: m.userId,
+                label: m.user?.name || m.user?.displayName || m.user?.username || `Member (${m.userId.slice(0, 6)})`,
+                handle: m.user?.username ? `@${m.user.username}` : "",
+                role: m.role || "member",
+            }));
+    }, [membersData]);
 
-    // FEEDBACK
+    // Feedback banner
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const showToast = (msg: string) => {
+    const [toastIsError, setToastIsError] = useState(false);
+    const showToast = (msg: string, isError = false) => {
+        setToastIsError(isError);
         setToastMessage(msg);
         setTimeout(() => setToastMessage(null), 3500);
     };
 
-    const handleSaveGeneral = () => {
-        if (onUpdateCommunityInfo) {
-            onUpdateCommunityInfo(name, description);
+    const handleSaveGeneral = async () => {
+        if (!communityId) return;
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+            showToast(isVi ? "Tên cộng đồng không được để trống." : "Community name cannot be empty.", true);
+            return;
         }
-        showToast(t('hub.communitymanagesettings_199'));
+        const parsedTags = tagsInput
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+
+        try {
+            await updateCommunityMutation.mutateAsync({
+                id: communityId,
+                data: {
+                    name: trimmedName,
+                    description: description.trim(),
+                    tags: parsedTags,
+                    privacy,
+                },
+            });
+            showToast(t("hub.communitymanagesettings_199"));
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : (isVi ? "Không thể lưu cài đặt cộng đồng." : "Failed to save community settings.");
+            showToast(msg, true);
+        }
     };
 
-    // 6. DANGER ZONE MODAL/STATE
+    // DANGER ZONE STATE
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-    const [transferTargetUser, setTransferTargetUser] = useState("Minh Quân (@shark_hunter99)");
-    const [transferPassword, setTransferPassword] = useState("");
-
+    const [transferTargetId, setTransferTargetId] = useState("");
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteConfirmName, setDeleteConfirmName] = useState("");
-    const [deletePassword, setDeletePassword] = useState("");
 
-    const handleConfirmTransfer = () => {
-        if (!transferPassword.trim()) {
-            alert(t('hub.communitymanagesettings_200'));
+    const handleConfirmTransfer = async () => {
+        if (!communityId || !transferTargetId) {
+            showToast(isVi ? "Vui lòng chọn thành viên nhận quyền sở hữu." : "Please select a member to transfer ownership to.", true);
             return;
         }
-        setIsTransferModalOpen(false);
-        setTransferPassword("");
-        showToast(isVi ? `Đã chuyển giao quyền Trưởng cộng đồng cho ${transferTargetUser}.` : `Ownership transferred to ${transferTargetUser}.`);
+        const target = transferCandidates.find((c) => c.id === transferTargetId);
+        try {
+            await transferOwnershipMutation.mutateAsync({
+                communityId,
+                newOwnerId: transferTargetId,
+            });
+            setIsTransferModalOpen(false);
+            setTransferTargetId("");
+            showToast(
+                isVi
+                    ? `Đã chuyển giao quyền Trưởng cộng đồng cho ${target?.label || "thành viên"}.`
+                    : `Ownership transferred to ${target?.label || "member"}.`
+            );
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : (isVi ? "Chuyển quyền sở hữu thất bại." : "Failed to transfer ownership.");
+            showToast(msg, true);
+        }
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (deleteConfirmName.trim().toLowerCase() !== communityName.trim().toLowerCase()) {
-            alert(isVi ? `Tên cộng đồng nhập không khớp với "${communityName}".` : `Community name does not match "${communityName}".`);
+            showToast(
+                isVi
+                    ? `Tên cộng đồng nhập không khớp với "${communityName}".`
+                    : `Community name does not match "${communityName}".`,
+                true
+            );
             return;
         }
-        if (!deletePassword.trim()) {
-            alert(t('hub.communitymanagesettings_201'));
-            return;
+        if (!communityId) return;
+        try {
+            await deleteCommunityMutation.mutateAsync(communityId);
+            setIsDeleteModalOpen(false);
+            setDeleteConfirmName("");
+            showToast(t("hub.communitymanagesettings_202"));
+            navigate({ to: "/community" });
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : (isVi ? "Xóa cộng đồng thất bại." : "Failed to delete community.");
+            showToast(msg, true);
         }
-        setIsDeleteModalOpen(false);
-        setDeleteConfirmName("");
-        setDeletePassword("");
-        showToast(t('hub.communitymanagesettings_202'));
     };
 
     return (
         <div className="w-full flex flex-col gap-6 animate-fade-in text-text select-none pb-12">
             {/* Toast Feedback */}
             {toastMessage && (
-                <div className="p-3 bg-primary/10 border border-primary/40 rounded-[6px] text-xs font-semibold text-primary flex items-center justify-between shadow-sm sticky top-0 z-40">
+                <div
+                    className={`p-3 rounded-[6px] text-xs font-semibold flex items-center justify-between shadow-sm sticky top-0 z-40 border ${
+                        toastIsError
+                            ? "bg-rose-500/10 border-rose-500/40 text-rose-400"
+                            : "bg-primary/10 border-primary/40 text-primary"
+                    }`}
+                >
                     <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faCircleCheck} className="text-sm" />
+                        <FontAwesomeIcon icon={toastIsError ? faTriangleExclamation : faCircleCheck} className="text-sm" />
                         <span>{toastMessage}</span>
                     </div>
                     <button
@@ -144,19 +275,24 @@ export const CommunityManageSettings = ({
                     </h2>
                     <p className="text-xs text-text-muted mt-0.5">
                         {isVi
-                            ? `Cấu hình thông tin, phạm vi tìm kiếm, quyền thành viên và kiểm duyệt cho ${communityName}.`
-                            : `Configure identity, discovery, membership permissions, and moderation for ${communityName}.`}
+                            ? `Cấu hình thông tin, thẻ khám phá và quyền tham gia cho ${communityName}.`
+                            : `Configure identity, discovery tags, and membership privacy for ${communityName}.`}
                     </p>
                 </div>
 
                 <button
                     type="button"
+                    disabled={updateCommunityMutation.isPending}
                     onClick={handleSaveGeneral}
                     title={isVi ? "Lưu thay đổi" : "Save changes"}
-                    className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shadow-sm"
+                    className="px-3 py-1.5 rounded-[4px] bg-primary hover:bg-primary/90 disabled:opacity-50 text-xs font-bold text-white flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shadow-sm"
                 >
                     <FontAwesomeIcon icon={faCheck} className="text-xs" />
-                    <span>{t('hub.communitymanagesettings_203')}</span>
+                    <span>
+                        {updateCommunityMutation.isPending
+                            ? (isVi ? "Đang lưu..." : "Saving...")
+                            : t("hub.communitymanagesettings_203")}
+                    </span>
                 </button>
             </div>
 
@@ -171,7 +307,7 @@ export const CommunityManageSettings = ({
                     {/* Community Name */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {t('hub.communitymanagesettings_204')}
+                            {t("hub.communitymanagesettings_204")}
                         </label>
                         <input
                             type="text"
@@ -181,27 +317,24 @@ export const CommunityManageSettings = ({
                         />
                     </div>
 
-                    {/* Game Association */}
+                    {/* Linked Game (read-only) */}
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-text-muted">
-                            {t('hub.communitymanagesettings_205')}
+                            {t("hub.communitymanagesettings_205")}
                         </label>
-                        <input
-                            type="text"
-                            value={game}
-                            onChange={(e) => setGame(e.target.value)}
-                            className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
-                        />
+                        <div className="h-8 px-3 rounded-[4px] bg-surface/60 border border-divider-primary/60 text-xs text-text-muted flex items-center">
+                            {gameName || "—"}
+                        </div>
                     </div>
 
                     {/* Community URL Slug */}
                     <div className="flex flex-col gap-1.5 md:col-span-2">
                         <label className="text-xs font-semibold text-text-muted">
-                            {t('hub.communitymanagesettings_206')}
+                            {t("hub.communitymanagesettings_206")}
                         </label>
                         <div className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary/60 text-xs font-mono text-text-muted flex items-center select-all">
-                            <span className="text-text-faint">app.gg/community/</span>
-                            <span className="text-text font-semibold">{communitySlug}</span>
+                            <span className="text-text-faint">/community/</span>
+                            <span className="text-text font-semibold">{communitySlug || communityId}</span>
                         </div>
                     </div>
                 </div>
@@ -209,59 +342,92 @@ export const CommunityManageSettings = ({
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-text-muted">
-                        {t('hub.communitymanagesettings_207')}
+                        {t("hub.communitymanagesettings_207")}
                     </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        rows={2}
+                        rows={3}
                         className="p-2.5 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary resize-none leading-relaxed"
                     />
                 </div>
 
-                {/* Logo & Cover preview rows */}
+                {/* Logo & Cover Upload (R2 + Cropper) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                            handleSelectMediaFile("logo", e.target.files?.[0]);
+                            e.target.value = "";
+                        }}
+                    />
+                    <input
+                        ref={coverInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                            handleSelectMediaFile("backdrop", e.target.files?.[0]);
+                            e.target.value = "";
+                        }}
+                    />
+
                     <div className="flex items-center gap-3 p-2.5 rounded bg-surface border border-divider-primary/40">
                         <img
-                            src={avatarUrl}
+                            src={logoPreview || DEFAULT_GAME_LOGO}
                             alt="Logo preview"
                             className="w-10 h-10 rounded-[4px] object-cover bg-surface-inner shrink-0"
                         />
                         <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-xs font-bold text-text truncate">Logo / Avatar</span>
-                            <span className="text-[10px] font-mono text-text-faint truncate">Square 1:1, max 2MB</span>
+                            <span className="text-xs font-bold text-text truncate">Logo</span>
+                            <span className="text-[10px] font-mono text-text-faint truncate">1:1 WebP, max 5MB</span>
                         </div>
                         <button
                             type="button"
-                            onClick={() => showToast(t('hub.communitymanagesettings_208'))}
-                            className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer"
+                            disabled={isUploadingMedia !== null}
+                            onClick={() => logoInputRef.current?.click()}
+                            className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text disabled:opacity-50 cursor-pointer flex items-center gap-1"
                         >
-                            {t('hub.communitymanagesettings_209')}
+                            <FontAwesomeIcon icon={faCamera} className="text-[11px]" />
+                            <span>
+                                {isUploadingMedia === "logo"
+                                    ? (isVi ? "Đang tải..." : "Uploading...")
+                                    : (isVi ? "Đổi logo" : "Change")}
+                            </span>
                         </button>
                     </div>
 
                     <div className="flex items-center gap-3 p-2.5 rounded bg-surface border border-divider-primary/40">
                         <img
-                            src={coverUrl}
+                            src={backdropPreview || DEFAULT_BG}
                             alt="Cover preview"
                             className="w-16 h-10 rounded-[4px] object-cover bg-surface-inner shrink-0"
                         />
                         <div className="flex flex-col min-w-0 flex-1">
                             <span className="text-xs font-bold text-text truncate">Cover Banner</span>
-                            <span className="text-[10px] font-mono text-text-faint truncate">16:9 or 3:1 ratio</span>
+                            <span className="text-[10px] font-mono text-text-faint truncate">16:9 WebP, max 10MB</span>
                         </div>
                         <button
                             type="button"
-                            onClick={() => showToast(t('hub.communitymanagesettings_210'))}
-                            className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text cursor-pointer"
+                            disabled={isUploadingMedia !== null}
+                            onClick={() => coverInputRef.current?.click()}
+                            className="px-2.5 py-1 rounded bg-surface-hover border border-divider-primary text-[11px] font-semibold text-text-muted hover:text-text disabled:opacity-50 cursor-pointer flex items-center gap-1"
                         >
-                            {t('hub.communitymanagesettings_211')}
+                            <FontAwesomeIcon icon={faCamera} className="text-[11px]" />
+                            <span>
+                                {isUploadingMedia === "backdrop"
+                                    ? (isVi ? "Đang tải..." : "Uploading...")
+                                    : (isVi ? "Đổi bìa" : "Change")}
+                            </span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* SECTION 2: DISCOVERY */}
+            {/* SECTION 2: DISCOVERY TAGS */}
             <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-3">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
@@ -270,56 +436,31 @@ export const CommunityManageSettings = ({
 
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-text-muted">
-                        {t('hub.communitymanagesettings_212')}
+                        {t("hub.communitymanagesettings_212")}
                     </label>
                     <input
                         type="text"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
+                        value={tagsInput}
+                        onChange={(e) => setTagsInput(e.target.value)}
+                        placeholder={isVi ? "vd: rpg, co-op, indie" : "e.g. rpg, co-op, indie"}
                         className="h-8 px-3 rounded-[4px] bg-surface border border-divider-primary text-xs text-text focus:outline-none focus:border-primary"
                     />
                 </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40 mt-1">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-text">
-                            {t('hub.communitymanagesettings_214')}
-                        </span>
-                        <span className="text-[11px] text-text-muted">
-                            {t('hub.communitymanagesettings_215')}
-                        </span>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setSearchVisibility(searchVisibility === "visible" ? "hidden" : "visible")
-                        }
-                        className={`px-3 py-1 rounded-[4px] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
-                            searchVisibility === "visible"
-                                ? "bg-primary/20 text-primary border border-primary/30"
-                                : "bg-surface-hover text-text-faint border border-divider-primary"
-                        }`}
-                    >
-                        <FontAwesomeIcon icon={searchVisibility === "visible" ? faEye : faEyeSlash} className="text-[11px]" />
-                        <span>{searchVisibility === "visible" ? (t('hub.communitymanagesettings_216')) : (t('hub.communitymanagesettings_217'))}</span>
-                    </button>
-                </div>
             </div>
 
-            {/* SECTION 3: MEMBERSHIP & PRIVACY (Prompt exact requirements) */}
+            {/* SECTION 3: MEMBERSHIP & PRIVACY */}
             <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-3">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span>MEMBERSHIP & PRIVACY</span>
+                    <span>MEMBERSHIP &amp; PRIVACY</span>
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                    {/* OPEN */}
+                    {/* PUBLIC */}
                     <div
-                        onClick={() => setMembershipPrivacy("open")}
+                        onClick={() => setPrivacy("public")}
                         className={`p-3.5 rounded-[6px] border transition-all cursor-pointer flex flex-col gap-1.5 ${
-                            membershipPrivacy === "open"
+                            privacy === "public"
                                 ? "bg-primary/10 border-primary shadow-sm"
                                 : "bg-surface border-divider-primary/50 hover:bg-surface-hover/50"
                         }`}
@@ -329,20 +470,20 @@ export const CommunityManageSettings = ({
                                 <FontAwesomeIcon icon={faUnlock} className="text-xs text-emerald-400" />
                                 <span>OPEN</span>
                             </span>
-                            {membershipPrivacy === "open" && (
+                            {privacy === "public" && (
                                 <FontAwesomeIcon icon={faCheck} className="text-primary text-xs" />
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {t('hub.communitymanagesettings_218')}
+                            {t("hub.communitymanagesettings_218")}
                         </p>
                     </div>
 
-                    {/* APPROVAL REQUIRED */}
+                    {/* PRIVATE (APPROVAL REQUIRED) */}
                     <div
-                        onClick={() => setMembershipPrivacy("approval")}
+                        onClick={() => setPrivacy("private")}
                         className={`p-3.5 rounded-[6px] border transition-all cursor-pointer flex flex-col gap-1.5 ${
-                            membershipPrivacy === "approval"
+                            privacy === "private"
                                 ? "bg-primary/10 border-primary shadow-sm"
                                 : "bg-surface border-divider-primary/50 hover:bg-surface-hover/50"
                         }`}
@@ -352,20 +493,20 @@ export const CommunityManageSettings = ({
                                 <FontAwesomeIcon icon={faUserCheck} className="text-xs text-amber-400" />
                                 <span>APPROVAL REQUIRED</span>
                             </span>
-                            {membershipPrivacy === "approval" && (
+                            {privacy === "private" && (
                                 <FontAwesomeIcon icon={faCheck} className="text-primary text-xs" />
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {t('hub.communitymanagesettings_219')}
+                            {t("hub.communitymanagesettings_219")}
                         </p>
                     </div>
 
-                    {/* RESTRICTED */}
+                    {/* INVITE_ONLY (RESTRICTED) */}
                     <div
-                        onClick={() => setMembershipPrivacy("restricted")}
+                        onClick={() => setPrivacy("invite_only")}
                         className={`p-3.5 rounded-[6px] border transition-all cursor-pointer flex flex-col gap-1.5 ${
-                            membershipPrivacy === "restricted"
+                            privacy === "invite_only"
                                 ? "bg-primary/10 border-primary shadow-sm"
                                 : "bg-surface border-divider-primary/50 hover:bg-surface-hover/50"
                         }`}
@@ -375,166 +516,24 @@ export const CommunityManageSettings = ({
                                 <FontAwesomeIcon icon={faLock} className="text-xs text-rose-400" />
                                 <span>RESTRICTED</span>
                             </span>
-                            {membershipPrivacy === "restricted" && (
+                            {privacy === "invite_only" && (
                                 <FontAwesomeIcon icon={faCheck} className="text-primary text-xs" />
                             )}
                         </div>
                         <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                            {t('hub.communitymanagesettings_220')}
+                            {t("hub.communitymanagesettings_220")}
                         </p>
                     </div>
                 </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40 mt-1">
-                    <span className="text-xs text-text-muted">
-                        {t('hub.communitymanagesettings_221')}
-                    </span>
-                    <input
-                        type="checkbox"
-                        checked={requirePlaytimeProof}
-                        onChange={(e) => setRequirePlaytimeProof(e.target.checked)}
-                        className="w-4 h-4 accent-primary cursor-pointer"
-                    />
-                </div>
             </div>
 
-            {/* SECTION 4: CONTENT */}
-            <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span>CONTENT</span>
-                </span>
-
-                <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-text-muted">
-                        {t('hub.communitymanagesettings_222')}
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                        {Object.entries(allowedPostTypes).map(([typeKey, isAllowed]) => (
-                            <label
-                                key={typeKey}
-                                className="flex items-center gap-2 p-2 rounded bg-surface border border-divider-primary/40 text-xs text-text cursor-pointer hover:bg-surface-hover capitalize"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={isAllowed}
-                                    onChange={(e) =>
-                                        setAllowedPostTypes((prev) => ({
-                                            ...prev,
-                                            [typeKey]: e.target.checked,
-                                        }))
-                                    }
-                                    className="accent-primary"
-                                />
-                                <span>{typeKey}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-
-                    <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
-                        <span className="text-xs text-text-muted">
-                            {t('hub.communitymanagesettings_224')}
-                        </span>
-                        <select
-                            value={maxMediaSizeMB}
-                            onChange={(e) => setMaxMediaSizeMB(Number(e.target.value))}
-                            className="h-7 px-2 rounded bg-surface-inner border border-divider-primary text-xs font-mono text-text focus:outline-none"
-                        >
-                            <option value={10}>10 MB</option>
-                            <option value={25}>25 MB</option>
-                            <option value={50}>50 MB</option>
-                        </select>
-                    </div>
-
-                    <div className="flex items-center justify-between p-2.5 rounded bg-surface border border-divider-primary/40">
-                        <span className="text-xs text-text-muted">
-                            {t('hub.communitymanagesettings_225')}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={autoEmbedLinks}
-                            onChange={(e) => setAutoEmbedLinks(e.target.checked)}
-                            className="w-4 h-4 accent-primary cursor-pointer"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* SECTION 5: MODERATION */}
-            <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-3">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span>MODERATION</span>
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40">
-                        <span className="text-xs font-semibold text-text">
-                            {t('hub.communitymanagesettings_226')}
-                        </span>
-                        <span className="text-[11px] text-text-muted">
-                            {t('hub.communitymanagesettings_227')}
-                        </span>
-                        <select
-                            value={minAccountAgeDays}
-                            onChange={(e) => setMinAccountAgeDays(Number(e.target.value))}
-                            className="h-7 px-2 rounded bg-surface-inner border border-divider-primary text-xs font-mono text-text focus:outline-none mt-1"
-                        >
-                            <option value={0}>{t('hub.communitymanagesettings_228')}</option>
-                            <option value={1}>{t('hub.communitymanagesettings_229')}</option>
-                            <option value={3}>{t('hub.communitymanagesettings_230')}</option>
-                            <option value={7}>{t('hub.communitymanagesettings_231')}</option>
-                        </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40">
-                        <span className="text-xs font-semibold text-text">
-                            {t('hub.communitymanagesettings_232')}
-                        </span>
-                        <span className="text-[11px] text-text-muted">
-                            {t('hub.communitymanagesettings_233')}
-                        </span>
-                        <select
-                            value={autoFlagThreshold}
-                            onChange={(e) => setAutoFlagThreshold(Number(e.target.value))}
-                            className="h-7 px-2 rounded bg-surface-inner border border-divider-primary text-xs font-mono text-text focus:outline-none mt-1"
-                        >
-                            <option value={2}>2 {t('hub.communitymanagesettings_234')}</option>
-                            <option value={3}>3 {t('hub.communitymanagesettings_235')}</option>
-                            <option value={5}>5 {t('hub.communitymanagesettings_236')}</option>
-                        </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 p-2.5 rounded bg-surface border border-divider-primary/40 justify-between">
-                        <div>
-                            <span className="text-xs font-semibold text-text block">
-                                {t('hub.communitymanagesettings_237')}
-                            </span>
-                            <span className="text-[11px] text-text-muted">
-                                {t('hub.communitymanagesettings_238')}
-                            </span>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={allowModsPinPosts}
-                            onChange={(e) => setAllowModsPinPosts(e.target.checked)}
-                            className="w-4 h-4 accent-primary cursor-pointer self-start mt-2"
-                        />
-                    </div>
-                </div>
-            </div>
-
-
-            {/* SECTION 6: COMMUNITY RULES */}
+            {/* SECTION 4: COMMUNITY RULES */}
             <div className="p-4 rounded-[6px] bg-surface-inner/50 border border-divider-primary/50 flex flex-col gap-4">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-text flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     <span>{isVi ? "QUY TẮC CỘNG ĐỒNG" : "COMMUNITY RULES"}</span>
                 </span>
-                
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 rounded-[6px] bg-surface border border-divider-primary/60">
                     <div className="flex flex-col gap-1 min-w-0">
                         <span className="text-xs font-bold text-text">
@@ -556,8 +555,7 @@ export const CommunityManageSettings = ({
                 </div>
             </div>
 
-
-            {/* SECTION 6: DANGER ZONE (Carefully separated at the bottom) */}
+            {/* SECTION 5: DANGER ZONE */}
             <div className="p-4 rounded-[6px] bg-rose-950/20 border border-rose-500/30 flex flex-col gap-4 mt-2">
                 <div className="flex items-center gap-2 text-rose-400">
                     <FontAwesomeIcon icon={faTriangleExclamation} className="text-sm" />
@@ -571,10 +569,10 @@ export const CommunityManageSettings = ({
                     <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex flex-col max-w-xl">
                             <span className="text-xs font-bold text-text">
-                                {t('hub.communitymanagesettings_239')}
+                                {t("hub.communitymanagesettings_239")}
                             </span>
                             <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                                {t('hub.communitymanagesettings_240')}
+                                {t("hub.communitymanagesettings_240")}
                             </p>
                         </div>
                         <button
@@ -582,7 +580,7 @@ export const CommunityManageSettings = ({
                             onClick={() => setIsTransferModalOpen(true)}
                             className="px-3 py-1.5 rounded-[4px] bg-surface hover:bg-amber-500/15 border border-amber-500/40 text-xs font-bold text-amber-400 transition-colors cursor-pointer shrink-0 self-start sm:self-center"
                         >
-                            {t('hub.communitymanagesettings_241')}
+                            {t("hub.communitymanagesettings_241")}
                         </button>
                     </div>
 
@@ -590,10 +588,10 @@ export const CommunityManageSettings = ({
                     <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex flex-col max-w-xl">
                             <span className="text-xs font-bold text-rose-400">
-                                {t('hub.communitymanagesettings_242')}
+                                {t("hub.communitymanagesettings_242")}
                             </span>
                             <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
-                                {t('hub.communitymanagesettings_243')}
+                                {t("hub.communitymanagesettings_243")}
                             </p>
                         </div>
                         <button
@@ -602,7 +600,7 @@ export const CommunityManageSettings = ({
                             className="px-3 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer shrink-0 self-start sm:self-center shadow-sm"
                         >
                             <FontAwesomeIcon icon={faTrashCan} className="text-xs mr-1.5" />
-                            <span>{t('hub.communitymanagesettings_244')}</span>
+                            <span>{t("hub.communitymanagesettings_244")}</span>
                         </button>
                     </div>
                 </div>
@@ -616,7 +614,7 @@ export const CommunityManageSettings = ({
                             <div className="flex items-center gap-2 text-amber-400">
                                 <FontAwesomeIcon icon={faCrown} />
                                 <span className="text-xs font-mono font-bold uppercase tracking-wider">
-                                    {t('hub.communitymanagesettings_245')}
+                                    {t("hub.communitymanagesettings_245")}
                                 </span>
                             </div>
                             <button
@@ -629,37 +627,29 @@ export const CommunityManageSettings = ({
                         </div>
 
                         <p className="text-xs text-text-muted leading-relaxed">
-                            {t('hub.communitymanagesettings_246')}
+                            {t("hub.communitymanagesettings_246")}
                         </p>
 
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-semibold text-text">
-                                {t('hub.communitymanagesettings_247')}
+                                {t("hub.communitymanagesettings_247")}
                             </label>
                             <select
-                                value={transferTargetUser}
-                                onChange={(e) => setTransferTargetUser(e.target.value)}
+                                value={transferTargetId}
+                                onChange={(e) => setTransferTargetId(e.target.value)}
                                 className="h-8 px-2.5 rounded-[4px] bg-surface-inner border border-divider-primary text-xs text-text focus:outline-none"
                             >
-                                <option value="Moderator 1">Moderator 1</option>
-                                <option value="Moderator 2">Moderator 2</option>
-                                <option value="Member 1">Member 1</option>
+                                <option value="">
+                                    {transferCandidates.length === 0
+                                        ? (isVi ? "Chưa có thành viên nào khác để chuyển giao" : "No other eligible members")
+                                        : (isVi ? "-- Chọn thành viên --" : "-- Select member --")}
+                                </option>
+                                {transferCandidates.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.label} {c.handle ? `(${c.handle})` : ""} — {c.role}
+                                    </option>
+                                ))}
                             </select>
-                        </div>
-
-                        {/* Re-authentication required as specified */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-semibold text-text flex items-center gap-1.5">
-                                <FontAwesomeIcon icon={faKey} className="text-amber-400 text-xs" />
-                                <span>{t('hub.communitymanagesettings_248')}</span>
-                            </label>
-                            <input
-                                type="password"
-                                value={transferPassword}
-                                onChange={(e) => setTransferPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="h-8 px-3 rounded-[4px] bg-surface-inner border border-divider-primary text-xs text-text focus:outline-none focus:border-amber-400"
-                            />
                         </div>
 
                         <div className="flex items-center justify-end gap-2 pt-2 border-t border-divider-primary/40">
@@ -668,14 +658,17 @@ export const CommunityManageSettings = ({
                                 onClick={() => setIsTransferModalOpen(false)}
                                 className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                             >
-                                {t('hub.communitymanagesettings_249')}
+                                {t("hub.communitymanagesettings_249")}
                             </button>
                             <button
                                 type="button"
+                                disabled={!transferTargetId || transferOwnershipMutation.isPending}
                                 onClick={handleConfirmTransfer}
-                                className="px-4 py-1.5 rounded-[4px] bg-amber-500 hover:bg-amber-600 text-xs font-bold text-black transition-colors cursor-pointer"
+                                className="px-4 py-1.5 rounded-[4px] bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-xs font-bold text-black transition-colors cursor-pointer"
                             >
-                                {t('hub.communitymanagesettings_250')}
+                                {transferOwnershipMutation.isPending
+                                    ? (isVi ? "Đang chuyển..." : "Transferring...")
+                                    : t("hub.communitymanagesettings_250")}
                             </button>
                         </div>
                     </div>
@@ -690,7 +683,7 @@ export const CommunityManageSettings = ({
                             <div className="flex items-center gap-2 text-rose-400">
                                 <FontAwesomeIcon icon={faTrashCan} />
                                 <span className="text-xs font-mono font-bold uppercase tracking-wider">
-                                    {t('hub.communitymanagesettings_251')}
+                                    {t("hub.communitymanagesettings_251")}
                                 </span>
                             </div>
                             <button
@@ -704,8 +697,8 @@ export const CommunityManageSettings = ({
 
                         <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded text-xs text-rose-300 leading-relaxed">
                             {isVi
-                                ? `CẢNH BÁO: Thao tác này sẽ xóa toàn bộ nội dung của "${communityName}". Tất cả 1,284 thành viên sẽ bị giải tán khỏi cộng đồng này.`
-                                : `WARNING: This will permanently erase "${communityName}". All 1,284 members will be disbanded.`}
+                                ? `CẢNH BÁO: Thao tác này sẽ xóa vĩnh viễn "${communityName}" cùng toàn bộ dữ liệu liên quan (${membersCount} thành viên).`
+                                : `WARNING: This will permanently erase "${communityName}" and its related data (${membersCount} members).`}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
@@ -723,39 +716,42 @@ export const CommunityManageSettings = ({
                             />
                         </div>
 
-                        {/* Re-authentication password */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-semibold text-text flex items-center gap-1.5">
-                                <FontAwesomeIcon icon={faKey} className="text-rose-400 text-xs" />
-                                <span>{t('hub.communitymanagesettings_252')}</span>
-                            </label>
-                            <input
-                                type="password"
-                                value={deletePassword}
-                                onChange={(e) => setDeletePassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="h-8 px-3 rounded-[4px] bg-surface-inner border border-divider-primary text-xs text-text focus:outline-none focus:border-rose-400"
-                            />
-                        </div>
-
                         <div className="flex items-center justify-end gap-2 pt-2 border-t border-divider-primary/40">
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteModalOpen(false)}
                                 className="px-3 py-1.5 rounded-[4px] bg-surface-inner hover:bg-surface-hover text-xs font-semibold text-text-muted cursor-pointer"
                             >
-                                {t('hub.communitymanagesettings_253')}
+                                {t("hub.communitymanagesettings_253")}
                             </button>
                             <button
                                 type="button"
+                                disabled={deleteCommunityMutation.isPending}
                                 onClick={handleConfirmDelete}
-                                className="px-4 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer"
+                                className="px-4 py-1.5 rounded-[4px] bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-xs font-bold text-white transition-colors cursor-pointer"
                             >
-                                {t('hub.communitymanagesettings_254')}
+                                {deleteCommunityMutation.isPending
+                                    ? (isVi ? "Đang xóa..." : "Deleting...")
+                                    : t("hub.communitymanagesettings_254")}
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+            {/* IMAGE CROPPER MODAL */}
+            {cropTarget && (
+                <ImageCropperModal
+                    rawImageSrc={cropTarget.rawSrc}
+                    aspectRatio={cropTarget.kind === "logo" ? 1 : 16 / 9}
+                    outputWidth={cropTarget.kind === "logo" ? 512 : 1600}
+                    title={
+                        cropTarget.kind === "logo"
+                            ? (isVi ? "Căn chỉnh Logo cộng đồng" : "Crop Community Logo")
+                            : (isVi ? "Căn chỉnh Ảnh bìa cộng đồng" : "Crop Community Cover")
+                    }
+                    onClose={() => setCropTarget(null)}
+                    onSave={handleSaveCroppedMedia}
+                />
             )}
         </div>
     );
