@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faCheckCircle, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { X as faXmark, CheckCircle as faCheckCircle, Warning as faTriangleExclamation } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useAuthStore } from "@/features/auth";
 import { type ReportModalProps } from "../types";
@@ -14,6 +14,7 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
     const [selectedReason, setSelectedReason] = useState<string>("");
     const [details, setDetails] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const createReportMutation = useCreateReportMutation();
 
     useRegisterOverlay({
@@ -26,23 +27,23 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
     const isDetailsValid = details.trim().length === 0 || details.trim().length >= 6;
 
     const handleSubmit = async () => {
-        if (!selectedReason || !isDetailsValid) return;
+        if (!selectedReason || !isDetailsValid || createReportMutation.isPending) return;
         if (!useAuthStore.getState().requireVerifiedEmail("gửi báo cáo vi phạm")) return;
-        
+
+        setSubmitError(null);
         try {
             await createReportMutation.mutateAsync({
                 postId: String(postId),
                 reason: `${selectedReason}${details ? `: ${details}` : ""}`,
             });
-        } catch {
-            // Log error
-            console.warn("Report submission failed on backend");
+            setIsSubmitted(true);
+            setTimeout(() => {
+                onClose();
+            }, 2000);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : t('report.submitFailed', { defaultValue: 'Không thể gửi báo cáo. Vui lòng thử lại.' });
+            setSubmitError(msg);
         }
-
-        setIsSubmitted(true);
-        setTimeout(() => {
-            onClose();
-        }, 2000);
     };
 
 
@@ -122,22 +123,32 @@ export const ReportModal = ({ postId, author = "người dùng", onClose }: Repo
                             )}
                         </div>
 
+                        {submitError && (
+                            <p className="text-xs text-rose-500 font-medium flex items-center gap-1.5 bg-rose-500/10 px-3 py-2 rounded-lg">
+                                <FontAwesomeIcon icon={faTriangleExclamation} />
+                                <span>{submitError}</span>
+                            </p>
+                        )}
+
                         <div className="flex flex-row gap-3 pt-2">
                             <button
                                 onClick={onClose}
+                                disabled={createReportMutation.isPending}
                                 className="flex-1 py-2.5 rounded-full font-semibold text-sm text-text bg-surface-hover hover:bg-border transition-colors"
                             >
                                 {t('report.cancel')}
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={!selectedReason || !isDetailsValid}
-                                className={`flex-1 py-2.5 rounded-full font-semibold text-sm transition-colors ${selectedReason && isDetailsValid
+                                disabled={!selectedReason || !isDetailsValid || createReportMutation.isPending}
+                                className={`flex-1 py-2.5 rounded-full font-semibold text-sm transition-colors ${selectedReason && isDetailsValid && !createReportMutation.isPending
                                     ? "bg-accent-500 text-white hover:bg-accent-600 shadow-sm cursor-pointer"
                                     : "bg-surface-hover text-text-faint cursor-not-allowed"
                                     }`}
                             >
-                                {t('report.submitReport')}
+                                {createReportMutation.isPending
+                                    ? t('common.sending', { defaultValue: 'Đang gửi...' })
+                                    : t('report.submitReport')}
                             </button>
                         </div>
                     </div>
