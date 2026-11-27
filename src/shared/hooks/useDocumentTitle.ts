@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { useTitleStore } from '@/shared/store/useTitleStore';
-import { useNotificationStore } from '@/features/notification';
-import { useAuthStore } from '@/features/auth';
+import { useNotificationStore } from '@/features/notification/store/useNotificationStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useTranslation } from './useTranslate';
 
 export const APP_NAME = 'Ludon';
-export const DEFAULT_FAVICON = '/favicon.svg';
+export const DEFAULT_FAVICON = '/favicon.svg?v=3';
 
 /**
  * Hook to set a custom page title for the current view.
@@ -16,8 +16,7 @@ export const DEFAULT_FAVICON = '/favicon.svg';
  *   useDocumentTitle("Counter-Strike 2 Vietnam");
  */
 export const useDocumentTitle = (
-    title?: string | null,
-    options?: { raw?: boolean }
+    title?: string | null
 ) => {
     const setCustomTitle = useTitleStore((state) => state.setCustomTitle);
     const clearCustomTitle = useTitleStore((state) => state.clearCustomTitle);
@@ -44,8 +43,12 @@ export const useDocumentTitle = (
 export const useSyncDocumentTitle = () => {
     const { pathname, search } = useLocation();
     const { t, language } = useTranslation();
-    const user = useAuthStore((state) => state.user);
-    const notifications = useNotificationStore((state) => state.notifications);
+    const isLoggedIn = useAuthStore((state) => Boolean(state.user));
+    const unreadCount = useNotificationStore((state) =>
+        isLoggedIn
+            ? state.notifications.reduce((count, n) => (!n.isRead ? count + 1 : count), 0)
+            : 0
+    );
     const customTitle = useTitleStore((state) => state.customTitle);
 
     useEffect(() => {
@@ -54,9 +57,7 @@ export const useSyncDocumentTitle = () => {
         let pageSectionTitle = customTitle;
 
         if (!pageSectionTitle) {
-            if (pathname.startsWith('/explore')) {
-                pageSectionTitle = t('common.explore', { defaultValue: 'Khám phá' });
-            } else if (pathname.startsWith('/search')) {
+            if (pathname.startsWith('/search')) {
                 const query = typeof search === 'object' && search !== null && 'q' in search
                     ? String((search as Record<string, unknown>).q || '').trim()
                     : '';
@@ -70,18 +71,12 @@ export const useSyncDocumentTitle = () => {
                 pageSectionTitle = t('post.post', { defaultValue: 'Bài viết' });
             } else if (pathname.startsWith('/profile')) {
                 pageSectionTitle = t('common.viewProfile', { defaultValue: 'Trang cá nhân' });
-            } else if (pathname.startsWith('/bookmark')) {
-                pageSectionTitle = t('common.bookmark', { defaultValue: 'Đã lưu' });
-            } else if (pathname.startsWith('/squad')) {
-                pageSectionTitle = t('common.squad', { defaultValue: 'Squad' });
             } else if (pathname.startsWith('/settings')) {
                 pageSectionTitle = t('common.settings', { defaultValue: 'Cài đặt' });
             } else if (pathname.startsWith('/auth')) {
                 pageSectionTitle = t('authenticate.login', { defaultValue: 'Đăng nhập' });
             } else if (pathname.startsWith('/verify-email')) {
                 pageSectionTitle = t('auth.verifyEmailTitle', { defaultValue: 'Xác minh email' });
-            } else if (pathname.startsWith('/developer')) {
-                pageSectionTitle = t('common.developerPortal', { defaultValue: 'Cổng nhà phát triển' });
             }
         }
 
@@ -98,7 +93,6 @@ export const useSyncDocumentTitle = () => {
         }
 
         // 3. Unread notification count prefix (Facebook convention: "(3) Title")
-        const unreadCount = user ? notifications.filter((n) => !n.isRead).length : 0;
         const unreadBadge = unreadCount > 0 ? `(${unreadCount}) ` : '';
         const finalTitle = `${unreadBadge}${baseTitle}`;
 
@@ -126,5 +120,5 @@ export const useSyncDocumentTitle = () => {
             defaultLink.href = DEFAULT_FAVICON;
             document.head.appendChild(defaultLink);
         }
-    }, [pathname, search, customTitle, user, notifications, t, language]);
+    }, [pathname, search, customTitle, unreadCount, t, language]);
 };

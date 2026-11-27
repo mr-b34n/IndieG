@@ -1,14 +1,6 @@
 import { useMemo } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-    faKeyboard,
-    faXmark,
-    faCompass,
-    faGlobe,
-    faNewspaper,
-    faImages,
-    faBell,
-} from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Keyboard as faKeyboard, X as faXmark, Compass as faCompass, Globe as faGlobe, Newspaper as faNewspaper, Images as faImages, Bell as faBell } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 import { useShortcutsStore } from "@/shared/store/useShortcutsStore";
 import { isMacSystem, formatKeyCap } from "@/shared/hooks/useHotkeys";
@@ -117,12 +109,6 @@ export const ShortcutsCheatsheetModal = () => {
                     keys: [["G", "P"]],
                     descriptionVi: "Hồ sơ cá nhân (/profile)",
                     descriptionEn: "My Profile",
-                    isSequence: true,
-                },
-                {
-                    keys: [["G", "B"]],
-                    descriptionVi: "Bài viết đã lưu (/bookmark)",
-                    descriptionEn: "Bookmarks",
                     isSequence: true,
                 },
                 {

@@ -1,5 +1,13 @@
+import { useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { ChatCircleDots } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
+import { useTrendingPostsQuery, useFriendsQuery } from "@/shared/api/useQueries";
+import { messagesApi } from "@/shared/api";
+import { useAuthStore } from "@/features/auth";
+import { useMessagesStore } from "@/features/messages/store/useMessagesStore";
+import { UserAvatar } from "@/shared/components/ui/UserAvatar";
+import type { PostDto } from "@/shared/api/types";
 
 const SectionTitle = ({ label }: { label: string }) => (
     <div className="pb-1.5 mb-2">
@@ -10,18 +18,36 @@ const SectionTitle = ({ label }: { label: string }) => (
 );
 
 interface FriendOnlineItem {
+    id?: string;
+    username?: string;
     name: string;
     game: string;
     detail: string;
     avatar: string;
-    status: "online" | "in-game";
+    status: "online" | "in-game" | "offline";
     playtime?: string;
+}
+
+export interface TrendingPostItem {
+    id: string | number;
+    postId: string;
+    number: string;
+    title: string;
+    game: string;
+    replies: number | string;
+}
+
+export interface UpcomingEventItem {
+    id: string | number;
+    date: string;
+    title: string;
+    subtitle?: string;
 }
 
 export interface RightBarProps {
     friends?: FriendOnlineItem[];
-    trending?: any[];
-    events?: any[];
+    trending?: TrendingPostItem[];
+    events?: UpcomingEventItem[];
     isLoadingFriends?: boolean;
     isLoadingTrending?: boolean;
     isLoadingEvents?: boolean;
@@ -34,8 +60,7 @@ export interface RightBarProps {
 }
 
 const FRIEND_LIST: FriendOnlineItem[] = [];
-const TRENDING_POSTS: any[] = [];
-const EVENTS: any[] = [];
+const EVENTS: UpcomingEventItem[] = [];
 
 const MinimalLoadingState = () => (
     <div className="flex flex-col gap-1.5 py-1 animate-pulse">
@@ -72,23 +97,136 @@ const MinimalErrorState = ({
 
 export const RightBar = ({
     friends = FRIEND_LIST,
-    trending = TRENDING_POSTS,
+    trending: customTrending,
     events = EVENTS,
     isLoadingFriends = false,
-    isLoadingTrending = false,
+    isLoadingTrending: customIsLoadingTrending,
     isLoadingEvents = false,
     errorFriends = null,
-    errorTrending = null,
+    errorTrending: customErrorTrending = null,
     errorEvents = null,
     onRetryFriends,
-    onRetryTrending,
+    onRetryTrending: customOnRetryTrending,
     onRetryEvents,
 }: RightBarProps) => {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    const displayFriends = friends.slice(0, 4);
-    const displayTrending = trending.slice(0, 3);
+    // Auto-query trending posts if not explicitly provided via props
+    const isAutoQuery = customTrending === undefined;
+    const {
+        data: queryTrendingData,
+        isLoading: isAutoLoading,
+        isError: isAutoError,
+        refetch: refetchTrending,
+    } = useTrendingPostsQuery(
+        { limit: 5 },
+        { enabled: isAutoQuery },
+    );
+
+    const currentUser = useAuthStore((s) => s.user);
+    const isAutoFriends = friends === FRIEND_LIST;
+    const {
+        data: queryFriendsData,
+        isLoading: isAutoFriendsLoading,
+        isError: isAutoFriendsError,
+        refetch: refetchFriends,
+    } = useFriendsQuery(isAutoFriends && Boolean(currentUser));
+
+    const onlineUserIds = useMessagesStore((s) => s.onlineUserIds);
+    const mergeOnlineUsers = useMessagesStore((s) => s.mergeOnlineUsers);
+
+    const friendProfileIds = useMemo(() => {
+        if (!queryFriendsData || !Array.isArray(queryFriendsData)) return [];
+        return queryFriendsData
+            .map((f) => {
+                const profile = f.friend || f.user || (f.requesterId === currentUser?.id ? f.addressee : f.requester);
+                return profile?.id || "";
+            })
+            .filter(Boolean);
+    }, [queryFriendsData, currentUser]);
+
+    // Fetch real Redis presence for friends
+    useEffect(() => {
+        if (!currentUser || friendProfileIds.length === 0) return;
+        let cancelled = false;
+        const fetchPresence = () => {
+            messagesApi
+                .getPresence(friendProfileIds)
+                .then((res) => {
+                    if (!cancelled && Array.isArray(res?.onlineUserIds)) {
+                        mergeOnlineUsers(friendProfileIds, res.onlineUserIds);
+                    }
+                })
+                .catch(() => {});
+        };
+        fetchPresence();
+        const interval = window.setInterval(fetchPresence, 60_000);
+        return () => {
+            cancelled = true;
+            window.clearInterval(interval);
+        };
+    }, [currentUser, friendProfileIds, mergeOnlineUsers]);
+
+    const autoFriendsList: FriendOnlineItem[] = useMemo(() => {
+        if (!queryFriendsData || !Array.isArray(queryFriendsData)) return [];
+        const items = queryFriendsData.map((f) => {
+            const profile = f.friend || f.user || (f.requesterId === currentUser?.id ? f.addressee : f.requester);
+            const id = profile?.id;
+            const username = profile?.username;
+            const name = profile?.name || profile?.username || "Gamer";
+            const avatar = profile?.avatarUrl || profile?.avatar || "";
+            const isOnline = id ? Boolean(onlineUserIds[id]) : false;
+            const status: "online" | "in-game" | "offline" = isOnline
+                ? (profile?.status === "in-game" ? "in-game" : "online")
+                : "offline";
+            return {
+                id,
+                username,
+                name,
+                game: status === "in-game" ? "Đang chơi" : status === "online" ? "Trực tuyến" : "Ngoại tuyến",
+                detail: `@${username || name}`,
+                avatar,
+                status,
+            };
+        });
+        // Sort online friends to the top
+        return items.sort((a, b) => Number(b.status !== "offline") - Number(a.status !== "offline"));
+    }, [queryFriendsData, currentUser, onlineUserIds]);
+
+    const finalFriends = isAutoFriends ? autoFriendsList : friends;
+    const finalIsLoadingFriends = isAutoFriends ? (Boolean(currentUser) && isAutoFriendsLoading) : isLoadingFriends;
+    const finalErrorFriends = isAutoFriends ? (isAutoFriendsError ? t('common.failedToLoad', { defaultValue: 'Unable to load.' }) : null) : errorFriends;
+    const finalOnRetryFriends = isAutoFriends ? (() => { void refetchFriends(); }) : onRetryFriends;
+
+    const autoTrendingList: TrendingPostItem[] = useMemo(() => {
+        if (!queryTrendingData) return [];
+        let items: PostDto[] = [];
+        if (Array.isArray(queryTrendingData)) {
+            items = queryTrendingData;
+        } else if (typeof queryTrendingData === "object") {
+            const obj = queryTrendingData as Record<string, unknown>;
+            if (Array.isArray(obj.data)) items = obj.data as PostDto[];
+            else if (Array.isArray(obj.items)) items = obj.items as PostDto[];
+        }
+        if (items.length === 0) return [];
+        return items.map((post, idx) => ({
+            id: post.id,
+            postId: String(post.id),
+            number: String(idx + 1).padStart(2, "0"),
+            title: post.title || (post.content ? post.content.slice(0, 70) + (post.content.length > 70 ? "..." : "") : "Untitled"),
+            game: post.gameTag || post.community?.name || "General",
+            replies: post.commentsCount ?? 0,
+        }));
+    }, [queryTrendingData]);
+
+    const finalTrending = customTrending ?? autoTrendingList;
+    const finalIsLoadingTrending = customIsLoadingTrending ?? (isAutoQuery ? isAutoLoading : false);
+    const finalErrorTrending = customErrorTrending ?? (isAutoQuery && isAutoError ? true : null);
+    const finalOnRetryTrending = customOnRetryTrending ?? (() => { void refetchTrending(); });
+
+    const displayFriends = finalFriends.slice(0, 4);
+    const displayTrending = finalTrending.slice(0, 3);
     const displayEvents = events.slice(0, 3);
 
     return (
@@ -97,12 +235,12 @@ export const RightBar = ({
             <div className="flex flex-col">
                 <SectionTitle label={t('common.onlineLabel', { defaultValue: 'Friends Online' })} />
 
-                {isLoadingFriends ? (
+                {finalIsLoadingFriends ? (
                     <MinimalLoadingState />
-                ) : errorFriends ? (
+                ) : finalErrorFriends ? (
                     <MinimalErrorState
-                        message={typeof errorFriends === 'string' ? errorFriends : undefined}
-                        onRetry={onRetryFriends}
+                        message={typeof finalErrorFriends === 'string' ? finalErrorFriends : undefined}
+                        onRetry={finalOnRetryFriends}
                     />
                 ) : displayFriends.length === 0 ? (
                     <p className="text-xs text-text-muted leading-relaxed py-0.5">
@@ -112,21 +250,27 @@ export const RightBar = ({
                     <div className="flex flex-col gap-1">
                         {displayFriends.map((m) => (
                             <div
-                                key={m.name}
-                                onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.name}` } })}
+                                key={m.id || m.name}
+                                onClick={() => navigate({ to: "/profile/$userId", params: { userId: `@${m.username || m.name}` } })}
                                 className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-hover/70 transition-colors cursor-pointer group"
                                 title={t('common.viewProfileOf', { name: m.name, defaultValue: `Xem trang cá nhân của ${m.name}` })}
                             >
                                 <div className="relative shrink-0">
-                                    <img
+                                    <UserAvatar
                                         src={m.avatar}
-                                        alt={m.name}
-                                        className="w-7 h-7 rounded-full object-cover ring-1 ring-border/80"
-                                        onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                                        }}
+                                        name={m.name}
+                                        className="w-7 h-7 ring-1 ring-border/80"
+                                        textClassName="text-[11px]"
                                     />
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-surface shrink-0" />
+                                    <span
+                                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-surface shrink-0 ${
+                                            m.status === "offline"
+                                                ? "bg-text-faint/40"
+                                                : m.status === "in-game"
+                                                ? "bg-sky-400"
+                                                : "bg-emerald-500"
+                                        }`}
+                                    />
                                 </div>
 
                                 <div className="flex flex-col min-w-0 flex-1 leading-tight">
@@ -134,10 +278,26 @@ export const RightBar = ({
                                         {m.name}
                                     </p>
                                     <p className="text-[11px] text-text-muted truncate mt-0.5">
-                                        <span className="font-medium text-text-muted">{m.game}</span>
+                                        <span className={m.status !== "offline" ? "font-semibold text-emerald-400" : "font-medium text-text-faint"}>
+                                            {m.game}
+                                        </span>
                                         {m.detail && <span className="text-text-faint ml-1">· {m.detail}</span>}
                                     </p>
                                 </div>
+
+                                {m.id && currentUser && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate({ to: "/messages", search: { userId: m.id } as Record<string, unknown> });
+                                        }}
+                                        title={`Nhắn tin cho ${m.name}`}
+                                        className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-all cursor-pointer shrink-0"
+                                    >
+                                        <ChatCircleDots className="size-3.5" />
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -148,12 +308,12 @@ export const RightBar = ({
             <div className="flex flex-col border-t border-divider-primary/60 pt-3.5">
                 <SectionTitle label={t('common.trending', { defaultValue: 'Trending' })} />
 
-                {isLoadingTrending ? (
+                {finalIsLoadingTrending ? (
                     <MinimalLoadingState />
-                ) : errorTrending ? (
+                ) : finalErrorTrending ? (
                     <MinimalErrorState
-                        message={typeof errorTrending === 'string' ? errorTrending : undefined}
-                        onRetry={onRetryTrending}
+                        message={typeof finalErrorTrending === 'string' ? finalErrorTrending : undefined}
+                        onRetry={finalOnRetryTrending}
                     />
                 ) : displayTrending.length === 0 ? (
                     <div className="flex flex-col gap-1 py-0.5">

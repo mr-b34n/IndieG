@@ -62,7 +62,7 @@ export function useGlobalShortcuts() {
         }
     }, { ignoreInput: false });
 
-    // 8. Go-To sequences: G then [F, C, S, G, E, P, B, N, A]
+    // 8. Go-To sequences: G then [F, C, G, P, N, A]
     useSequenceHotkeys("g", {
         f: () => {
             navigate({ to: "/" });
@@ -75,9 +75,6 @@ export function useGlobalShortcuts() {
         },
         p: () => {
             navigate({ to: "/profile/$userId", params: { userId: "me" } });
-        },
-        b: () => {
-            navigate({ to: "/bookmark" });
         },
         n: () => {
             useNotificationStore.getState().toggleOpen?.();

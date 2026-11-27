@@ -1,6 +1,6 @@
-import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import React, { useEffect, useRef } from "react";
+import { AppIcon as FontAwesomeIcon, type AppIconComponent as IconDefinition } from "@/shared/components/ui/Icon";
+import { X } from "@phosphor-icons/react";
 
 export type ModalVariant = "default" | "security" | "admin" | "danger";
 
@@ -9,7 +9,7 @@ export interface AppModalProps {
     onClose: () => void;
     title: string;
     subtitle?: string | React.ReactNode;
-    icon?: IconDefinition;
+    icon?: IconDefinition | React.ReactNode;
     variant?: ModalVariant;
     maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
     children: React.ReactNode;
@@ -36,6 +36,75 @@ export const AppModal: React.FC<AppModalProps> = ({
     children,
     footer,
 }) => {
+    const modalRef = useRef<HTMLDivElement>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+
+    // Save previous focus on open and restore on close
+    useEffect(() => {
+        if (isOpen) {
+            previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+            // Focus the modal or first focusable element
+            const timer = setTimeout(() => {
+                if (modalRef.current) {
+                    const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+                        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    );
+                    if (focusable.length > 0) {
+                        focusable[0].focus();
+                    } else {
+                        modalRef.current.focus();
+                    }
+                }
+            }, 50);
+
+            return () => {
+                clearTimeout(timer);
+                if (previousFocusRef.current && typeof previousFocusRef.current.focus === "function") {
+                    previousFocusRef.current.focus();
+                }
+            };
+        }
+    }, [isOpen]);
+
+    // Handle Escape key and focus trap
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                e.preventDefault();
+                onClose();
+                return;
+            }
+
+            if (e.key === "Tab" && modalRef.current) {
+                const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusableElements.length === 0) return;
+
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     // Accent styles per variant
@@ -65,9 +134,15 @@ export const AppModal: React.FC<AppModalProps> = ({
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in font-sans"
             onClick={onClose}
+            aria-hidden={!isOpen}
         >
             <div
-                className={`relative w-full ${maxWidthClasses[maxWidth]} bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-text animate-modal`}
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="app-modal-title"
+                tabIndex={-1}
+                className={`relative w-full ${maxWidthClasses[maxWidth]} bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-text animate-modal outline-none`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Accent Line at Top */}
@@ -78,11 +153,15 @@ export const AppModal: React.FC<AppModalProps> = ({
                     <div className="flex items-center gap-3 min-w-0">
                         {icon && (
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg shadow-xs ${iconBg}`}>
-                                <FontAwesomeIcon icon={icon} />
+                                {"iconName" in (icon as object) ? (
+                                    <FontAwesomeIcon icon={icon as IconDefinition} />
+                                ) : (
+                                    icon as React.ReactNode
+                                )}
                             </div>
                         )}
                         <div className="min-w-0">
-                            <h3 className="text-base font-black text-text uppercase tracking-tight truncate leading-tight">
+                            <h3 id="app-modal-title" className="text-base font-black text-text uppercase tracking-tight truncate leading-tight">
                                 {title}
                             </h3>
                             {subtitle && (
@@ -96,9 +175,10 @@ export const AppModal: React.FC<AppModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
+                        aria-label="Đóng hộp thoại"
                         className="w-8 h-8 rounded-full bg-surface-inner text-text-muted hover:text-text hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-3"
                     >
-                        <FontAwesomeIcon icon={faXmark} className="text-sm" />
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
 

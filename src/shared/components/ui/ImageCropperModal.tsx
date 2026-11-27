@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCrop, faXmark, faCheck, faSearchPlus } from "@fortawesome/free-solid-svg-icons";
+import { AppIcon as FontAwesomeIcon } from "@/shared/components/ui/Icon";
+import { Crop as faCrop, X as faXmark, Check as faCheck, MagnifyingGlassPlus as faSearchPlus } from "@phosphor-icons/react";
 import { useTranslation } from "@/shared/hooks/useTranslate";
 
 interface ImageCropperModalProps {
