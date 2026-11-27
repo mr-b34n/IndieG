@@ -280,7 +280,7 @@ function parseSearchResponse(
     // 2. If backend formatted as legacy SearchResponse { data: { posts, communities, games, users }, meta: { totalPosts... } }
     if (raw.data && typeof raw.data === "object" && !Array.isArray(raw.data) && (raw.data as Record<string, unknown>).posts) {
         const existingData = raw.data as Record<string, unknown>;
-        const posts = Array.isArray(existingData.posts) ? existingData.posts.map(mapPostDtoToPost) : [];
+        const posts = Array.isArray(existingData.posts) ? existingData.posts.map((p) => mapPostDtoToPost(p as Parameters<typeof mapPostDtoToPost>[0])) : [];
         const communities = Array.isArray(existingData.communities)
             ? existingData.communities.map(mapCommunityDtoToCommunityData).filter((c) => !isGenericTestCommunity(c))
             : [];

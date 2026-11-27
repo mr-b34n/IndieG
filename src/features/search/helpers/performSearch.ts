@@ -71,9 +71,10 @@ export function performSearchAPI(
                   )
                 : false;
         const genresListSafe = game.genres || (Array.isArray(game.genre) ? game.genre : []);
+        const rawGenre = game.genre as string | string[] | undefined;
         const genreMatch =
             genresListSafe.some((g) => typeof g === "string" && g.toLowerCase().includes(q)) ||
-            (typeof game.genre === "string" && game.genre.toLowerCase().includes(q));
+            (typeof rawGenre === "string" && rawGenre.toLowerCase().includes(q));
         const devMatch =
             (typeof game.developer === "string" && game.developer.toLowerCase().includes(q)) ||
             (Array.isArray(game.developers) && game.developers.some((d) => typeof d === "string" && d.toLowerCase().includes(q)));
